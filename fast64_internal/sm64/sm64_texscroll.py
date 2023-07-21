@@ -1,7 +1,7 @@
 import os, re, bpy
 from ..utility import PluginError, writeIfNotFound, getDataFromFile, saveDataToFile, CScrollData, CData
 from .c_templates.tile_scroll import tile_scroll_c, tile_scroll_h
-from .sm64_utility import getMemoryCFilePath
+from .utility import getMemoryCFilePath
 
 # This is for writing framework for scroll code.
 # Actual scroll code found in f3d_gbi.py (FVertexScrollData)
@@ -18,7 +18,7 @@ def readSegmentInfo(baseDir):
     ldData = ldFile.read()
     ldFile.close()
 
-    compressionFmt = bpy.context.scene.compressionFormat
+    compressionFmt = bpy.context.scene.fast64.sm64.compression_format
     segDict = {}
     for matchResult in re.finditer(
         "(?<!#define )STANDARD\_OBJECTS\(" + "(((?!\,).)*)\,\s*(((?!\,).)*)\,\s*(((?!\)).)*)\)", ldData
@@ -335,7 +335,7 @@ def modifyTexScrollHeadersGroup(
     dataInclude: str,
     hasScrolling: bool,
 ):
-    if not bpy.context.scene.disableScroll and hasScrolling:
+    if not bpy.context.scene.fast64.sm64.disable_scroll and hasScrolling:
         fileStatus = writeTexScrollHeadersGroup(
             exportDir, includeC, includeH, groupName, topLevelScrollFunc, dataInclude
         )
@@ -445,7 +445,7 @@ def removeTexScrollHeadersGroup(exportDir: str, includeC: str, includeH: str, gr
 
 
 def modifyTexScrollFiles(exportDir: str, assetDir: str, scrollData: CScrollData):
-    if not bpy.context.scene.disableScroll and scrollData.hasScrolling():
+    if not bpy.context.scene.fast64.sm64.disable_scroll and scrollData.hasScrolling():
         writeTexScrollFiles(exportDir, assetDir, scrollData)
     else:
         removeTexScrollFiles(exportDir, assetDir)

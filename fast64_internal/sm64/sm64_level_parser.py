@@ -1,5 +1,5 @@
 import copy
-from .sm64_constants import mainLevelLoadScriptSegment, loadSegmentAddresses
+from .constants import mainLevelLoadScriptSegment, loadSegmentAddresses
 
 from ..utility import (
     PluginError,

@@ -1,4 +1,4 @@
-from .sm64_constants import loadSegmentAddresses
+from .constants import loadSegmentAddresses
 from ..utility import PluginError
 
 

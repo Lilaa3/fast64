@@ -2,7 +2,7 @@ import bpy, mathutils
 from bpy.utils import register_class, unregister_class
 from ..utility import colorTo16bitRGBA, gammaCorrect
 
-from .sm64_geolayout_classes import (
+from .geolayout.sm64_geolayout_classes import (
     TransformNode,
     ScreenAreaNode,
     ZBufferNode,

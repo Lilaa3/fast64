@@ -1,8 +1,8 @@
-import bpy, random, string, os, math, traceback, re, os, mathutils, ast, operator
+import bpy, random, string, os, math, traceback, re, os, mathutils, ast, operator, time, io
 from math import pi, ceil, degrees, radians
 from mathutils import *
-from .utility_anim import *
-from typing import Callable, Iterable, Any
+
+from typing import BinaryIO, Callable, Iterable, Any
 
 CollectionProperty = Any  # collection prop as defined by using bpy.props.CollectionProperty
 
@@ -18,9 +18,6 @@ class VertexWeightError(PluginError):
 # default indentation to use when writing to decomp files
 indent = " " * 4
 
-geoNodeRotateOrder = "ZXY"
-sm64BoneUp = Vector([1, 0, 0])
-
 transform_mtx_blender_to_n64 = lambda: Matrix(((1, 0, 0, 0), (0, 0, 1, 0), (0, -1, 0, 0), (0, 0, 0, 1)))
 
 yUpToZUp = mathutils.Quaternion((1, 0, 0), math.radians(90.0)).to_matrix().to_4x4()
@@ -32,22 +29,10 @@ axis_enums = [
     ("-Y", "-Y", "-Y"),
 ]
 
-enumExportType = [
-    ("C", "C", "C"),
-    ("Binary", "Binary", "Binary"),
-    ("Insertable Binary", "Insertable Binary", "Insertable Binary"),
-]
 
-enumExportHeaderType = [
-    # ('None', 'None', 'Headers are not written'),
-    ("Actor", "Actor Data", "Headers are written to a group in actors/"),
-    ("Level", "Level Data", "Headers are written to a specific level in levels/"),
-]
-
-enumCompressionFormat = [
-    ("mio0", "MIO0", "MIO0"),
-    ("yay0", "YAY0", "YAY0"),
-]
+# bpy.context.mode returns the keys here, while the values are required by bpy.ops.object.mode_set
+BLENDER_MODE_TO_MODE_SET = {"PAINT_VERTEX": "VERTEX_PAINT", "EDIT_MESH": "EDIT", "EDIT_ARMATURE": "EDIT"}
+get_mode_set_from_context_mode = lambda mode: BLENDER_MODE_TO_MODE_SET.get(mode, "OBJECT")
 
 
 def isPowerOf2(n):
@@ -162,13 +147,13 @@ def selectSingleObject(obj: bpy.types.Object):
     bpy.context.view_layer.objects.active = obj
 
 
-def parentObject(parent, child):
+def parentObject(parent, child, keep_transform=True):
     bpy.ops.object.select_all(action="DESELECT")
 
     child.select_set(True)
     parent.select_set(True)
     bpy.context.view_layer.objects.active = parent
-    bpy.ops.object.parent_set(type="OBJECT", keep_transform=True)
+    bpy.ops.object.parent_set(type="OBJECT", keep_transform=keep_transform)
 
 
 def getFMeshName(vertexGroup, namePrefix, drawLayer, isSkinned):
@@ -395,73 +380,6 @@ def getTabbedText(text, tabCount):
     return text.replace("\n", "\n" + "\t" * tabCount)
 
 
-def extendedRAMLabel(layout):
-    return
-    infoBox = layout.box()
-    infoBox.label(text="Be sure to add: ")
-    infoBox.label(text='"#define USE_EXT_RAM"')
-    infoBox.label(text="to include/segments.h.")
-    infoBox.label(text="Extended RAM prevents crashes.")
-
-
-def checkExpanded(filepath):
-    size = os.path.getsize(filepath)
-    if size < 9000000:  # check if 8MB
-        raise PluginError(
-            "ROM at "
-            + filepath
-            + " is too small. You may be using an unexpanded ROM. You can expand a ROM by opening it in SM64 Editor or ROM Manager."
-        )
-
-
-def getPathAndLevel(customExport, exportPath, levelName, levelOption):
-    if customExport:
-        exportPath = bpy.path.abspath(exportPath)
-        levelName = levelName
-    else:
-        exportPath = bpy.path.abspath(bpy.context.scene.decompPath)
-        if levelOption == "custom":
-            levelName = levelName
-        else:
-            levelName = levelOption
-    return exportPath, levelName
-
-
-def findStartBones(armatureObj):
-    noParentBones = sorted(
-        [
-            bone.name
-            for bone in armatureObj.data.bones
-            if bone.parent is None and (bone.geo_cmd != "SwitchOption" and bone.geo_cmd != "Ignore")
-        ]
-    )
-
-    if len(noParentBones) == 0:
-        raise PluginError(
-            "No non switch option start bone could be found "
-            + "in "
-            + armatureObj.name
-            + ". Is this the root armature?"
-        )
-    else:
-        return noParentBones
-
-    if len(noParentBones) == 1:
-        return noParentBones[0]
-    elif len(noParentBones) == 0:
-        raise PluginError(
-            "No non switch option start bone could be found "
-            + "in "
-            + armatureObj.name
-            + ". Is this the root armature?"
-        )
-    else:
-        raise PluginError(
-            "Too many parentless bones found. Make sure your bone hierarchy starts from a single bone, "
-            + 'and that any bones not related to a hierarchy have their geolayout command set to "Ignore".'
-        )
-
-
 def getDataFromFile(filepath):
     if not os.path.exists(filepath):
         raise PluginError('Path "' + filepath + '" does not exist.')
@@ -475,35 +393,6 @@ def saveDataToFile(filepath, data):
     dataFile = open(filepath, "w", newline="\n")
     dataFile.write(data)
     dataFile.close()
-
-
-def applyBasicTweaks(baseDir):
-    enableExtendedRAM(baseDir)
-    return
-
-
-def enableExtendedRAM(baseDir):
-    segmentPath = os.path.join(baseDir, "include/segments.h")
-
-    segmentFile = open(segmentPath, "r", newline="\n")
-    segmentData = segmentFile.read()
-    segmentFile.close()
-
-    matchResult = re.search("#define\s*USE\_EXT\_RAM", segmentData)
-
-    if not matchResult:
-        matchResult = re.search("#ifndef\s*USE\_EXT\_RAM", segmentData)
-        if matchResult is None:
-            raise PluginError(
-                "When trying to enable extended RAM, " + "could not find '#ifndef USE_EXT_RAM' in include/segments.h."
-            )
-        segmentData = (
-            segmentData[: matchResult.start(0)] + "#define USE_EXT_RAM\n" + segmentData[matchResult.start(0) :]
-        )
-
-        segmentFile = open(segmentPath, "w", newline="\n")
-        segmentFile.write(segmentData)
-        segmentFile.close()
 
 
 def writeMaterialHeaders(exportDir, matCInclude, matHInclude):
@@ -597,11 +486,6 @@ def cast_integer(value: int, bits: int, signed: bool):
 
 
 to_s16 = lambda x: cast_integer(round(x), 16, True)
-radians_to_s16 = lambda d: to_s16(d * 0x10000 / (2 * math.pi))
-
-
-def decompFolderMessage(layout):
-    layout.box().label(text="This will export to your decomp folder.")
 
 
 def customExportWarning(layout):
@@ -658,39 +542,6 @@ def setOrigin(target, obj):
     bpy.context.scene.cursor.location = target.location
     bpy.ops.object.origin_set(type="ORIGIN_CURSOR")
     bpy.ops.object.select_all(action="DESELECT")
-
-
-def checkIfPathExists(filePath):
-    if not os.path.exists(filePath):
-        raise PluginError(filePath + " does not exist.")
-
-
-def makeWriteInfoBox(layout):
-    writeBox = layout.box()
-    writeBox.label(text="Along with header edits, this will write to:")
-    return writeBox
-
-
-def writeBoxExportType(writeBox, headerType, name, levelName, levelOption):
-    if headerType == "Actor":
-        writeBox.label(text="actors/" + toAlnum(name))
-    elif headerType == "Level":
-        if levelOption != "custom":
-            levelName = levelOption
-        writeBox.label(text="levels/" + toAlnum(levelName) + "/" + toAlnum(name))
-
-
-def getExportDir(customExport, dirPath, headerType, levelName, texDir, dirName):
-    # Get correct directory from decomp base, and overwrite texDir
-    if not customExport:
-        if headerType == "Actor":
-            dirPath = os.path.join(dirPath, "actors")
-            texDir = "actors/" + dirName
-        elif headerType == "Level":
-            dirPath = os.path.join(dirPath, "levels/" + levelName)
-            texDir = "levels/" + levelName
-
-    return dirPath, texDir
 
 
 def overwriteData(headerRegex, name, value, filePath, writeNewBeforeString, isFunction):
@@ -788,6 +639,7 @@ def translation_rotation_from_mtx(mtx: mathutils.Matrix):
 def scale_mtx_from_vector(scale: mathutils.Vector):
     return mathutils.Matrix.Diagonal(scale[0:3]).to_4x4()
 
+from .utility_anim import attemptModifierApply
 
 def copy_object_and_apply(obj: bpy.types.Object, apply_scale=False, apply_modifiers=False):
     if apply_scale or apply_modifiers:
@@ -1183,6 +1035,12 @@ def prop_split(layout, data, field, name, **prop_kwargs):
     split.label(text=name)
     split.prop(data, field, text="", **prop_kwargs)
 
+def draw_text_with_wrapping(layout: bpy.types.UILayout, string: str, wrap_width: int = 60):
+    import textwrap
+    wrapped_lines = textwrap.wrap(string, width=wrap_width)
+
+    for wrapped_line in wrapped_lines:
+        layout.label(text=wrapped_line)
 
 def toAlnum(name, exceptions=[]):
     if name is None or name == "":
@@ -1264,9 +1122,10 @@ def intToBytes(value, byteSize):
 # returns an integer, usually used for file seeking positions
 def decodeSegmentedAddr(address, segmentData):
     # print(bytesAsHex(address))
-    if address[0] not in segmentData:
-        raise PluginError("Segment " + str(address[0]) + " not found in segment list.")
-    segmentStart = segmentData[address[0]][0]
+    segment = address[0]
+    if segment not in segmentData:
+        raise PluginError("Segment " + str(segment) + " not found in segment list.")
+    segmentStart = segmentData[segment][0]
     return segmentStart + bytesToInt(address[1:4])
 
 
@@ -1294,7 +1153,10 @@ def readVectorFromShorts(command, offset):
 
 
 def readFloatFromShort(command, offset):
-    return int.from_bytes(command[offset : offset + 2], "big", signed=True) / bpy.context.scene.blenderToSM64Scale
+    return (
+        int.from_bytes(command[offset : offset + 2], "big", signed=True)
+        / bpy.context.scene.fast64.sm64.blender_to_sm64_scale
+    )
 
 
 def writeVectorToShorts(command, offset, values):
@@ -1304,13 +1166,13 @@ def writeVectorToShorts(command, offset, values):
 
 
 def writeFloatToShort(command, offset, value):
-    command[offset : offset + 2] = int(round(value * bpy.context.scene.blenderToSM64Scale)).to_bytes(
+    command[offset : offset + 2] = int(round(value * bpy.context.scene.fast64.sm64.blender_to_sm64_scale)).to_bytes(
         2, "big", signed=True
     )
 
 
 def convertFloatToShort(value):
-    return int(round((value * bpy.context.scene.blenderToSM64Scale)))
+    return int(round((value * bpy.context.scene.fast64.sm64.blender_to_sm64_scale)))
 
 
 def convertEulerFloatToShort(value):
@@ -1442,6 +1304,10 @@ def bitMask(data, offset, amount):
     return (~(-1 << amount) << offset & data) >> offset
 
 
+def isBitActive(x, index):
+    return ((x >> index) & 1) == 1
+
+
 def read16bitRGBA(data):
     r = bitMask(data, 11, 5) / ((2**5) - 1)
     g = bitMask(data, 6, 5) / ((2**5) - 1)
@@ -1451,7 +1317,7 @@ def read16bitRGBA(data):
     return [r, g, b, a]
 
 
-def join_c_args(args: "list[str]"):
+def join_c_args(args: list[str]):
     return ", ".join(args)
 
 
@@ -1471,7 +1337,7 @@ def all_values_equal_x(vals: Iterable, test):
 def get_blender_to_game_scale(context):
     match context.scene.gameEditorMode:
         case "SM64":
-            return context.scene.blenderToSM64Scale
+            return context.scene.fast64.sm64.blender_to_sm64_scale
         case "OOT":
             return context.scene.ootBlenderScale
         case "F3D":
@@ -1566,3 +1432,165 @@ binOps = {
     ast.BitAnd: operator.and_,
     ast.BitXor: operator.xor,
 }
+
+
+def findTupleInBlenderEnum(tuples: list[tuple[str, str, str]], string: str):
+    for t in tuples:
+        if t[0] == string:
+            return t
+    return None
+
+
+def structToC(
+    name: str,
+    type: str,
+    values: list[tuple[str, object]],
+    designated: bool = True,
+    asArray: bool = False,
+) -> str:
+    """
+    Converts a list of tuples into a c struct as an str.
+    "designated" Makes the struct utilize c designated initializers.
+    """
+    cStruct = io.StringIO()
+    cStruct.write(f"{type} {name}")
+
+    if asArray:
+        cStruct.write("[]")
+
+    cStruct.write(" = {\n")
+
+    for key, value in values:
+        if designated:
+            cStruct.write(f"\t.{key} = {value},\n")
+        else:
+            cStruct.write(f"\t{value},\n")
+
+    cStruct.write("};")
+    return cStruct.getvalue()
+
+
+def enumToC(
+    name: str,
+    enumList: list[tuple | str],
+) -> str:
+    if not enumList:
+        raise Exception("Empty array contents.")
+
+    cArray = io.StringIO()
+    cArray.write(f"enum {name} {{\n")
+
+    # Hard set enums are stored as tuples.
+    for enum in enumList:
+        if isinstance(enum, tuple):
+            cArray.write(f"\t{enum[0]} = {enum[1]},\n")
+        else:
+            cArray.write(f"\t{enum},\n")
+
+    cArray.write("};")
+    return cArray.getvalue()
+
+
+def arrayToC(
+    name: str,
+    type: str,
+    arrayContents: list | dict,
+    explicitSize: bool = False,
+    sizeComment: bool = True,
+    elementByteSize: int = 2,
+    storeAsHex: bool = False,
+    newLineEveryElement=False,
+) -> str:
+    def enumIndexedListToC(cArray: io.StringIO(), arrayContents: dict):
+        for enum, value in arrayContents.items():
+            cArray.write(f"\t[{enum}] = {value},\n")
+
+    def listToC(cArray: io.StringIO(), storeAsHex: bool, elementByteSize: int, arrayContents: list):
+        def toElement(value, storeAsHex: bool, elementByteSize: int):
+            if storeAsHex:
+                asBytes = value.to_bytes(elementByteSize, "big", signed=True)
+                unsigned = int.from_bytes(asBytes, byteorder="big", signed=False)
+                return "0x" + "{:0x}".format(unsigned).zfill(elementByteSize * 2)
+            return str(value)
+
+        if newLineEveryElement:
+            for element in arrayContents:
+                cArray.write(f"\t{element},\n")
+            return
+
+        if storeAsHex:
+            ljustCharacters = elementByteSize * 2 + 4
+        else:
+            lenghts = [len(str(x)) for x in arrayContents]
+            ljustCharacters = max(lenghts) + 2
+
+        charactersPerLine = 80
+        elementsPerNewline = charactersPerLine // ljustCharacters
+
+        if elementsPerNewline <= 0:
+            elementsPerNewline = 1
+        if charactersPerLine - (len(arrayContents) * ljustCharacters) >= 0:
+            ljustCharacters = 0
+
+        cArray.write("\t")
+        for i, element in enumerate(arrayContents):
+            elementStr = f"{toElement(element, storeAsHex, elementByteSize)}, "
+            cArray.write(elementStr.ljust(ljustCharacters))
+            index = i + 1
+            if index % elementsPerNewline == 0:
+                cArray.write("\n\t")
+
+    startTime = time.perf_counter()
+
+    if not arrayContents:
+        raise Exception("Empty array contents.")
+
+    cArray = io.StringIO()
+    if sizeComment:
+        cArray.write(f"/*{(len(arrayContents) * elementByteSize) / 1000.0} KB*/\n")
+
+    arraySize = ""
+    if explicitSize:
+        arraySize = str(len(arrayContents))
+
+    cArray.write(f"{type} {name}[{arraySize}] = {{\n")
+    if isinstance(arrayContents, list):
+        listToC(cArray, storeAsHex, elementByteSize, arrayContents)
+    elif isinstance(arrayContents, dict):
+        enumIndexedListToC(cArray, arrayContents)
+    cArray.write("\n};")
+
+    print(f'Array "{name}" (type: "{type}") created in {time.perf_counter() - startTime}.')
+
+    return cArray.getvalue()
+
+
+def kbToBytes(x):
+    return x * 1024
+
+
+def mbToBytes(x):
+    return kbToBytes(kbToBytes(x))
+
+
+class RomReading:
+    def __init__(self, ROMData: BinaryIO, startAddress: int):
+        self.startAddress = startAddress
+        self.address = startAddress
+        self.ROMData: BinaryIO = ROMData
+
+    def readValue(self, size, offset: int = None, signed=True):
+        if offset is None:
+            self.ROMData.seek(self.address)
+            self.address += size
+        else:
+            self.ROMData.seek(self.startAddress + offset)
+
+        return int.from_bytes(self.ROMData.read(size), "big", signed=signed)
+
+
+def copyPropToProp(src, dest, excludeFromCopy: list):
+    props = [(key, value) for key, value in src.items() if key not in excludeFromCopy]
+
+    for key, value in props:
+        dest[key] = value

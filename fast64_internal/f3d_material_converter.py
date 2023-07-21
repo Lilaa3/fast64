@@ -3,7 +3,6 @@
 import bpy, math
 from bpy.utils import register_class, unregister_class
 from .f3d.f3d_material import *
-from .sm64.sm64_collision import CollisionSettings
 from .utility import *
 from bl_operators.presets import AddPresetBase
 
@@ -27,19 +26,16 @@ def upgradeF3DVersionAll(objs, armatures, version):
 
     for armature in armatures:
         for bone in armature.bones:
-            if bone.geo_cmd == "Switch":
-                for switchOption in bone.switch_options:
-                    if switchOption.switchType == "Material":
-                        if switchOption.materialOverride in materialDict:
-                            switchOption.materialOverride = materialDict[switchOption.materialOverride]
-                        for i in range(len(switchOption.specificOverrideArray)):
-                            material = switchOption.specificOverrideArray[i].material
-                            if material in materialDict:
-                                switchOption.specificOverrideArray[i].material = materialDict[material]
-                        for i in range(len(switchOption.specificIgnoreArray)):
-                            material = switchOption.specificIgnoreArray[i].material
-                            if material in materialDict:
-                                switchOption.specificIgnoreArray[i].material = materialDict[material]
+            bone_props = bone.fast64.sm64
+            for switchOption in bone_props.switch_options:
+                if switchOption.material_override in materialDict:
+                    switchOption.material_override = materialDict[switchOption.material_override]
+                for i, material in enumerate(switchOption.specific_override_array):
+                    if material in materialDict:
+                        switchOption.specific_override_array[i].material = materialDict[material]
+                for i, material in enumerate(switchOption.specific_ignore_array):
+                    if material in materialDict:
+                        switchOption.specific_ignore_array[i].material = materialDict[material]
 
 
 def upgradeF3DVersionOneObject(obj, materialDict, version):
@@ -127,7 +123,7 @@ def set_best_draw_layer_for_materials():
                 bone = bone_map.get(group.name)
                 if bone is not None:
                     # override material draw later with bone's draw layer
-                    mat.f3d_mat.draw_layer.sm64 = bone.draw_layer
+                    mat.f3d_mat.draw_layer.sm64 = bone.fast64.sm64.draw_layer # TODO: Might not be a bright idea
             finished_mats.add(mat.name)
 
     for obj in objects:
@@ -164,9 +160,7 @@ def convertF3DtoNewVersion(obj: bpy.types.Object | bpy.types.Bone, index, materi
         copyPropertyGroup(material.flipbookGroup, newMat.flipbookGroup)
         copyPropertyGroup(material.ootCollisionProperty, newMat.ootCollisionProperty)
 
-        colSettings = CollisionSettings()
-        colSettings.load(material)
-        colSettings.apply(newMat)
+        # TODO: Add back collision copying, but with upgrade logic
 
         updateMatWithNewVersionName(newMat, material, materialDict, version)
     except Exception as exc:

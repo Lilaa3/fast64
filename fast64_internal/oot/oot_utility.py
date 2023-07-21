@@ -9,7 +9,6 @@ from ..utility import (
     prop_split,
     getDataFromFile,
     saveDataToFile,
-    attemptModifierApply,
     setOrigin,
     applyRotation,
     cleanupDuplicatedObjects,
@@ -17,6 +16,7 @@ from ..utility import (
     hexOrDecInt,
     binOps,
 )
+from ..utility_anim import attemptModifierApply
 
 
 def isPathObject(obj: bpy.types.Object) -> bool:

@@ -1,4 +1,15 @@
 import math, bpy, mathutils
+
+from bpy.props import (
+    StringProperty,
+    IntProperty,
+    FloatProperty,
+    BoolProperty,
+    PointerProperty,
+    CollectionProperty,
+    EnumProperty,
+    FloatVectorProperty,
+)
 from bpy.utils import register_class, unregister_class
 from re import findall
 from .sm64_function_map import func_map
@@ -16,7 +27,7 @@ from ..utility import (
     prop_split,
 )
 
-from .sm64_constants import (
+from .constants import (
     levelIDNames,
     enumLevelNames,
     enumModelIDs,
@@ -32,7 +43,7 @@ from .sm64_spline import (
     convertSplineObject,
 )
 
-from .sm64_geolayout_classes import (
+from .geolayout.sm64_geolayout_classes import (
     DisplayListNode,
     JumpNode,
     TranslateNode,
@@ -642,7 +653,7 @@ class PuppycamVolume:
         # xyz, beginning and end
         self.begin = (position[0] - scale[0], position[1] - scale[2], position[2] - scale[1])
         self.end = (position[0] + scale[0], position[1] + scale[2], position[2] + scale[1])
-        camScaleValue = bpy.context.scene.blenderToSM64Scale
+        camScaleValue = bpy.context.scene.fast64.sm64.blender_to_sm64_scale
 
         # xyz for pos and focus obtained from chosen empties or from selected camera (32767 is ignore flag)
         if camPos != (32767, 32767, 32767):
@@ -735,15 +746,17 @@ def exportAreaCommon(areaObj, transformMatrix, geolayout, collision, name):
 
 # These are all done in reference to refresh 8
 def handleRefreshDiffModelIDs(modelID):
-    if bpy.context.scene.refreshVer == "Refresh 8" or bpy.context.scene.refreshVer == "Refresh 7":
+    sm64Props = bpy.context.scene.fast64.sm64
+
+    if sm64Props.refresh_version == "Refresh 8" or sm64Props.refresh_version == "Refresh 7":
         pass
-    elif bpy.context.scene.refreshVer == "Refresh 6":
+    elif sm64Props.refresh_version == "Refresh 6":
         if modelID == "MODEL_TWEESTER":
             modelID = "MODEL_TORNADO"
     elif (
-        bpy.context.scene.refreshVer == "Refresh 5"
-        or bpy.context.scene.refreshVer == "Refresh 4"
-        or bpy.context.scene.refreshVer == "Refresh 3"
+        sm64Props.refresh_version == "Refresh 5"
+        or sm64Props.refresh_version == "Refresh 4"
+        or sm64Props.refresh_version == "Refresh 3"
     ):
         if modelID == "MODEL_TWEESTER":
             modelID = "MODEL_TORNADO"
@@ -758,26 +771,30 @@ def handleRefreshDiffModelIDs(modelID):
 
 
 def handleRefreshDiffSpecials(preset):
+    sm64Props = bpy.context.scene.fast64.sm64
+
     if (
-        bpy.context.scene.refreshVer == "Refresh 8"
-        or bpy.context.scene.refreshVer == "Refresh 7"
-        or bpy.context.scene.refreshVer == "Refresh 6"
-        or bpy.context.scene.refreshVer == "Refresh 5"
-        or bpy.context.scene.refreshVer == "Refresh 4"
-        or bpy.context.scene.refreshVer == "Refresh 3"
+        sm64Props.scene.refresh_version == "Refresh 8"
+        or sm64Props.refresh_version == "Refresh 7"
+        or sm64Props.refresh_version == "Refresh 6"
+        or sm64Props.refresh_version == "Refresh 5"
+        or sm64Props.refresh_version == "Refresh 4"
+        or sm64Props.refresh_version == "Refresh 3"
     ):
         pass
     return preset
 
 
 def handleRefreshDiffMacros(preset):
+    sm64Props = bpy.context.scene.fast64.sm64
+
     if (
-        bpy.context.scene.refreshVer == "Refresh 8"
-        or bpy.context.scene.refreshVer == "Refresh 7"
-        or bpy.context.scene.refreshVer == "Refresh 6"
-        or bpy.context.scene.refreshVer == "Refresh 5"
-        or bpy.context.scene.refreshVer == "Refresh 4"
-        or bpy.context.scene.refreshVer == "Refresh 3"
+        sm64Props.refresh_version == "Refresh 8"
+        or sm64Props.refresh_version == "Refresh 7"
+        or sm64Props.refresh_version == "Refresh 6"
+        or sm64Props.refresh_version == "Refresh 5"
+        or sm64Props.refresh_version == "Refresh 4"
+        or sm64Props.refresh_version == "Refresh 3"
     ):
         pass
     return preset
@@ -828,7 +845,7 @@ def process_sm64_objects(obj, area, rootMatrix, transformMatrix, specialsOnly):
                 modelID = obj.sm64_model_enum if obj.sm64_model_enum != "Custom" else obj.sm64_obj_model
                 modelID = handleRefreshDiffModelIDs(modelID)
                 behaviour = (
-                    func_map[bpy.context.scene.refreshVer][obj.sm64_behaviour_enum]
+                    func_map[bpy.context.scene.fast64.sm64.refresh_version][obj.sm64_behaviour_enum]
                     if obj.sm64_behaviour_enum != "Custom"
                     else obj.sm64_obj_behaviour
                 )
@@ -1028,7 +1045,7 @@ class SearchBehaviourEnumOperator(bpy.types.Operator):
         context.object.sm64_behaviour_enum = self.sm64_behaviour_enum
         bpy.context.region.tag_redraw()
         name = (
-            func_map[context.scene.refreshVer][self.sm64_behaviour_enum]
+            func_map[context.scene.fast64.sm64.refresh_version][self.sm64_behaviour_enum]
             if self.sm64_behaviour_enum != "Custom"
             else "Custom"
         )
@@ -1253,7 +1270,7 @@ class SM64ObjectPanel(bpy.types.Panel):
                     prop_split(box, levelObj, "backgroundSegment", "Custom Background Segment")
                     segmentExportBox = box.box()
                     segmentExportBox.label(
-                        text=f"Exported Segment: _{levelObj.backgroundSegment}_{context.scene.compressionFormat}SegmentRomStart"
+                        text=f"Exported Segment: _{levelObj.backgroundSegment}_{context.scene.fast64.sm64.compression_format}SegmentRomStart"
                     )
                 box.prop(obj, "useBackgroundColor")
                 # box.box().label(text = 'Background IDs defined in include/geo_commands.h.')
@@ -1295,10 +1312,22 @@ class SM64ObjectPanel(bpy.types.Panel):
             prop_split(fogBox, obj, "area_fog_color", "Area Fog Color")
             prop_split(fogBox, obj, "area_fog_position", "Area Fog Position")
 
-            if obj.areaIndex == 1 or obj.areaIndex == 2 or obj.areaIndex == 3:
+            # TODO: Review this glTF specific code later on.
+            if (
+                obj.areaIndex == 1
+                or obj.areaIndex == 2
+                or obj.areaIndex == 3
+                or context.scene.fast64.sm64.export_type == "glTF"
+            ):
                 prop_split(box, obj, "echoLevel", "Echo Level")
 
-            if obj.areaIndex == 1 or obj.areaIndex == 2 or obj.areaIndex == 3 or obj.areaIndex == 4:
+            if (
+                obj.areaIndex == 1
+                or obj.areaIndex == 2
+                or obj.areaIndex == 3
+                or obj.areaIndex == 4
+                or context.scene.fast64.sm64.export_type == "glTF"
+            ):
                 box.prop(obj, "zoomOutOnPause")
 
             box.prop(obj.fast64.sm64.area, "disable_background")
@@ -1728,26 +1757,6 @@ class PuppycamProperty(bpy.types.PropertyGroup):
     NC_FLAG_SLIDECORRECT: bpy.props.BoolProperty(name="Slide Correction")
 
 
-class SM64_GeoASMProperties(bpy.types.PropertyGroup):
-    name = "Geo ASM Properties"
-    func: bpy.props.StringProperty(
-        name="Geo ASM Func", default="", description="Name of function for C, hex address for binary."
-    )
-    param: bpy.props.StringProperty(
-        name="Geo ASM Param", default="0", description="Function parameter. (Binary exporting will cast to int)"
-    )
-
-    @staticmethod
-    def upgrade_object(obj: bpy.types.Object):
-        geo_asm = obj.fast64.sm64.geo_asm
-
-        func = obj.get("geoASMFunc") or obj.get("geo_func") or geo_asm.func
-        geo_asm.func = func
-
-        param = obj.get("geoASMParam") or obj.get("func_param") or geo_asm.param
-        geo_asm.param = str(param)
-
-
 class SM64_AreaProperties(bpy.types.PropertyGroup):
     name = "Area Properties"
     disable_background: bpy.props.BoolProperty(
@@ -1884,23 +1893,63 @@ class SM64_SegmentProperties(bpy.types.PropertyGroup):
             return self.seg6_group_custom
         else:
             return self.jump_link_from_enum(self.seg6_enum)
-
-
 class SM64_ObjectProperties(bpy.types.PropertyGroup):
+    from .geolayout.properties import SM64_ShadowProperties, SM64_GeoASMProperties, SM64_CullingRadiusProperties
+
     version: bpy.props.IntProperty(name="SM64_ObjectProperties Version", default=0)
     cur_version = 3  # version after property migration
 
+    add_func: bpy.props.BoolProperty(name="Add Function Node")
     geo_asm: bpy.props.PointerProperty(type=SM64_GeoASMProperties)
+    set_culling_radius: bpy.props.BoolProperty(name="Set Culling Radius", default=True)
+    culling: bpy.props.PointerProperty(type=SM64_CullingRadiusProperties)
+    add_shadow: bpy.props.BoolProperty(name="Add Shadow")
+    shadow: bpy.props.PointerProperty(type=SM64_ShadowProperties)
+    use_render_range: BoolProperty(name="Use Render Range (LOD)")
+    render_range: FloatVectorProperty(name="Render Range", size=2, default=(0, 100))
+
     level: bpy.props.PointerProperty(type=SM64_LevelProperties)
     area: bpy.props.PointerProperty(type=SM64_AreaProperties)
     game_object: bpy.props.PointerProperty(type=SM64_GameObjectProperties)
     segment_loads: bpy.props.PointerProperty(type=SM64_SegmentProperties)
 
+    def draw_armature_props(self, layout: bpy.types.UILayout, obj: bpy.types.Object):
+        col = layout.column()
+
+        box = col.box().column()
+        box.prop(self, "set_culling_radius")
+        if self.set_culling_radius:
+            self.culling.draw_props(box, obj)
+            
+        box = col.box().column()
+        box.prop(self, "add_shadow")
+        if self.add_shadow:
+            self.shadow.draw_props(box)
+
+        box = col.box().column()
+        box.prop(self, "add_func")
+        if self.add_func:
+            geo_asm = self.geo_asm
+            prop_split(box, geo_asm, "func", "Function")
+            prop_split(box, geo_asm, "param", "Parameter")
+
+        box = col.box().column()
+        box.prop(self, "use_render_range")
+        if self.use_render_range:
+            col.prop(self, "render_range")
+
     @staticmethod
     def upgrade_changed_props():
+        from .geolayout.properties import SM64_BoneProperties
+
         for obj in bpy.data.objects:
+            SM64_BoneProperties.upgrade_changed_props(obj)
             if obj.fast64.sm64.version == 0:
-                SM64_GeoASMProperties.upgrade_object(obj)
+                geo_asm = obj.fast64.sm64.geo_asm
+                func = obj.get("geoASMFunc") or obj.get("geo_func") or geo_asm.func
+                geo_asm.func = func
+                param = obj.get("geoASMParam") or obj.get("func_param") or geo_asm.param
+                geo_asm.param = str(param)
             if obj.fast64.sm64.version < 3:
                 SM64_GameObjectProperties.upgrade_object(obj)
             obj.fast64.sm64.version = SM64_ObjectProperties.cur_version
@@ -1917,7 +1966,6 @@ sm64_obj_classes = (
     StarGetCutscenesProperty,
     PuppycamProperty,
     PuppycamSetupCamera,
-    SM64_GeoASMProperties,
     SM64_LevelProperties,
     SM64_AreaProperties,
     SM64_GameObjectProperties,

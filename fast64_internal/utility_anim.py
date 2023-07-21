@@ -7,7 +7,6 @@ if TYPE_CHECKING:
     from .. import Fast64_Properties
     from .. import Fast64Settings_Properties
 
-
 class ArmatureApplyWithMeshOperator(bpy.types.Operator):
     # set bl_ properties
     bl_description = (
@@ -109,20 +108,6 @@ def saveQuaternionFrame(frameData, rotation):
         value = (math.degrees(field) % 360) / 360
         frameData[i].frames.append(min(int(round(value * (2**16 - 1))), 2**16 - 1))
 
-
-def removeTrailingFrames(frameData):
-    for i in range(3):
-        if len(frameData[i].frames) < 2:
-            continue
-        lastUniqueFrame = len(frameData[i].frames) - 1
-        while lastUniqueFrame > 0:
-            if frameData[i].frames[lastUniqueFrame] == frameData[i].frames[lastUniqueFrame - 1]:
-                lastUniqueFrame -= 1
-            else:
-                break
-        frameData[i].frames = frameData[i].frames[: lastUniqueFrame + 1]
-
-
 def squashFramesIfAllSame(frameData):
     for i in range(3):
         if len(frameData[i].frames) < 2:
@@ -185,6 +170,11 @@ def stashActionInArmature(armatureObj: bpy.types.Object, action: bpy.types.Actio
     This prevents animations from being deleted by blender or
     purged by the user on accident.
     """
+
+    from .utility import PluginError
+
+    if not action:
+        raise PluginError("Action does not exist.")
 
     for track in armatureObj.animation_data.nla_tracks:
         for strip in track.strips:

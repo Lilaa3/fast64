@@ -11,10 +11,10 @@ from ...utility import (
     readFile,
     setOrigin,
     getGroupNameFromIndex,
-    attemptModifierApply,
     cleanupDuplicatedObjects,
     yUpToZUp,
 )
+from ...utility_anim import attemptModifierApply
 
 
 def ootGetSkeleton(skeletonData, skeletonName, continueOnError):

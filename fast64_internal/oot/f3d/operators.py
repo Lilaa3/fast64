@@ -176,10 +176,6 @@ class OOT_ExportDL(Operator):
         finalTransform = Matrix.Scale(getOOTScale(obj.ootActorScale), 4)
 
         try:
-            # exportPath, levelName = getPathAndLevel(context.scene.geoCustomExport,
-            # 	context.scene.geoExportPath, context.scene.geoLevelName,
-            # 	context.scene.geoLevelOption)
-
             saveTextures = context.scene.saveTextures
             isHWv1 = context.scene.isHWv1
             f3dType = context.scene.f3d_type

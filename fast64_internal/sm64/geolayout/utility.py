@@ -1,5 +1,5 @@
 import bpy
-from ..utility import PluginError
+from ...utility import PluginError
 
 
 def getBoneGroupByName(armatureObj, name):
@@ -41,7 +41,8 @@ boneNodeProperties = {
     "Scale": BoneNodeProperties(True, "THEME10"),  # 0x1D
     "StartRenderArea": BoneNodeProperties(True, "THEME13"),  # 0x20
     "Ignore": BoneNodeProperties(False, "THEME08"),  # Used for rigging
-    "SwitchOption": BoneNodeProperties(False, "THEME11"),
+    "DefineVariants": BoneNodeProperties(False, "THEME12"),
+    "Custom": BoneNodeProperties(False, "THEME14"),
 }
 
 boneLayers = {"anim": 0, "other": 1, "meta": 2, "visual": 3}
@@ -87,7 +88,15 @@ def addBoneToGroup(armatureObj, boneName, groupName):
         bone.use_deform = boneNodeProperties[groupName].deform
         if groupName != "DisplayList":
             bone.layers = createBoneLayerMask([boneLayers["other"]])
-        if groupName != "SwitchOption":
-            posebone.lock_location = (True, True, True)
         posebone.lock_rotation = (True, True, True)
         posebone.lock_scale = (True, True, True)
+
+
+def find_start_bones(armature_obj):
+    noParentBones = sorted(
+        [bone.name for bone in armature_obj.data.bones if bone.parent is None and bone.fast64.sm64.geo_cmd != "Ignore"]
+    )
+
+    if len(noParentBones) == 0:
+        raise PluginError(f'No root bones can be found in armature "{armature_obj.name}"')
+    return noParentBones

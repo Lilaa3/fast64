@@ -1,15 +1,16 @@
-import bpy
+import bpy, mathutils
 from bpy.utils import register_class, unregister_class
-from . import addon_updater_ops
-from .fast64_internal.operators import AddWaterBox
-from .fast64_internal.panels import SM64_Panel
-from .fast64_internal.utility import PluginError, raisePluginError, attemptModifierApply, prop_split
 
-from .fast64_internal.sm64 import SM64_Properties, sm64_register, sm64_unregister
-from .fast64_internal.sm64.sm64_geolayout_bone import SM64_BoneProperties
+from . import addon_updater_ops
+from .fast64_internal.utility import PluginError, prop_split
+
+from .fast64_internal.sm64 import sm64_register, sm64_unregister
+from .fast64_internal.sm64.utility import box_sm64_panel
+from .fast64_internal.sm64.properties import SM64_Properties
+from .fast64_internal.sm64.animation.properties import SM64_ActionProps
+from .fast64_internal.sm64.properties import SM64_MaterialProps
+from .fast64_internal.sm64.geolayout.properties import SM64_BoneProperties
 from .fast64_internal.sm64.sm64_objects import SM64_ObjectProperties
-from .fast64_internal.sm64.sm64_geolayout_utility import createBoneGroups
-from .fast64_internal.sm64.sm64_geolayout_parser import generateMetarig
 
 from .fast64_internal.oot import OOT_Properties, oot_register, oot_unregister
 from .fast64_internal.oot.props_panel_main import OOT_ObjectProperties
@@ -37,6 +38,8 @@ from .fast64_internal.render_settings import (
     on_update_render_settings,
 )
 
+from .gltf_extension import *
+
 # info about add on
 bl_info = {
     "name": "Fast64",
@@ -53,96 +56,23 @@ gameEditorEnum = (
     ("OOT", "OOT", "Ocarina Of Time"),
 )
 
-
-class AddBoneGroups(bpy.types.Operator):
-    # set bl_ properties
-    bl_description = (
-        "Add bone groups respresenting other node types in " + "SM64 geolayouts (ex. Shadow, Switch, Function)."
-    )
-    bl_idname = "object.add_bone_groups"
-    bl_label = "Add Bone Groups"
-    bl_options = {"REGISTER", "UNDO", "PRESET"}
-
-    # Called on demand (i.e. button press, menu item)
-    # Can also be called from operator search menu (Spacebar)
-    def execute(self, context):
-        try:
-            if context.mode != "OBJECT" and context.mode != "POSE":
-                raise PluginError("Operator can only be used in object or pose mode.")
-            elif context.mode == "POSE":
-                bpy.ops.object.mode_set(mode="OBJECT")
-
-            if len(context.selected_objects) == 0:
-                raise PluginError("Armature not selected.")
-            elif type(context.selected_objects[0].data) is not bpy.types.Armature:
-                raise PluginError("Armature not selected.")
-
-            armatureObj = context.selected_objects[0]
-            createBoneGroups(armatureObj)
-        except Exception as e:
-            raisePluginError(self, e)
-            return {"CANCELLED"}
-
-        self.report({"INFO"}, "Created bone groups.")
-        return {"FINISHED"}  # must return a set
-
-
-class CreateMetarig(bpy.types.Operator):
-    # set bl_ properties
-    bl_description = (
-        "SM64 imported armatures are usually not good for "
-        + "rigging. There are often intermediate bones between deform bones "
-        + "and they don't usually point to their children. This operator "
-        + "creates a metarig on armature layer 4 useful for IK."
-    )
-    bl_idname = "object.create_metarig"
-    bl_label = "Create Animatable Metarig"
-    bl_options = {"REGISTER", "UNDO", "PRESET"}
-
-    # Called on demand (i.e. button press, menu item)
-    # Can also be called from operator search menu (Spacebar)
-    def execute(self, context):
-        try:
-            if context.mode != "OBJECT":
-                bpy.ops.object.mode_set(mode="OBJECT")
-
-            if len(context.selected_objects) == 0:
-                raise PluginError("Armature not selected.")
-            elif type(context.selected_objects[0].data) is not bpy.types.Armature:
-                raise PluginError("Armature not selected.")
-
-            armatureObj = context.selected_objects[0]
-            generateMetarig(armatureObj)
-        except Exception as e:
-            raisePluginError(self, e)
-            return {"CANCELLED"}
-
-        self.report({"INFO"}, "Created metarig.")
-        return {"FINISHED"}  # must return a set
-
-
-class SM64_AddWaterBox(AddWaterBox):
-    bl_idname = "object.sm64_add_water_box"
-
-    scale: bpy.props.FloatProperty(default=10)
-    preset: bpy.props.StringProperty(default="Shaded Solid")
-    matName: bpy.props.StringProperty(default="sm64_water_mat")
-
-    def setEmptyType(self, emptyObj):
-        emptyObj.sm64_obj_type = "Water Box"
-
-
-class SM64_ArmatureToolsPanel(SM64_Panel):
-    bl_idname = "SM64_PT_armature_tools"
-    bl_label = "SM64 Tools"
-
-    # called every frame
-    def draw(self, context):
-        col = self.layout.column()
-        col.operator(ArmatureApplyWithMeshOperator.bl_idname)
-        col.operator(AddBoneGroups.bl_idname)
-        col.operator(CreateMetarig.bl_idname)
-        col.operator(SM64_AddWaterBox.bl_idname)
+glTFFormatEnum = (
+    (
+        "GLB",
+        "glTF Binary",
+        "(.glb) Exports a single file, with all data packed in binary form. Most efficient and portable, but more difficult to edit later.",
+    ),
+    (
+        "GLTF_SEPARATE",
+        "glTF Separate",
+        "(.gltf + .bin + textures) Exports multiple files, with separate JSON, binary and texture data. Easiest to edit later.",
+    ),
+    (
+        "GLTF_EMBEDDED",
+        "glTF Embedded",
+        "(.gltf) Exports a single file, with all data packed in JSON. Less efficient than binary, but easier to edit later.",
+    ),
+)
 
 
 class F3D_GlobalSettingsPanel(bpy.types.Panel):
@@ -196,18 +126,20 @@ class Fast64_GlobalSettingsPanel(bpy.types.Panel):
     bl_region_type = "UI"
     bl_category = "Fast64"
 
-    @classmethod
-    def poll(cls, context):
-        return True
-
     # called every frame
     def draw(self, context):
+        scene: bpy.types.Scene = context.scene
+        fast64Props: Fast64_Properties = scene.fast64
+        fast64Settings: Fast64Settings_Properties = fast64Props.settings
+
         col = self.layout.column()
         col.scale_y = 1.1  # extra padding
-        prop_split(col, context.scene, "gameEditorMode", "Game")
-        col.prop(context.scene, "exportHiddenGeometry")
-        col.prop(context.scene, "fullTraceback")
-        prop_split(col, context.scene.fast64.settings, "anim_range_choice", "Anim Range")
+        prop_split(col, scene, "gameEditorMode", "Game")
+        col.prop(scene, "exportHiddenGeometry")
+        col.prop(scene, "fullTraceback")
+        prop_split(col, fast64Settings, "anim_range_choice", "Anim Range")
+
+        fast64Settings.glTF.draw_props(col.box())
 
 
 class Fast64_GlobalToolsPanel(bpy.types.Panel):
@@ -225,13 +157,33 @@ class Fast64_GlobalToolsPanel(bpy.types.Panel):
     def draw(self, context):
         col = self.layout.column()
         col.operator(ArmatureApplyWithMeshOperator.bl_idname)
-        # col.operator(CreateMetarig.bl_idname)
         ui_oplargetexture(col, context)
         addon_updater_ops.update_notice_box_ui(self, context)
 
 
+class Fast64_glTFProperties(bpy.types.PropertyGroup):
+    """
+    Properties in scene.fast64.settings.glTF.
+    """
+
+    exportFormat: bpy.props.EnumProperty(name="Format", default="GLTF_SEPARATE", items=glTFFormatEnum)
+    copyright: bpy.props.StringProperty(name="Copyright")
+    useMeshCompression: bpy.props.BoolProperty(name="Use Mesh Compression")
+    meshCompressionLevel: bpy.props.IntProperty(name="Mesh Compression Level", min=0, max=6)
+
+    def draw_props(self, layout: bpy.types.UILayout):
+        col = layout.column()
+        col.label(text="Fast64 glTF Settings")
+        col.prop(self, "exportFormat")
+        col.prop(self, "copyright")
+        col.prop(self, "useMeshCompression")
+        col.prop(self, "meshCompressionLevel")
+
+
 class Fast64Settings_Properties(bpy.types.PropertyGroup):
     """Settings affecting exports for all games found in scene.fast64.settings"""
+
+    glTF: bpy.props.PointerProperty(type=Fast64_glTFProperties, name="glTF Properties")
 
     version: bpy.props.IntProperty(name="Fast64Settings_Properties Version", default=0)
 
@@ -274,6 +226,22 @@ class Fast64_Properties(bpy.types.PropertyGroup):
     oot: bpy.props.PointerProperty(type=OOT_Properties, name="OOT Properties")
     settings: bpy.props.PointerProperty(type=Fast64Settings_Properties, name="Fast64 Settings")
     renderSettings: bpy.props.PointerProperty(type=Fast64RenderSettings_Properties, name="Fast64 Render Settings")
+
+
+class Fast64_MaterialProperties(bpy.types.PropertyGroup):
+    """
+    Properties in material.fast64.
+    """
+
+    sm64: bpy.props.PointerProperty(type=SM64_MaterialProps, name="SM64 Properties")
+
+
+class Fast64_ActionProperties(bpy.types.PropertyGroup):
+    """
+    Properties in action.fast64.
+    """
+
+    sm64: bpy.props.PointerProperty(type=SM64_ActionProps, name="SM64 Properties")
 
 
 class Fast64_BoneProperties(bpy.types.PropertyGroup):
@@ -378,18 +346,17 @@ class ExampleAddonPreferences(bpy.types.AddonPreferences, addon_updater_ops.Addo
 
 
 classes = (
+    Fast64_glTFProperties,
     Fast64Settings_Properties,
     Fast64RenderSettings_Properties,
     Fast64_Properties,
+    Fast64_MaterialProperties,
+    Fast64_ActionProperties,
     Fast64_BoneProperties,
     Fast64_ObjectProperties,
-    AddBoneGroups,
-    CreateMetarig,
-    SM64_AddWaterBox,
     # Fast64_GlobalObjectPanel,
     F3D_GlobalSettingsPanel,
     Fast64_GlobalSettingsPanel,
-    SM64_ArmatureToolsPanel,
     Fast64_GlobalToolsPanel,
     UpgradeF3DMaterialsDialog,
 )
@@ -472,13 +439,20 @@ def register():
     bpy.types.Scene.saveTextures = bpy.props.BoolProperty(name="Save Textures As PNGs (Breaks CI Textures)")
     bpy.types.Scene.generateF3DNodeGraph = bpy.props.BoolProperty(name="Generate F3D Node Graph", default=True)
     bpy.types.Scene.exportHiddenGeometry = bpy.props.BoolProperty(name="Export Hidden Geometry", default=True)
-    bpy.types.Scene.exportInlineF3D = bpy.props.BoolProperty(name="Bleed and Inline Material Exports", \
-    description = "Inlines and bleeds materials in a single mesh. GeoLayout + Armature exports bleed over entire model", default=False)
+    bpy.types.Scene.exportInlineF3D = bpy.props.BoolProperty(
+        name="Bleed and Inline Material Exports",
+        description="Inlines and bleeds materials in a single mesh. GeoLayout + Armature exports bleed over entire model",
+        default=False,
+    )
     bpy.types.Scene.blenderF3DScale = bpy.props.FloatProperty(
         name="F3D Blender Scale", default=100, update=on_update_render_settings
     )
 
     bpy.types.Scene.fast64 = bpy.props.PointerProperty(type=Fast64_Properties, name="Fast64 Properties")
+    bpy.types.Material.fast64 = bpy.props.PointerProperty(
+        type=Fast64_MaterialProperties, name="Fast64 Material Properties"
+    )
+    bpy.types.Action.fast64 = bpy.props.PointerProperty(type=Fast64_ActionProperties, name="Fast64 Action Properties")
     bpy.types.Bone.fast64 = bpy.props.PointerProperty(type=Fast64_BoneProperties, name="Fast64 Bone Properties")
     bpy.types.Object.fast64 = bpy.props.PointerProperty(type=Fast64_ObjectProperties, name="Fast64 Object Properties")
 
@@ -509,6 +483,7 @@ def unregister():
     del bpy.types.Scene.blenderF3DScale
 
     del bpy.types.Scene.fast64
+    del bpy.types.Action.fast64
     del bpy.types.Bone.fast64
     del bpy.types.Object.fast64
 

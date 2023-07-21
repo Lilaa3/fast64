@@ -1,15 +1,15 @@
 import bpy, os, math, re, shutil, mathutils
 from collections import defaultdict
 from bpy.utils import register_class, unregister_class
-from ..panels import SM64_Panel
+from .panels import SM64_Panel
 from ..operators import ObjectDataExporter
-from .sm64_constants import cameraTriggerNames, levelIDNames, enumLevelNames
+from .constants import cameraTriggerNames, levelIDNames, enumLevelNames
 from .sm64_objects import exportAreaCommon, backgroundSegments
-from .sm64_collision import exportCollisionCommon
+from .collision.sm64_collision import exportCollisionCommon
 from .sm64_f3d_writer import SM64Model, SM64GfxFormatter
-from .sm64_geolayout_writer import setRooms, convertObjectToGeolayout
+from .geolayout.sm64_geolayout_writer import set_rooms, convert_object_to_geolayout
 from .sm64_f3d_writer import modifyTexScrollFiles, modifyTexScrollHeadersGroup
-from .sm64_utility import cameraWarning, starSelectWarning
+from .utility import box_sm64_panel, cameraWarning, starSelectWarning, decompFolderMessage, makeWriteInfoBox
 
 from ..utility import (
     PluginError,
@@ -21,15 +21,12 @@ from ..utility import (
     overwriteData,
     selectSingleObject,
     deleteIfFound,
-    applyBasicTweaks,
     applyRotation,
     prop_split,
     toAlnum,
     writeMaterialHeaders,
     raisePluginError,
     customExportWarning,
-    decompFolderMessage,
-    makeWriteInfoBox,
     writeMaterialFiles,
 )
 
@@ -762,14 +759,13 @@ def exportLevelC(
             zoomFlags[child.areaIndex - 1] = child.zoomOutOnPause
 
         # Needs to be done BEFORE collision parsing
-        setRooms(child)
+        set_rooms(child)
 
-        geolayoutGraph, fModel = convertObjectToGeolayout(
+        geolayoutGraph, fModel = convert_object_to_geolayout(
             obj,
             transformMatrix,
             f3dType,
             isHWv1,
-            child.areaCamera,
             levelName + "_" + areaName,
             fModel,
             child,
@@ -837,7 +833,7 @@ def exportLevelC(
     cameraVolumeString += "\tNULL_TRIGGER\n};"
 
     # Generate levelscript string
-    compressionFmt = bpy.context.scene.compressionFormat
+    compressionFmt = bpy.context.scene.fast64.sm64.compression_format
     replaceSegmentLoad(prevLevelScript, f"_{levelName}_segment_7", f"LOAD_{compressionFmt.upper()}", 0x07)
     if usesEnvFX:
         replaceSegmentLoad(prevLevelScript, f"_effect_{compressionFmt}", f"LOAD_{compressionFmt.upper()}", 0x0B)
@@ -1131,6 +1127,12 @@ class SM64_ExportLevel(ObjectDataExporter):
     bl_options = {"REGISTER", "UNDO", "PRESET"}
 
     def execute(self, context):
+        from .properties import SM64_Properties, SM64_GlobalExportProperties, SM64_ExportGeolayoutProps
+        from .utility import apply_basic_tweaks
+
+        scene = context.scene
+        sm64_props: SM64_Properties = scene.fast64.sm64
+
         if context.mode != "OBJECT":
             raise PluginError("Operator can only be used in object mode.")
         obj: bpy.types.Object = None
@@ -1154,7 +1156,7 @@ class SM64_ExportLevel(ObjectDataExporter):
                     raise PluginError("Cannot find level empty.")
                 selectSingleObject(obj)
 
-            scaleValue = bpy.context.scene.blenderToSM64Scale
+            scaleValue = bpy.context.scene.fast64.sm64.blender_to_sm64_scale
             finalTransform = mathutils.Matrix.Diagonal(mathutils.Vector((scaleValue, scaleValue, scaleValue))).to_4x4()
 
         except Exception as e:
@@ -1169,15 +1171,17 @@ class SM64_ExportLevel(ObjectDataExporter):
                 levelName = context.scene.levelName
                 triggerName = "sCam" + context.scene.levelName.title().replace(" ", "").replace("_", "")
             else:
-                exportPath = bpy.path.abspath(context.scene.decompPath)
+                exportPath = bpy.path.abspath(context.scene.fast64.sm64.decomp_path)
                 if context.scene.levelOption == "custom":
                     levelName = context.scene.levelName
                     triggerName = "sCam" + context.scene.levelName.title().replace(" ", "").replace("_", "")
                 else:
                     levelName = context.scene.levelOption
                     triggerName = cameraTriggerNames[context.scene.levelOption]
-            if not context.scene.levelCustomExport:
-                applyBasicTweaks(exportPath)
+
+            export_settings = sm64_props.get_export_settings_class()
+            apply_basic_tweaks(export_settings)
+
             fileStatus = exportLevelC(
                 obj,
                 finalTransform,
@@ -1217,14 +1221,13 @@ class SM64_ExportLevel(ObjectDataExporter):
 
 class SM64_ExportLevelPanel(SM64_Panel):
     bl_idname = "SM64_PT_export_level"
-    bl_label = "SM64 Level Exporter"
-    goal = "Export Level"
+    bl_label = "Level Exporter"
+    goal = "Level"
     decomp_only = True
 
     # called every frame
     def draw(self, context):
-        col = self.layout.column()
-        col.label(text="This is for decomp only.")
+        col = box_sm64_panel(self.layout)
         col.operator(SM64_ExportLevel.bl_idname)
         col.prop(context.scene, "levelCustomExport")
         if context.scene.levelCustomExport:
@@ -1241,7 +1244,6 @@ class SM64_ExportLevelPanel(SM64_Panel):
                 prop_split(col, context.scene, "levelName", "Name")
             else:
                 levelName = context.scene.levelOption
-            decompFolderMessage(col)
             writeBox = makeWriteInfoBox(col)
             writeBox.label(text="levels/" + toAlnum(levelName) + " (data).")
             writeBox.label(text="src/game/camera.c (camera volume).")

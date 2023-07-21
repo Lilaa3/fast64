@@ -1,14 +1,18 @@
+import mathutils
+
+# TODO: Should these be removed?
+"""
 # RAM address used in evaluating switch for hatless Mario
 marioHatSwitch = 0x80277740
 marioLowPolySwitch = 0x80277150
-
-marioFaceExpressionCount = 4
 
 loadMarioMIO0 = 0x2ABCA0
 loadMarioGeo = 0x2ABCB8
 
 # Full available rom interval for extended 0x04 bank (from SM64 Editor)
 marioFullRomInterval = (0x11D8930, 0x11FFF00)
+"""
+
 defaultExtendSegment4 = (0x11A35B8, 0x11FFF00)
 
 mainLevelLoadScriptSegment = {0x15: (0x2ABCA0, 0x2AC6B0)}
@@ -18,9 +22,68 @@ bank0Segment = {0x00: (0x000000, 0x7FFFFF)}
 # Segments for common geolayouts and Mario
 loadSegmentAddresses = {0x03: 0x2ABCAC, 0x04: 0x2ABCA0, 0x13: 0x2ABCD0, 0x16: 0x2ABCC4, 0x17: 0x2ABCB8}
 
-lightIndices = [0x86, 0x88, 0x8A, 0x8C, 0x8E, 0x90, 0x92, 0x94]
+sm64BoneUp = mathutils.Vector([1, 0, 0])
 
-originalMarioHeadROMInterval = (0x011B4F58, 0x011B5710)
+NULL = 0x00000000
+
+MIN_U8 = 0
+MAX_U8 = (2**8) - 1
+
+MIN_S8 = -(2**7)
+MAX_S8 = (2**7) - 1
+
+MIN_S16 = -(2**15)
+MAX_S16 = (2**15) - 1
+
+MIN_U16 = 0
+MAX_U16 = 2**16 - 1
+
+MIN_S32 = -(2**31)
+MAX_S32 = 2**31 - 1
+
+MIN_U32 = 0
+MAX_U32 = 2**32 - 1
+
+enumExportType = [
+    ("C", "C", "C"),
+    ("Binary", "Binary", "Binary"),
+    ("Insertable Binary", "Insertable Binary", "Insertable Binary"),
+    ("glTF", "glTF", "glTF, with EXT_fast64 and EXT_SM64 extensions"),
+]
+
+enumExportHeaderType = [
+    ("", "Decomp", ""),
+    ("Actor", "Actor Data", "Includes are added to a group in actors/"),
+    ("Level", "Level Data", "Includes are added to a specific level in levels/"),
+    ("", "Custom", ""),
+    ("Custom", "Custom Path", "Exports to a specific path"),
+]
+
+enumCompressionFormat = [
+    ("mio0", "MIO0", "MIO0"),
+    ("yay0", "YAY0", "YAY0"),
+]
+
+enumRefreshVer = [
+    ("Refresh 3", "Refresh 3", "Refresh 3"),
+    ("Refresh 4", "Refresh 4", "Refresh 4"),
+    ("Refresh 5", "Refresh 5", "Refresh 5"),
+    ("Refresh 6", "Refresh 6", "Refresh 6"),
+    ("Refresh 7", "Refresh 7", "Refresh 7"),
+    ("Refresh 8", "Refresh 8", "Refresh 8"),
+    ("Refresh 10", "Refresh 10", "Refresh 10"),
+    ("Refresh 11", "Refresh 11", "Refresh 11"),
+    ("Refresh 12", "Refresh 12", "Refresh 12"),
+    ("Refresh 13", "Refresh 13", "Refresh 13"),
+]
+
+sm64GoalTypeEnum = [
+    ("All", "All", "All"),
+    ("Object/Actor/Anim", "Object/Actor/Anim", "Export or Import Object/Actor/Anim"),
+    ("Level", "Level", "Export or Import Level"),
+    ("Displaylist", "Displaylist", "Export or Import Displaylist"),
+    ("UI Image", "UI Image", "Export UI Image"),
+]
 
 marioVanishOffsets = {
     "regular": 0xB0C,
@@ -185,87 +248,6 @@ cameraTriggerNames = {
     "wmotr": "sCamWMOtR",
 }
 
-
-class SM64_CharacterImportData:
-    def __init__(self, geoAddr, level, switchDict):
-        self.geoAddr = geoAddr
-        self.level = level
-        self.switchDict = switchDict
-
-
-character_enums = [
-    ("Mario", "Mario", "Mario"),
-    ("Peach", "Peach", "Peach"),
-    # ("Bowser" ,  "Bowser" , "Bowser" ),
-    # ("Koopa" ,  "Koopa" , "Koopa" ),
-    # ("Toad" ,  "Toad" , "Toad" )
-]
-
-# switch index starts at 1.
-# switch option index starts at 0.
-sm64_character_data = {
-    "Mario": SM64_CharacterImportData(
-        "12A784",
-        "CG",
-        {
-            1: {0: "Ignore"},  # Low poly mario
-            2: {
-                1: "Material",  # metal mario
-                2: "Draw Layer",  # vanish mario
-                3: "Material",  # metal vanish mario
-            },
-            3: {},  # cap vs no cap
-            4: {  # face animation (cap)
-                0: "Material",
-                1: "Material",
-                2: "Material",
-                3: "Material",
-                4: "Material",
-                5: "Material",
-                6: "Material",
-                7: "Material",
-            },
-            5: {  # face animation (no cap)
-                0: "Material",
-                1: "Material",
-                2: "Material",
-                3: "Material",
-                4: "Material",
-                5: "Material",
-                6: "Material",
-                7: "Material",
-            },
-            6: {  # right fist type
-                # 0 = closed, 1 = open, 2 is something, 3-5 are same as 2
-                3: "Ignore",
-                4: "Ignore",
-                5: "Ignore",
-            },
-            7: {  # left fist type
-                # 0 = closed, 1 = open, 2 = peace, 3 = hold cap, 4 = hold cap wing
-            },
-        },
-    ),
-    "Peach": SM64_CharacterImportData(
-        "180950",
-        "CG",
-        {
-            1: {  # transparent peach
-                1: "Draw Layer",
-            },
-            2: {  # 0-3 = face animation kissing, 4-7 = face animation normal
-                0: "Material",
-                1: "Material",
-                2: "Material",
-                3: "Material",
-                4: "Material",
-                5: "Material",
-                6: "Material",
-                7: "Material",
-            },
-        },
-    ),
-}
 
 level_pointers = {
     "HH": 0x2AC094,
@@ -1799,216 +1781,35 @@ groupsSeg6 = [
     ("Custom", "Custom", "Custom"),
 ]
 
-
-marioAnimations = [
-#   ( Adress, "Animation name" ),
-    ( 5162640, "0 - Slow ledge climb up"),
-    ( 5165520, "1 - Fall over backwards"),
-    ( 5165544, "2 - Backward air kb"),
-    ( 5172396, "3 - Dying on back"),
-    ( 5177044, "4 - Backflip"),
-    ( 5179584, "5 - Climbing up pole"),
-    ( 5185656, "6 - Grab pole short"),
-    ( 5186824, "7 - Grab pole swing part 1"),
-    ( 5186848, "8 - Grab pole swing part 2"),
-    ( 5191920, "9 - Handstand idle"),
-    ( 5194740, "10 - Handstand jump"),
-    ( 5194764, "11 - Start handstand"),
-    ( 5188592, "12 - Return from handstand"),
-    ( 5196388, "13 - Idle on pole"),
-    ( 5197436, "14 - A pose"),
-    ( 5197792, "15 - Skid on ground"),
-    ( 5197816, "16 - Stop skid"),
-    ( 5199596, "17 - Crouch from fast longjump"),
-    ( 5201048, "18 - Crouch from a slow longjump"),
-    ( 5202644, "19 - Fast longjump"),
-    ( 5204600, "20 - Slow longjump"),
-    ( 5205980, "21 - Airborne on stomach"),
-    ( 5207188, "22 - Walk with light object"),
-    ( 5211916, "23 - Run with light object"),
-    ( 5215136, "24 - Slow walk with light object"),
-    ( 5219864, "25 - Shivering and warming hands"),
-    ( 5225496, "26 - Shivering return to idle "),
-    ( 5226920, "27 - Shivering"),
-    ( 5230056, "28 - Climb down on ledge"),
-    ( 5231112, "29 - Credits - Waving"),
-    ( 5232768, "30 - Credits - Look up"),
-    ( 5234576, "31 - Credits - Return from look up"),
-    ( 5235700, "32 - Credits - Raising hand"),
-    ( 5243100, "33 - Credits - Lowering hand"),
-    ( 5245988, "34 - Credits - Taking off cap"),
-    ( 5248016, "35 - Credits - Start walking and look up"),
-    ( 5256508, "36 - Credits - Look back then run"),
-    ( 5266160, "37 - Final Bowser - Raise hand and spin"),
-    ( 5274456, "38 - Final Bowser - Wing cap take off"),
-    ( 5282084, "39 - Credits - Peach sign"),
-    ( 5291340, "40 - Stand up from lava boost"),
-    ( 5292628, "41 - Fire/Lava burn"),
-    ( 5293488, "42 - Wing cap flying"),
-    ( 5295016, "43 - Hang on owl"),
-    ( 5296876, "44 - Land on stomach"),
-    ( 5296900, "45 - Air forward kb"),
-    ( 5302796, "46 - Dying on stomach"),
-    ( 5306100, "47 - Suffocating"),
-    ( 5313796, "48 - Coughing"),
-    ( 5319500, "49 - Throw catch key"),
-    ( 5330436, "50 - Dying fall over"),
-    ( 5338604, "51 - Idle on ledge"),
-    ( 5341720, "52 - Fast ledge grab"),
-    ( 5343296, "53 - Hang on ceiling"),
-    ( 5347276, "54 - Put cap on"),
-    ( 5351252, "55 - Take cap off then on"),
-    ( 5358356, "56 - Quickly put cap on"),
-    ( 5359476, "57 - Head stuck in ground"),
-    ( 5372172, "58 - Ground pound landing"),
-    ( 5372824, "59 - Triple jump ground-pound"),
-    ( 5374304, "60 - Start ground-pound"),
-    ( 5374328, "61 - Ground-pound"),
-    ( 5375380, "62 - Bottom stuck in ground"),
-    ( 5387148, "63 - Idle with light object"),
-    ( 5390520, "64 - Jump land with light object"),
-    ( 5391892, "65 - Jump with light object"),
-    ( 5392704, "66 - Fall land with light object"),
-    ( 5393936, "67 - Fall with light object"),
-    ( 5394296, "68 - Fall from sliding with light object"),
-    ( 5395224, "69 - Sliding on bottom with light object"),
-    ( 5395248, "70 - Stand up from sliding with light object"),
-    ( 5396716, "71 - Riding shell"),
-    ( 5397832, "72 - Walking"),
-    ( 5403208, "73 - Forward flip"),
-    ( 5404784, "74 - Jump riding shell"),
-    ( 5405676, "75 - Land from double jump"),
-    ( 5407340, "76 - Double jump fall"),
-    ( 5408288, "77 - Single jump"),
-    ( 5408312, "78 - Land from single jump"),
-    ( 5411044, "79 - Air kick"),
-    ( 5412900, "80 - Double jump rise"),
-    ( 5413596, "81 - Start forward spinning"),
-    ( 5414876, "82 - Throw light object"),
-    ( 5416032, "83 - Fall from slide kick"),
-    ( 5418280, "84 - Bend kness riding shell"),
-    ( 5419872, "85 - Legs stuck in ground"),
-    ( 5431416, "86 - General fall"),
-    ( 5431440, "87 - General land"),
-    ( 5433276, "88 - Being grabbed"),
-    ( 5434636, "89 - Grab heavy object"),
-    ( 5437964, "90 - Slow land from dive"),
-    ( 5441520, "91 - Fly from cannon"),
-    ( 5442516, "92 - Moving right while hanging"),
-    ( 5444052, "93 - Moving left while hanging"),
-    ( 5445472, "94 - Missing cap"),
-    ( 5457860, "95 - Pull door walk in"),
-    ( 5463196, "96 - Push door walk in"),
-    ( 5467492, "97 - Unlock door"),
-    ( 5480428, "98 - Start reach pocket"),
-    ( 5481448, "99 - Reach pocket"),
-    ( 5483352, "100 - Stop reach pocket"),
-    ( 5484876, "101 - Ground throw"),
-    ( 5486852, "102 - Ground kick"),
-    ( 5489076, "103 - First punch"),
-    ( 5489740, "104 - Second punch"),
-    ( 5490356, "105 - First punch fast"),
-    ( 5491396, "106 - Second punch fast"),
-    ( 5492732, "107 - Pick up light object"),
-    ( 5493948, "108 - Pushing"),
-    ( 5495508, "109 - Start riding shell"),
-    ( 5497072, "110 - Place light object"),
-    ( 5498484, "111 - Forward spinning"),
-    ( 5498508, "112 - Backward spinning"),
-    ( 5498884, "113 - Breakdance"),
-    ( 5501240, "114 - Running"),
-    ( 5501264, "115 - Running (unused)"),
-    ( 5505884, "116 - Soft back kb"),
-    ( 5508004, "117 - Soft front kb"),
-    ( 5510172, "118 - Dying in quicksand"),
-    ( 5515096, "119 - Idle in quicksand"),
-    ( 5517836, "120 - Move in quicksand"),
-    ( 5528568, "121 - Electrocution"),
-    ( 5532480, "122 - Shocked"),
-    ( 5533160, "123 - Backward kb"),
-    ( 5535796, "124 - Forward kb"),
-    ( 5538372, "125 - Idle heavy object"),
-    ( 5539764, "126 - Stand against wall"),
-    ( 5544580, "127 - Side step left"),
-    ( 5548480, "128 - Side step right"),
-    ( 5553004, "129 - Start sleep idle"),
-    ( 5557588, "130 - Start sleep scratch"),
-    ( 5563636, "131 - Start sleep yawn"),
-    ( 5568648, "132 - Start sleep sitting"),
-    ( 5573680, "133 - Sleep idle"),
-    ( 5574280, "134 - Sleep start laying"),
-    ( 5577460, "135 - Sleep laying"),
-    ( 5579300, "136 - Dive"),
-    ( 5579324, "137 - Slide dive"),
-    ( 5580860, "138 - Ground bonk"),
-    ( 5584116, "139 - Stop slide light object"),
-    ( 5587364, "140 - Slide kick"),
-    ( 5588288, "141 - Crouch from slide kick"),
-    ( 5589652, "142 - Slide motionless"),
-    ( 5589676, "143 - Stop slide"),
-    ( 5591572, "144 - Fall from slide"),
-    ( 5592860, "145 - Slide"),
-    ( 5593404, "146 - Tiptoe"),
-    ( 5599280, "147 - Twirl land"),
-    ( 5600160, "148 - Twirl"),
-    ( 5600516, "149 - Start twirl"),
-    ( 5601072, "150 - Stop crouching"),
-    ( 5602028, "151 - Start crouching"),
-    ( 5602720, "152 - Crouching"),
-    ( 5605756, "153 - Crawling"),
-    ( 5613048, "154 - Stop crawling"),
-    ( 5613968, "155 - Start crawling"),
-    ( 5614876, "156 - Summon star"),
-    ( 5620036, "157 - Return star approach door"),
-    ( 5622256, "158 - Backwards water kb"),
-    ( 5626540, "159 - Swim with object part 1"),
-    ( 5627592, "160 - Swim with object part 2"),
-    ( 5628260, "161 - Flutter kick with object"),
-    ( 5629456, "162 - Action end with object in water"),
-    ( 5631180, "163 - Stop holding object in water"),
-    ( 5634048, "164 - Holding object in water"),
-    ( 5635976, "165 - Drowning part 1"),
-    ( 5641400, "166 - Drowning part 2"),
-    ( 5646324, "167 - Dying in water"),
-    ( 5649660, "168 - Forward kb in water"),
-    ( 5653848, "169 - Falling from water"),
-    ( 5655852, "170 - Swimming part 1"),
-    ( 5657100, "171 - Swimming part 2"),
-    ( 5658128, "172 - Flutter kick"),
-    ( 5660112, "173 - Action end in water"),
-    ( 5662248, "174 - Pick up object in water"),
-    ( 5663480, "175 - Grab object in water part 2"),
-    ( 5665916, "176 - Grab object in water part 1"),
-    ( 5666632, "177 - Throw object in water"),
-    ( 5669328, "178 - Idle in water"),
-    ( 5671428, "179 - Star dance in water"),
-    ( 5678200, "180 - Return from in water star dance"),
-    ( 5680324, "181 - Grab bowser"),
-    ( 5680348, "182 - Swing bowser"),
-    ( 5682008, "183 - Release bowser"),
-    ( 5685264, "184 - Holding bowser"),
-    ( 5686316, "185 - Heavy throw"),
-    ( 5688660, "186 - Walk panting"),
-    ( 5689924, "187 - Walk with heavy object"),
-    ( 5694332, "188 - Turning part 1"),
-    ( 5694356, "189 - Turning part 2"),
-    ( 5696160, "190 - Side flip land"),
-    ( 5697196, "191 - Side flip"),
-    ( 5699408, "192 - Triple jump land"),
-    ( 5702136, "193 - Triple jump"),
-    ( 5704880, "194 - First person"),
-    ( 5710580, "195 - Idle head left"),
-    ( 5712800, "196 - Idle head right"),
-    ( 5715020, "197 - Idle head center"),
-    ( 5717240, "198 - Handstand left"),
-    ( 5719184, "199 - Handstand right"),
-    ( 5722304, "200 - Wake up from sleeping"),
-    ( 5724228, "201 - Wake up from laying"),
-    ( 5726444, "202 - Start tiptoeing"),
-    ( 5728720, "203 - Slide jump"),
-    ( 5728744, "204 - Start wallkick"),
-    ( 5730404, "205 - Star dance"),
-    ( 5735864, "206 - Return from star dance"),
-    ( 5737600, "207 - Forwards spinning flip"),
-    ( 5740584, "208 - Triple jump fly"),
+common_levels = "Bob Omb Battlefield\nWhomp's Fortress\nJolly Rodger's Bay\nCool Cool Mountain\nBig Boo's Haunt\n\
+Hazy Maze Cave\nLethal Lava Land\nShifting Sand Land\nDire Dire Docks\nSnowman's Land\n\
+Wet Dry World\nTall Tall Mountain\nTiny Huge Island\nTick Tock Clock\nRainbow Ride\n\
+Bowser in the Dark World\nBowser in the Fire Sea\nBowser in the Sky\nPrincess's Secret Slide\n\
+Winged Mario over the Rainbow\nSecret Aquarium\nCavern of the Metal Cap\nTower of the Wing Cap\n\
+Vanish Cap Under the Moat\nCastle Grounds\nCastle Courtyard"
+groupEnum = [
+    ("Custom", "Custom", "Custom"),
+    ("", "General Groups", ""),
+    ("common0", "Common (No Castle Inside)", "(common0)\n" + common_levels),
+    #("common1", "Common 2 (No Castle Inside)", "(common1)\n" + common_levels),
+    ("group0", "Global", "(group0)\nAlways loaded"),
+    ("group8", "Bonus Levels", "(group8)\nTower of the Wing Cap\nPrincess's Secret Slide\nCavern of the Metal Cap\nVanish Cap Under the Moat"),
+    ("group13", "Water Levels", "(group13)\nDire Dire Docks\nJolly Rodger's Bay\nSecret Aquarium\nWet Dry World"),
+    ("group4", "Water Levels (No WDW)", "(group4)\nDire Dire Docks\nJolly Rodger's\nSecret Aquarium"),
+    ("group7", "Snow Levels", "(group7)\nCool Cool Mountain\nSnowman's Land"),
+    #("group16", "Snow Levels 2", "(group16)\nCool Cool Mountain\nSnowman's Land"),
+    ("group12", "Bowser Boss Fights", "(group12)\nLoaded in bowser boss fight (not in the rest of the course)"),
+    ("group15", "Castle Grounds and Inside", "(group15)\nCastle Grounds\nCastle Inside"),
+    ("", "Level Specific Groups", ""),
+    ("group3", "Bob Omb Battlefield", "(group3)\nBob Omb Battlefield"),
+    ("group5", "Shifting Sand Land", "(group5)\nShifting Sand Land"),
+    ("group10", "Castle Grounds", "(group10)\nCastle Grounds"),
+    ("", "Less Specific Groups", ""),
+    ("group1", "Group 1", "(group1)\nTick Tock Clock\nWet Dry World\nWhomp's Fortress"),
+    ("group2", "Group 2", "(group2)\nBowser in the Fire Sea\nLethal Lava Land\nWinged Mario over the Rainbow"),
+    ("group6", "Group 6", "(group6)\nHazy Maze Cave\nTall Tall Mountain"),
+    ("group9", "Group 9", "(group9)\nBig Boo´s Haunt\nCastle Courtyard"),
+    ("group11", "Group 11", "(group11)\nBowser in the Dark World\nRainbow Ride\nTiny Huge Island"),
+    ("group14", "Group 14", "(group14)\nBowser in the Sky\nBob Omb Battlefield\nTiny Huge Island\nWhomp's Fortress"),
+    ("group17", "Group 17", "(group17)\nBig Boo's Haunt\nBowser in the Dark World\nBowser in the Fire Sea\nCavern of the Metal Cap\nHazy Maze Cave\nLethal Lava Land\nWinged Mario over the Rainbow"),
 ]
