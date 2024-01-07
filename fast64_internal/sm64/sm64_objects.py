@@ -1,6 +1,5 @@
 import math, bpy, mathutils
 from bpy.utils import register_class, unregister_class
-from re import findall
 from .sm64_function_map import func_map
 
 from ..utility import (
@@ -15,6 +14,8 @@ from ..utility import (
     checkIsSM64PreInlineGeoLayout,
     prop_split,
 )
+
+from .animation.properties import SM64_AnimProps
 
 from .sm64_constants import (
     levelIDNames,
@@ -1876,6 +1877,7 @@ class SM64_ObjectProperties(bpy.types.PropertyGroup):
     version: bpy.props.IntProperty(name="SM64_ObjectProperties Version", default=0)
     cur_version = 3  # version after property migration
 
+    animation: bpy.props.PointerProperty(type=SM64_AnimProps)
     geo_asm: bpy.props.PointerProperty(type=SM64_GeoASMProperties)
     level: bpy.props.PointerProperty(type=SM64_LevelProperties)
     area: bpy.props.PointerProperty(type=SM64_AreaProperties)

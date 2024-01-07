@@ -1,5 +1,5 @@
 import bpy, mathutils, math
-from bpy.types import Operator, Context, UILayout
+from bpy.types import Operator, Context, UILayout, EnumProperty
 from bpy.utils import register_class, unregister_class
 from .utility import *
 from .f3d.f3d_material import *
@@ -45,6 +45,35 @@ class OperatorBase(Operator):
             return {"CANCELLED"}
         finally:
             bpy.ops.object.mode_set(mode=get_mode_set_from_context_mode(starting_context_mode))
+
+
+class SearchEnumOperatorBase(OperatorBase):
+    bl_description = "Search Enum"
+    bl_label = "Search"
+    bl_property = None
+    bl_options = {"UNDO"}
+    result: EnumProperty = None
+
+    @classmethod
+    def draw_props(cls, layout: UILayout, data, prop: str, name: str):
+        row = layout.row()
+        if name:
+            row.label(text=name)
+        row.prop(data, prop, text="")
+        row.operator(cls.bl_idname, icon="VIEWZOOM", text="")
+
+    def update_enum(self, context: Context):
+        raise NotImplementedError()
+
+    def execute_operator(self, context: Context):
+        assert self.bl_property
+        self.report({"INFO"}, f"Selected: {getattr(self, self.bl_property)}")
+        self.update_enum(context)
+        context.region.tag_redraw()
+
+    def invoke(self, context: Context, _):
+        context.window_manager.invoke_search_popup(self)
+        return {"RUNNING_MODAL"}
 
 
 class AddWaterBox(OperatorBase):

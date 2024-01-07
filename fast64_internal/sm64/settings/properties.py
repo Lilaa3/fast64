@@ -1,7 +1,7 @@
 import os
 import bpy
 from bpy.types import PropertyGroup, UILayout, Scene, Context
-from bpy.props import BoolProperty, StringProperty, EnumProperty, IntProperty, FloatProperty
+from bpy.props import BoolProperty, StringProperty, EnumProperty, IntProperty, FloatProperty, PointerProperty
 from bpy.path import abspath
 from bpy.utils import register_class, unregister_class
 
@@ -21,6 +21,8 @@ from ...utility import (
     multilineLabel,
     prop_split,
 )
+
+from ..animation.properties import SM64_AnimProps
 
 
 def decomp_path_update(self, context: Context):
@@ -69,6 +71,8 @@ Sets bank 4 range to ({hex(defaultExtendSegment4[0])}, {hex(defaultExtendSegment
     compression_format: EnumProperty(items=enum_compression_formats, name="Compression", default="mio0")
     force_extended_ram: BoolProperty(name="Force Extended Ram", default=True)
     matstack_fix: BoolProperty(name="Matstack Fix", description="Exports account for matstack fix requirements")
+
+    animation: PointerProperty(type=SM64_AnimProps)
 
     def is_binary_export(self):
         return self.export_type in ["Binary", "Insertable Binary"]
@@ -120,6 +124,7 @@ Sets bank 4 range to ({hex(defaultExtendSegment4[0])}, {hex(defaultExtendSegment
             if sm64_props.version == 1:
                 sm64_props.upgrade_version_1(scene)
                 print("Upgraded global SM64 settings to version 2")
+        SM64_AnimProps.upgrade_changed_props()
 
     def draw_props(self, layout: UILayout, show_repo_settings: bool = True):
         col = layout.column()
