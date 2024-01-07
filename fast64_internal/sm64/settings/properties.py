@@ -22,6 +22,8 @@ from ...utility import (
     prop_split,
 )
 
+from ..animation.properties import SM64_AnimProps
+
 
 def decomp_path_update(self, context: Context):
     directory_path_checks(
@@ -66,6 +68,8 @@ Sets bank 4 range to ({hex(defaultExtendSegment4[0])}, {hex(defaultExtendSegment
     refresh_version: EnumProperty(items=enum_refresh_versions, name="Refresh", default="Refresh 13")
     compression_format: EnumProperty(items=enum_compression_formats, name="Compression", default="mio0")
     disable_scroll: BoolProperty(name="Disable Scrolling Textures")
+
+    animation: PointerProperty(type=SM64_AnimProps)
 
     def is_binary_export(self):
         return self.export_type in ["Binary", "Insertable Binary"]
@@ -117,6 +121,7 @@ Sets bank 4 range to ({hex(defaultExtendSegment4[0])}, {hex(defaultExtendSegment
             if sm64_props.version == 1:
                 sm64_props.upgrade_version_1(scene)
                 print("Upgraded global SM64 settings to version 2")
+        SM64_AnimProps.upgrade_changed_props()
 
     def draw_props(self, layout: UILayout, show_repo_settings: bool = True):
         col = layout.column()

@@ -41,7 +41,12 @@ enumExportHeaderType = [
 ]
 
 # bpy.context.mode returns the keys here, while the values are required by bpy.ops.object.mode_set
-BLENDER_MODE_TO_MODE_SET = {"PAINT_VERTEX": "VERTEX_PAINT", "EDIT_MESH": "EDIT"}
+BLENDER_MODE_TO_MODE_SET = {
+    "PAINT_VERTEX": "VERTEX_PAINT",
+    "EDIT_MESH": "EDIT",
+    "EDIT_ARMATURE": "EDIT",
+    "POSE": "POSE",
+}
 get_mode_set_from_context_mode = lambda mode: BLENDER_MODE_TO_MODE_SET.get(mode, "OBJECT")
 
 
@@ -672,11 +677,17 @@ def makeWriteInfoBox(layout):
 
 
 def writeBoxExportType(writeBox, headerType, name, levelName, levelOption):
+    if not name:
+        writeBox.label(text="Empty actor name", icon="ERROR")
+        return
     if headerType == "Actor":
         writeBox.label(text="actors/" + toAlnum(name))
     elif headerType == "Level":
         if levelOption != "custom":
             levelName = levelOption
+        if not name:
+            writeBox.label(text="Empty level name", icon="ERROR")
+            return
         writeBox.label(text="levels/" + toAlnum(levelName) + "/" + toAlnum(name))
 
 
@@ -1250,6 +1261,27 @@ def filepath_ui_warnings(
         return False
 
 
+def path_checks(filepath: str, empty_error: str = "Empty path.", doesnt_exist_error: str = "Path does not exist."):
+    if filepath == "":
+        raise PluginError(empty_error)
+    elif not os.path.exists(filepath):
+        raise PluginError(doesnt_exist_error)
+
+
+def path_ui_warnings(
+    layout: bpy.types.UILayout,
+    filepath: str,
+    empty_error: str = "Empty path.",
+    doesnt_exist_error: str = "Path does not exist.",
+) -> bool:
+    try:
+        path_checks(filepath, empty_error, doesnt_exist_error)
+        return True
+    except Exception as e:
+        multilineLabel(layout.box(), str(e), "ERROR")
+        return False
+
+
 def toAlnum(name, exceptions=[]):
     if name is None or name == "":
         return None
@@ -1552,6 +1584,10 @@ def byteMask(data, offset, amount):
 
 def bitMask(data, offset, amount):
     return (~(-1 << amount) << offset & data) >> offset
+
+
+def is_bit_active(x: int, index: int):
+    return ((x >> index) & 1) == 1
 
 
 def read16bitRGBA(data):
