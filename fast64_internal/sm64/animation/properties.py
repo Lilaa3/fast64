@@ -139,7 +139,7 @@ class SM64_AnimHeaderProps(PropertyGroup):
     setListIndex: BoolProperty(name="Set List Entry", default=True)
     addr0x27: StringProperty(name="0x27 Command Address", default=hex(2215168))
     addr0x28: StringProperty(name="0x28 Command Address", default=hex(2215176))
-    listIndexExport: IntProperty(name="Anim List Index", min=0, max=255)
+    table_index: IntProperty(name="Table Index", min=0, max=255)
 
     def get_frame_range(self, action: Action):
         if self.manual_frame_range:
@@ -227,23 +227,6 @@ class SM64_AnimHeaderProps(PropertyGroup):
 
         return header
 
-    def draw_binary(self, layout: UILayout, is_dma: bool):
-        col = layout.column()
-
-        col.box().label(text="These values will not be used when exporting an entire table.")
-        if is_dma:
-            prop_split(col, self, "dma_entry", "DMA Entrie")
-            return
-
-        col.prop(self, "setListIndex")
-        if self.setListIndex:
-            prop_split(col, self, "addr0x27", "27 Command Address")
-            prop_split(col, self, "listIndexExport", "Anim List Index")
-        col = layout.box().column()
-        col.prop(self, "overwrite0x28")
-        if self.overwrite0x28:
-            prop_split(col, self, "addr0x28", "28 Command Address")
-
     def draw_flag_props(self, layout: UILayout):
         col = layout.column()
 
@@ -319,7 +302,7 @@ class SM64_AnimHeaderProps(PropertyGroup):
         export_type: str = "C",
         actor_name: str = "mario",
         generate_enums: bool = False,
-        is_dma: bool = False,
+        draw_table_index: bool = True,
     ):
         col = layout.column()
 
@@ -332,8 +315,8 @@ class SM64_AnimHeaderProps(PropertyGroup):
             add_op.type = "ADD"
             add_op.action_name, add_op.header_variant = action.name, self.header_variant
 
-        if export_type == "Binary":
-            self.draw_binary(col, is_dma)
+        if export_type == "Binary" and draw_table_index:
+            prop_split(col, self, "table_index", "Table Index")
         if draw_names:
             self.draw_names(col, action, actor_name, generate_enums)
         col.separator()
@@ -355,6 +338,7 @@ class SM64_ActionProps(PropertyGroup):
     indices_table: StringProperty(name="Indices Table", default="anim_00_indices")
     values_table: StringProperty(name="Value Table", default="anim_00_values")
 
+    dma_entry: IntProperty(name="DMA Entry Position")
     start_address: StringProperty(name="Start Address", default=hex(18712880))
     end_address: StringProperty(name="End Address", default=hex(18874112))
 
@@ -479,7 +463,7 @@ class SM64_ActionProps(PropertyGroup):
         export_type: str = "C",
         actor_name: str = "mario",
         generate_enums: bool = False,
-        is_dma: bool = False,
+        draw_table_index: bool = False,
     ):
         col = layout.column()
 
@@ -525,14 +509,14 @@ class SM64_ActionProps(PropertyGroup):
             return
 
         header.draw_props(
-            layout=col,
-            action=action,
-            draw_table_operations=draw_table_operations,
-            draw_names=draw_names,
-            export_type=export_type,
-            actor_name=actor_name,
-            generate_enums=generate_enums,
-            is_dma=is_dma,
+            col,
+            action,
+            draw_table_operations,
+            draw_names,
+            export_type,
+            actor_name,
+            generate_enums,
+            draw_table_index,
         )
 
     def draw_variants(
@@ -544,7 +528,7 @@ class SM64_ActionProps(PropertyGroup):
         export_type: str = "C",
         actor_name: str = "mario",
         generate_enums: bool = False,
-        is_dma: bool = False,
+        draw_table_index: bool = False,
     ):
         col = layout.column()
 
@@ -556,14 +540,14 @@ class SM64_ActionProps(PropertyGroup):
         )
         if self.header.expand_tab_in_action:
             self.header.draw_props(
-                layout=col,
-                action=action,
-                draw_table_operations=draw_table_operations,
-                draw_names=draw_names,
-                export_type=export_type,
-                actor_name=actor_name,
-                generate_enums=generate_enums,
-                is_dma=is_dma,
+                col,
+                action,
+                draw_table_operations,
+                draw_names,
+                export_type,
+                actor_name,
+                generate_enums,
+                draw_table_index,
             )
 
         col.prop(
@@ -588,16 +572,16 @@ class SM64_ActionProps(PropertyGroup):
             if i != 0:
                 box.separator(factor=2.0)
             self.draw_variant(
-                layout=box,
-                action=action,
-                header=variant,
-                array_index=i,
-                draw_table_operations=draw_table_operations,
-                draw_names=draw_names,
-                export_type=export_type,
-                actor_name=actor_name,
-                generate_enums=generate_enums,
-                is_dma=is_dma,
+                box,
+                action,
+                variant,
+                i,
+                draw_table_operations,
+                draw_names,
+                export_type,
+                actor_name,
+                generate_enums,
+                draw_table_index,
             )
 
     def draw_references(self, layout: UILayout):
@@ -625,6 +609,7 @@ class SM64_ActionProps(PropertyGroup):
         actor_name: str = "mario",
         generate_enums: bool = False,
         is_dma: bool = False,
+        draw_table_index: bool = False,
     ):
         col = layout.column()
 
@@ -637,8 +622,11 @@ class SM64_ActionProps(PropertyGroup):
             add_op.action_name = action.name
 
         if export_type == "Binary":
-            prop_split(col, self, "start_address", "Start Address")
-            prop_split(col, self, "end_address", "End Address")
+            if is_dma:
+                prop_split(col, self, "dma_entry", "DMA Entry Position")
+            else:
+                prop_split(col, self, "start_address", "Start Address")
+                prop_split(col, self, "end_address", "End Address")
         elif draw_file_name:
             name_split = col.split(factor=0.5)
             name_split.prop(self, "override_file_name")
@@ -668,14 +656,14 @@ class SM64_ActionProps(PropertyGroup):
         col.scale_y = header_scale_y
         if specific_variant is not None:
             self.headers[specific_variant].draw_props(
-                layout=col,
-                action=action,
-                draw_table_operations=draw_table_operations,
-                draw_names=draw_names,
-                export_type=export_type,
-                actor_name=actor_name,
-                generate_enums=generate_enums,
-                is_dma=is_dma,
+                col,
+                action,
+                draw_table_operations,
+                draw_names,
+                export_type,
+                actor_name,
+                generate_enums,
+                draw_table_index,
             )
         else:
             self.draw_variants(
@@ -686,7 +674,7 @@ class SM64_ActionProps(PropertyGroup):
                 export_type=export_type,
                 actor_name=actor_name,
                 generate_enums=generate_enums,
-                is_dma=is_dma,
+                draw_table_index=draw_table_index,
             )
 
 
@@ -796,8 +784,12 @@ class SM64_AnimTableProps(PropertyGroup):
 
     insertable_file_name: StringProperty(name="Insertable File Name", default="toad.insertable")
 
-    start_address: StringProperty(name="Start Address", default="0x00")
-    end_address: StringProperty(name="End Address", default="0x00")
+    address: StringProperty(name="Table Address", default="0x0600FC48")  # Toad animation table
+    update_load_command: BoolProperty(name="Update Table Load Command")
+    load_command_address: StringProperty(
+        name="Table Load Command Address", default="0x21CD08"
+    )  # TODO: Change this to castle toad's, use quad64
+    dma_table_address: StringProperty(name="DMA Table Address", default="0x4EC000")
 
     @property
     def override_files(self):
@@ -958,18 +950,24 @@ class SM64_AnimTableProps(PropertyGroup):
                 "INFO",
             )
 
-    def draw_non_exclusive_settings(self, layout: UILayout, actor_name: str):
+    def draw_non_exclusive_settings(self, layout: UILayout, export_type: str = "C", actor_name: str = "mario"):
         col = layout.column()
-        col.prop(self, "generate_enums")
+        if export_type == "C":
+            col.prop(self, "generate_enums")
 
-        name_split = col.split()
-        name_split.prop(self, "override_table_name")
-        if self.override_table_name:
-            name_split.prop(self, "custom_table_name", text="")
-        else:
-            box = name_split.row().box()
-            box.scale_y = 0.5
-            box.label(text=self.get_anim_table_name(actor_name))
+            name_split = col.split()
+            name_split.prop(self, "override_table_name")
+            if self.override_table_name:
+                name_split.prop(self, "custom_table_name", text="")
+            else:
+                box = name_split.row().box()
+                box.scale_y = 0.5
+                box.label(text=self.get_anim_table_name(actor_name))
+        elif export_type == "Binary":
+            prop_split(col, self, "address", "Table Address")
+            col.prop(self, "update_load_command")
+            if self.update_load_command:
+                prop_split(col, self, "load_command_address", "Command Address")
 
     def draw_props(
         self,
@@ -982,8 +980,7 @@ class SM64_AnimTableProps(PropertyGroup):
         col = layout.column()
 
         if draw_non_exclusive_settings:
-            self.draw_non_exclusive_settings(col, is_dma, export_type, actor_name)
-            col.separator()
+            self.draw_non_exclusive_settings(col, export_type, actor_name)
 
         if export_type == "Insertable Binary" or (export_type == "C" and not is_dma):
             col.prop(self, "export_seperately")
@@ -1201,6 +1198,9 @@ class SM64_AnimImportProps(PropertyGroup):
 
 
 class SM64_AnimProps(PropertyGroup):
+    version: bpy.props.IntProperty(name="SM64_AnimProps Version", default=0)
+    cur_version = 1  # version after property migration
+
     played_header: IntProperty(min=0)
     played_action: PointerProperty(name="Action", type=Action)
 
@@ -1209,11 +1209,10 @@ class SM64_AnimProps(PropertyGroup):
     importing_tab: BoolProperty(name="Importing")
     importing: PointerProperty(type=SM64_AnimImportProps)
 
-    action_tab: BoolProperty(name="Action Export", default=True)
+    action_tab: BoolProperty(name="Action", default=True)
     selected_action: PointerProperty(name="Action", type=Action)
 
     directory_path: StringProperty(name="Directory Path", subtype="FILE_PATH")
-
     dma_folder: StringProperty(name="DMA Folder", default="assets/anims/")
     use_dma_structure: BoolProperty(
         name="Use DMA Structure",
@@ -1230,8 +1229,11 @@ class SM64_AnimProps(PropertyGroup):
 
     # Binary
     binary_level: EnumProperty(items=level_enums, name="Level", default="IC")
-    binary_overwrite_dma_entry: BoolProperty(name="Overwrite DMA Entry")
     is_binary_dma: BoolProperty(name="Is DMA", default=True)
+    dma_table_address: StringProperty(name="DMA Table Address", default="0x4EC000")
+
+    # Insertable
+    insertable_directory_path: StringProperty(name="Directory Path", subtype="FILE_PATH")
 
     quick_read: BoolProperty(
         name="Quick Data Read", default=True, description="Read fcurves directly, should work with the majority of rigs"
@@ -1239,54 +1241,64 @@ class SM64_AnimProps(PropertyGroup):
 
     def update_version_0(self, scene: Scene):
         importing: SM64_AnimImportProps = self.importing
-        importing.address = importing.get("levelAnimImport", importing.address)
-        # del bpy.types.Scene.levelAnimImport
-        # del bpy.types.Scene.animStartImport
-        # del bpy.types.Scene.animListIndexImport
+
+        importing.animation_address = scene.get("animStartImport", importing.animation_address)
+        importing.is_segmented_address = scene.get("animIsSegPtr", importing.is_segmented_address)
+        importing.level = scene.get("levelAnimImport", importing.level)
+        importing.table_index = scene.get("animListIndexImport", importing.table_index)
         if importing.get("isDMAImport", False):
             importing.binary_import_type = "DMA"
         elif importing.get("animIsAnimList", True):
             importing.binary_import_type = "Table"
-        # del bpy.types.Scene.animExportStart
-        # del bpy.types.Scene.animExportEnd
-        # del bpy.types.Scene.levelAnimExport
-        self.is_binary_dma = importing.get("isDMAExport", self.is_binary_dma)
-        # del bpy.types.Scene.DMAStartAddress
-        # del bpy.types.Scene.DMAEntryAddress
+
+        # Export
         loop_animation = scene.get("loopAnimation", True)
         if not loop_animation:
             for action in bpy.data.actions:
                 action.fast64.sm64.header.no_loop = True
-        # del bpy.types.Scene.setAnimListIndex
-        # del bpy.types.Scene.overwrite_0x28
-        # del bpy.types.Scene.addr_0x27
-        # del bpy.types.Scene.addr_0x28
-        # del bpy.types.Scene.animExportPath
-        # del bpy.types.Scene.animOverwriteDMAEntry
-        # del bpy.types.Scene.animInsertableBinaryPath
-        # del bpy.types.Scene.animIsSegPtr
-        # del bpy.types.Scene.animIsAnimList
-        # del bpy.types.Scene.animListIndexExport
-        self.actor_name = scene.get("animName", self.name)
+
+        custom_export = scene.get("animCustomExport", False)
+        if custom_export:
+            self.header_type = "Custom"
+        else:
+            header_type = scene.get("animExportHeaderType", None)
+            if header_type:
+                self.header_type = enumAnimExportTypes[header_type][0]
+
+        self.directory_path = scene.get("animExportPath", self.directory_path)
+        self.actor_name_prop = scene.get("animName", self.actor_name_prop)
         self.group_name = scene.get("animGroupName", self.group_name)
-        header_type = scene.get("animExportHeaderType", None)
-        if header_type:
-            self.header_type = enumAnimExportTypes[header_type][0]
         level_option = scene.get("animLevelOption", None)
         if level_option:
             self.level_option = enumLevelNames[level_option][0]
-        custom_export = self.get("animCustomExport", False)
-        if custom_export:
-            self.header_type = "Custom"
+        self.level_name = scene.get("animLevelName", self.level_name)
+        self.is_binary_dma = scene.get("isDMAExport", self.is_binary_dma)
+        insertable_directory_path = scene.get("animInsertableBinaryPath", "")
+        if insertable_directory_path:
+            self.insertable_directory_path = os.path.split(insertable_directory_path)[0]
+            # TODO: Handle the file name?
+
+        # del bpy.types.Scene.animOverwriteDMAEntry
+        # del bpy.types.Scene.DMAStartAddress
+        # del bpy.types.Scene.DMAEntryAddress
+        # del bpy.types.Scene.setAnimListIndex
+        # del bpy.types.Scene.addr_0x27
+        # del bpy.types.Scene.animListIndexExport
+        # del bpy.types.Scene.overwrite_0x28
+        # del bpy.types.Scene.addr_0x28
+        self.binary_level = scene.get("levelAnimExport", self.binary_level)
+        # del bpy.types.Scene.animExportStart
+        # del bpy.types.Scene.animExportEnd
+
+        self.version = 1
         print(f"Upgraded global SM64 settings to version 1")
 
     @staticmethod
     def upgrade_changed_props():
         for scene in bpy.data.scenes:
-            sm64_props: SM64_AnimProps = scene.fast64.sm64
-            if sm64_props.version == 0:
-                sm64_props.update_version_0(scene)
-            sm64_props.version = SM64_AnimProps.cur_version
+            anim_props: SM64_AnimProps = scene.fast64.sm64.animation
+            if anim_props.version == 0:
+                anim_props.update_version_0(scene)
 
     @property
     def actor_name(self):
@@ -1359,7 +1371,7 @@ class SM64_AnimProps(PropertyGroup):
                 export_type=export_type,
                 actor_name=self.actor_name,
                 generate_enums=self.table.generate_enums,
-                is_dma=is_dma,
+                draw_table_index=self.table.update_table,
             )
 
     def draw_table_properties(self, layout: UILayout, is_dma: bool, export_type: str):
@@ -1370,7 +1382,7 @@ class SM64_AnimProps(PropertyGroup):
                 col,
                 is_dma,
                 export_type,
-                export_type == "C" and self.header_type == "DMA" and not self.table.update_table,
+                not self.table.update_table and not is_dma,
                 self.actor_name,
             )
 
@@ -1428,13 +1440,6 @@ class SM64_AnimProps(PropertyGroup):
                 self.level_option,
             )
 
-        if self.header_type != "DMA":
-            box = col.box().column()
-            box.prop(self.table, "update_table")
-            if self.table.update_table:
-                self.table.draw_non_exclusive_settings(box, self.actor_name)
-                col.separator()
-
     def draw_props(
         self,
         layout: UILayout,
@@ -1451,8 +1456,17 @@ class SM64_AnimProps(PropertyGroup):
         else:
             self.draw_binary_settings(col, export_type)
         col.separator()
-        col.prop(self, "quick_read")
+
+        box = col.box().column()
+        if (export_type == "C" or export_type == "Binary") and not is_dma:
+            box.prop(self.table, "update_table")
+            if self.table.update_table:
+                self.table.draw_non_exclusive_settings(box, export_type, self.actor_name)
+        elif export_type == "Binary":
+            prop_split(box, self.table, "dma_table_address", "DMA Table Address")
+        box.prop(self, "quick_read")
         col.separator()
+
         self.draw_action_properties(col.box(), is_dma, export_type)
         self.draw_table_properties(col.box(), is_dma, export_type)
         if show_importing:
