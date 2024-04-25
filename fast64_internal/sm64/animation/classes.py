@@ -34,7 +34,7 @@ class SM64_AnimPair:
             self.values = self.values[:1]
 
     def get_frame(self, frame: int):
-        return self.values[frame] if frame < len(self.values) else self.values[-1]
+        return self.values[min(frame, len(self.values) - 1)]
 
     def read_binary(self, indices_reader: RomReading, values_reader: RomReading):
         max_frame = indices_reader.read_value(2, signed=False)
