@@ -21,15 +21,18 @@ class SM64_AnimPair:
     offset: int = 0
 
     def clean_frames(self):
-        if len(self.values) <= 1:
+        if not self.values:
+            self.values = [0]
             return
 
         last_value = self.values[-1]
-        for i, value in enumerate(reversed(self.values)):
+        for i, value in enumerate(reversed(self.values[:-1])):
             if value != last_value:
-                break
-        self.values = self.values[: (-i if i > 1 else len(self.values))]
-        pass
+                if i > 1:
+                    self.values = self.values[:-i]
+                return
+        else:
+            self.values = self.values[:1]
 
     def get_frame(self, frame: int):
         return self.values[frame] if frame < len(self.values) else self.values[-1]
