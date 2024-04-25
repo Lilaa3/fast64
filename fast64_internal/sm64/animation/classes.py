@@ -236,10 +236,8 @@ class SM64_AnimHeader:
         self.start_frame = header_reader.read_value(2)  # /*0x04*/ s16 startFrame;
         self.loop_start = header_reader.read_value(2)  # /*0x06*/ s16 loopStart;
         self.loop_end = header_reader.read_value(2)  # /*0x08*/ s16 loopEnd;
-        # Unused in engine but makes it easy to read animation data
-        # /*0x0A*/ s16 unusedBoneCount;
-        bone_count = header_reader.read_value(2)
-        self.bone_count = bone_count if bone_count is not None else assumed_bone_count
+        bone_count = header_reader.read_value(2)  # /*0x0A*/ s16 unusedBoneCount; (Unused in engine)
+        self.bone_count = bone_count if assumed_bone_count is None else assumed_bone_count
 
         # /*0x0C*/ const s16 *values;
         # /*0x10*/ const u16 *index;
@@ -279,7 +277,7 @@ class SM64_Anim:
     headers: list[SM64_AnimHeader] = dataclasses.field(default_factory=list)
 
     # Imports
-    action_name: str = ""  # Used in table class to prop functionality
+    action_name: str = ""  # Used in the table class to prop function
 
     def to_binary(self, is_dma: bool = False, start_address: int = 0) -> bytearray:
         data: bytearray = bytearray()
@@ -323,13 +321,9 @@ class SM64_Anim:
         c_headers = self.headers_to_c(is_dma_structure, refresh_version)
         if is_dma_structure:
             text_data.write(c_headers)
-            if table_data:
-                text_data.write("\n")
-                text_data.write(table_data)
-        else:
-            if table_data:
-                text_data.write(table_data)
-                text_data.write("\n")
+        text_data.write(table_data)
+        text_data.write("\n")
+        if not is_dma_structure:
             text_data.write(c_headers)
 
         return text_data.getvalue()
