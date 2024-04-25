@@ -42,7 +42,6 @@ class SM64_AnimPair:
         values_reader = values_reader.branch(values_reader.start_address + offset)
         for _ in range(max_frame):
             self.values.append(values_reader.read_value(2, signed=True))
-        self.clean_frames()
 
     def read_c(self, max_frame: int, offset: int, values: list[int]):
         for frame in range(max_frame):
@@ -56,10 +55,10 @@ class SM64_AnimPair:
 @dataclasses.dataclass
 class SM64_AnimData:
     pairs: list[SM64_AnimPair] = dataclasses.field(default_factory=list)
-    indice_reference: str = ""
-    values_reference: str = ""
-    indices_file_name: str = ""
-    values_file_name: str = ""
+    indice_reference: str | int = ""
+    values_reference: str | int = ""
+    indices_file_name: str | int = ""
+    values_file_name: str | int = ""
 
     def to_c(self, is_dma_structure: bool):
         text_data = StringIO()
@@ -120,10 +119,10 @@ class SM64_AnimData:
 
 @dataclasses.dataclass
 class SM64_AnimHeader:
-    reference: str | int = None
+    reference: str | int = ""
 
     flags: int = 0
-    custom_flags: str = None
+    custom_flags: Optional[str|int] = None
     trans_divisor: int = 0
     start_frame: int = 0
     loop_start: int = 0

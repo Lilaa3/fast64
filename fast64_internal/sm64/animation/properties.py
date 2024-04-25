@@ -204,8 +204,8 @@ class SM64_AnimHeaderProps(PropertyGroup):
         action: Action,
         values_reference: Optional[int | str] = None,
         indice_reference: Optional[int | str] = None,
-        actor_name: Optional[str] = "",
-        file_name: Optional[str] = "",
+        actor_name: str | None = "",
+        file_name: str | None = "",
     ):
         header = SM64_AnimHeader()
         header.reference = self.get_anim_name(actor_name, action)
@@ -1308,15 +1308,16 @@ class SM64_AnimImportProps(PropertyGroup):
 
         if self.import_type == "C":
             self.draw_c(col)
-        elif self.import_type == "Binary":
-            self.draw_binary(col, import_rom)
-        elif self.import_type == "Insertable Binary":
-            self.draw_insertable_binary(col, import_rom)
+        else:
+            if self.import_type == "Binary":
+                self.draw_binary(col, import_rom)
+            elif self.import_type == "Insertable Binary":
+                self.draw_insertable_binary(col, import_rom)
+            col.prop(self, "assume_bone_count")
+            layout.operator(SM64_ImportAllMarioAnims.bl_idname, icon="IMPORT")
 
         col.separator()
         col.operator(SM64_ImportAnim.bl_idname, icon="IMPORT")
-        if self.import_type in {"Binary", "C"}:
-            col.operator(SM64_ImportAllMarioAnims.bl_idname, icon="IMPORT")
 
 
 class SM64_AnimProps(PropertyGroup):

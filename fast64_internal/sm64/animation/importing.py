@@ -1,6 +1,4 @@
 from collections import OrderedDict
-from typing import Optional
-from io import BufferedReader
 import math
 import os
 
@@ -8,7 +6,7 @@ import bpy
 from bpy.types import Object, Action
 from mathutils import Euler, Vector, Quaternion
 
-from ...utility import PluginError, decodeSegmentedAddr, path_checks
+from ...utility import PluginError, path_checks
 from ...utility_anim import stashActionInArmature
 from ..sm64_constants import insertableBinaryTypes
 
@@ -108,6 +106,9 @@ def animation_data_to_blender(
 
     # TODO: Duplicate keyframe filter
     pairs = anim_import.data.pairs
+    for pair in pairs:
+        self.clean_frames()
+
     for pair_num in range(3, len(pairs), 3):
         bone = SM64_AnimBone()
         if pair_num == 3:
