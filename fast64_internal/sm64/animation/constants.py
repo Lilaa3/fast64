@@ -1,3 +1,24 @@
+HEADER_SIZE = 0x18
+C_FLAGS = [
+    "ANIM_FLAG_NOLOOP",
+    "ANIM_FLAG_FORWARD",
+    "ANIM_FLAG_NO_ACCEL",
+    "ANIM_FLAG_HOR_TRANS",
+    "ANIM_FLAG_VERT_TRANS",
+    "ANIM_FLAG_DISABLED",
+    "ANIM_FLAG_NO_TRANS",
+    # "ANIM_FLAG_UNUSED",
+]
+FLAG_PROPS = [
+    "no_loop",
+    "backwards",
+    "no_acceleration",
+    "disabled",
+    "only_horizontal_trans",
+    "only_vertical_trans",
+    "no_trans",
+]
+
 enumAnimExportTypes = [
     ("Actor", "Actor Data", "Includes are added to a group in actors/"),
     ("Level", "Level Data", "Includes are added to a specific level in levels/"),

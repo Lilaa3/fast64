@@ -159,7 +159,7 @@ def animation_import_to_blender(
             action=action,
         )
 
-    anim_import.to_props(action, actor_name, remove_name_footer, use_custom_name)
+    action.fast64.sm64.from_anim_class(anim_import, action, actor_name, remove_name_footer, use_custom_name)
 
     stashActionInArmature(armature_obj, action)
     armature_obj.animation_data.action = action
@@ -184,6 +184,7 @@ def import_animation_from_c_header(
             values_array = c_parser.values_by_name[header.values_reference]
             anim.data = SM64_AnimData()
             anim.data.read_c(indices_array, values_array)
+            header.data = anim.data
 
         animations[data_key] = anim
 
@@ -265,6 +266,7 @@ def import_binary_header(
                 values_reader=header_reader.branch(header.values_reference),
                 bone_count=header.bone_count,
             )
+            header.data = anim.data
         animations[data_key] = anim
 
     header.header_variant = len(anim.headers)

@@ -5,23 +5,12 @@ from typing import Optional
 import dataclasses
 import os
 
-from ...utility import PluginError, decodeSegmentedAddr, is_bit_active
+from ...utility import PluginError, is_bit_active
 from ..sm64_constants import MAX_U16
 
-from .utility import RomReading, eval_num_from_str
-from .c_parser import Initialization, ParsedValue
-
-HEADER_SIZE = 0x18
-int_to_c_flags = {
-    0: "ANIM_FLAG_NOLOOP",
-    1: "ANIM_FLAG_FORWARD",
-    2: "ANIM_FLAG_NO_ACCEL",
-    3: "ANIM_FLAG_HOR_TRANS",
-    4: "ANIM_FLAG_VERT_TRANS",
-    5: "ANIM_FLAG_DISABLED",
-    6: "ANIM_FLAG_NO_TRANS",
-    7: "ANIM_FLAG_UNUSED",
-}
+from .utility import RomReading
+from .c_parser import Initialization
+from .constants import HEADER_SIZE, C_FLAGS
 
 
 @dataclasses.dataclass
@@ -55,8 +44,8 @@ class SM64_AnimPair:
             value = values_reader.read_value(2, signed=True)
             self.values.append(value)
 
-    def read_c(self, maxFrame, offset, values: list[int]):
-        for frame in range(maxFrame):
+    def read_c(self, max_frame: int, offset: int, values: list[int]):
+        for frame in range(max_frame):
             value = values[offset + frame].value
             value = int.from_bytes(
                 value.to_bytes(length=2, byteorder="big", signed=False), signed=True, byteorder="big"
@@ -69,7 +58,6 @@ class SM64_AnimData:
     pairs: list[SM64_AnimPair] = dataclasses.field(default_factory=list)
     indice_reference: str = ""
     values_reference: str = ""
-    # Import
     indices_file_name: str = ""
     values_file_name: str = ""
 
@@ -154,15 +142,15 @@ class SM64_AnimHeader:
     # Imports
     header_variant: int = 0
 
-    def get_c_flags(self, refresh_version: str):
+    def get_c_flags(self, refresh_version: str):  # TODO: rethink lol lmfao even
         if self.custom_flags:
             return self.custom_flags
 
         flags_list: list[str] = []
-        for bit, flag in int_to_c_flags.items():
+        for index, flag in enumerate(C_FLAGS):
             if flag == "ANIM_FLAG_FORWARD" and refresh_version == "Refresh 16":
                 flag = "ANIM_FLAG_BACKWARD"
-            if is_bit_active(self.flags, bit):
+            if is_bit_active(self.flags, index):
                 flags_list.append(flag)
 
         if flags_list:
@@ -279,54 +267,14 @@ class SM64_AnimHeader:
             ),
         )
 
-    def to_props(self, action, header, actor_name: str, use_custom_name: bool = True):
-        flagsToProps = {  # TODO: Fix this whole thing its so cringe help me oh god help me
-            "ANIM_FLAG_NOLOOP": "no_loop",
-            "ANIM_FLAG_BACKWARD": "backwards",
-            "ANIM_FLAG_NO_ACCEL": "no_acceleration",
-            "ANIM_FLAG_DISABLED": "disabled",
-            "ANIM_FLAG_HOR_TRANS": "only_horizontal_trans",
-            "ANIM_FLAG_VERT_TRANS": "only_vertical_trans",
-            "ANIM_FLAG_NO_TRANS": "no_trans",
-        }
-
-        header.action = action
-
-        if (
-            isinstance(self.reference, str)
-            and self.reference != header.get_anim_name(actor_name, action)
-            and use_custom_name
-        ):
-            header.custom_name = self.reference
-            header.override_name = True
-
-        correct_frame_range = self.start_frame, self.loop_start, self.loop_end
-        header.start_frame, header.loop_start, header.loop_end = correct_frame_range
-        auto_frame_range = header.get_frame_range(action)
-        if correct_frame_range != auto_frame_range:
-            header.manual_frame_range = True
-
-        header.trans_divisor = self.trans_divisor
-
-        if isinstance(self.flags, int):
-            header.customIntFlags = hex(self.flags)
-            cFlags = [flag for bit, flag in int_to_c_flags.items() if is_bit_active(self.flags, bit)]
-            header.customFlags = " | ".join(cFlags)
-            for cFlag in cFlags:
-                if cFlag in flagsToProps:
-                    setattr(header, flagsToProps[cFlag], True)
-                else:
-                    header.setCustomFlags = True
-        else:
-            header.setCustomFlags = True
-            header.customFlags = self.flags
-
 
 @dataclasses.dataclass
 class SM64_Anim:
     data: SM64_AnimData = None
     headers: list[SM64_AnimHeader] = dataclasses.field(default_factory=list)
-    action_name: str = None
+
+    # Imports
+    action_name: str = ""  # Used in table class to prop functionality
 
     def to_binary(self, is_dma: bool = False, start_address: int = 0) -> bytearray:
         data: bytearray = bytearray()
@@ -381,49 +329,6 @@ class SM64_Anim:
 
         return text_data.getvalue()
 
-    def to_props(self, action, actor_name: str, remove_name_footer: bool = True, use_custom_name: bool = True):
-        action_props = action.fast64.sm64
-
-        main_header = self.headers[0]
-
-        if not self.action_name:
-            if main_header.file_name:
-                self.action_name = main_header.file_name.rstrip(".c").rstrip(".inc")
-            elif isinstance(main_header.reference, int):
-                self.action_name = hex(main_header.reference)
-            if remove_name_footer:
-                index = self.action_name.find("anim_")
-                if index != -1:
-                    self.action_name = self.action_name[index + 5 :]
-        action.name = self.action_name
-
-        action_props.indices_table, action_props.indices_address = (
-            str(main_header.indice_reference),
-            str(main_header.indice_reference),
-        )
-        action_props.values_table, action_props.values_address = (
-            str(main_header.values_reference),
-            str(main_header.values_reference),
-        )
-
-        if self.data:
-            action_props.custom_file_name = self.data.indices_file_name
-            action_props.custom_max_frame = max([1] + [len(x.values) for x in self.data.pairs])
-        else:
-            action_props.custom_file_name = main_header.file_name
-            action_props.reference_tables = True
-
-        if action_props.custom_file_name and action_props.get_anim_file_name(action) != action_props.custom_file_name:
-            action_props.override_file_name = True
-
-        for i in range(len(self.headers) - 1):
-            action_props.header_variants.add()
-
-        for header, header_props in zip(self.headers, action_props.headers):
-            header.to_props(action, header_props, actor_name, use_custom_name)
-
-        action_props.update_header_variant_numbers()
-
 
 @dataclasses.dataclass
 class DMATableEntrie:
@@ -464,6 +369,7 @@ class SM64_AnimTable:
     values_reference: str = ""
     elements: list[SM64_AnimHeader] = dataclasses.field(default_factory=list)
 
+    # TODO: Bring over binary and c import logic for tables here
     def get_sets(self) -> tuple[list[SM64_AnimHeader], list[SM64_AnimData]]:
         # Remove duplicates of data and headers, keep order by using a list
         data_set = []
@@ -637,7 +543,7 @@ class SM64_AnimTable:
                 text_data.write("\n")
 
         for anim_header in headers_set:
-            text_data.write(anim_header.to_c(refresh_version=refresh_version))
+            text_data.write(anim_header.to_c(refresh_version=refresh_version, values_override=self.values_reference))
             text_data.write("\n")
 
         return text_data.getvalue()
