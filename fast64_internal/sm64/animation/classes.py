@@ -36,9 +36,13 @@ class SM64_AnimPair:
     def get_frame(self, frame: int):
         return self.values[min(frame, len(self.values) - 1)]
 
-    def read_binary(self, max_frame: int, values_reader: RomReading):
+    def read_binary(self, indices_reader: RomReading, values_reader: RomReading):
+        max_frame = indices_reader.read_value(2, signed=False)
+        offset = indices_reader.read_value(2, signed=False) * 2
+        values_reader = values_reader.branch(values_reader.start_address + offset)
         for _ in range(max_frame):
             self.values.append(values_reader.read_value(2, signed=True))
+        self.clean_frames()
 
     def read_c(self, max_frame: int, offset: int, values: list[int]):
         for frame in range(max_frame):
@@ -94,15 +98,7 @@ class SM64_AnimData:
         self.values_reference = values_reader.address
         for _ in range((bone_count + 1) * 3):
             pair = SM64_AnimPair()
-            max_frame = indices_reader.read_value(2, signed=False)
-            value_offset = indices_reader.read_value(2, signed=False) * 2
-            pair.read_binary(
-                max_frame,
-                values_reader.branch(
-                    values_reader.start_address + value_offset,
-                ),
-            )
-            pair.clean_frames()
+            pair.read_binary(indices_reader, values_reader)
             self.pairs.append(pair)
 
     def read_c(self, indices_array: Initialization, values_array: Initialization):
