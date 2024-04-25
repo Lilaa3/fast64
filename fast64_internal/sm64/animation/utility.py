@@ -34,10 +34,10 @@ class RomReading:
         self.insertable_ptrs = insertable_ptrs
         self.segment_data = segment_data
 
-    def branch(self, start_address: int, data: bytes | None = None):
+    def branch(self, start_address: int | None = None, data: bytes | None = None):
         branch = RomReading(
             data if data else self.data,
-            start_address,
+            start_address if start_address else self.address,
             self.insertable_ptrs,
             self.rom_data,
             self.segment_data,
