@@ -20,17 +20,16 @@ class SM64_AnimPair:
     # For compressing
     offset: int = 0
 
-    def clean_frames(self):  # TODO: How the fuck do you write this
+    def clean_frames(self):
         if len(self.values) <= 1:
             return
 
         last_value = self.values[-1]
-
-        i = 0
         for i, value in enumerate(reversed(self.values)):
             if value != last_value:
                 break
-        self.values = self.values[: len(self.values) - (i - 1)]
+        self.values = self.values[: (-i if i > 1 else len(self.values))]
+        pass
 
     def get_frame(self, frame: int):
         return self.values[frame] if frame < len(self.values) else self.values[-1]
@@ -616,7 +615,6 @@ def create_tables(anims_data: list[SM64_AnimData], values_name: str = None):
             i = seq.index(sub_seq[0], i + 1)
             if sub_seq == seq[i:sub_length]:
                 return i
-        return -1
 
     value_table = SM64_ShortArray(values_name if values_name else anims_data[0].values_reference, True)
 

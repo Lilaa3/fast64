@@ -1408,7 +1408,7 @@ class SM64_AnimProps(PropertyGroup):
         self.binary_level = scene.get("levelAnimExport", self.binary_level)
 
         self.version = 1
-        print(f"Upgraded global SM64 settings to version 1")
+        print("Upgraded global SM64 settings to version 1")
 
     @staticmethod
     def upgrade_changed_props():
