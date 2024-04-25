@@ -121,8 +121,7 @@ class SM64_AnimData:
 class SM64_AnimHeader:
     reference: str | int = ""
 
-    flags: int = 0
-    custom_flags: Optional[str|int] = None
+    flags: int | str = 0
     trans_divisor: int = 0
     start_frame: int = 0
     loop_start: int = 0
@@ -140,9 +139,14 @@ class SM64_AnimHeader:
     # Imports
     header_variant: int = 0
 
-    def get_c_flags(self, refresh_version: str):  # TODO: rethink lol lmfao even
-        if self.custom_flags:
-            return self.custom_flags
+    def get_int_flags(self):
+        if not isinstance(self.flags, int):
+            raise PluginError("Flags must be in an int.")
+        return self.flags
+
+    def get_c_flags(self, refresh_version: str):
+        if isinstance(self.flags, str):
+            return self.flags
 
         flags_list: list[str] = []
         for index, flag in enumerate(C_FLAGS):
@@ -184,7 +188,7 @@ class SM64_AnimHeader:
         return (
             f"static const struct Animation {self.reference}{'[]' if is_dma_structure else ''} = {{\n"
             + (
-                f"\t{self.flags}, // flags {self.get_c_flags(refresh_version)}\n"
+                f"\t{hex(self.get_int_flags())}, // flags {self.get_c_flags(refresh_version)}\n"
                 if is_dma_structure
                 else f"\t{self.get_c_flags(refresh_version)}, // flags\n"
             )
@@ -205,7 +209,7 @@ class SM64_AnimHeader:
         indice_override: Optional[str | int] = None,
     ):
         data = bytearray()
-        data.extend(self.flags.to_bytes(2, byteorder="big", signed=False))  # 0x00
+        data.extend(self.get_int_flags().to_bytes(2, byteorder="big", signed=False))  # 0x00
         data.extend(self.trans_divisor.to_bytes(2, byteorder="big", signed=True))  # 0x02
         data.extend(self.start_frame.to_bytes(2, byteorder="big", signed=True))  # 0x04
         data.extend(self.loop_start.to_bytes(2, byteorder="big", signed=True))  # 0x06

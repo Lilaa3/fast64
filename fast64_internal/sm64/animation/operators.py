@@ -286,6 +286,7 @@ class SM64_ExportAnimTable(Operator):
         table: SM64_AnimTable = table_props.to_table_class(
             armature_obj,
             sm64_props.blender_to_sm64_scale,
+            sm64_props.export_type != "C" or animation_props.header_type == "DMA",
             sm64_props.export_type == "C" or not animation_props.is_binary_dma,
             animation_props.quick_read,
             actor_name,
@@ -396,6 +397,7 @@ class SM64_ExportAnim(Operator):
             action,
             armature_obj,
             sm64_props.blender_to_sm64_scale,
+            sm64_props.export_type != "C" or animation_props.header_type == "DMA",
             sm64_props.export_type == "C" or not animation_props.is_binary_dma,
             animation_props.quick_read,
             actor_name,

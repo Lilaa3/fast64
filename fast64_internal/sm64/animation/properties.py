@@ -202,17 +202,21 @@ class SM64_AnimHeaderProps(PropertyGroup):
         bone_count: int,
         data: SM64_AnimData,
         action: Action,
+        use_int_flags: bool = False,
         values_reference: Optional[int | str] = None,
         indice_reference: Optional[int | str] = None,
-        actor_name: str | None = "",
-        file_name: str | None = "",
+        actor_name: str | None = "mario",
+        file_name: str | None = "anim_00.inc.c",
     ):
         header = SM64_AnimHeader()
         header.reference = self.get_anim_name(actor_name, action)
         header.enum_reference = self.get_anim_enum(actor_name, action)
 
         if self.set_custom_flags:
-            header.custom_flags = self.custom_flags
+            if use_int_flags:
+                header.flags = eval_num_from_str(self.custom_int_flags)
+            else:
+                header.flags = self.custom_flags
         else:
             header.flags = self.get_int_flags()
 
@@ -232,7 +236,11 @@ class SM64_AnimHeaderProps(PropertyGroup):
         return header
 
     def from_header_class(
-        self, header: SM64_AnimHeader, action: Action, actor_name: str = "mario", use_custom_name: bool = True
+        self,
+        header: SM64_AnimHeader,
+        action: Action,
+        actor_name: str = "mario",
+        use_custom_name: bool = True,
     ):
         if (
             isinstance(header.reference, str)
@@ -473,8 +481,9 @@ class SM64_ActionProps(PropertyGroup):
         armature_obj: Object,
         blender_to_sm64_scale: float,
         can_use_references: bool,
+        use_int_flags: bool,
         quick_read: bool,
-        actor_name: str,
+        actor_name: str = "mario",
     ):
         animation = SM64_Anim()
         animation.file_name = self.get_anim_file_name(action)
@@ -495,6 +504,7 @@ class SM64_ActionProps(PropertyGroup):
                     bone_count,
                     animation.data,
                     action,
+                    use_int_flags,
                     values_reference,
                     indice_reference,
                     actor_name,
@@ -976,6 +986,7 @@ class SM64_AnimTableProps(PropertyGroup):
         blender_to_sm64_scale: float,
         can_use_references: bool,
         quick_read: bool,
+        use_int_flags: bool,
         actor_name: str = "mario",
     ):
         table = SM64_AnimTable()
@@ -1012,6 +1023,7 @@ class SM64_AnimTableProps(PropertyGroup):
                     bone_count,
                     data,
                     action,
+                    use_int_flags,
                     values_reference,
                     indice_reference,
                     actor_name,
