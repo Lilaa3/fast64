@@ -23,13 +23,12 @@ class SM64_AnimPair:
     def clean_frames(self):
         if not self.values:
             self.values = [0]
-            return
 
         last_value = self.values[-1]
-        for i, value in enumerate(reversed(self.values[:-1])):
+        for i, value in enumerate(reversed(self.values)):
             if value != last_value:
                 if i > 1:
-                    self.values = self.values[:-i]
+                    self.values = self.values[: -(i - 1)]
                 return
         else:
             self.values = self.values[:1]
