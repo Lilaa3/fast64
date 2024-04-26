@@ -186,6 +186,8 @@ def update_enum_file(
         enum_list_index = text.find(enum_list_name)
 
     for enum_name in enum_names:
+        if not enum_name:
+            continue
         if text.find(enum_name, enum_list_index) == -1:
             enum_list_end = text.find("}", enum_list_index)
             text = text[:enum_list_end] + f"\t{enum_name},\n" + text[enum_list_end:]

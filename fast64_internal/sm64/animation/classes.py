@@ -355,45 +355,59 @@ def num_to_padded_hex(num: int):
 
 
 @dataclasses.dataclass
+class SM64_AnimTableElement:
+    reference: str | int = ""
+    enum_name: str | None = None
+    header: SM64_AnimHeader | None = None
+
+    @property
+    def data(self):
+        return self.header.data if self.header else None
+
+
+@dataclasses.dataclass
 class SM64_AnimTable:
     reference: str | int = None
     enum_list_reference: str = ""
     file_name: str = ""
     values_reference: str = ""
-    elements: list[SM64_AnimHeader] = dataclasses.field(default_factory=list)
+    elements: list[SM64_AnimTableElement] = dataclasses.field(default_factory=list)
+
+    @property
+    def enum_and_header_names(self) -> list[str, str]:
+        names = []
+        for element in self.elements:
+            assert isinstance(element.reference, str), "Reference is not a string."
+            names.append((element.enum_name, element.reference))
+        return names
 
     # TODO: Bring over binary and c import logic for tables here
     def get_sets(self) -> tuple[list[SM64_AnimHeader], list[SM64_AnimData]]:
         # Remove duplicates of data and headers, keep order by using a list
         data_set = []
         headers_set = []
-        for anim_header in self.elements:
-            if anim_header.data and not anim_header.data in data_set:
-                data_set.append(anim_header.data)
-            if not anim_header in headers_set:
-                headers_set.append(anim_header)
+        for element in self.elements:
+            if element.data and not element.data in data_set:
+                data_set.append(element.data)
+            if element.header and not element.header in headers_set:
+                headers_set.append(element.header)
         return headers_set, data_set
 
     def prepare_for_dma(self):
         elements = []
-
         # For creating duplicates
         data_already_added = []
         headers_already_added = []
-
         header_nums = []
         included_headers = []
         data = None
 
         for i, anim_header in enumerate(self.elements):
             header_nums.append(i)
-
             if anim_header in headers_already_added:
                 anim_header = copy.copy(anim_header)
             anim_header.reference = f"anim_{num_to_padded_hex(i)}"
-
             included_headers.append(anim_header)
-
             if anim_header.data:
                 data = anim_header.data
 
@@ -405,7 +419,6 @@ class SM64_AnimTable:
             for num in header_nums:
                 name += f"_{num_to_padded_hex(num)}"
             file_name = f"{name}.inc.c"
-
             if data:
                 if data in data_already_added:
                     data = copy.copy(anim_header.data)
@@ -413,8 +426,7 @@ class SM64_AnimTable:
                 anim_header.data.values_reference = f"{name}_values"
                 anim_header.data.file_name = file_name
                 data_already_added.append(data)
-
-            # While normal names are possible (order goes by line and file) that would break convention
+            # Normal names are possible (order goes by line and file) but would break convention
             for included_header in included_headers:
                 included_header.file_name = file_name
                 included_header.indice_reference = f"{name}_indices"
@@ -541,7 +553,7 @@ class SM64_AnimTable:
 
         text_data.write(f"enum {self.enum_list_reference} {{\n")
         for anim_header in self.elements:
-            text_data.write(f"\t{anim_header.enum_reference},\n")
+            text_data.write(f"\t{anim_header.enum_name},\n")
         text_data.write("};\n")
 
         return text_data.getvalue()
@@ -553,11 +565,11 @@ class SM64_AnimTable:
             text_data.write(f'#include "table_enum.h"\n')
 
         text_data.write(f"const struct Animation *const {self.reference}[] = {{\n")
-        for anim_header in self.elements:
+        for element in self.elements:
             if generate_enums:
-                text_data.write(f"\t[{anim_header.enum_reference}] = &{anim_header.reference},\n")
+                text_data.write(f"\t[{element.enum_name}] = &{element.reference},\n")
             else:
-                text_data.write(f"\t&{anim_header.reference},\n")
+                text_data.write(f"\t&{element.reference},\n")
         text_data.write("\tNULL,\n};\n")
 
         return text_data.getvalue()

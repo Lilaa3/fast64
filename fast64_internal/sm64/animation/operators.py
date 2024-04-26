@@ -29,10 +29,9 @@ from ..sm64_utility import import_rom_checks
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_constants import level_pointers, insertableBinaryTypes
 
-from .classes import SM64_DMATable, DMATableEntrie, SM64_Anim, SM64_AnimTable, RomReading
+from .classes import DMATableEntrie, SM64_Anim, SM64_AnimTable, RomReading
 from .importing import (
     import_binary_animations,
-    import_binary_dma_animation,
     animation_import_to_blender,
     import_binary_header,
     import_c_animations,
@@ -44,7 +43,7 @@ from .exporting import (
     update_table_file,
     write_anim_header,
 )
-from .utility import animation_operator_checks, eval_num_from_str, get_action, get_anim_pose_bones
+from .utility import animation_operator_checks, get_action, get_anim_pose_bones
 from .constants import marioAnimationNames
 
 from typing import TYPE_CHECKING
@@ -174,7 +173,7 @@ class SM64_TableOperations(Operator):
             if self.action_name and self.header_variant:
                 table_elements[-1].set_variant(bpy.data.actions[self.action_name], self.header_variant)
             elif table_element:
-                table_elements[-1].set_variant(table_element.action, self.header_variant)
+                copyPropertyGroup(table_element, table_elements[-1])
                 table_elements.move(len(table_elements) - 1, self.array_index + 1)
         elif self.type == "ADD_ALL":
             action = bpy.data.actions[self.action_name]
@@ -208,7 +207,7 @@ class SM64_AnimVariantOperations(Operator):
 
     def execute_operator(self, context):
         action = bpy.data.actions[self.action_name]
-        action_props = action.fast64.sm64
+        action_props: SM64_ActionProps = action.fast64.sm64
 
         variants = action_props.header_variants
 
@@ -281,12 +280,15 @@ class SM64_ExportAnimTable(Operator):
 
         print("Reading table data")
 
+        is_dma = (sm64_props.binary_export and animation_props.is_binary_dma) or animation_props.header_type == "DMA"
         table: SM64_AnimTable = table_props.to_table_class(
             armature_obj,
             sm64_props.blender_to_sm64_scale,
-            sm64_props.export_type != "C" or animation_props.header_type == "DMA",
-            sm64_props.export_type == "C" or not animation_props.is_binary_dma,
             animation_props.quick_read,
+            not is_dma and not sm64_props.binary_export,
+            not is_dma,
+            not is_dma and not sm64_props.binary_export and table_props.generate_enums,
+            sm64_props.binary_export,
             actor_name,
         )
 
@@ -328,7 +330,7 @@ class SM64_ExportAnimTable(Operator):
                 else:
                     update_table_file(
                         os.path.join(anim_dir_path, "table.inc.c"),
-                        table_props.get_enum_and_header_names(actor_name),
+                        table.enum_and_header_names,
                         table.reference,
                         table_props.generate_enums,
                         False,
@@ -387,7 +389,7 @@ class SM64_ExportAnim(Operator):
         table_props: SM64_AnimTableProps = animation_props.table
 
         action = animation_props.selected_action
-        action_props = action.fast64.sm64
+        action_props: SM64_ActionProps = action.fast64.sm64
         stashActionInArmature(armature_obj, action)
 
         actor_name = animation_props.actor_name
@@ -446,10 +448,9 @@ class SM64_ExportAnim(Operator):
                     table_props.update_table,
                 )
         elif sm64_props.export_type == "Insertable Binary":
-            # data, ptrs = animation.to_binary(export_props.is_binary_dma, 0)
-            # path = abspath(export_props.insertable_path)
-            # writeInsertableFile(path, 2, ptrs, 0, data)
-            pass
+            data, ptrs = animation.to_binary(animation_props.is_binary_dma)
+            path = abspath(action_props.get_anim_file_name(action))
+            writeInsertableFile(path, insertableBinaryTypes["Animation"], ptrs, 0, data)
         else:
             raise PluginError(f"Unimplemented export type ({sm64_props.export_type})")
         self.report({"INFO"}, "Animation exported successfully.")

@@ -50,7 +50,7 @@ from .operators import (
     SM64_AnimVariantOperations,
     SM64_PreviewAnimOperator,
 )
-from .classes import SM64_Anim, SM64_AnimData, SM64_AnimHeader, SM64_AnimTable
+from .classes import SM64_Anim, SM64_AnimData, SM64_AnimHeader, SM64_AnimTable, SM64_AnimTableElement
 from .constants import (
     enumAnimImportTypes,
     enumAnimBinaryImportTypes,
@@ -444,12 +444,6 @@ class SM64_ActionProps(PropertyGroup):
 
         return max(loop_ends)
 
-    def get_header_names(self, action: Action, actor_name: str):
-        return [header.get_anim_name(actor_name, action) for header in self.headers]
-
-    def get_enum_names(self, action: Action, actor_name: str):
-        return [header.get_anim_enum(actor_name, action) for header in self.headers]
-
     def get_enum_and_header_names(self, action: Action, actor_name: str):
         return [
             (header.get_anim_enum(actor_name, action), header.get_anim_name(actor_name, action))
@@ -804,9 +798,9 @@ class SM64_ActionProps(PropertyGroup):
             )
 
 
-class SM64_TableElement(PropertyGroup):
+class SM64_TableElementProps(PropertyGroup):
     expand_tab: BoolProperty()
-    action: PointerProperty(name="Action", type=Action)
+    action_prop: PointerProperty(name="Action", type=Action)
     use_main_variant: BoolProperty(name="Use Main Variant", default=True)
     variant: IntProperty(name="Variant", min=1, default=1)
 
@@ -817,12 +811,22 @@ class SM64_TableElement(PropertyGroup):
 
     @property
     def header(self) -> SM64_AnimHeaderProps:
+        if self.reference:
+            return None
+        elif not self.action:
+            return None
         if self.use_main_variant:
             return self.action.fast64.sm64.header
         return self.action.fast64.sm64.headers[self.variant]
 
+    @property
+    def action(self) -> Action:
+        if self.reference:
+            return None
+        return self.action_prop
+
     def set_variant(self, action: Action, variant: int):
-        self.action = action
+        self.action_prop = action
         if variant == 0:
             self.use_main_variant = True
         else:
@@ -855,11 +859,11 @@ class SM64_TableElement(PropertyGroup):
             self.draw_reference(col, export_type, generate_enums)
             return
 
-        row.prop(self, "action", text="")
-        if not self.action:
-            col.box().label(text="Header´s action does not exist.", icon="ERROR")
+        row.prop(self, "action_prop", text="")
+        if not self.action_prop:
+            col.box().label(text="Header´s action does not exist. Use references for NULLs", icon="ERROR")
             return
-        action_props: SM64_ActionProps = self.action.fast64.sm64
+        action_props: SM64_ActionProps = self.action_prop.fast64.sm64
 
         row = col.row(align=True)
         row.prop(self, "use_main_variant")
@@ -872,7 +876,7 @@ class SM64_TableElement(PropertyGroup):
             remove_op.array_index, remove_op.type, remove_op.action_name = (
                 self.variant - 1,
                 "REMOVE",
-                self.action.name,
+                self.action_prop.name,
             )
             remove_split.enabled = len(action_props.headers) > 1
 
@@ -880,7 +884,7 @@ class SM64_TableElement(PropertyGroup):
             add_op.array_index, add_op.type, add_op.action_name = (
                 self.variant - 1,
                 "ADD",
-                self.action.name,
+                self.action_prop.name,
             )
 
             if not 0 <= self.variant < len(action_props.headers):
@@ -893,13 +897,13 @@ class SM64_TableElement(PropertyGroup):
             self,
             "expand_tab",
             icon="TRIA_DOWN" if self.expand_tab else "TRIA_RIGHT",
-            text=f"{self.header.get_anim_name(actor_name, self.action)} Properties",
+            text=f"{self.header.get_anim_name(actor_name, self.action_prop)} Properties",
         )
         c_not_dma = export_type == "C" and not is_dma
         if self.expand_tab:
             action_props.draw_props(
                 layout=prop_box,
-                action=self.action,
+                action=self.action_prop,
                 export_type=export_type,
                 header_scale_y=1.0,
                 specific_variant=variant,
@@ -923,7 +927,7 @@ class SM64_AnimTableProps(PropertyGroup):
 
     export_seperately: BoolProperty(name="Export All Seperately")
     override_files_prop: BoolProperty(name="Override Table and Data Files")
-    elements: CollectionProperty(type=SM64_TableElement)
+    elements: CollectionProperty(type=SM64_TableElementProps)
 
     generate_enums: BoolProperty(
         name="Generate Enums",
@@ -948,56 +952,32 @@ class SM64_AnimTableProps(PropertyGroup):
 
     @property
     def override_files(self):
-        return not self.export_seperately and self.override_files_prop
+        return self.export_seperately and self.override_files_prop
 
     @property
-    def actions(self):
+    def actions(self) -> list[Action]:
         actions = []
         for table_element in self.elements:
-            if table_element.action not in actions:
+            if table_element.action and table_element.action not in actions:
                 actions.append(table_element.action)
 
         return actions
 
     @property
-    def headers(self):
+    def headers(self) -> list[SM64_AnimHeaderProps]:
         headers = []
         for table_element in self.elements:
-            if table_element.header not in headers:
+            if table_element.header and table_element.header not in headers:
                 headers.append(table_element.header)
         return headers
 
-    def get_anim_table_name(self, actor_name: str):
+    def get_anim_table_name(self, actor_name: str) -> str:
         if self.override_table_name:
             return self.custom_table_name
         return f"{actor_name}_anims"
 
     def get_enum_list_name(self, actor_name: str):
         return f"{actor_name}Anims".title()
-
-    def get_header_names(self, actor_name: str):
-        header_names = []
-        for table_element in self.elements:
-            header_names.append(table_element.header.get_anim_name(actor_name, table_element.action))
-        return header_names
-
-    def get_enum_names(self, actor_name: str):
-        enum_names = []
-        for table_element in self.elements:
-            enum_names.append(table_element.header.get_anim_enum(actor_name, table_element.action))
-        return enum_names
-
-    def get_enum_and_header_names(self, actor_name: str):
-        enum_and_header_names = []
-        for table_element in self.elements:
-            header = table_element.header
-            enum_and_header_names.append(
-                (
-                    header.get_anim_enum(actor_name, table_element.action),
-                    header.get_anim_name(actor_name, table_element.action),
-                )
-            )
-        return enum_and_header_names
 
     def from_anim_table_class(self, table: SM64_AnimTable, clear_table: bool = False):
         if clear_table:
@@ -1010,9 +990,11 @@ class SM64_AnimTableProps(PropertyGroup):
         self,
         armature_obj: Object,
         blender_to_sm64_scale: float,
-        can_use_references: bool,
         quick_read: bool,
         use_int_flags: bool,
+        can_use_references: bool,
+        generate_enums: bool,
+        use_addresses_for_references: bool,
         actor_name: str = "mario",
     ):
         table = SM64_AnimTable()
@@ -1025,14 +1007,29 @@ class SM64_AnimTableProps(PropertyGroup):
 
         existing_data: dict[Action, SM64_AnimData] = {}
         existing_headers: dict[SM64_AnimHeaderProps, SM64_AnimHeader] = {}
-        for element in self.elements:
-            action = element.action
-            action_props: SM64_ActionProps = action.fast64.sm64
-            header_props: SM64_AnimHeaderProps = element.header
 
+        element: SM64_TableElementProps
+        for i, element in enumerate(self.elements):
+            reference = SM64_AnimTableElement()
+            if can_use_references and element.reference:
+                header = (
+                    eval_num_from_str(element.header_address) if use_addresses_for_references else element.header_name
+                )
+                assert header, f"Reference in table element {i} is not set."
+                reference.reference = header
+                if generate_enums:
+                    assert element.enum_name, f"Enum name in table element {i} is not set."
+                    reference.enum_name = element.enum_name
+                table.elements.append(reference)
+                continue
+
+            if not element.header:
+                raise PluginError(f"No header in table element {i}.")
+
+            action: Action = element.action
+            action_props: SM64_ActionProps = action.fast64.sm64
             if can_use_references and action_props.reference_tables:
-                values_reference = action_props.values_table
-                indice_reference = action_props.indices_table
+                values_reference, indice_reference = action_props.values_table, action_props.indices_table
                 data = None
             else:
                 if not action in existing_data:
@@ -1040,12 +1037,11 @@ class SM64_AnimTableProps(PropertyGroup):
                         action, armature_obj, blender_to_sm64_scale, quick_read
                     )
                 data = existing_data[action]
-                values_reference = data.values_reference
-                indice_reference = data.indice_reference
+                values_reference, indice_reference = data.values_reference, data.indice_reference
 
-            header = existing_headers.get(
-                header_props,
-                header_props.to_header_class(
+            reference.header = existing_headers.get(
+                element.header,
+                element.header.to_header_class(
                     bone_count,
                     data,
                     action,
@@ -1056,7 +1052,9 @@ class SM64_AnimTableProps(PropertyGroup):
                     action_props.get_anim_file_name(action),
                 ),
             )
-            table.elements.append(header)
+            reference.reference = reference.header.reference
+            reference.enum_name = reference.header.enum_reference
+            table.elements.append(reference)
 
         return table
 
@@ -1065,7 +1063,7 @@ class SM64_AnimTableProps(PropertyGroup):
         self,
         layout: UILayout,
         table_index: int,
-        table_element: SM64_TableElement,
+        table_element: SM64_TableElementProps,
         is_dma: bool,
         duplicate_index: int | None = 0,
         export_type: str = "c",
@@ -1641,7 +1639,7 @@ class SM64_AnimProps(PropertyGroup):
 
 properties = (
     SM64_AnimHeaderProps,
-    SM64_TableElement,
+    SM64_TableElementProps,
     SM64_ActionProps,
     SM64_AnimTableProps,
     SM64_AnimImportProps,
