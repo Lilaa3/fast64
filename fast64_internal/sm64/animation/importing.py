@@ -107,7 +107,7 @@ def animation_data_to_blender(
     # TODO: Duplicate keyframe filter
     pairs = anim_import.data.pairs
     for pair in pairs:
-        self.clean_frames()
+        pair.clean_frames()
 
     for pair_num in range(3, len(pairs), 3):
         bone = SM64_AnimBone()

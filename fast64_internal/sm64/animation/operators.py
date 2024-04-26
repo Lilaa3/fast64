@@ -184,8 +184,7 @@ class SM64_TableOperations(Operator):
         elif self.type == "REMOVE":
             table_elements.remove(self.array_index)
         if self.type == "CLEAR":
-            for _ in range(len(table_elements)):
-                table_elements.remove(0)
+            table_elements.clear()
 
         return {"FINISHED"}
 
@@ -236,8 +235,7 @@ class SM64_AnimVariantOperations(Operator):
         elif self.type == "REMOVE":
             variants.remove(self.array_index)
         if self.type == "CLEAR":
-            for _ in range(len(variants)):
-                variants.remove(0)
+            variants.clear()
 
         action_props.update_header_variant_numbers()
 
@@ -618,7 +616,7 @@ class SM64_ImportAnim(Operator):
                 import_props.remove_name_footer,
                 import_props.use_custom_name,
             )
-        table_props.from_anim_table_class(table)
+        table_props.from_anim_table_class(table, import_props.clear_table)
 
         self.report({"INFO"}, "Success!")
         return {"FINISHED"}

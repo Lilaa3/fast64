@@ -30,16 +30,16 @@ enumAnimExportTypes = [
     ("Custom", "Custom Path", "Exports to a specific path"),
 ]
 
-enumAnimBinaryImportTypes = [
-    ("DMA", "DMA (Mario)", "Import a DMA animation from a DMA table from a ROM"),
-    ("Table", "Table", "Import animations from an animation table from a ROM"),
-    ("Animation", "Animation", "Import one animation from a ROM"),
-]
-
 enumAnimImportTypes = [
     ("C", "C", "Import a decomp folder or a specific animation"),
     ("Binary", "Binary", "Import from ROM"),
     ("Insertable Binary", "Insertable Binary", "Import from an insertable binary file"),
+]
+
+enumAnimBinaryImportTypes = [
+    ("DMA", "DMA (Mario)", "Import a DMA animation from a DMA table from a ROM"),
+    ("Table", "Table", "Import animations from an animation table from a ROM"),
+    ("Animation", "Animation", "Import one animation from a ROM"),
 ]
 
 marioAnimationNames = [

@@ -975,7 +975,9 @@ class SM64_AnimTableProps(PropertyGroup):
             )
         return enum_and_header_names
 
-    def from_anim_table_class(self, table: SM64_AnimTable):
+    def from_anim_table_class(self, table: SM64_AnimTable, clear_table: bool = False):
+        if clear_table:
+            self.elements.clear()
         for header in table.elements:
             self.elements.add()
             self.elements[-1].set_variant(bpy.data.actions[header.data.action_name], header.header_variant)
@@ -1172,23 +1174,23 @@ class SM64_AnimTableProps(PropertyGroup):
 class SM64_AnimImportProps(PropertyGroup):
     import_type: EnumProperty(items=enumAnimImportTypes, name="Type", default="C")
 
+    clear_table: BoolProperty(name="Clear Table On Import", default=True)
     binary_import_type: EnumProperty(
         items=enumAnimBinaryImportTypes,
         name="Type",
         default="Animation",
     )
-
     assume_bone_count: BoolProperty(
         name="Assume Bone Count",
         default=True,
         description="When enabled, the selected armature's bone count will be used instead of the header's, "
         "as old fast64 binary exports did no export this value",
     )
+
+    rom: StringProperty(name="Import ROM", subtype="FILE_PATH")
     read_entire_table: BoolProperty(
         name="Read All Animations",
     )
-
-    rom: StringProperty(name="Import ROM", subtype="FILE_PATH")
     table_index: IntProperty(name="Table Index", min=0)
     ignore_null: BoolProperty(name="Ignore NULL Delimiter")
     table_address: StringProperty(name="Address", default=hex(0x0600FC48))  # Toad animation table
@@ -1326,10 +1328,12 @@ class SM64_AnimImportProps(PropertyGroup):
             elif self.import_type == "Insertable Binary":
                 self.draw_insertable_binary(col, import_rom)
             col.prop(self, "assume_bone_count")
-            layout.operator(SM64_ImportAllMarioAnims.bl_idname, icon="IMPORT")
-
+        col.prop(self, "clear_table")
         col.separator()
+
         col.operator(SM64_ImportAnim.bl_idname, icon="IMPORT")
+        if self.import_type in {"C", "Binary"}:
+            layout.operator(SM64_ImportAllMarioAnims.bl_idname, icon="IMPORT")
 
 
 class SM64_AnimProps(PropertyGroup):
