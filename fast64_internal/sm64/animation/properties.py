@@ -267,13 +267,14 @@ class SM64_AnimHeaderProps(PropertyGroup):
             self.custom_flags = header.flags
             int_flags = 0
 
-            flags = header.flags.lstrip("(").rstrip(")").split(" | ")
+            flags = header.flags.replace(" ", "").lstrip("(").rstrip(")").split(" | ")
             try:
                 int_flags = eval_num_from_str(header.flags)
             except Exception:
                 for flag in flags:
-                    if flag in C_FLAGS:
-                        int_flags |= 1 << C_FLAGS.index(flag)
+                    index = next((index for index, flag_tuple in enumerate(C_FLAGS) if flag in flag_tuple), None)
+                    if index is not None:
+                        int_flags |= 1 << index
                     else:
                         self.set_custom_flags = True  # Unknown flag
         self.custom_int_flags = hex(int_flags)
@@ -495,8 +496,8 @@ class SM64_ActionProps(PropertyGroup):
             animation.data = self.to_data_class(
                 action, armature_obj, blender_to_sm64_scale, quick_read, animation.file_name
             )
-            values_reference = None
-            indice_reference = None
+            values_reference = animation.data.values_reference
+            indice_reference = animation.data.indice_reference
         bone_count = len(get_anim_pose_bones(armature_obj))
         for header_props in self.headers:
             animation.headers.append(
@@ -904,7 +905,10 @@ class SM64_AnimTableProps(PropertyGroup):
     override_files_prop: BoolProperty(name="Override Table and Data Files")
     elements: CollectionProperty(type=SM64_TableElement)
 
-    generate_enums: BoolProperty(name="Generate Enums", default=True)
+    generate_enums: BoolProperty(
+        name="Generate Enums",
+        description="Does not work in vanilla decomp, HackerSM64 users may use this feature freely",
+    )
     override_table_name: BoolProperty(name="Override Table Name")
     custom_table_name: StringProperty(name="Table Name", default="mario_anims")
 
@@ -1016,8 +1020,8 @@ class SM64_AnimTableProps(PropertyGroup):
                         action, armature_obj, blender_to_sm64_scale, quick_read
                     )
                 data = existing_data[action]
-                values_reference = None
-                indice_reference = None
+                values_reference = data.values_reference
+                indice_reference = data.indice_reference
 
             header = existing_headers.get(
                 header_props,

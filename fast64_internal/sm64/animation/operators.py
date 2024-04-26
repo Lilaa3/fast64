@@ -303,7 +303,7 @@ class SM64_ExportAnimTable(Operator):
             if header_type == "DMA" or table_props.export_seperately:
                 if header_type == "DMA":
                     table.prepare_for_dma()
-                files_data = table.data_and_headers_to_c(header_type == "DMA", sm64_props.refresh_version)
+                files_data = table.data_and_headers_to_c(header_type == "DMA")
 
                 print("Saving all generated files")
                 for file_name, file_data in files_data.items():
@@ -313,7 +313,7 @@ class SM64_ExportAnimTable(Operator):
                         update_data_file(os.path.join(anim_dir_path, "data.inc.c"), [file_name])
             else:
                 with open(os.path.join(anim_dir_path, "data.inc.c"), "w", newline="\n") as file:
-                    file.write(table.data_and_headers_to_c_combined(sm64_props.refresh_version))
+                    file.write(table.data_and_headers_to_c_combined())
 
             if header_type != "DMA":
                 write_anim_header(
@@ -413,12 +413,7 @@ class SM64_ExportAnim(Operator):
                 applyBasicTweaks(abspath(sm64_props.decomp_path))
 
             with open(anim_path, "w", newline="\n") as file:
-                file.write(
-                    animation.to_c(
-                        animation_props.is_c_dma_structure,
-                        sm64_props.refresh_version,
-                    )
-                )
+                file.write(animation.to_c(animation_props.is_c_dma_structure))
 
             if header_type != "DMA":
                 table_name = table_props.get_anim_table_name(actor_name)

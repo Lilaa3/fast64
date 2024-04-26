@@ -139,28 +139,26 @@ class SM64_AnimHeader:
     # Imports
     header_variant: int = 0
 
+    def get_flags_comment(self):
+        if isinstance(self.flags, str):
+            return self.flags
+        flags_list: list[str] = []
+        for index, flags in enumerate(C_FLAGS):
+            if is_bit_active(self.flags, index):
+                flags_list.extend(flags)
+
+        return ", ".join(flags_list)
+
     def get_int_flags(self):
         if not isinstance(self.flags, int):
             raise PluginError("Flags must be in an int.")
         return self.flags
 
-    def get_c_flags(self, refresh_version: str):
+    def get_c_flags(self):
         if isinstance(self.flags, str):
             return self.flags
 
-        flags_list: list[str] = []
-        for index, flag in enumerate(C_FLAGS):
-            if flag == "ANIM_FLAG_FORWARD" and refresh_version == "Refresh 16":
-                flag = "ANIM_FLAG_BACKWARD"
-            if is_bit_active(self.flags, index):
-                flags_list.append(flag)
-
-        if flags_list:
-            flags = " | ".join(flags_list)
-            if len(flags_list) > 1:
-                return f"({flags})"
-            return flags
-        return 0
+        return hex(self.flags)
 
     def get_values_reference(self, override: Optional[str | int] = None):
         if override:
@@ -183,16 +181,12 @@ class SM64_AnimHeader:
         values_override: Optional[str | int] = None,
         indice_override: Optional[str | int] = None,
         is_dma_structure: bool = False,
-        refresh_version: str = "Refresh 13",
     ):
         return (
             f"static const struct Animation {self.reference}{'[]' if is_dma_structure else ''} = {{\n"
-            + (
-                f"\t{hex(self.get_int_flags())}, // flags {self.get_c_flags(refresh_version)}\n"
-                if is_dma_structure
-                else f"\t{self.get_c_flags(refresh_version)}, // flags\n"
-            )
-            + f"\t{self.trans_divisor}, // animYTransDivisor\n"
+            + (f"\t{hex(self.get_int_flags())}, " if is_dma_structure else f"\t{self.get_c_flags()}, ")
+            + f"// flags {self.get_flags_comment()}\n"
+            f"\t{self.trans_divisor}, // animYTransDivisor\n"
             f"\t{self.start_frame}, // startFrame\n"
             f"\t{self.loop_start}, // loopStart\n"
             f"\t{self.loop_end}, // loopEnd\n"
@@ -304,21 +298,21 @@ class SM64_Anim:
         else:
             return data, ptrs
 
-    def headers_to_c(self, is_dma_structure: bool, refresh_version: str) -> str:
+    def headers_to_c(self, is_dma_structure: bool) -> str:
         text_data = StringIO()
         for header in self.headers:
-            text_data.write(header.to_c(is_dma_structure=is_dma_structure, refresh_version=refresh_version))
+            text_data.write(header.to_c(is_dma_structure=is_dma_structure))
             text_data.write("\n")
         return text_data.getvalue()
 
-    def to_c(self, is_dma_structure: bool, refresh_version: str):
+    def to_c(self, is_dma_structure: bool):
         text_data = StringIO()
 
         table_data = None
         if self.data:
             table_data = self.data.to_c(is_dma_structure)
 
-        c_headers = self.headers_to_c(is_dma_structure, refresh_version)
+        c_headers = self.headers_to_c(is_dma_structure)
         if is_dma_structure:
             text_data.write(c_headers)
         text_data.write(table_data)
@@ -477,7 +471,7 @@ class SM64_AnimTable:
 
         return data, ptrs
 
-    def data_and_headers_to_c(self, is_dma: bool, refresh_version: str) -> list[os.PathLike, str]:
+    def data_and_headers_to_c(self, is_dma: bool) -> list[os.PathLike, str]:
         files_data: dict[str, str] = {}
 
         headers_set = self.get_sets()[0]
@@ -500,11 +494,8 @@ class SM64_AnimTable:
 
             if is_dma:
                 for same_reference_header in same_reference_headers:
-                    text_data.write(
-                        same_reference_header.to_c(is_dma_structure=is_dma, refresh_version=refresh_version)
-                    )
-                text_data.write("\n\n")
-
+                    text_data.write(same_reference_header.to_c(is_dma_structure=is_dma))
+                text_data.write("\n")
             for same_reference_header in same_reference_headers:
                 if same_reference_header.data:
                     value_table, indice_tables = create_tables([same_reference_header.data])
@@ -519,9 +510,7 @@ class SM64_AnimTable:
                     break
             if not is_dma:
                 for same_reference_header in same_reference_headers:
-                    text_data.write(
-                        same_reference_header.to_c(is_dma_structure=is_dma, refresh_version=refresh_version)
-                    )
+                    text_data.write(same_reference_header.to_c(is_dma_structure=is_dma))
                 text_data.write("\n")
 
             files_data[anim_header.file_name] = text_data.getvalue()
@@ -529,7 +518,7 @@ class SM64_AnimTable:
 
         return files_data
 
-    def data_and_headers_to_c_combined(self, refresh_version: str):
+    def data_and_headers_to_c_combined(self):
         text_data = StringIO()
 
         headers_set, data_set = self.get_sets()
@@ -542,7 +531,7 @@ class SM64_AnimTable:
                 text_data.write("\n")
 
         for anim_header in headers_set:
-            text_data.write(anim_header.to_c(refresh_version=refresh_version, values_override=self.values_reference))
+            text_data.write(anim_header.to_c(values_override=self.values_reference))
             text_data.write("\n")
 
         return text_data.getvalue()

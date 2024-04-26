@@ -1,14 +1,16 @@
 HEADER_SIZE = 0x18
 C_FLAGS = [
-    "ANIM_FLAG_NOLOOP",
-    "ANIM_FLAG_FORWARD",
-    "ANIM_FLAG_NO_ACCEL",
-    "ANIM_FLAG_HOR_TRANS",
-    "ANIM_FLAG_VERT_TRANS",
-    "ANIM_FLAG_DISABLED",
-    "ANIM_FLAG_NO_TRANS",
-    # "ANIM_FLAG_UNUSED",
+    ("ANIM_FLAG_NOLOOP",),
+    ("ANIM_FLAG_FORWARD", "ANIM_FLAG_BACKWARD"),
+    ("ANIM_FLAG_NO_ACCEL", "ANIM_FLAG_2"),
+    ("ANIM_FLAG_HOR_TRANS",),
+    ("ANIM_FLAG_VERT_TRANS",),
+    ("ANIM_FLAG_DISABLED", "ANIM_FLAG_5"),
+    ("ANIM_FLAG_NO_TRANS", "ANIM_FLAG_6"),
+    # Not used anywhere and has no functionality, let it be picked up as custom
+    # ("ANIM_FLAG_UNUSED", "ANIM_FLAG_7"),
 ]
+
 FLAG_PROPS = [
     "no_loop",
     "backwards",

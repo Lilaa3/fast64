@@ -143,18 +143,18 @@ def update_includes(
         data_path = os.path.join(dir_path, f"{group_name}.c")
         header_path = os.path.join(dir_path, f"{group_name}.h")
 
-        writeIfNotFound(data_path, f'\n#include "{dir_name}/anims/data.inc.c"', "")
+        writeIfNotFound(data_path, f'\n#include "{dir_name}/anims/data.inc.c"\n', "")
         if update_table:
-            writeIfNotFound(data_path, f'\n#include "{dir_name}/anims/table.inc.c"', "")
-            writeIfNotFound(header_path, f'\n#include "{dir_name}/anim_header.h"', "#endif")
+            writeIfNotFound(data_path, f'\n#include "{dir_name}/anims/table.inc.c"\n', "")
+            writeIfNotFound(header_path, f'\n#include "{dir_name}/anim_header.h"\n', "#endif")
     elif header_type == "Level":
         data_path = os.path.join(dir_path, "leveldata.c")
         header_path = os.path.join(dir_path, "header.h")
 
-        writeIfNotFound(data_path, f'\n#include "levels/{level_name}/{dir_name}/anims/data.inc.c"', "")
+        writeIfNotFound(data_path, f'\n#include "levels/{level_name}/{dir_name}/anims/data.inc.c"\n', "")
         if update_table:
-            writeIfNotFound(data_path, f'\n#include "levels/{level_name}/{dir_name}/anims/table.inc.c"', "")
-            writeIfNotFound(header_path, f'\n#include "levels/{level_name}/{dir_name}/anim_header.h"', "\n#endif")
+            writeIfNotFound(data_path, f'\n#include "levels/{level_name}/{dir_name}/anims/table.inc.c"\n', "")
+            writeIfNotFound(header_path, f'\n#include "levels/{level_name}/{dir_name}/anim_header.h"\n', "\n#endif")
 
 
 def write_anim_header(
