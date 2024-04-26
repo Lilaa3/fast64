@@ -145,7 +145,7 @@ class SM64_AnimHeader:
         flags_list: list[str] = []
         for index, flags in enumerate(C_FLAGS):
             if is_bit_active(self.flags, index):
-                flags_list.extend(flags)
+                flags_list.append("/".join(flags))
 
         return ", ".join(flags_list)
 
