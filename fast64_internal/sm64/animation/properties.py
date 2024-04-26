@@ -809,7 +809,11 @@ class SM64_TableElement(PropertyGroup):
     action: PointerProperty(name="Action", type=Action)
     use_main_variant: BoolProperty(name="Use Main Variant", default=True)
     variant: IntProperty(name="Variant", min=1, default=1)
-    expand_tab: BoolProperty()
+
+    reference: BoolProperty(name="Reference")
+    header_name: StringProperty(name="Header Reference", default="toad_seg6_anim_0600B66C")
+    header_address: StringProperty(name="Header Reference", default=hex(0x0600B75C))  # Toad animation 0
+    enum_name: StringProperty(name="Enum Name")
 
     @property
     def header(self) -> SM64_AnimHeaderProps:
@@ -825,6 +829,15 @@ class SM64_TableElement(PropertyGroup):
             self.variant = variant
 
     # UI
+    def draw_reference(self, layout: UILayout, export_type: str = "C", generate_enums: bool = False):
+        col = layout.column()
+        if export_type in {"C"}:
+            prop_split(col, self, "header_name", "Header Reference")
+            if generate_enums:
+                prop_split(col, self, "enum_name", "Enum Name")
+        else:
+            prop_split(col, self, "header_address", "Header Reference")
+
     def draw_props(
         self,
         layout: UILayout,
@@ -835,7 +848,14 @@ class SM64_TableElement(PropertyGroup):
         actor_name: str = "mario",
     ):
         col = layout.column()
-        col.prop(self, "action", text="")
+
+        row = col.row()
+        row.prop(self, "reference")
+        if self.reference:
+            self.draw_reference(col, export_type, generate_enums)
+            return
+
+        row.prop(self, "action", text="")
         if not self.action:
             col.box().label(text="Header´s action does not exist.", icon="ERROR")
             return
@@ -1080,7 +1100,14 @@ class SM64_AnimTableProps(PropertyGroup):
         move_down_op = move_down_col.operator(SM64_TableOperations.bl_idname, icon="TRIA_DOWN")
         move_down_op.array_index, move_down_op.type = table_index, "MOVE_DOWN"
 
-        table_element.draw_props(info_col, is_dma, self.export_seperately, export_type, self.generate_enums, actor_name)
+        table_element.draw_props(
+            info_col.box(),
+            is_dma,
+            self.export_seperately,
+            export_type,
+            self.generate_enums,
+            actor_name,
+        )
 
         if is_dma and not duplicate_index is None:
             multilineLabel(
