@@ -251,9 +251,9 @@ def update_table_file(
         file.write(text)
 
 
-def update_data_file(data_file_path, anim_file_names: list):
+def update_data_file(data_file_path: os.PathLike, anim_file_names: list, override_files: bool = False):
     print(f"Updating animation data file at {data_file_path}")
-    if not os.path.exists(data_file_path):
+    if not os.path.exists(data_file_path) or override_files:
         with open(data_file_path, "w", newline="\n"):
             pass  # Leave empty
 

@@ -278,7 +278,7 @@ class SM64_ExportAnimTable(Operator):
 
         actor_name = animation_props.actor_name
 
-        print("Reading table data")
+        print("Reading table data from fast64")
 
         is_dma = (sm64_props.binary_export and animation_props.is_binary_dma) or animation_props.header_type == "DMA"
         table: SM64_AnimTable = table_props.to_table_class(
@@ -293,7 +293,6 @@ class SM64_ExportAnimTable(Operator):
         )
 
         print("Exporting table data")
-
         if sm64_props.export_type == "C":
             header_type = animation_props.header_type
 
@@ -301,21 +300,28 @@ class SM64_ExportAnimTable(Operator):
 
             if header_type != "Custom":
                 applyBasicTweaks(abspath(sm64_props.decomp_path))
+            if header_type == "DMA":
+                table.prepare_for_dma()
+                print("DMA duplicates and naming handled ahead of time")
 
-            if header_type == "DMA" or table_props.export_seperately:
-                if header_type == "DMA":
-                    table.prepare_for_dma()
+            print("Creating all C data")
+            if table_props.export_seperately:
                 files_data = table.data_and_headers_to_c(header_type == "DMA")
-
-                print("Saving all generated files")
+                print("Saving all generated data files")
                 for file_name, file_data in files_data.items():
                     with open(os.path.join(anim_dir_path, file_name), "w", newline="\n") as file:
                         file.write(file_data)
-                    if header_type != "DMA":
-                        update_data_file(os.path.join(anim_dir_path, "data.inc.c"), [file_name])
+                print("All files exported")
+                if header_type != "DMA":
+                    update_data_file(
+                        os.path.join(anim_dir_path, "data.inc.c"), [files_data.keys()], table_props.override_files
+                    )
             else:
                 with open(os.path.join(anim_dir_path, "data.inc.c"), "w", newline="\n") as file:
-                    file.write(table.data_and_headers_to_c_combined())
+                    result = table.data_and_headers_to_c_combined()
+                    print("Saving generated data file")
+                    file.write(result)
+                    print("File exported")
 
             if header_type != "DMA":
                 write_anim_header(
