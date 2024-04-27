@@ -29,7 +29,15 @@ from ..sm64_utility import import_rom_checks
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_constants import level_pointers, insertableBinaryTypes
 
-from .classes import DMATableEntrie, SM64_Anim, SM64_AnimTable, RomReading
+from .classes import (
+    DMATableEntrie,
+    SM64_Anim,
+    SM64_AnimTable,
+    RomReading,
+    SM64_AnimHeader,
+    SM64_AnimData,
+    SM64_AnimTableElement,
+)
 from .importing import (
     import_binary_animations,
     animation_import_to_blender,
@@ -557,7 +565,8 @@ class SM64_ImportAnim(Operator):
         import_props: SM64_AnimImportProps = animation_props.importing
         table_props: SM64_AnimTableProps = animation_props.table
 
-        animations: dict[str, SM64_Anim] = {}
+        animation_data: dict[tuple[str, str], SM64_Anim] = {}
+        animation_headers: dict[str, SM64_AnimHeader] = {}
         table = SM64_AnimTable()
 
         if import_props.import_type == "Binary" or (
@@ -579,15 +588,14 @@ class SM64_ImportAnim(Operator):
             if import_props.binary_import_type != "DMA" and import_props.is_segmented_address:
                 address = decodeSegmentedAddr(address.to_bytes(4, "big"), segment_data)
             import_binary_animations(
-                data_reader=RomReading(
-                    data=rom_data, start_address=address, rom_data=rom_data, segment_data=segment_data
-                ),
-                import_type=import_props.binary_import_type,
-                animations=animations,
-                table_index=None if import_props.read_entire_table else import_props.mario_or_table_index,
-                ignore_null=import_props.ignore_null,
-                table=table,
-                assumed_bone_count=assumed_bone_count,
+                RomReading(data=rom_data, start_address=address, rom_data=rom_data, segment_data=segment_data),
+                import_props.binary_import_type,
+                animation_headers,
+                animation_data,
+                table,
+                None if import_props.read_entire_table else import_props.mario_or_table_index,
+                import_props.ignore_null,
+                assumed_bone_count,
             )
         elif import_props.import_type == "Insertable Binary":
             path = abspath(import_props.path)
@@ -595,23 +603,26 @@ class SM64_ImportAnim(Operator):
 
             with open(path, "rb") as insertable_file:
                 import_insertable_binary_animations(
-                    insertable_data_reader=RomReading(insertable_file.read(), 0, None, rom_data, segment_data),
-                    animations=animations,
-                    table=table,
-                    table_index=None if import_props.read_entire_table else import_props.mario_or_table_index,
-                    ignore_null=import_props.ignore_null,
-                    assumed_bone_count=assumed_bone_count,
+                    RomReading(insertable_file.read(), 0, None, rom_data, segment_data),
+                    animation_headers,
+                    animation_data,
+                    table,
+                    None if import_props.read_entire_table else import_props.mario_or_table_index,
+                    import_props.ignore_null,
+                    assumed_bone_count,
                 )
         elif import_props.import_type == "C":
             path = abspath(import_props.path)
             path_checks(path)
             import_c_animations(path, animations, table)
 
-        for data in animations.values():
+        if not table.elements:
+            table.elements = [SM64_AnimTableElement(header=header) for header in animation_headers.values()]
+        for animation in animation_data.values():
             animation_import_to_blender(
                 context.selected_objects[0],
                 sm64_props.blender_to_sm64_scale,
-                data,
+                animation,
                 animation_props.actor_name,
                 import_props.remove_name_footer,
                 import_props.use_custom_name,

@@ -167,17 +167,19 @@ def animation_import_to_blender(
 
 
 def import_animation_from_c_header(
-    animations: dict[str, SM64_Anim], header_initialization: Initialization, c_parser: CParser
+    animation_headers: dict[str, SM64_AnimHeader],
+    animation_data: dict[tuple[str, str], SM64_Anim],
+    header_initialization: Initialization,
+    c_parser: CParser,
 ):
     print(f"Reading animation {header_initialization.name}")
 
     header = SM64_AnimHeader()
     header.read_c(header_initialization)
 
-    data_key = f"{header.indice_reference}-{header.values_reference}"
-
-    if data_key in animations:
-        anim = animations[data_key]
+    data_key = (header.indice_reference, header.values_reference)
+    if data_key in animation_data:
+        anim = animation_data[data_key]
     else:
         anim = SM64_Anim()
         if header.indice_reference in c_parser.values_by_name and header.values_reference in c_parser.values_by_name:
@@ -187,7 +189,7 @@ def import_animation_from_c_header(
             anim.data.read_c(indices_array, values_array)
             header.data = anim.data
 
-        animations[data_key] = anim
+        animation_data[data_key] = anim
 
     header.header_variant = len(anim.headers)
     header.data = anim
@@ -196,7 +198,7 @@ def import_animation_from_c_header(
     return header
 
 
-def import_c_animations(path: str, animations: dict[str, SM64_Anim], table: SM64_AnimTable):
+def import_c_animations(path: str, animations: dict[tuple[str, str], SM64_AnimData], table: SM64_AnimTable):
     path_checks(path)
 
     if os.path.isfile(path):
@@ -247,28 +249,27 @@ def import_c_animations(path: str, animations: dict[str, SM64_Anim], table: SM64
 def import_binary_header(
     header_reader: RomReading,
     is_dma: bool,
-    animations: dict[str, SM64_Anim],
+    animation_headers: dict[str, SM64_AnimHeader],
+    animation_data: dict[tuple[str, str], SM64_Anim],
     assumed_bone_count: int | None = None,
 ):
     print(f"Reading binary header at address {hex(header_reader.address)}")
     header = SM64_AnimHeader()
     header.read_binary(header_reader=header_reader, is_dma=is_dma, assumed_bone_count=assumed_bone_count)
 
-    data_key = f"{header.indice_reference}-{header.values_reference}"
-    if data_key in animations:
-        anim = animations[data_key]
+    data_key = (header.indice_reference, header.values_reference)
+    if data_key in animation_data:
+        anim = animation_data[data_key]
     else:
         anim = SM64_Anim()
-        # TODO: if header.indice_reference < len(data) and header.values_reference < len(data):
-        if True:
-            anim.data = SM64_AnimData()
-            anim.data.read_binary(
-                indices_reader=header_reader.branch(header.indice_reference),
-                values_reader=header_reader.branch(header.values_reference),
-                bone_count=header.bone_count,
-            )
-            header.data = anim.data
-        animations[data_key] = anim
+        anim.data = SM64_AnimData()
+        anim.data.read_binary(
+            indices_reader=header_reader.branch(header.indice_reference),
+            values_reader=header_reader.branch(header.values_reference),
+            bone_count=header.bone_count,
+        )
+        header.data = anim.data
+        animation_data[data_key] = anim
 
     header.header_variant = len(anim.headers)
     header.data = anim
@@ -276,102 +277,27 @@ def import_binary_header(
     return header
 
 
-def import_binary_dma_animation(
-    dma_table_reader: RomReading,
-    animations: dict[str, SM64_Anim],
-    table: SM64_AnimTable,
-    table_index: int | None = None,
-    assumed_bone_count: int | None = None,
-) -> SM64_AnimHeader | None:
-    dma_table = SM64_DMATable()
-    dma_table.read_binary(dma_table_reader)
-    if table_index is not None:
-        if table_index < 0 or table_index >= len(dma_table.entries):
-            raise PluginError(f"Index {table_index} outside of defined table ({len(dma_table.entries)} entries).")
-
-        entrie: DMATableEntrie = dma_table.entries[table_index]
-        header = import_binary_header(
-            header_reader=dma_table_reader.branch(entrie.address),
-            is_dma=True,
-            animations=animations,
-            assumed_bone_count=assumed_bone_count,
-        )
-        table.elements.append(header)
-        return header
-    else:
-        for entrie in dma_table.entries:
-            header = import_binary_header(
-                header_reader=dma_table_reader.branch(entrie.address),
-                is_dma=True,
-                animations=animations,
-                assumed_bone_count=assumed_bone_count,
-            )
-            table.elements.append(header)
-
-
-def import_binary_table(
-    table_reader: RomReading,
-    animations: dict[str, SM64_Anim],
-    table: SM64_AnimTable,
-    ignore_null: bool,
-    table_index: int | None = None,
-    assumed_bone_count: int | None = None,
-):
-    for i in range(255):
-        ptr = table_reader.read_ptr()
-        if ptr is None and not ignore_null:
-            if table_index is not None:
-                raise PluginError("Table index not in table.")
-            break
-
-        is_correct_index = i == table_index
-        if table_index is None or is_correct_index:
-            header = import_binary_header(
-                header_reader=table_reader.branch(ptr),
-                is_dma=False,
-                animations=animations,
-                assumed_bone_count=assumed_bone_count,
-            )
-            table.elements.append(header)
-
-            if table_index is not None and is_correct_index:
-                break
-    else:
-        raise PluginError("Table address is invalid, iterated through 255 indices and no NULL was found.")
-
-
 def import_binary_animations(
     data_reader: RomReading,
     import_type: str,
-    animations: dict[str, SM64_Anim],
+    animation_headers: dict[str, SM64_AnimHeader],
+    animation_data: dict[tuple[str, str], SM64_Anim],
+    table: SM64_AnimTable,
     table_index: int | None = None,
     ignore_null: bool = False,
     assumed_bone_count: int | None = None,
-    table: SM64_AnimTable = SM64_AnimTable(),
 ):
     if import_type == "Table":
-        import_binary_table(
-            table_reader=data_reader,
-            animations=animations,
-            table=table,
-            table_index=table_index,
-            ignore_null=ignore_null,
-            assumed_bone_count=assumed_bone_count,
-        )
+        table.read_binary(data_reader, animation_headers, animation_data, table_index, ignore_null, assumed_bone_count)
     elif import_type == "DMA":
-        import_binary_dma_animation(
-            dma_table_reader=data_reader,
-            animations=animations,
-            table=table,
-            table_index=table_index,
-            assumed_bone_count=assumed_bone_count,
-        )
+        table.read_dma_binary(data_reader, animation_headers, animation_data, table_index, assumed_bone_count)
     elif import_type == "Animation":
-        import_binary_header(
-            header_reader=data_reader,
-            is_dma=False,
-            animations=animations,
-            assumed_bone_count=assumed_bone_count,
+        SM64_AnimHeader.read_binary(
+            data_reader,
+            animation_headers,
+            animation_data,
+            False,
+            assumed_bone_count,
         )
     else:
         raise PluginError("Unimplemented binary import type.")
@@ -379,7 +305,8 @@ def import_binary_animations(
 
 def import_insertable_binary_animations(
     insertable_data_reader: RomReading,
-    animations: dict[str, SM64_Anim],
+    animation_headers: dict[str, SM64_AnimHeader],
+    animation_data: dict[tuple[str, str], SM64_Anim],
     table_index: int = 0,
     ignore_null: bool = False,
     assumed_bone_count: int | None = None,
@@ -408,17 +335,10 @@ def import_insertable_binary_animations(
         import_binary_header(
             header_reader=data_reader,
             is_dma=False,
-            animations=animations,
+            animation_data=animation_data,
             assumed_bone_count=assumed_bone_count,
         )
     elif data_type == "Animation Table":
-        import_binary_table(
-            table_reader=data_reader,
-            animations=animations,
-            table=table,
-            table_index=table_index,
-            ignore_null=ignore_null,
-            assumed_bone_count=assumed_bone_count,
-        )
+        pass
     else:
         raise PluginError(f'Wrong animation data type "{data_type}".')

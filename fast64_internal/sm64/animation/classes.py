@@ -1,9 +1,10 @@
-from collections import OrderedDict
-import copy
-from io import StringIO
-from typing import Optional
 import dataclasses
+from io import StringIO
 import os
+import copy
+from typing import Optional
+
+from bpy.types import Action
 
 from ...utility import PluginError, is_bit_active
 from ..sm64_constants import MAX_U16
@@ -70,6 +71,7 @@ class SM64_AnimPair:
         values_reader = values_reader.branch(values_reader.start_address + offset)
         for _ in range(max_frame):
             self.values.append(values_reader.read_value(2, signed=True))
+        return self
 
     def read_c(self, max_frame: int, offset: int, values: list[int]):
         for frame in range(max_frame):
@@ -127,6 +129,7 @@ class SM64_AnimData:
             pair = SM64_AnimPair()
             pair.read_binary(indices_reader, values_reader)
             self.pairs.append(pair)
+        return self
 
     def read_c(self, indices_array: Initialization, values_array: Initialization):
         self.indices_file_name = os.path.basename(indices_array.origin_path)
@@ -143,6 +146,7 @@ class SM64_AnimData:
             pair.read_c(max_frame, offset, values)
             pair.clean_frames()
             self.pairs.append(pair)
+        return self
 
 
 @dataclasses.dataclass
@@ -245,30 +249,53 @@ class SM64_AnimHeader:
         # 0x18
         return data
 
+    @staticmethod
     def read_binary(
-        self,
         header_reader: RomReading,
+        animation_headers: dict[str, "SM64_AnimHeader"],
+        animation_data: dict[tuple[str, str], "SM64_Anim"],
         is_dma: bool = False,
         assumed_bone_count: int | None = None,
     ):
-        self.reference = header_reader.address
-        self.flags = header_reader.read_value(2, signed=False)  # /*0x00*/ s16 flags;
-        self.trans_divisor = header_reader.read_value(2)  # /*0x02*/ s16 animYTransDivisor;
-        self.start_frame = header_reader.read_value(2)  # /*0x04*/ s16 startFrame;
-        self.loop_start = header_reader.read_value(2)  # /*0x06*/ s16 loopStart;
-        self.loop_end = header_reader.read_value(2)  # /*0x08*/ s16 loopEnd;
+        if str(header_reader.start_address) in animation_headers:
+            return animation_headers[str(header_reader.start_address)]
+
+        header = SM64_AnimHeader()
+        animation_headers[str(header_reader.start_address)] = header
+        header.reference = header_reader.address
+        header.flags = header_reader.read_value(2, signed=False)  # /*0x00*/ s16 flags;
+        header.trans_divisor = header_reader.read_value(2)  # /*0x02*/ s16 animYTransDivisor;
+        header.start_frame = header_reader.read_value(2)  # /*0x04*/ s16 startFrame;
+        header.loop_start = header_reader.read_value(2)  # /*0x06*/ s16 loopStart;
+        header.loop_end = header_reader.read_value(2)  # /*0x08*/ s16 loopEnd;
         bone_count = header_reader.read_value(2)  # /*0x0A*/ s16 unusedBoneCount; (Unused in engine)
-        self.bone_count = bone_count if assumed_bone_count is None else assumed_bone_count
+        header.bone_count = bone_count if assumed_bone_count is None else assumed_bone_count
 
         # /*0x0C*/ const s16 *values;
         # /*0x10*/ const u16 *index;
         if is_dma:
             start_address = header_reader.start_address
-            self.values_reference = start_address + header_reader.read_value(4, signed=False)
-            self.indice_reference = start_address + header_reader.read_value(4, signed=False)
+            header.values_reference = start_address + header_reader.read_value(4, signed=False)
+            header.indice_reference = start_address + header_reader.read_value(4, signed=False)
         else:
-            self.values_reference = header_reader.read_ptr()
-            self.indice_reference = header_reader.read_ptr()
+            header.values_reference = header_reader.read_ptr()
+            header.indice_reference = header_reader.read_ptr()
+
+        data_key = (str(header.indice_reference), str(header.values_reference))
+        if not data_key in animation_data:
+            animation_data[data_key] = SM64_Anim(
+                SM64_AnimData().read_binary(
+                    indices_reader=header_reader.branch(header.indice_reference),
+                    values_reader=header_reader.branch(header.values_reference),
+                    bone_count=header.bone_count,
+                )
+            )
+        animation = animation_data[data_key]
+        header.data = animation.data
+        header.header_variant = len(animation.headers)
+        animation.headers.append(header)
+
+        return header
 
     def read_c(self, value: Initialization):
         self.file_name = os.path.basename(value.origin_path)
@@ -290,6 +317,7 @@ class SM64_AnimHeader:
                 },
             ),
         )
+        return self
 
 
 @dataclasses.dataclass
@@ -299,7 +327,7 @@ class SM64_Anim:
     file_name: str | None = ""
 
     # Imports
-    action_name: str = ""  # Used in the table class to prop function
+    action: Action | None = None  # Used in the table class to prop function
 
     def to_binary(self, is_dma: bool = False, start_address: int = 0) -> bytearray:
         data: bytearray = bytearray()
@@ -351,28 +379,29 @@ class SM64_Anim:
 
 @dataclasses.dataclass
 class DMATableEntrie:
-    offset: int
-    size: int
     address: int
+    size: int
+    offset: int
 
 
 @dataclasses.dataclass
 class SM64_DMATable:
     address_place_holder: int = 0
     entries: list[DMATableEntrie] = dataclasses.field(default_factory=list)
-
+    table_size: int = 0
     def read_binary(self, dma_table_reader: RomReading):
         num_entries = dma_table_reader.read_value(4)  # numEntries
         self.address_place_holder = dma_table_reader.read_value(4)  # addrPlaceholder
 
-        end_of_table = 0
+        self.table_size = 0
         for _ in range(num_entries):
             offset = dma_table_reader.read_value(4)
             size = dma_table_reader.read_value(4)
-            self.entries.append(DMATableEntrie(offset, size, dma_table_reader.start_address + offset))
+            self.entries.append(DMATableEntrie(dma_table_reader.start_address + offset, size, offset))
             end_of_entry = offset + size
-            if end_of_entry > end_of_table:
-                end_of_table = end_of_entry
+            if end_of_entry > self.table_size:
+                self.table_size = end_of_entry
+        return self
 
 
 def num_to_padded_hex(num: int):
@@ -541,6 +570,75 @@ class SM64_AnimTable:
         text_data.write("\tNULL,\n};\n")
 
         return text_data.getvalue()
+
+    def read_binary(
+        self,
+        table_reader: RomReading,
+        animation_headers: dict[str, SM64_AnimHeader],
+        animation_data: dict[tuple[str, str], SM64_Anim],
+        table_index: int | None = None,
+        ignore_null: bool = False,
+        assumed_bone_count: int | None = 0,
+    ) -> SM64_AnimHeader | None:
+        self.elements.clear()
+        for i in range(table_index + 1 if table_index is not None else 300):
+            ptr = table_reader.read_ptr()
+            if ptr is None and not ignore_null:
+                if table_index is not None:
+                    raise PluginError("Table index not in table.")
+                break
+            if table_index is not None and i != table_index:
+                continue
+
+            header = SM64_AnimHeader.read_binary(
+                table_reader.branch(ptr),
+                animation_headers,
+                animation_data,
+                False,
+                assumed_bone_count,
+            )
+            if table_index is None:
+                self.elements.append(SM64_AnimTableElement(table_reader.start_address, None, header))
+            else:
+                return header
+        else:
+            raise PluginError(
+                "Table address is most likely invalid, iterated through 300 elements and no NULL was found."
+            )
+        return self
+
+    def read_dma_binary(
+        self,
+        table_reader: RomReading,
+        animation_headers: dict[str, SM64_AnimHeader],
+        animation_data: dict[tuple[str, str], SM64_Anim],
+        table_index: int | None = None,
+        assumed_bone_count: int | None = None,
+    ):
+        dma_table = SM64_DMATable()
+        dma_table.read_binary(table_reader)
+        if table_index is not None:
+            assert table_index >= 0 and table_index < len(
+                dma_table.entries
+            ), f"Index {table_index} outside of defined table ({len(dma_table.entries)} entries)."
+            entrie: DMATableEntrie = dma_table.entries[table_index]
+            return SM64_AnimHeader.read_binary(
+                table_reader.branch(entrie.address),
+                animation_headers,
+                animation_data,
+                True,
+                assumed_bone_count,
+            )
+
+        for entrie in dma_table.entries:
+            header = SM64_AnimHeader.read_binary(
+                table_reader.branch(entrie.address),
+                animation_headers,
+                animation_data,
+                True,
+                assumed_bone_count,
+            )
+            self.elements.append(SM64_AnimTableElement(table_reader.start_address, None, header))
 
 
 def create_tables(anims_data: list[SM64_AnimData], values_name: str = None):

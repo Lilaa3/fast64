@@ -531,7 +531,6 @@ class SM64_ActionProps(PropertyGroup):
             if index != -1:
                 action_name = action_name[index + 5 :]
         action.name = action_name
-        animation.action_name = action.name
 
         indice_reference = main_header.indice_reference
         values_reference = main_header.values_reference
@@ -548,6 +547,7 @@ class SM64_ActionProps(PropertyGroup):
         self.values_table, self.values_address = values_reference, values_reference
 
         if animation.data:
+            animation.data.action = action  # Used in table class to prop
             self.custom_file_name = animation.data.indices_file_name
             self.custom_max_frame = max([1] + [len(x.values) for x in animation.data.pairs])
         else:
@@ -980,9 +980,9 @@ class SM64_AnimTableProps(PropertyGroup):
     def from_anim_table_class(self, table: SM64_AnimTable, clear_table: bool = False):
         if clear_table:
             self.elements.clear()
-        for header in table.elements:
+        for element in table.elements:
             self.elements.add()
-            self.elements[-1].set_variant(bpy.data.actions[header.data.action_name], header.header_variant)
+            self.elements[-1].set_variant(element.data.action, element.header.header_variant)
 
     def to_table_class(
         self,
