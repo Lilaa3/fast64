@@ -60,7 +60,7 @@ class SM64_AnimData:
     indices_file_name: str | int = ""
     values_file_name: str | int = ""
 
-    def to_c(self, is_dma_structure: bool):
+    def to_c(self, is_dma_structure: bool = False):
         text_data = StringIO()
 
         value_table, indice_tables = create_tables([self])
@@ -68,11 +68,11 @@ class SM64_AnimData:
 
         if is_dma_structure:
             text_data.write(indice_table.to_c())
-            text_data.write("\n\n")
+            text_data.write("\n")
             text_data.write(value_table.to_c())
         else:
             text_data.write(value_table.to_c())
-            text_data.write("\n\n")
+            text_data.write("\n")
             text_data.write(indice_table.to_c())
 
         return text_data.getvalue()
@@ -192,7 +192,7 @@ class SM64_AnimHeader:
             f"\tANIMINDEX_NUMPARTS({self.get_indice_reference(indice_override)}), // unusedBoneCount\n"
             f"\t{self.get_values_reference(values_override)}, // values\n"
             f"\t{self.get_indice_reference(indice_override)}, // index\n"
-            "\t0\n // length\n"
+            "\t0 // length\n"
             "};\n"
         )
 
@@ -491,47 +491,35 @@ class SM64_AnimTable:
 
     def data_and_headers_to_c(self, is_dma: bool) -> list[os.PathLike, str]:
         files_data: dict[str, str] = {}
-
-        headers_set = self.get_sets()[0]
-        headers_added = []
+        headers_set, headers_added = self.get_sets()[0], []
 
         text_data = StringIO()
-        for anim_header in headers_set:
-            if anim_header in headers_added:
+        for header in headers_set:
+            if header in headers_added:
                 continue
 
-            same_reference_headers = [anim_header]
+            ordered_headers: list[SM64_AnimHeader] = []
             for other_header in headers_set:
                 if (
-                    not anim_header is other_header
-                    and anim_header.indice_reference == other_header.indice_reference
-                    and anim_header.values_reference == other_header.values_reference
+                    header.indice_reference == other_header.indice_reference
+                    and header.values_reference == other_header.values_reference
                 ):
-                    same_reference_headers.append(other_header)
+                    ordered_headers.append(other_header)
                     headers_added.append(other_header)
 
+            header_data = "\n".join(
+                [ordered_header.to_c(is_dma_structure=is_dma) for ordered_header in ordered_headers]
+            )
             if is_dma:
-                for same_reference_header in same_reference_headers:
-                    text_data.write(same_reference_header.to_c(is_dma_structure=is_dma))
-                text_data.write("\n")
-            for same_reference_header in same_reference_headers:
-                if same_reference_header.data:
-                    value_table, indice_tables = create_tables([same_reference_header.data])
-                    if is_dma:
-                        text_data.write(indice_tables[0].to_c())
-                        text_data.write("\n")
-                    text_data.write(value_table.to_c())
-                    text_data.write("\n")
-                    if not is_dma:
-                        text_data.write(indice_tables[0].to_c())
-                        text_data.write("\n")
-                    break
+                text_data.write(header_data)
+                text_data.write("\n\n")
+            for ordered_header in ordered_headers:
+                if ordered_header.data:
+                    text_data.write(ordered_header.data.to_c(is_dma))
             if not is_dma:
-                for same_reference_header in same_reference_headers:
-                    text_data.write(same_reference_header.to_c(is_dma_structure=is_dma))
-                text_data.write("\n")
-
-            files_data[anim_header.file_name] = text_data.getvalue()
+                text_data.write(header_data)
+            text_data.write("\n")
+            files_data[header.file_name] = text_data.getvalue()
             text_data = StringIO()
 
         return files_data
