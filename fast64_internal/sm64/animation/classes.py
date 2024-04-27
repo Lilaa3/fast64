@@ -6,19 +6,25 @@ from typing import Optional
 
 from bpy.types import Action
 
-from ...utility import PluginError, is_bit_active
+from ...utility import PluginError, is_bit_active, to_s16
 from ..sm64_constants import MAX_U16
 
 from .utility import RomReading
-from .c_parser import Initialization
 from .constants import HEADER_SIZE, C_FLAGS
 
 
+@dataclasses.dataclass
+class CArrayDeclaration:
+    name: str = ""
+    path: os.PathLike = ""
+    values: list[str] = dataclasses.field(default_factory=str)
+
+
+@dataclasses.dataclass
 class SM64_ShortArray:
-    def __init__(self, name, signed):
-        self.name = name
-        self.data = []
-        self.signed = signed
+    name: str = ""
+    data: list[int] = dataclasses.field(default_factory=list)
+    signed: bool = False
 
     def to_binary(self):
         data = bytearray(0)
@@ -73,14 +79,6 @@ class SM64_AnimPair:
             self.values.append(values_reader.read_value(2, signed=True))
         return self
 
-    def read_c(self, max_frame: int, offset: int, values: list[int]):
-        for frame in range(max_frame):
-            value = values[offset + frame].value
-            value = int.from_bytes(
-                value.to_bytes(length=2, byteorder="big", signed=False), signed=True, byteorder="big"
-            )
-            self.values.append(value)
-
 
 @dataclasses.dataclass
 class SM64_AnimData:
@@ -131,20 +129,15 @@ class SM64_AnimData:
             self.pairs.append(pair)
         return self
 
-    def read_c(self, indices_array: Initialization, values_array: Initialization):
-        self.indices_file_name = os.path.basename(indices_array.origin_path)
-        self.values_file_name = os.path.basename(values_array.origin_path)
-
-        self.indice_reference = indices_array.name
-        self.values_reference = values_array.name
-
-        indices = indices_array.value.value
-        values = values_array.value.value
-        for i in range(0, len(indices), 2):
-            max_frame, offset = indices[i].value, indices[i + 1].value
+    def read_c(self, indice_decl: CArrayDeclaration, value_decl: CArrayDeclaration):
+        self.indice_reference = indice_decl.name
+        self.values_reference = value_decl.name
+        for i in range(0, len(indice_decl.values), 2):
             pair = SM64_AnimPair()
-            pair.read_c(max_frame, offset, values)
-            pair.clean_frames()
+            max_frame = int(indice_decl.values[i], 0)
+            offset = int(indice_decl.values[i + 1], 0)
+            for j in range(max_frame):
+                pair.values.append(to_s16(int(value_decl.values[offset + j], 0)))
             self.pairs.append(pair)
         return self
 
@@ -262,7 +255,7 @@ class SM64_AnimHeader:
 
         header = SM64_AnimHeader()
         animation_headers[str(header_reader.start_address)] = header
-        header.reference = header_reader.address
+        header.reference = header_reader.start_address
         header.flags = header_reader.read_value(2, signed=False)  # /*0x00*/ s16 flags;
         header.trans_divisor = header_reader.read_value(2)  # /*0x02*/ s16 animYTransDivisor;
         header.start_frame = header_reader.read_value(2)  # /*0x04*/ s16 startFrame;
@@ -297,27 +290,41 @@ class SM64_AnimHeader:
 
         return header
 
-    def read_c(self, value: Initialization):
-        self.file_name = os.path.basename(value.origin_path)
-        self.reference = value.name
+    @staticmethod
+    def read_c(
+        header_decl: CArrayDeclaration,
+        value_decls,
+        indices_decls,
+        animation_headers: dict[str, "SM64_AnimHeader"],
+        animation_data: dict[tuple[str, str], "SM64_Anim"],
+    ):
+        assert len(header_decl.values) == 9, "Header declarion does not have 9 elements"
+        if header_decl.name in animation_headers:
+            return animation_headers[header_decl.name]
 
-        value.set_attributes_from_struct(
-            self,
-            OrderedDict(
-                {
-                    "flags": "flags",
-                    "animYTransDivisor": "trans_divisor",
-                    "startFrame": "start_frame",
-                    "loopStart": "loop_start",
-                    "loopEnd": "loop_end",
-                    "unusedBoneCount": "bone_count",
-                    "values": "values_reference",
-                    "index": "indice_reference",
-                    "length": "length",
-                },
-            ),
-        )
-        return self
+        header = SM64_AnimHeader()
+        animation_headers[header_decl.name] = header
+        header.reference = header_decl.name
+        header.flags = header_decl.values[0]  # /*0x00*/ s16 flags;
+        header.trans_divisor = int(header_decl.values[1], 0)  # /*0x02*/ s16 animYTransDivisor;
+        header.start_frame = int(header_decl.values[2], 0)  # /*0x04*/ s16 startFrame;
+        header.loop_start = int(header_decl.values[3], 0)  # /*0x06*/ s16 loopStart;
+        header.loop_end = int(header_decl.values[4], 0)  # /*0x08*/ s16 loopEnd;
+        # bone_count = header_decl.values[5]  # /*0x0A*/ s16 unusedBoneCount; (Unused in engine)
+        header.values_reference = header_decl.values[6]  # /*0x0C*/ const s16 *values;
+        header.indice_reference = header_decl.values[7]  # /*0x10*/ const u16 *index;
+
+        data_key = (header.indice_reference, header.values_reference)
+        if not data_key in animation_data:
+            indices_decl = next(indice for indice in indices_decls if indice.name == header.indice_reference)
+            value_decl = next(value for value in value_decls if value.name == header.values_reference)
+            animation_data[data_key] = SM64_Anim(SM64_AnimData().read_c(indices_decl, value_decl))
+        animation = animation_data[data_key]
+        header.data = animation.data
+        header.header_variant = len(animation.headers)
+        animation.headers.append(header)
+
+        return header
 
 
 @dataclasses.dataclass

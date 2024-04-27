@@ -1,6 +1,6 @@
-from collections import OrderedDict
 import math
 import os
+import re
 
 import bpy
 from bpy.types import Object, Action
@@ -15,12 +15,11 @@ from .classes import (
     SM64_DMATable,
     DMATableEntrie,
     SM64_Anim,
-    SM64_AnimData,
+    CArrayDeclaration,
     SM64_AnimHeader,
     SM64_AnimPair,
     SM64_AnimTable,
 )
-from .c_parser import CParser, EnumIndexedValue, Initialization
 
 
 def value_distance(e1: Euler, e2: Euler) -> float:
@@ -166,84 +165,69 @@ def animation_import_to_blender(
     armature_obj.animation_data.action = action
 
 
-def import_animation_from_c_header(
+def find_decls(
+    c_data: str,
+    search_text: str,
+    file_path: os.PathLike,
+    decl_list: list[CArrayDeclaration],
+):
+    start_index = c_data.find(search_text)
+    while start_index != -1:
+        decl_index = c_data.find("{", start_index)
+        end_index = c_data.find("};", start_index)
+        name = c_data[start_index + len(search_text) : decl_index]
+        name = name.replace("[]", "").replace("=", "").rstrip().lstrip()
+        values = [value.rstrip().lstrip() for value in c_data[decl_index + 1 : end_index].split(",")]
+        if values[-1] == "":
+            values = values[:-1]
+        decl_list.append(CArrayDeclaration(name, file_path, values))
+        start_index = c_data.find(search_text, end_index)
+
+
+pattern = re.compile(r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"', re.DOTALL | re.MULTILINE)
+
+
+def comment_remover(text: str):
+    def replacer(match):
+        s = match.group(0)
+        if s.startswith("/"):
+            return " "  # note: a space and not an empty string
+        else:
+            return s
+
+    return re.sub(pattern, replacer, text)
+
+
+def import_c_animations(
+    path: os.PathLike,
     animation_headers: dict[str, SM64_AnimHeader],
     animation_data: dict[tuple[str, str], SM64_Anim],
-    header_initialization: Initialization,
-    c_parser: CParser,
+    table: SM64_AnimTable,
 ):
-    print(f"Reading animation {header_initialization.name}")
-
-    header = SM64_AnimHeader()
-    header.read_c(header_initialization)
-
-    data_key = (header.indice_reference, header.values_reference)
-    if data_key in animation_data:
-        anim = animation_data[data_key]
-    else:
-        anim = SM64_Anim()
-        if header.indice_reference in c_parser.values_by_name and header.values_reference in c_parser.values_by_name:
-            indices_array = c_parser.values_by_name[header.indice_reference]
-            values_array = c_parser.values_by_name[header.values_reference]
-            anim.data = SM64_AnimData()
-            anim.data.read_c(indices_array, values_array)
-            header.data = anim.data
-
-        animation_data[data_key] = anim
-
-    header.header_variant = len(anim.headers)
-    header.data = anim
-    anim.headers.append(header)
-
-    return header
-
-
-def import_c_animations(path: str, animations: dict[tuple[str, str], SM64_AnimData], table: SM64_AnimTable):
     path_checks(path)
 
+    header_decls, value_decls, indices_decls, table_decls = [], [], [], []
+
     if os.path.isfile(path):
-        file_paths: list[str] = [path]
-    elif os.path.isdir(path):
-        file_names = sorted(os.listdir(path))
-        file_paths: list[str] = [os.path.join(path, fileName) for fileName in file_names]
-
-    c_parser = CParser()
-
-    for filepath in file_paths:
-        print(f"Reading file {filepath}")
-        try:
-            with open(filepath, "r") as file:
-                c_parser.read_c_text(file.read(), filepath)
-        except Exception as e:
-            print(f"Exception while attempting to parse file {filepath}: {str(e)}")
-            # Should I raise here?
-
-    print("All files have been parsed")
-
-    table_initialization: None | Initialization = None
-    all_headers: OrderedDict[SM64_AnimHeader] = OrderedDict()
-
-    for value in c_parser.values:
-        if not "Animation" in value.keywords:
-            continue
-
-        if value.pointer_depth == 1:  # Table
-            table_initialization = value
-        else:
-            header = import_animation_from_c_header(animations, value, c_parser)
-            all_headers[header.reference] = header
-
-    if table_initialization:  # If a table was found
-        for element in table_initialization.value.value:
-            if isinstance(element, EnumIndexedValue):
-                name = element.value.value[1:]
-            else:
-                name = element.value[1:]
-            if name in all_headers:
-                table.elements.append(all_headers[name])
-        table.name = table_initialization.name
+        file_paths = [path]
     else:
-        table.elements.extend(all_headers.values())
+        file_paths = sorted(os.listdir(path))
+        file_paths = [os.path.join(path, file_name) for file_name in file_paths]
+
+    for file_path in file_paths:
+        print("Reading from: " + file_path)
+        with open(file_path, "r", newline="\n") as file:
+            c_data = comment_remover(file.read())
+
+        find_decls(c_data, "static const struct Animation ", file_path, header_decls)
+        find_decls(c_data, "static const u16 ", file_path, indices_decls)
+        find_decls(c_data, "static const s16 ", file_path, value_decls)
+        find_decls(c_data, "const struct Animation *const ", file_path, table_decls)
+
+    for header_decl in header_decls:
+        header = SM64_AnimHeader().read_c(header_decl, value_decls, indices_decls, animation_headers, animation_data)
+    assert len(table_decls) <= 1, "More than 1 table declaration"
+    pass
 
 
 def import_binary_animations(

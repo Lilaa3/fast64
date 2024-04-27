@@ -41,7 +41,6 @@ from .classes import (
 from .importing import (
     import_binary_animations,
     animation_import_to_blender,
-    import_binary_header,
     import_c_animations,
     import_insertable_binary_animations,
 )
@@ -614,7 +613,7 @@ class SM64_ImportAnim(Operator):
         elif import_props.import_type == "C":
             path = abspath(import_props.path)
             path_checks(path)
-            import_c_animations(path, animations, table)
+            import_c_animations(path, animation_headers, animation_data, table)
 
         if not table.elements:
             table.elements = [SM64_AnimTableElement(header=header) for header in animation_headers.values()]

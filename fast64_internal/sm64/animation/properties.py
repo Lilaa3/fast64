@@ -526,6 +526,9 @@ class SM64_ActionProps(PropertyGroup):
             action_name = main_header.file_name.rstrip(".c").rstrip(".inc")
         elif is_from_binary:
             action_name = hex(main_header.reference)
+        else:
+            action_name = main_header.reference
+
         if remove_name_footer:
             index = action_name.find("anim_")
             if index != -1:
