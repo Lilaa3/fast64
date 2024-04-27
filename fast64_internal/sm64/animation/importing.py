@@ -246,37 +246,6 @@ def import_c_animations(path: str, animations: dict[tuple[str, str], SM64_AnimDa
         table.elements.extend(all_headers.values())
 
 
-def import_binary_header(
-    header_reader: RomReading,
-    is_dma: bool,
-    animation_headers: dict[str, SM64_AnimHeader],
-    animation_data: dict[tuple[str, str], SM64_Anim],
-    assumed_bone_count: int | None = None,
-):
-    print(f"Reading binary header at address {hex(header_reader.address)}")
-    header = SM64_AnimHeader()
-    header.read_binary(header_reader=header_reader, is_dma=is_dma, assumed_bone_count=assumed_bone_count)
-
-    data_key = (header.indice_reference, header.values_reference)
-    if data_key in animation_data:
-        anim = animation_data[data_key]
-    else:
-        anim = SM64_Anim()
-        anim.data = SM64_AnimData()
-        anim.data.read_binary(
-            indices_reader=header_reader.branch(header.indice_reference),
-            values_reader=header_reader.branch(header.values_reference),
-            bone_count=header.bone_count,
-        )
-        header.data = anim.data
-        animation_data[data_key] = anim
-
-    header.header_variant = len(anim.headers)
-    header.data = anim
-    anim.headers.append(header)
-    return header
-
-
 def import_binary_animations(
     data_reader: RomReading,
     import_type: str,
