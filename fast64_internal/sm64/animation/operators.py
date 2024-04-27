@@ -285,11 +285,11 @@ class SM64_ExportAnimTable(Operator):
             armature_obj,
             sm64_props.blender_to_sm64_scale,
             animation_props.quick_read,
-            not is_dma and not sm64_props.binary_export,
+            is_dma or sm64_props.binary_export,
             not is_dma,
+            actor_name,
             not is_dma and not sm64_props.binary_export and table_props.generate_enums,
             sm64_props.binary_export,
-            actor_name,
         )
 
         print("Exporting table data")
@@ -403,10 +403,11 @@ class SM64_ExportAnim(Operator):
             action,
             armature_obj,
             sm64_props.blender_to_sm64_scale,
-            sm64_props.export_type != "C" or animation_props.header_type == "DMA",
-            sm64_props.export_type == "C" or not animation_props.is_binary_dma,
             animation_props.quick_read,
+            sm64_props.binary_export or animation_props.header_type == "DMA",
+            not sm64_props.binary_export or not animation_props.is_binary_dma,
             actor_name,
+            not sm64_props.binary_export and table_props.generate_enums,
         )
         if sm64_props.export_type == "C":
             header_type = animation_props.header_type

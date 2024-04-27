@@ -206,11 +206,13 @@ class SM64_AnimHeaderProps(PropertyGroup):
         values_reference: Optional[int | str] = None,
         indice_reference: Optional[int | str] = None,
         actor_name: str | None = "mario",
+        generate_enums: bool = False,
         file_name: str | None = "anim_00.inc.c",
     ):
         header = SM64_AnimHeader()
         header.reference = self.get_anim_name(actor_name, action)
-        header.enum_reference = self.get_anim_enum(actor_name, action)
+        if generate_enums:
+            header.enum_reference = self.get_anim_enum(actor_name, action)
 
         if self.set_custom_flags:
             if use_int_flags:
@@ -475,10 +477,11 @@ class SM64_ActionProps(PropertyGroup):
         action: Action,
         armature_obj: Object,
         blender_to_sm64_scale: float,
+        quick_read: bool,
         can_use_references: bool,
         use_int_flags: bool,
-        quick_read: bool,
         actor_name: str = "mario",
+        generate_enums: bool = False,
     ):
         animation = SM64_Anim()
         animation.file_name = self.get_anim_file_name(action)
@@ -503,6 +506,7 @@ class SM64_ActionProps(PropertyGroup):
                     values_reference,
                     indice_reference,
                     actor_name,
+                    generate_enums,
                     animation.file_name,
                 )
             )
@@ -854,10 +858,11 @@ class SM64_TableElementProps(PropertyGroup):
         col = layout.column()
 
         row = col.row()
-        row.prop(self, "reference")
-        if self.reference:
-            self.draw_reference(col, export_type, generate_enums)
-            return
+        if not is_dma:
+            row.prop(self, "reference")
+            if self.reference:
+                self.draw_reference(col, export_type, generate_enums)
+                return
 
         row.prop(self, "action_prop", text="")
         if not self.action_prop:
@@ -991,11 +996,11 @@ class SM64_AnimTableProps(PropertyGroup):
         armature_obj: Object,
         blender_to_sm64_scale: float,
         quick_read: bool,
-        use_int_flags: bool,
-        can_use_references: bool,
-        generate_enums: bool,
-        use_addresses_for_references: bool,
+        use_int_flags: bool = False,
+        can_use_references: bool = True,
         actor_name: str = "mario",
+        generate_enums: bool = False,
+        use_addresses_for_references: bool = False,
     ):
         table = SM64_AnimTable()
         table.reference = self.get_anim_table_name(actor_name)
@@ -1049,6 +1054,7 @@ class SM64_AnimTableProps(PropertyGroup):
                     values_reference,
                     indice_reference,
                     actor_name,
+                    generate_enums,
                     action_props.get_anim_file_name(action),
                 ),
             )
