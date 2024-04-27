@@ -23,8 +23,8 @@ class CArrayDeclaration:
 @dataclasses.dataclass
 class SM64_ShortArray:
     name: str = ""
-    data: list[int] = dataclasses.field(default_factory=list)
     signed: bool = False
+    data: list[int] = dataclasses.field(default_factory=list)
 
     def to_binary(self):
         data = bytearray(0)
