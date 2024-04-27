@@ -15,9 +15,9 @@ FLAG_PROPS = [
     "no_loop",
     "backwards",
     "no_acceleration",
-    "disabled",
     "only_horizontal_trans",
     "only_vertical_trans",
+    "disabled",
     "no_trans",
 ]
 

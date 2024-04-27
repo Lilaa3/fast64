@@ -569,8 +569,8 @@ class SM64_ActionProps(PropertyGroup):
     # UI
     def draw_variant(
         self,
-        action: Action,
         layout: UILayout,
+        action: Action,
         header: SM64_AnimHeaderProps,
         array_index: int,
         draw_table_operations: bool = True,
@@ -834,6 +834,7 @@ class SM64_TableElementProps(PropertyGroup):
         if variant == 0:
             self.use_main_variant = True
         else:
+            self.use_main_variant = False
             self.variant = variant
 
     # UI
@@ -916,7 +917,7 @@ class SM64_TableElementProps(PropertyGroup):
                 draw_table_operations=False,
                 draw_names=c_not_dma,
                 draw_references=not is_dma,
-                draw_file_name=(c_not_dma or export_type == "Insertable Binary") and export_seperately,
+                draw_file_name=c_not_dma and export_seperately,
                 actor_name=actor_name,
                 generate_enums=generate_enums,
                 is_dma=is_dma,
@@ -1153,14 +1154,12 @@ class SM64_AnimTableProps(PropertyGroup):
         if draw_non_exclusive_settings:
             self.draw_non_exclusive_settings(col, export_type, actor_name)
 
-        if export_type == "Insertable Binary" or (export_type == "C" and not is_dma):
+        if export_type == "Insertable Binary":
+            prop_split(col, self, "insertable_file_name", "File Name")
+        elif export_type == "C" and not is_dma:
             col.prop(self, "export_seperately")
             if self.export_seperately:
-                if export_type != "Insertable Binary":
-                    col.prop(self, "override_files_prop")
-            else:
-                if export_type == "Insertable Binary":
-                    prop_split(col, self, "insertable_file_name", "File Name")
+                col.prop(self, "override_files_prop")
 
         if self.elements:
             col.operator(SM64_ExportAnimTable.bl_idname, icon="EXPORT")

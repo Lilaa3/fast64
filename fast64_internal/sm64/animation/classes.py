@@ -268,6 +268,7 @@ class SM64_AnimHeader:
 class SM64_Anim:
     data: SM64_AnimData = None
     headers: list[SM64_AnimHeader] = dataclasses.field(default_factory=list)
+    file_name: str | None = ""
 
     # Imports
     action_name: str = ""  # Used in the table class to prop function
@@ -307,15 +308,13 @@ class SM64_Anim:
     def to_c(self, is_dma_structure: bool):
         text_data = StringIO()
 
-        table_data = None
-        if self.data:
-            table_data = self.data.to_c(is_dma_structure)
-
         c_headers = self.headers_to_c(is_dma_structure)
         if is_dma_structure:
             text_data.write(c_headers)
-        text_data.write(table_data)
-        text_data.write("\n")
+            text_data.write("\n")
+        if self.data:
+            text_data.write(self.data.to_c(is_dma_structure))
+            text_data.write("\n")
         if not is_dma_structure:
             text_data.write(c_headers)
 
@@ -391,6 +390,22 @@ class SM64_AnimTable:
             if element.header and not element.header in headers_set:
                 headers_set.append(element.header)
         return headers_set, data_set
+
+    def get_seperate_anims(self):
+        anims = []
+        headers_set, headers_added = self.get_sets()[0], []
+        for header in headers_set:
+            if header in headers_added:
+                continue
+
+            ordered_headers: list[SM64_AnimHeader] = []
+            for other_header in headers_set:
+                if other_header.data == header.data:
+                    ordered_headers.append(other_header)
+                    headers_added.append(other_header)
+
+            anims.append(SM64_Anim(header.data, ordered_headers, header.file_name))
+        return anims
 
     def prepare_for_dma(self):
         elements = []
@@ -491,36 +506,10 @@ class SM64_AnimTable:
 
     def data_and_headers_to_c(self, is_dma: bool) -> list[os.PathLike, str]:
         files_data: dict[str, str] = {}
-        headers_set, headers_added = self.get_sets()[0], []
+        anims = self.get_seperate_anims()
 
-        text_data = StringIO()
-        for header in headers_set:
-            if header in headers_added:
-                continue
-
-            ordered_headers: list[SM64_AnimHeader] = []
-            for other_header in headers_set:
-                if (
-                    header.indice_reference == other_header.indice_reference
-                    and header.values_reference == other_header.values_reference
-                ):
-                    ordered_headers.append(other_header)
-                    headers_added.append(other_header)
-
-            header_data = "\n".join(
-                [ordered_header.to_c(is_dma_structure=is_dma) for ordered_header in ordered_headers]
-            )
-            if is_dma:
-                text_data.write(header_data)
-                text_data.write("\n\n")
-            for ordered_header in ordered_headers:
-                if ordered_header.data:
-                    text_data.write(ordered_header.data.to_c(is_dma))
-            if not is_dma:
-                text_data.write(header_data)
-            text_data.write("\n")
-            files_data[header.file_name] = text_data.getvalue()
-            text_data = StringIO()
+        for anim in anims:
+            files_data[anim.file_name] = anim.to_c(is_dma_structure=is_dma)
 
         return files_data
 
