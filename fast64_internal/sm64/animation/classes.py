@@ -13,6 +13,34 @@ from .c_parser import Initialization
 from .constants import HEADER_SIZE, C_FLAGS
 
 
+class SM64_ShortArray:
+    def __init__(self, name, signed):
+        self.name = name
+        self.data = []
+        self.signed = signed
+
+    def to_binary(self):
+        data = bytearray(0)
+        for short in self.data:
+            data += short.to_bytes(2, "big", signed=True)
+        return data
+
+    def to_c(self):
+        data = StringIO()
+        data.write(f"static const {'s' if self.signed else 'u'}16 {self.name}[] = {{\n\t")
+
+        wrap_counter = 0
+        for short in self.data:
+            u_short = int.from_bytes(short.to_bytes(2, "big", signed=True), "big", signed=False)
+            data.write(f"0x{format(u_short, '04X')}, ")
+            wrap_counter += 1
+            if wrap_counter > 8:
+                data.write("\n\t")
+                wrap_counter = 0
+        data.write("\n};\n")
+        return data.getvalue()
+
+
 @dataclasses.dataclass
 class SM64_AnimPair:
     values: list[int] = dataclasses.field(default_factory=list)
@@ -407,8 +435,9 @@ class SM64_AnimTable:
             anims.append(SM64_Anim(header.data, ordered_headers, header.file_name))
         return anims
 
-    def prepare_for_dma(self):
-        elements = []
+    def get_seperate_anims_dma(self):
+        anims = []
+
         # For creating duplicates
         data_already_added = []
         headers_already_added = []
@@ -421,15 +450,13 @@ class SM64_AnimTable:
             assert element.data, f"Data in table element {i} is not set."
             header_nums.append(i)
 
-            header = element.header
+            header, data = element.header, element.data
             if header in headers_already_added:
                 header = copy.copy(header)
             header.reference = f"anim_{num_to_padded_hex(i)}"
             headers_already_added.append(header)
 
             included_headers.append(header)
-            if header.data:
-                data = header.data
 
             # If not at the end of the list and the next element doesn´t have different data
             if (i < len(self.elements) - 1) and self.elements[i + 1].data is data:
@@ -437,80 +464,38 @@ class SM64_AnimTable:
 
             name = f'anim_{"_".join([f"{num_to_padded_hex(num)}" for num in header_nums])}'
             file_name = f"{name}.inc.c"
-            if data:
-                if data in data_already_added:
-                    data = copy.copy(data)
-                data_already_added.append(data)
+            if data in data_already_added:
+                data = copy.copy(data)
+            data_already_added.append(data)
 
-                data.indice_reference, data.values_reference, data.file_name = (
-                    f"{name}_indices",
-                    f"{name}_values",
-                    file_name,
-                )
+            data.indice_reference, data.values_reference, data.file_name = (
+                f"{name}_indices",
+                f"{name}_values",
+                file_name,
+            )
             # Normal names are possible (order goes by line and file) but would break convention
             for included_header in included_headers:
                 included_header.file_name = file_name
-                included_header.indice_reference = f"{name}_indices"
-                included_header.values_reference = f"{name}_values"
+                included_header.indice_reference = data.indice_reference
+                included_header.values_reference = data.values_reference
                 included_header.data = data
-                elements.append(SM64_AnimTableElement(header=included_header))
+            anims.append(SM64_Anim(data, included_headers, file_name))
 
-            data = None
             header_nums.clear()
             included_headers.clear()
 
-        self.elements = elements
+        return anims
 
-    def to_binary(self, is_dma: bool = False, start_address: int = 0):
-        # TODO: Handle dma exports
+    def to_binary_dma(self, start_address: int = 0):
         data: bytearray = bytearray()
         ptrs: list[int] = []
-        headers_set, data_set = self.get_sets()
-
-        headers_offset = start_address + len(self.elements) * 4 + 4  # Table length
-        headers_length = len(headers_set) * HEADER_SIZE
-        if data_set:
-            value_table, indice_tables = create_tables(data_set, "values")
-            indice_tables_offset = headers_offset + headers_length
-            values_table_offset = indice_tables_offset + sum(
-                [len(indice_table.data) * 2 for indice_table in indice_tables]
-            )
-
-        for anim_header in self.elements:  # Add the animation table
-            ptrs.append(len(data))
-            header_offset = headers_offset + (headers_set.index(anim_header) * HEADER_SIZE)
-            data.extend(header_offset.to_bytes(4, byteorder="big", signed=False))
-        data.extend(bytearray([0x00] * 4))  # NULL delimiter
-
-        for anim_header in self.elements:  # Add the headers
-            if not anim_header.data:
-                data.extend(anim_header.to_binary())
-                continue
-            ptrs.extend([start_address + len(data) + 12, start_address + len(data) + 16])
-            indice_offset = indice_tables_offset + sum(
-                len(indice_table.data) * 2 for indice_table in indice_tables[: data_set.index(anim_header.data)]
-            )
-            data.extend(
-                anim_header.to_binary(
-                    values_table_offset,
-                    indice_offset,
-                )
-            )
-
-        if data_set:  # Add the data
-            for indice_table in indice_tables:
-                data.extend(indice_table.to_binary())
-            data.extend(value_table.to_binary())
-
+        self.get_seperate_anims_dma()
         return data, ptrs
 
     def data_and_headers_to_c(self, is_dma: bool) -> list[os.PathLike, str]:
         files_data: dict[str, str] = {}
-        anims = self.get_seperate_anims()
-
-        for anim in anims:
+        for anim in self.get_seperate_anims_dma() if is_dma else self.get_seperate_anims():
             files_data[anim.file_name] = anim.to_c(is_dma_structure=is_dma)
-
         return files_data
 
     def data_and_headers_to_c_combined(self):
@@ -556,34 +541,6 @@ class SM64_AnimTable:
         text_data.write("\tNULL,\n};\n")
 
         return text_data.getvalue()
-
-
-class SM64_ShortArray:
-    def __init__(self, name, signed):
-        self.name = name
-        self.data = []
-        self.signed = signed
-
-    def to_binary(self):
-        data = bytearray(0)
-        for short in self.data:
-            data += short.to_bytes(2, "big", signed=True)
-        return data
-
-    def to_c(self):
-        data = StringIO()
-        data.write(f"static const {'s' if self.signed else 'u'}16 {self.name}[] = {{\n\t")
-
-        wrap_counter = 0
-        for short in self.data:
-            u_short = int.from_bytes(short.to_bytes(2, "big", signed=True), "big", signed=False)
-            data.write(f"0x{format(u_short, '04X')}, ")
-            wrap_counter += 1
-            if wrap_counter > 8:
-                data.write("\n\t")
-                wrap_counter = 0
-        data.write("\n};\n")
-        return data.getvalue()
 
 
 def create_tables(anims_data: list[SM64_AnimData], values_name: str = None):

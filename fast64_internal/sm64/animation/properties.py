@@ -138,7 +138,6 @@ class SM64_AnimHeaderProps(PropertyGroup):
     custom_enum: StringProperty(name="Enum", default="ANIM_00")
 
     # Binary
-    dma_entry: IntProperty(name="DMA Entrie")
     overwrite0x28: BoolProperty(name="Overwrite 0x28 behaviour command", default=True)
     setListIndex: BoolProperty(name="Set List Entry", default=True)
     addr0x27: StringProperty(name="0x27 Command Address", default=hex(2215168))
@@ -401,7 +400,6 @@ class SM64_ActionProps(PropertyGroup):
     indices_address: StringProperty(name="Indices Table")  # TODO: Toad example
     values_address: StringProperty(name="Value Table")
 
-    dma_entry: IntProperty(name="DMA Entry Position")
     start_address: StringProperty(name="Start Address", default=hex(18712880))
     end_address: StringProperty(name="End Address", default=hex(18874112))
 
@@ -720,7 +718,6 @@ class SM64_ActionProps(PropertyGroup):
         self,
         layout: UILayout,
         action: Action,
-        header_scale_y: float = 0.8,
         specific_variant: int | None = None,
         draw_export_operation: bool = True,
         draw_table_operations: bool = True,
@@ -745,9 +742,7 @@ class SM64_ActionProps(PropertyGroup):
             add_op.action_name = action.name
 
         if export_type == "Binary":
-            if is_dma:
-                prop_split(col, self, "dma_entry", "DMA Entry Position")
-            else:
+            if not is_dma:
                 prop_split(col, self, "start_address", "Start Address")
                 prop_split(col, self, "end_address", "End Address")
         elif draw_file_name:
@@ -774,8 +769,6 @@ class SM64_ActionProps(PropertyGroup):
                 box.label(text=f"{action.fast64.sm64.get_max_frame(action)}")
         col.separator()
 
-        col = col.column()
-        col.scale_y = header_scale_y
         if specific_variant is not None:
             self.headers[specific_variant].draw_props(
                 col,
@@ -911,7 +904,6 @@ class SM64_TableElementProps(PropertyGroup):
                 layout=prop_box,
                 action=self.action_prop,
                 export_type=export_type,
-                header_scale_y=1.0,
                 specific_variant=variant,
                 draw_export_operation=False,
                 draw_table_operations=False,
@@ -1532,14 +1524,17 @@ class SM64_AnimProps(PropertyGroup):
 
         col.prop(self, "selected_action")
         if self.selected_action:
-            self.selected_action.fast64.sm64.draw_props(
+            action_props: SM64_ActionProps = self.selected_action.fast64.sm64
+            action_props.draw_props(
                 layout=col,
                 action=self.selected_action,
-                draw_references=export_type == "C" or not is_dma,
+                draw_references=export_type in {"C"} or not is_dma,
                 export_type=export_type,
                 actor_name=self.actor_name,
                 generate_enums=self.table.generate_enums,
                 draw_table_index=self.table.update_table,
+                draw_names=export_type in {"C"},
+                is_dma=is_dma,
             )
 
     def draw_table_properties(self, layout: UILayout, is_dma: bool, export_type: str):

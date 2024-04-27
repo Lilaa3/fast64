@@ -300,9 +300,6 @@ class SM64_ExportAnimTable(Operator):
 
             if header_type != "Custom":
                 applyBasicTweaks(abspath(sm64_props.decomp_path))
-            if header_type == "DMA":
-                table.prepare_for_dma()
-                print("DMA duplicates and naming handled ahead of time")
 
             print("Creating all C data")
             if table_props.export_seperately:
