@@ -263,7 +263,6 @@ class SM64_AnimHeader:
         header.loop_end = header_reader.read_value(2)  # /*0x08*/ s16 loopEnd;
         bone_count = header_reader.read_value(2)  # /*0x0A*/ s16 unusedBoneCount; (Unused in engine)
         header.bone_count = bone_count if assumed_bone_count is None else assumed_bone_count
-
         # /*0x0C*/ const s16 *values;
         # /*0x10*/ const u16 *index;
         if is_dma:
@@ -305,19 +304,49 @@ class SM64_AnimHeader:
         header = SM64_AnimHeader()
         animation_headers[header_decl.name] = header
         header.reference = header_decl.name
-        header.flags = header_decl.values[0]  # /*0x00*/ s16 flags;
-        header.trans_divisor = int(header_decl.values[1], 0)  # /*0x02*/ s16 animYTransDivisor;
-        header.start_frame = int(header_decl.values[2], 0)  # /*0x04*/ s16 startFrame;
-        header.loop_start = int(header_decl.values[3], 0)  # /*0x06*/ s16 loopStart;
-        header.loop_end = int(header_decl.values[4], 0)  # /*0x08*/ s16 loopEnd;
-        # bone_count = header_decl.values[5]  # /*0x0A*/ s16 unusedBoneCount; (Unused in engine)
-        header.values_reference = header_decl.values[6]  # /*0x0C*/ const s16 *values;
-        header.indice_reference = header_decl.values[7]  # /*0x10*/ const u16 *index;
+
+        # Place the values into a dictionary, handles designated initialization
+        var_defs = [
+            "flags",
+            "animYTransDivisor",
+            "startFrame",
+            "loopStart",
+            "loopEnd",
+            "unusedBoneCount",
+            "values",
+            "index",
+            "length",
+        ]
+        designated = {}
+        for i, value in enumerate(header_decl.values):
+            var_value_split: list[str] = value.split("=")
+            value = var_value_split[-1].strip()
+            if len(var_value_split) == 2:
+                var = var_value_split[0].replace(".", "", 1).strip()
+                designated[var] = value
+            else:
+                designated[var_defs[i]] = value
+
+        # Read from the dict
+        header.flags = designated["flags"]
+        header.trans_divisor = int(designated["animYTransDivisor"], 0)
+        header.start_frame = int(designated["startFrame"], 0)
+        header.loop_start = int(designated["loopStart"], 0)
+        header.loop_end = int(designated["loopEnd"], 0)
+        # bone_count = designated["unusedBoneCount"]
+        header.values_reference = designated["values"]
+        header.indice_reference = designated["index"]
 
         data_key = (header.indice_reference, header.values_reference)
         if not data_key in animation_data:
-            indices_decl = next((indice for indice in indices_decls if indice.name == header.indice_reference), None)
-            value_decl = next((value for value in value_decls if value.name == header.values_reference), None)
+            indices_decl = next(
+                (indice for indice in indices_decls if indice.name == header.indice_reference),
+                None,
+            )
+            value_decl = next(
+                (value for value in value_decls if value.name == header.values_reference),
+                None,
+            )
             animation = SM64_Anim()
             if indices_decl and value_decl:
                 animation.data = SM64_AnimData().read_c(indices_decl, value_decl)
@@ -399,6 +428,7 @@ class SM64_DMATable:
     address_place_holder: int = 0
     entries: list[DMATableEntrie] = dataclasses.field(default_factory=list)
     table_size: int = 0
+
     def read_binary(self, dma_table_reader: RomReading):
         num_entries = dma_table_reader.read_value(4)  # numEntries
         self.address_place_holder = dma_table_reader.read_value(4)  # addrPlaceholder
@@ -566,7 +596,7 @@ class SM64_AnimTable:
 
         return text_data.getvalue()
 
-    def table_to_c(self, generate_enums: bool):
+    def table_to_c(self):
         text_data = StringIO()
 
         text_data.write(f"const struct Animation *const {self.reference}[] = {{\n")
@@ -666,7 +696,10 @@ class SM64_AnimTable:
             )
 
             if header_name not in animation_headers:
-                header_decl = next((header for header in header_decls if header.name == header_name), None)
+                header_decl = next(
+                    (header for header in header_decls if header.name == header_name),
+                    None,
+                )
                 if header_decl:
                     animation_headers[header_name] = SM64_AnimHeader.read_c(
                         header_decl, values_decls, indices_decls, animation_headers, animation_data

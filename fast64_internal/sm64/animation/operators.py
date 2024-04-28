@@ -333,7 +333,7 @@ class SM64_ExportAnimTable(Operator):
                 )
                 if table_props.override_files:
                     with open(os.path.join(anim_dir_path, "table.inc.c"), "w", newline="\n") as file:
-                        file.write(table.table_to_c(table_props.generate_enums))
+                        file.write(table.table_to_c())
                     if table_props.generate_enums:
                         with open(os.path.join(anim_dir_path, "table_enum.h"), "w", newline="\n") as file:
                             file.write(table.enum_list_to_c())

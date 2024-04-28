@@ -944,10 +944,7 @@ class SM64_AnimTableProps(PropertyGroup):
     override_files_prop: BoolProperty(name="Override Table and Data Files")
     elements: CollectionProperty(type=SM64_TableElementProps)
 
-    generate_enums: BoolProperty(
-        name="Generate Enums",
-        description="Does not work in vanilla decomp, HackerSM64 users may use this feature freely",
-    )
+    generate_enums: BoolProperty(name="Generate Enums", default=True)
     override_table_name: BoolProperty(name="Override Table Name")
     custom_table_name: StringProperty(name="Table Name", default="mario_anims")
 
