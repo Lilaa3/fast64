@@ -942,7 +942,7 @@ class SM64_AnimTableProps(PropertyGroup):
     )
 
     export_seperately: BoolProperty(name="Export All Seperately")
-    override_files_prop: BoolProperty(name="Override Table and Data Files")
+    override_files_prop: BoolProperty(name="Override Table and Data Files", default=True)
     elements: CollectionProperty(type=SM64_TableElementProps)
 
     generate_enums: BoolProperty(name="Generate Enums", default=True)
