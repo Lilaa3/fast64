@@ -9,6 +9,7 @@ from ...utility import PluginError, writeIfNotFound, radians_to_s16
 from .classes import SM64_AnimPair
 from .utility import get_anim_pose_bones
 
+
 def get_entire_fcurve_data(action: Action, bone: PoseBone, path: str, max_frame: int, max_index: int = 0) -> list:
     data_path = f'pose.bones["{bpy.utils.escape_identifier(bone.name)}"].{path}'
     values = [None] * max_index
@@ -18,7 +19,7 @@ def get_entire_fcurve_data(action: Action, bone: PoseBone, path: str, max_frame:
         values[fcurve.array_index] = [fcurve.evaluate(frame) for frame in range(max_frame)]
 
     for i, value in enumerate(values):
-        if value is None:
+        if not value:
             values[i] = [getattr(bone, path)[i]] * max_frame
     return values
 
