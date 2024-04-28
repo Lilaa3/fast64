@@ -184,20 +184,20 @@ class SM64_AnimHeader:
     def get_values_reference(self, override: Optional[str | int] = None, expected_type: type = str):
         if override:
             reference = override
-        elif self.values_reference:
-            reference = self.values_reference
         elif self.data and self.data.values_reference:
             reference = self.data.values_reference
+        elif self.values_reference:
+            reference = self.values_reference
         assert isinstance(reference, expected_type), f"Value reference must be a {expected_type}."
         return reference
 
     def get_indice_reference(self, override: Optional[str | int] = None, expected_type: type = str):
         if override:
             reference = override
-        elif self.indice_reference:
-            reference = self.indice_reference
         elif self.data and self.data.indice_reference:
             reference = self.data.indice_reference
+        elif self.indice_reference:
+            reference = self.indice_reference
         assert isinstance(reference, expected_type), f"Indice reference must be a {expected_type}."
         return reference
 
@@ -276,13 +276,16 @@ class SM64_AnimHeader:
 
         data_key = (str(header.indice_reference), str(header.values_reference))
         if not data_key in animation_data:
-            animation_data[data_key] = SM64_Anim(
-                SM64_AnimData().read_binary(
-                    indices_reader=header_reader.branch(header.indice_reference),
-                    values_reader=header_reader.branch(header.values_reference),
-                    bone_count=header.bone_count,
+            animation = SM64_Anim()
+            indices_reader = header_reader.branch(header.indice_reference)
+            values_reader = header_reader.branch(header.values_reference)
+            if indices_reader and values_reader:
+                animation.data = SM64_AnimData().read_binary(
+                    indices_reader,
+                    values_reader,
+                    header.bone_count,
                 )
-            )
+            animation_data[data_key] = animation
         animation = animation_data[data_key]
         header.data = animation.data
         header.header_variant = len(animation.headers)
@@ -600,7 +603,6 @@ class SM64_AnimTable:
                     indice_offset,
                 )
             )
-
         if data_set:  # Add the data
             for indice_table in indice_tables:
                 data.extend(indice_table.to_binary())
@@ -673,16 +675,19 @@ class SM64_AnimTable:
             if table_index is not None and i != table_index:
                 continue
 
-            header = SM64_AnimHeader.read_binary(
-                table_reader.branch(ptr),
-                animation_headers,
-                animation_data,
-                False,
-                assumed_bone_count,
-            )
-            if table_index is None:
-                self.elements.append(SM64_AnimTableElement(table_reader.start_address, None, header))
+            header_reader = table_reader.branch(ptr)
+            if header_reader:
+                header = SM64_AnimHeader.read_binary(
+                    table_reader.branch(ptr),
+                    animation_headers,
+                    animation_data,
+                    False,
+                    assumed_bone_count,
+                )
             else:
+                header = None
+            self.elements.append(SM64_AnimTableElement(ptr, None, header))
+            if table_index is not None:
                 return header
         else:
             raise PluginError(

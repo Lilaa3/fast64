@@ -1,12 +1,10 @@
-import ast
-import copy
 import dataclasses
 import math
 
 import bpy
 from bpy.types import Object, Armature
 
-from ...utility import findStartBones, PluginError, decodeSegmentedAddr
+from ...utility import findStartBones, PluginError, decodeSegmentedAddr, intToHex
 from ..sm64_geolayout_bone import animatableBoneTypes
 
 
@@ -35,9 +33,14 @@ class RomReading:
         self.segment_data = segment_data
 
     def branch(self, start_address: int | None = None, data: bytes | None = None):
+        if start_address and start_address > len(self.data):
+            if self.rom_data and self.insertable_ptrs:
+                data = self.rom_data
+            else:
+                return None
         branch = RomReading(
             data if data else self.data,
-            start_address if start_address else self.address,
+            start_address if start_address is not None else self.address,
             self.insertable_ptrs,
             self.rom_data,
             self.segment_data,
@@ -45,17 +48,18 @@ class RomReading:
         return branch
 
     def read_ptr(self):
-        in_bytes = self.data[self.address : self.address + 4]
+        ptr_address = self.address
         self.address += 4
+        in_bytes = self.data[ptr_address : ptr_address + 4]
         ptr = int.from_bytes(in_bytes, "big", signed=False)
 
         if ptr == 0:
             return None
 
-        if not ptr in self.insertable_ptrs and self.segment_data:
+        if ptr_address not in self.insertable_ptrs and self.segment_data:
             ptr_in_bytes: bytes = ptr.to_bytes(4, "big")
             if ptr_in_bytes[0] not in self.segment_data:
-                raise PluginError(f"Address {ptr} does not belong to the current segment.")
+                raise PluginError(f"Address {intToHex(ptr)} does not belong to the current segment.")
             return decodeSegmentedAddr(ptr_in_bytes, self.segment_data)
         return ptr
 

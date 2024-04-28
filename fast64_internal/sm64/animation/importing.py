@@ -6,14 +6,12 @@ import bpy
 from bpy.types import Object, Action
 from mathutils import Euler, Vector, Quaternion
 
-from ...utility import PluginError, path_checks
+from ...utility import PluginError, path_checks, intToHex
 from ...utility_anim import stashActionInArmature
 from ..sm64_constants import insertableBinaryTypes
 
 from .utility import RomReading, get_anim_pose_bones, sm64_to_radian
 from .classes import (
-    SM64_DMATable,
-    DMATableEntrie,
     SM64_Anim,
     CArrayDeclaration,
     SM64_AnimHeader,
@@ -262,10 +260,10 @@ def import_insertable_binary_animations(
     insertable_data_reader: RomReading,
     animation_headers: dict[str, SM64_AnimHeader],
     animation_data: dict[tuple[str, str], SM64_Anim],
-    table_index: int = 0,
+    table: SM64_AnimTable,
+    table_index: int | None = None,
     ignore_null: bool = False,
     assumed_bone_count: int | None = None,
-    table: SM64_AnimTable = SM64_AnimTable(),
 ):
     data_type_num = insertable_data_reader.read_value(4, signed=False)
     if data_type_num not in insertableBinaryTypes.values():
@@ -277,23 +275,24 @@ def import_insertable_binary_animations(
     pointer_offsets = []
     for _ in range(pointer_count):
         pointer_offsets.append(insertable_data_reader.read_value(4, signed=False))
-    insertable_data_reader.insertable_ptrs = pointer_offsets
 
     actual_start = insertable_data_reader.address + start_address
     data_reader = insertable_data_reader.branch(
         0,
         insertable_data_reader.data[actual_start : actual_start + data_size],
     )
+    data_reader.insertable_ptrs = pointer_offsets
 
     data_type = next(key for key, value in insertableBinaryTypes.items() if value == data_type_num)
     if data_type == "Animation":
-        import_binary_header(
-            header_reader=data_reader,
-            is_dma=False,
-            animation_data=animation_data,
-            assumed_bone_count=assumed_bone_count,
+        SM64_AnimHeader.read_binary(
+            data_reader,
+            animation_headers,
+            animation_data,
+            False,
+            assumed_bone_count,
         )
     elif data_type == "Animation Table":
-        pass
+        table.read_binary(data_reader, animation_headers, animation_data, table_index, ignore_null, assumed_bone_count)
     else:
         raise PluginError(f'Wrong animation data type "{data_type}".')

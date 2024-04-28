@@ -554,7 +554,6 @@ class SM64_ActionProps(PropertyGroup):
         self.values_table, self.values_address = values_reference, values_reference
 
         if animation.data:
-            animation.data.action = action  # Used in table class to prop
             self.custom_file_name = animation.data.indices_file_name
             self.custom_max_frame = max([1] + [len(x.values) for x in animation.data.pairs])
         else:
@@ -567,6 +566,7 @@ class SM64_ActionProps(PropertyGroup):
         for i in range(len(animation.headers) - 1):
             self.header_variants.add()
         for header, header_props in zip(animation.headers, self.headers):
+            header.action = action  # Used in table class to prop
             header_props.from_header_class(header, action, actor_name, use_custom_name)
 
         self.update_header_variant_numbers()
@@ -709,12 +709,12 @@ class SM64_ActionProps(PropertyGroup):
                 draw_table_index,
             )
 
-    def draw_references(self, layout: UILayout, is_dma: bool = False):
+    def draw_references(self, layout: UILayout, is_binary: bool = False):
         col = layout.column()
         col.prop(self, "reference_tables")
         if not self.reference_tables:
             return
-        if is_dma:
+        if is_binary:
             prop_split(col, self, "indices_address", "Indices Table")
             prop_split(col, self, "values_address", "Value Table")
         else:
@@ -763,7 +763,7 @@ class SM64_ActionProps(PropertyGroup):
                 box.label(text=self.get_anim_file_name(action))
 
         if draw_references:
-            self.draw_references(col)
+            self.draw_references(col, export_type in {"Binary", "Insertable Binary"})
 
         if not self.reference_tables:
             max_frame_split = col.split(factor=0.5)
@@ -837,8 +837,8 @@ class SM64_TableElementProps(PropertyGroup):
             self.variant = variant
 
     def from_table_element_class(self, element: SM64_AnimTableElement):
-        if element.data:
-            self.set_variant(element.data.action, element.header.header_variant)
+        if element.header:
+            self.set_variant(element.header.action, element.header.header_variant)
         else:
             self.reference = True
         if isinstance(element.reference, int):
@@ -1355,8 +1355,6 @@ class SM64_AnimImportProps(PropertyGroup):
                 from_rom_box.enabled = False
 
             prop_split(from_rom_box, self, "level", "Level")
-            from_rom_box.prop(self, "is_segmented_address")
-            prop_split(from_rom_box, self, "address", "Address")
 
         table_box = col.box().column()
         table_box.label(text="Table Imports")
