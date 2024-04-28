@@ -117,22 +117,3 @@ def get_anim_pose_bones(armature_obj: Armature):
         bones_to_process = children_names + bones_to_process
 
     return anim_bones
-
-
-def eval_num_from_str(string: str):  # TODO: Reconsider this, if a good idea, put into general utility.py to standardize
-    try:
-        return ast.literal_eval(string)
-    except SyntaxError as exc:
-        raise SyntaxError(
-            f"Exception occured while evaluating number from text, if value is in hexadecimal, "
-            f"use 0x before it.\n({string}\n{str(exc)}"
-        ) from exc
-    except ValueError as exc:
-        raise ValueError(
-            f"Exception occured while evaluating number from text, the value must be a number."
-            f"\n({string})\n{str(exc)}"
-        ) from exc
-    except Exception as exc:
-        raise Exception(
-            f"Exception occured while evaluating number from text.\n({string})\n{str(exc)}",
-        ) from exc

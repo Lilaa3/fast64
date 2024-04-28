@@ -59,7 +59,7 @@ from .constants import (
     C_FLAGS,
     FLAG_PROPS,
 )
-from .utility import get_anim_pose_bones, eval_num_from_str
+from .utility import get_anim_pose_bones
 from .exporting import get_animation_pairs
 
 
@@ -215,7 +215,7 @@ class SM64_AnimHeaderProps(PropertyGroup):
 
         if self.set_custom_flags:
             if use_int_flags:
-                header.flags = eval_num_from_str(self.custom_int_flags)
+                header.flags = int(self.custom_int_flags, 0)
             else:
                 header.flags = self.custom_flags
         else:
@@ -270,7 +270,7 @@ class SM64_AnimHeaderProps(PropertyGroup):
 
             flags = header.flags.replace(" ", "").lstrip("(").rstrip(")").split(" | ")
             try:
-                int_flags = eval_num_from_str(header.flags)
+                int_flags = int(header.flags, 0)
             except Exception:
                 for flag in flags:
                     index = next((index for index, flag_tuple in enumerate(C_FLAGS) if flag in flag_tuple), None)
@@ -1024,9 +1024,7 @@ class SM64_AnimTableProps(PropertyGroup):
         for i, element in enumerate(self.elements):
             reference = SM64_AnimTableElement()
             if can_use_references and element.reference:
-                header = (
-                    eval_num_from_str(element.header_address) if use_addresses_for_references else element.header_name
-                )
+                header = int(element.header_address, 0) if use_addresses_for_references else element.header_name
                 assert header, f"Reference in table element {i} is not set."
                 reference.reference = header
                 if generate_enums:
@@ -1270,10 +1268,11 @@ class SM64_AnimImportProps(PropertyGroup):
 
     @property
     def address(self):
-        return eval_num_from_str(
+        return int(
             self.dma_table_address
             if self.binary_import_type == "DMA"
-            else (self.table_address if self.binary_import_type == "Table" else self.animation_address)
+            else (self.table_address if self.binary_import_type == "Table" else self.animation_address),
+            0,
         )
 
     def draw_c(self, layout: UILayout):
