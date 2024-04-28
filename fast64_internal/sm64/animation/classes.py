@@ -783,30 +783,21 @@ def create_tables(anims_data: list[SM64_AnimData], values_name: str = None):
     """Can generate multiple indices table with only one value table, which improves compression"""
     """This feature is used in table exports"""
 
-    def index_sub_seq_in_seq(sub_seq: list[int], seq: list[int]):
-        i, sub_length = -1, len(sub_seq)
-        if sub_length > len(seq):
-            return None
-        try:
-            while True:
-                i = seq.index(sub_seq[0], i + 1)
-                if sub_seq == seq[i : i + sub_length]:
-                    return i
-        except ValueError:
-            return None
-
     value_table = SM64_AnimTableArray(values_name if values_name else anims_data[0].values_reference, True)
+    data = value_table.data
 
-    all_pairs = [pair for anim_data in anims_data for pair in anim_data.pairs]
     # Generate compressed value table and offsets
-    for pair in all_pairs:
+    for pair in [pair for anim_data in anims_data for pair in anim_data.pairs]:
         values = pair.values
         assert len(values) <= MAX_U16, "Pair frame count is higher than the 16 bit max."
 
-        pair.offset = index_sub_seq_in_seq(values, value_table.data)
+        # It's never worth to find an offset for values bigger than 1 frame from my testing
+        # the one use case resulted in a 286 bytes improvement, which for a slow down of all exports
+        # is not worth it
+        pair.offset = data.index(values[0]) if len(values) == 1 and values[0] in data else None
         if pair.offset is None:
-            pair.offset = len(value_table.data)
-            value_table.data.extend(values)
+            pair.offset = len(data)
+            data.extend(values)
         assert pair.offset <= MAX_U16, "Pair offset is higher than the 16 bit max."
 
     indice_tables: list[SM64_AnimTableArray] = []
