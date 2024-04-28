@@ -189,8 +189,8 @@ def update_enum_file(
         if not enum_name:
             continue
         if text.find(enum_name, enum_list_index) == -1:
-            enum_list_end = text.find("}", enum_list_index)
-            text = text[:enum_list_end] + f"\t{enum_name},\n" + text[enum_list_end:]
+            enum_list_end = text.find(f"{enum_list_name.upper()}_END", enum_list_index)
+            text = text[:enum_list_end] + f"{enum_name},\n\t" + text[enum_list_end:]
 
     with open(enum_path, "w", newline="\n") as file:
         file.write(text)
@@ -201,51 +201,36 @@ def update_table_file(
     enum_and_header_names: list[tuple[str, str]],
     table_name: str,
     generate_enums: bool,
-    override_files: bool,
     enum_path: str,
     enum_list_name: str,
 ):
-    if override_files or not os.path.exists(table_path):
+    if not os.path.exists(table_path):
         text = ""
     else:
         with open(table_path, "r") as file:
             text = file.read()
 
     if generate_enums:
-        update_enum_file(
-            enum_path,
-            enum_list_name,
-            [tup[0] for tup in enum_and_header_names],
-            override_files,
-        )
-        include_text = '#include "table_enum.h"\n'
-        include_index = text.find(include_text)
-        if include_index == -1:  # If there is no table, add one and find again
-            text = include_text + text
-            include_index = text.find(include_text)
+        update_enum_file(enum_path, enum_list_name, [tup[0] for tup in enum_and_header_names], False)
 
     # Table
     table_index = text.find(table_name)
     if table_index == -1:  # If there is no table, add one and find again
-        text += f"const struct Animation *const {table_name}[] = {{\n\tNULL,\n}};\n"
+        text += f"const struct Animation *const {table_name}[] = {{\n"
+        text += "\tNULL,\n"
+        text += "}};\n"
         table_index = text.find(table_name)
 
-    for enum_name, header_name in enum_and_header_names:
+    for _, header_name in enum_and_header_names:
         header_reference = f"&{header_name}"
-        header_by_enum_reference = f"[{enum_name}] = &{header_name}"
-        if text.find(header_reference, table_index) != -1 and (
-            not generate_enums or text.find(header_by_enum_reference, table_index) != -1
-        ):
+        if text.find(header_reference, table_index) != -1:
             continue
 
         table_end = text.find("NULL", table_index)
         if table_end == -1:
             table_end = text.find("}", table_index)
 
-        if generate_enums:
-            text = text[:table_end] + f"\t[{enum_name}] = {header_reference},\n" + text[table_end:]
-        else:
-            text = text[:table_end] + f"\t{header_reference},\n" + text[table_end:]
+        text = text[:table_end] + f"{header_reference},\n\t" + text[table_end:]
 
     with open(table_path, "w", newline="\n") as file:
         file.write(text)

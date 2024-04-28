@@ -561,6 +561,7 @@ class SM64_AnimTable:
         text_data.write(f"enum {self.enum_list_reference} {{\n")
         for anim_header in self.elements:
             text_data.write(f"\t{anim_header.enum_name},\n")
+        text_data.write(f"\t{self.enum_list_reference.upper()}_END,\n")
         text_data.write("};\n")
 
         return text_data.getvalue()
@@ -568,16 +569,11 @@ class SM64_AnimTable:
     def table_to_c(self, generate_enums: bool):
         text_data = StringIO()
 
-        if generate_enums:
-            text_data.write(f'#include "table_enum.h"\n')
-
         text_data.write(f"const struct Animation *const {self.reference}[] = {{\n")
         for element in self.elements:
-            if generate_enums:
-                text_data.write(f"\t[{element.enum_name}] = &{element.reference},\n")
-            else:
-                text_data.write(f"\t&{element.reference},\n")
-        text_data.write("\tNULL,\n};\n")
+            text_data.write(f"\t&{element.reference},\n")
+        text_data.write("\tNULL,\n")
+        text_data.write("};\n")
 
         return text_data.getvalue()
 
@@ -658,7 +654,7 @@ class SM64_AnimTable:
         header_decls: list[CArrayDeclaration],
         values_decls: list[CArrayDeclaration],
         indices_decls: list[CArrayDeclaration],
-    ) -> SM64_AnimHeader | None:
+    ):
         self.elements.clear()
         for value in table_decl.values:
             enum_name_split: list[str] = value.split("=")

@@ -318,7 +318,7 @@ class SM64_ExportAnimTable(Operator):
                 print("All files exported")
                 if header_type != "DMA":
                     update_data_file(
-                        os.path.join(anim_dir_path, "data.inc.c"), [files_data.keys()], table_props.override_files
+                        os.path.join(anim_dir_path, "data.inc.c"), files_data.keys(), table_props.override_files
                     )
             else:
                 with open(os.path.join(anim_dir_path, "data.inc.c"), "w", newline="\n") as file:
@@ -343,7 +343,6 @@ class SM64_ExportAnimTable(Operator):
                         table.enum_and_header_names,
                         table.reference,
                         table_props.generate_enums,
-                        False,
                         os.path.join(anim_dir_path, "table_enum.h"),
                         table.enum_list_reference,
                     )
@@ -443,7 +442,6 @@ class SM64_ExportAnim(Operator):
                         action_props.get_enum_and_header_names(action, actor_name),
                         table_name,
                         table_props.generate_enums,
-                        False,
                         os.path.join(anim_dir_path, "table_enum.h"),
                         enum_list_name,
                     )
