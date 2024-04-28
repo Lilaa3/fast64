@@ -781,29 +781,49 @@ def create_tables(anims_data: list[SM64_AnimData], values_name: str = None):
     """This feature is used in table exports"""
 
     def index_sub_seq_in_seq(sub_seq: list[int], seq: list[int]):
-        i, sub_length = -1, len(sub_seq)
-        while True:
-            trunc_seq = seq[i + 1 :]
-            if sub_seq[0] not in trunc_seq:
-                return -1
-            i = seq.index(sub_seq[0], i + 1)
-            if sub_seq == seq[i:sub_length]:
-                return i
+        try:
+            i, sub_length = -1, len(sub_seq)
+            while True:
+                i = seq.index(sub_seq[0], i + 1)
+                if sub_seq == seq[i:sub_length]:
+                    return i
+        except ValueError:
+            return None
+
+    def find_overlap(list1, list2):
+        len1, len2 = len(list1), len(list2)
+        min_len = min(len1, len2)
+
+        for i in range(1, min_len + 1):
+            if list1[-i:] == list2[:i]:
+                return True, len1 - i
+
+        return False, None
 
     value_table = SM64_ShortArray(values_name if values_name else anims_data[0].values_reference, True)
+
+    known_parts: dict[list[int], (list[SM64_AnimPair], list[int])] = {}
 
     all_pairs = [pair for anim_data in anims_data for pair in anim_data.pairs]
     # Generate compressed value table and offsets
     value_table_parts: list[(list[SM64_AnimPair], list[int])] = []
     for pair in all_pairs:
         values = pair.values
+        values_as_str = str(values)
         assert len(values) <= MAX_U16, "Pair frame count is higher than the 16 bit max."
 
+        if values_as_str in known_parts:
+            known_part, offset = known_parts[values_as_str]
+            pair.offset = offset
+            known_part.append(pair)
+            continue
+
         for value_table_part_pairs, value_table_part in value_table_parts:
-            index = index_sub_seq_in_seq(values, value_table_part)
-            if index != -1:
-                pair.offset = index
+            offset = index_sub_seq_in_seq(values, value_table_part)
+            if offset is not None:
+                pair.offset = offset
                 value_table_part_pairs.append(pair)
+                known_parts[values_as_str] = (value_table_part_pairs, offset)
                 break
             # TODO: Add more extensive compression in the future
         else:
