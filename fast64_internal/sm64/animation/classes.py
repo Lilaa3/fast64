@@ -487,7 +487,6 @@ class SM64_AnimTable:
             names.append((element.enum_name, element.reference))
         return names
 
-    # TODO: Bring over binary and c import logic for tables here
     def get_sets(self) -> tuple[list[SM64_AnimHeader], list[SM64_AnimData]]:
         # Remove duplicates of data and headers, keep order by using a list
         data_set = []
