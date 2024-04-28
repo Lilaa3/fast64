@@ -35,7 +35,6 @@ from .classes import (
     SM64_AnimTable,
     RomReading,
     SM64_AnimHeader,
-    SM64_AnimData,
     SM64_AnimTableElement,
 )
 from .importing import (
@@ -49,6 +48,7 @@ from .exporting import (
     update_includes,
     update_table_file,
     write_anim_header,
+    export_animation_table,
 )
 from .utility import animation_operator_checks, get_action, get_anim_pose_bones
 from .constants import marioAnimationNames
@@ -262,109 +262,11 @@ class SM64_ExportAnimTable(Operator):
     bl_description = "Select an armature with animation data to use"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
 
-    def execute_operator(self, context: Context):
-        # TODO: This got a bit gross, revisit eventually
-        bpy.ops.object.mode_set(mode="OBJECT")
-        animation_operator_checks(context)
-
-        scene = context.scene
-        sm64_props: SM64_Properties = scene.fast64.sm64
-        armature_obj: Object = context.selected_objects[0]
-        if context.space_data.type != "VIEW_3D" and context.space_data.context == "OBJECT":
-            animation_props: SM64_AnimProps = armature_obj.fast64.sm64.animation
-        else:
-            animation_props: SM64_AnimProps = sm64_props.animation
-        table_props: SM64_AnimTableProps = animation_props.table
-        is_dma = (sm64_props.binary_export and animation_props.is_binary_dma) or animation_props.header_type == "DMA"
-
-        print("Stashing all actions in table")
-        for action in table_props.get_actions(not is_dma):
-            stashActionInArmature(armature_obj, action)
-
-        actor_name = animation_props.actor_name
-
-        print("Reading table data from fast64")
-        table: SM64_AnimTable = table_props.to_table_class(
-            armature_obj,
-            sm64_props.blender_to_sm64_scale,
-            animation_props.quick_read,
-            is_dma or sm64_props.binary_export,
-            not is_dma,
-            actor_name,
-            not is_dma and not sm64_props.binary_export and table_props.generate_enums,
-            sm64_props.binary_export,
-        )
-
-        print("Exporting table data")
-        if sm64_props.export_type == "C":
-            header_type = animation_props.header_type
-
-            anim_dir_path, dir_path, geo_dir_path, level_name = animation_props.get_animation_paths(True)
-
-            if header_type != "Custom":
-                applyBasicTweaks(abspath(sm64_props.decomp_path))
-
-            print("Creating all C data")
-            if table_props.export_seperately:
-                files_data = table.data_and_headers_to_c(header_type == "DMA")
-                print("Saving all generated data files")
-                for file_name, file_data in files_data.items():
-                    with open(os.path.join(anim_dir_path, file_name), "w", newline="\n") as file:
-                        file.write(file_data)
-                print("All files exported")
-                if header_type != "DMA":
-                    update_data_file(
-                        os.path.join(anim_dir_path, "data.inc.c"), files_data.keys(), table_props.override_files
-                    )
-            else:
-                with open(os.path.join(anim_dir_path, "data.inc.c"), "w", newline="\n") as file:
-                    result = table.data_and_headers_to_c_combined()
-                    print("Saving generated data file")
-                    file.write(result)
-                    print("File exported")
-
-            if header_type != "DMA":
-                write_anim_header(
-                    os.path.join(geo_dir_path, "anim_header.h"), table.reference, table_props.generate_enums
-                )
-                if table_props.override_files:
-                    with open(os.path.join(anim_dir_path, "table.inc.c"), "w", newline="\n") as file:
-                        file.write(table.table_to_c())
-                    if table_props.generate_enums:
-                        with open(os.path.join(anim_dir_path, "table_enum.h"), "w", newline="\n") as file:
-                            file.write(table.enum_list_to_c())
-                else:
-                    update_table_file(
-                        os.path.join(anim_dir_path, "table.inc.c"),
-                        table.enum_and_header_names,
-                        table.reference,
-                        table_props.generate_enums,
-                        os.path.join(anim_dir_path, "table_enum.h"),
-                        table.enum_list_reference,
-                    )
-
-            if not header_type in {"Custom", "DMA"}:
-                update_includes(
-                    level_name,
-                    animation_props.group_name,
-                    toAlnum(actor_name),
-                    dir_path,
-                    header_type,
-                    True,
-                )
-        elif sm64_props.export_type == "Insertable Binary":
-            data, ptrs = table.to_binary(animation_props.is_binary_dma, 0)
-            path = abspath(os.path.join(animation_props.directory_path, table_props.insertable_file_name))
-            writeInsertableFile(path, insertableBinaryTypes["Animation Table"], ptrs, 0, data)
-        else:
-            raise PluginError(f"Unimplemented export type ({sm64_props.export_type})")
-
-        self.report({"INFO"}, "Animation table exported successfully.")
-
     def execute(self, context: Context):
         starting_context_mode = context.mode
         try:
-            self.execute_operator(context)
+            export_animation_table(context)
+            self.report({"INFO"}, "Animation table exported successfully.")
             return {"FINISHED"}
         except Exception as exc:
             raisePluginError(self, exc)

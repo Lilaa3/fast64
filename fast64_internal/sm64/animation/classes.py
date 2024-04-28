@@ -447,6 +447,7 @@ class SM64_DMATable:
     address_place_holder: int = 0
     entries: list[DMATableEntrie] = dataclasses.field(default_factory=list)
     table_size: int = 0
+    end_address: int = 0
 
     def read_binary(self, dma_table_reader: RomReading):
         num_entries = dma_table_reader.read_value(4)  # numEntries
@@ -460,6 +461,7 @@ class SM64_DMATable:
             end_of_entry = offset + size
             if end_of_entry > self.table_size:
                 self.table_size = end_of_entry
+        self.end_address = dma_table_reader.address
         return self
 
 
@@ -481,6 +483,9 @@ class SM64_AnimTable:
     file_name: str = ""
     values_reference: str = ""
     elements: list[SM64_AnimTableElement] = dataclasses.field(default_factory=list)
+
+    # Importing
+    end_address: int = 0
 
     @property
     def enum_and_header_names(self) -> list[str, str]:
@@ -680,6 +685,7 @@ class SM64_AnimTable:
         assumed_bone_count: int | None = 0,
     ) -> SM64_AnimHeader | None:
         self.elements.clear()
+        self.reference = table_reader.start_address
         for i in range(table_index + 1 if table_index is not None else 300):
             ptr = table_reader.read_ptr()
             if ptr is None and not ignore_null:
@@ -720,6 +726,7 @@ class SM64_AnimTable:
     ):
         dma_table = SM64_DMATable()
         dma_table.read_binary(table_reader)
+        self.reference = table_reader.start_address
         if table_index is not None:
             assert table_index >= 0 and table_index < len(
                 dma_table.entries
@@ -742,6 +749,7 @@ class SM64_AnimTable:
                 assumed_bone_count,
             )
             self.elements.append(SM64_AnimTableElement(table_reader.start_address, None, header))
+        self.end_address = dma_table.end_address
 
     def read_c(
         self,
