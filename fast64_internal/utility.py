@@ -587,7 +587,7 @@ def cast_integer(value: int, bits: int, signed: bool):
 
 
 to_s16 = lambda x: cast_integer(round(x), 16, True)
-radians_to_s16 = lambda d: to_s16(d * 0x10000 / (2 * math.pi))
+radians_to_s16 = lambda d: round(d * 10430.37835047)  # 0x10000 / (2 * math.pi)
 
 
 def int_from_s16(value: int) -> int:
@@ -1343,15 +1343,15 @@ def bytesToInt(value):
 
 
 def bytesToHex(value, byteSize=4):
-    return format(bytesToInt(value), "#0" + str(byteSize * 2 + 2) + "x")
+    return format(bytesToInt(value), f"#0{(byteSize * 2 + 2)}x")
 
 
 def bytesToHexClean(value, byteSize=4):
-    return format(bytesToInt(value), "0" + str(byteSize * 2) + "x")
+    return format(bytesToInt(value), f"#0{(byteSize * 2)}x")
 
 
 def intToHex(value, byteSize=4):
-    return format(value, "#0" + str(byteSize * 2 + 2) + "x")
+    return format(value, f"#0{(byteSize * 2 + 2)}x")
 
 
 def intToBytes(value, byteSize):

@@ -1,4 +1,6 @@
+from cProfile import Profile
 import os
+from pstats import SortKey, Stats
 
 import bpy
 from bpy.utils import register_class, unregister_class
@@ -362,15 +364,17 @@ class SM64_ExportAnimTable(Operator):
         self.report({"INFO"}, "Animation table exported successfully.")
 
     def execute(self, context: Context):
-        starting_context_mode = context.mode
-        try:
-            self.execute_operator(context)
-            return {"FINISHED"}
-        except Exception as exc:
-            raisePluginError(self, exc)
-            return {"CANCELLED"}
-        finally:
-            bpy.ops.object.mode_set(mode=get_mode_set_from_context_mode(starting_context_mode))
+        with Profile() as profile:
+            starting_context_mode = context.mode
+            try:
+                self.execute_operator(context)
+                return {"FINISHED"}
+            except Exception as exc:
+                raisePluginError(self, exc)
+                return {"CANCELLED"}
+            finally:
+                bpy.ops.object.mode_set(mode=get_mode_set_from_context_mode(starting_context_mode))
+                print(Stats(profile).strip_dirs().sort_stats(SortKey.TIME).print_stats())
 
 
 class SM64_ExportAnim(Operator):

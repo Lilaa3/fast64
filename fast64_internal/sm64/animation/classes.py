@@ -21,7 +21,7 @@ class CArrayDeclaration:
 
 
 @dataclasses.dataclass
-class SM64_ShortArray:
+class SM64_AnimTableArray:
     name: str = ""
     signed: bool = False
     data: list[int] = dataclasses.field(default_factory=list)
@@ -36,11 +36,14 @@ class SM64_ShortArray:
         data = StringIO()
         data.write(f"static const {'s' if self.signed else 'u'}16 {self.name}[] = {{\n\t")
 
-        for i, short in enumerate(self.data):
-            u_short = int.from_bytes(short.to_bytes(2, "big", signed=True), "big", signed=False)
-            data.write(f"{intToHex(u_short, 2)}, ")
-            if i % 9 == 8:
+        wrap = 9 if self.signed else 6
+        i = 0 if self.signed else -12 + 6
+        for short in self.data:
+            data.write(f"{format(short if short >= 0 else 65536 + short, '#06x')}, ")
+            i += 1
+            if i == wrap:
                 data.write("\n\t")
+                i = 0
         data.write("\n};\n")
         return data.getvalue()
 
@@ -800,7 +803,7 @@ def create_tables(anims_data: list[SM64_AnimData], values_name: str = None):
 
         return False, None
 
-    value_table = SM64_ShortArray(values_name if values_name else anims_data[0].values_reference, True)
+    value_table = SM64_AnimTableArray(values_name if values_name else anims_data[0].values_reference, True)
 
     known_parts: dict[list[int], (list[SM64_AnimPair], list[int])] = {}
 
@@ -836,10 +839,10 @@ def create_tables(anims_data: list[SM64_AnimData], values_name: str = None):
             assert pair.offset <= MAX_U16, "Pair offset is higher than the 16 bit max."
         value_table.data.extend(value_table_part)
 
-    indice_tables: list[SM64_ShortArray] = []
+    indice_tables: list[SM64_AnimTableArray] = []
     # Use calculated offsets to generate the indices table
     for anim_data in anims_data:
-        indice_table = SM64_ShortArray(anim_data.indice_reference, False)
+        indice_table = SM64_AnimTableArray(anim_data.indice_reference, False)
         for pair in anim_data.pairs:
             indice_table.data.extend([len(pair.values), pair.offset])
         indice_tables.append(indice_table)

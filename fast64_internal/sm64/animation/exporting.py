@@ -4,27 +4,22 @@ import bpy
 import mathutils
 from bpy.types import Object, Action, PoseBone
 
-from ...utility import (
-    PluginError,
-    radians_to_s16,
-    writeIfNotFound,
-)
+from ...utility import PluginError, writeIfNotFound, radians_to_s16
 
-from .classes import SM64_Anim, SM64_AnimPair
+from .classes import SM64_AnimPair
 from .utility import get_anim_pose_bones
 
-
 def get_entire_fcurve_data(action: Action, bone: PoseBone, path: str, max_frame: int, max_index: int = 0) -> list:
-    values = []
-    for index in range(max_index):
-        values.append([])
+    data_path = f'pose.bones["{bpy.utils.escape_identifier(bone.name)}"].{path}'
+    values = [None] * max_index
     for fcurve in action.fcurves:
-        if fcurve.data_path != f'pose.bones["{bpy.utils.escape_identifier(bone.name)}"].{path}':
+        if fcurve.data_path != data_path:
             continue
-        for index in range(max_index):
-            if fcurve.array_index == index:
-                for frame in range(min(int(fcurve.range()[1]) + 1, max_frame)):
-                    values[index].append(fcurve.evaluate(frame))
+        values[fcurve.array_index] = [fcurve.evaluate(frame) for frame in range(max_frame)]
+
+    for i, value in enumerate(values):
+        if value is None:
+            values[i] = [getattr(bone, path)[i]] * max_frame
     return values
 
 
@@ -41,7 +36,7 @@ def get_trans_data(action: Action, bone: PoseBone, max_frame: int, blender_to_sm
         for index in range(3):
             if fcurve.array_index == index:
                 values = trasnlation_pairs[index].values
-                for frame in range(min(int(fcurve.range()[1]) + 1, max_frame)):
+                for frame in range(max_frame):
                     values.append(int(fcurve.evaluate(frame) * blender_to_sm64_scale))
     return trasnlation_pairs
 
@@ -56,21 +51,21 @@ def get_rotation_data(action: Action, bone: PoseBone, max_frame: int):
     if bone.rotation_mode == "QUATERNION":
         for w, x, y, z in zip(*get_entire_fcurve_data(action, bone, "rotation_quaternion", max_frame, 4)):
             euler = mathutils.Quaternion((w, x, y, z)).to_euler()
-            rotation[0].append(radians_to_s16(euler[0]))
-            rotation[1].append(radians_to_s16(euler[1]))
-            rotation[2].append(radians_to_s16(euler[2]))
+            rotation[0].append(radians_to_s16(euler.x))
+            rotation[1].append(radians_to_s16(euler.y))
+            rotation[2].append(radians_to_s16(euler.z))
     elif bone.rotation_mode == "AXIS_ANGLE":
         for x, y, z, w in zip(*get_entire_fcurve_data(action, bone, "rotation_axis_angle", max_frame, 4)):
             euler = mathutils.AxisAngle((x, y, z), w).to_euler()
-            rotation[0].append(radians_to_s16(euler[0]))
-            rotation[1].append(radians_to_s16(euler[1]))
-            rotation[2].append(radians_to_s16(euler[2]))
+            rotation[0].append(radians_to_s16(euler.x))
+            rotation[1].append(radians_to_s16(euler.y))
+            rotation[2].append(radians_to_s16(euler.z))
     else:
         for x, y, z in zip(*get_entire_fcurve_data(action, bone, "rotation_euler", max_frame, 3)):
-            euler = mathutils.Euler(x, y, z, action, bone.rotation_mode).to_euler()
-            rotation[0].append(radians_to_s16(euler[0]))
-            rotation[1].append(radians_to_s16(euler[1]))
-            rotation[2].append(radians_to_s16(euler[2]))
+            euler = mathutils.Euler(x, y, z, action, bone.rotation_mode)
+            rotation[0].append(radians_to_s16(euler.x))
+            rotation[1].append(radians_to_s16(euler.y))
+            rotation[2].append(radians_to_s16(euler.z))
     return rotation_pairs
 
 
