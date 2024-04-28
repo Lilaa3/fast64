@@ -481,13 +481,16 @@ class SM64_ActionProps(PropertyGroup):
         use_int_flags: bool,
         actor_name: str = "mario",
         generate_enums: bool = False,
+        use_addresses_for_references: bool = False,
     ):
         animation = SM64_Anim()
         animation.file_name = self.get_anim_file_name(action)
 
         if can_use_references and self.reference_tables:
-            values_reference = self.values_table
-            indice_reference = self.indices_table
+            if use_addresses_for_references:
+                values_reference, indice_reference = int(self.values_address, 0), int(self.indices_address, 0)
+            else:
+                values_reference, indice_reference = self.values_table, self.indices_table
         else:
             animation.data = self.to_data_class(
                 action, armature_obj, blender_to_sm64_scale, quick_read, animation.file_name
@@ -810,19 +813,18 @@ class SM64_TableElementProps(PropertyGroup):
     header_address: StringProperty(name="Header Reference", default=intToHex(0x0600B75C))  # Toad animation 0
     enum_name: StringProperty(name="Enum Name")
 
-    @property
-    def header(self) -> SM64_AnimHeaderProps:
-        if self.reference:
+    def get_header(self, use_reference: bool) -> SM64_AnimHeaderProps:
+        if use_reference and self.reference:
             return None
-        elif not self.action:
+        action = self.get_action(use_reference)
+        if not action:
             return None
         if self.use_main_variant:
-            return self.action.fast64.sm64.header
-        return self.action.fast64.sm64.headers[self.variant]
+            return action.fast64.sm64.header
+        return action.fast64.sm64.headers[self.variant]
 
-    @property
-    def action(self) -> Action:
-        if self.reference:
+    def get_action(self, use_reference: bool) -> Action:
+        if use_reference and self.reference:
             return None
         return self.action_prop
 
@@ -862,6 +864,7 @@ class SM64_TableElementProps(PropertyGroup):
         self,
         layout: UILayout,
         is_dma: bool = False,
+        can_reference: bool = True,
         export_seperately: bool = True,
         export_type: str = "C",
         generate_enums: bool = False,
@@ -870,7 +873,7 @@ class SM64_TableElementProps(PropertyGroup):
         col = layout.column()
 
         row = col.row()
-        if not is_dma:
+        if can_reference:
             row.prop(self, "reference")
             if self.reference:
                 self.draw_reference(col, export_type, generate_enums)
@@ -914,7 +917,7 @@ class SM64_TableElementProps(PropertyGroup):
             self,
             "expand_tab",
             icon="TRIA_DOWN" if self.expand_tab else "TRIA_RIGHT",
-            text=f"{self.header.get_anim_name(actor_name, self.action_prop)} Properties",
+            text=f"{self.get_header(can_reference).get_anim_name(actor_name, self.action_prop)} Properties",
         )
         c_not_dma = export_type == "C" and not is_dma
         if self.expand_tab:
@@ -967,21 +970,21 @@ class SM64_AnimTableProps(PropertyGroup):
     def override_files(self):
         return self.export_seperately and self.override_files_prop
 
-    @property
-    def actions(self) -> list[Action]:
+    def get_actions(self, can_reference: bool) -> list[Action]:
         actions = []
         for table_element in self.elements:
-            if table_element.action and table_element.action not in actions:
-                actions.append(table_element.action)
+            action = table_element.get_action(can_reference)
+            if action and action not in actions:
+                actions.append(action)
 
         return actions
 
-    @property
-    def headers(self) -> list[SM64_AnimHeaderProps]:
+    def get_headers(self, can_reference: bool) -> list[SM64_AnimHeaderProps]:
         headers = []
         for table_element in self.elements:
-            if table_element.header and table_element.header not in headers:
-                headers.append(table_element.header)
+            header = table_element.get_header(can_reference)
+            if header and header not in headers:
+                headers.append(header)
         return headers
 
     def get_anim_table_name(self, actor_name: str) -> str:
@@ -1005,7 +1008,7 @@ class SM64_AnimTableProps(PropertyGroup):
         blender_to_sm64_scale: float,
         quick_read: bool,
         use_int_flags: bool = False,
-        can_use_references: bool = True,
+        can_reference: bool = True,
         actor_name: str = "mario",
         generate_enums: bool = False,
         use_addresses_for_references: bool = False,
@@ -1024,7 +1027,7 @@ class SM64_AnimTableProps(PropertyGroup):
         element: SM64_TableElementProps
         for i, element in enumerate(self.elements):
             reference = SM64_AnimTableElement()
-            if can_use_references and element.reference:
+            if can_reference and element.reference:
                 header = int(element.header_address, 0) if use_addresses_for_references else element.header_name
                 assert header, f"Reference in table element {i} is not set."
                 reference.reference = header
@@ -1034,13 +1037,20 @@ class SM64_AnimTableProps(PropertyGroup):
                 table.elements.append(reference)
                 continue
 
-            if not element.header:
-                raise PluginError(f"No header in table element {i}.")
+            header: SM64_AnimHeaderProps = element.get_header(can_reference)
+            assert header, f"Header in table element {i} is not set."
+            action: Action = element.get_action(can_reference)
+            assert action, f"Action in table element {i} is not set."
 
-            action: Action = element.action
             action_props: SM64_ActionProps = action.fast64.sm64
-            if can_use_references and action_props.reference_tables:
-                values_reference, indice_reference = action_props.values_table, action_props.indices_table
+            if can_reference and action_props.reference_tables:
+                if use_addresses_for_references:
+                    values_reference, indice_reference = (
+                        int(action_props.values_address, 0),
+                        int(action_props.indices_address, 0),
+                    )
+                else:
+                    values_reference, indice_reference = action_props.values_table, action_props.indices_table
                 data = None
             else:
                 if not action in existing_data:
@@ -1051,8 +1061,8 @@ class SM64_AnimTableProps(PropertyGroup):
                 values_reference, indice_reference = data.values_reference, data.indice_reference
 
             reference.header = existing_headers.get(
-                element.header,
-                element.header.to_header_class(
+                header,
+                header.to_header_class(
                     bone_count,
                     data,
                     action,
@@ -1076,7 +1086,8 @@ class SM64_AnimTableProps(PropertyGroup):
         layout: UILayout,
         table_index: int,
         table_element: SM64_TableElementProps,
-        is_dma: bool,
+        is_dma: bool = False,
+        can_reference: bool = True,
         duplicate_index: int | None = 0,
         export_type: str = "c",
         actor_name: str = "mario",
@@ -1113,6 +1124,7 @@ class SM64_AnimTableProps(PropertyGroup):
         table_element.draw_props(
             info_col.box(),
             is_dma,
+            can_reference,
             self.export_seperately,
             export_type,
             self.generate_enums,
@@ -1149,12 +1161,14 @@ class SM64_AnimTableProps(PropertyGroup):
     def draw_props(
         self,
         layout: UILayout,
-        is_dma: bool,
-        export_type: str,
-        draw_non_exclusive_settings: bool,
-        actor_name: str,
+        is_dma: bool = False,
+        export_type: str = "C",
+        draw_non_exclusive_settings: bool = True,
+        actor_name: str = "mario",
     ):
         col = layout.column()
+
+        can_reference = not is_dma
 
         if draw_non_exclusive_settings:
             self.draw_non_exclusive_settings(col, export_type, actor_name)
@@ -1193,8 +1207,9 @@ class SM64_AnimTableProps(PropertyGroup):
         elements_col.scale_y = 0.8
         actions = []
         for table_index, table_element in enumerate(self.elements):
-            if table_element.action in actions and actions[-1] != table_element.action:
-                duplicate_index = actions.index(table_element.action)
+            action = table_element.get_action(can_reference)
+            if action in actions and actions[-1] != action:
+                duplicate_index = actions.index(action)
             else:
                 duplicate_index = None
             self.draw_element(
@@ -1202,12 +1217,13 @@ class SM64_AnimTableProps(PropertyGroup):
                 table_index,
                 table_element,
                 is_dma,
+                can_reference,
                 duplicate_index,
                 export_type,
                 actor_name,
             )
             elements_col.separator()
-            actions.append(table_element.action)
+            actions.append(action)
 
 
 class SM64_AnimImportProps(PropertyGroup):

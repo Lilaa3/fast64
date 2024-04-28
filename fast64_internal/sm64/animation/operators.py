@@ -275,19 +275,15 @@ class SM64_ExportAnimTable(Operator):
         else:
             animation_props: SM64_AnimProps = sm64_props.animation
         table_props: SM64_AnimTableProps = animation_props.table
-
-        actions = table_props.actions
+        is_dma = (sm64_props.binary_export and animation_props.is_binary_dma) or animation_props.header_type == "DMA"
 
         print("Stashing all actions in table")
-
-        for action in actions:
+        for action in table_props.get_actions(not is_dma):
             stashActionInArmature(armature_obj, action)
 
         actor_name = animation_props.actor_name
 
         print("Reading table data from fast64")
-
-        is_dma = (sm64_props.binary_export and animation_props.is_binary_dma) or animation_props.header_type == "DMA"
         table: SM64_AnimTable = table_props.to_table_class(
             armature_obj,
             sm64_props.blender_to_sm64_scale,
@@ -357,7 +353,7 @@ class SM64_ExportAnimTable(Operator):
                     True,
                 )
         elif sm64_props.export_type == "Insertable Binary":
-            data, ptrs = table.to_binary_combined(animation_props.is_binary_dma, 0)
+            data, ptrs = table.to_binary(animation_props.is_binary_dma, 0)
             path = abspath(os.path.join(animation_props.directory_path, table_props.insertable_file_name))
             writeInsertableFile(path, insertableBinaryTypes["Animation Table"], ptrs, 0, data)
         else:
@@ -411,6 +407,7 @@ class SM64_ExportAnim(Operator):
             not sm64_props.binary_export or not animation_props.is_binary_dma,
             actor_name,
             not sm64_props.binary_export and table_props.generate_enums,
+            sm64_props.binary_export,
         )
         if sm64_props.export_type == "C":
             header_type = animation_props.header_type
