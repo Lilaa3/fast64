@@ -30,6 +30,7 @@ from ...utility import (
     toAlnum,
     writeBoxExportType,
     is_bit_active,
+    intToHex,
 )
 from ..sm64_utility import import_rom_checks
 from ..sm64_constants import (
@@ -140,8 +141,8 @@ class SM64_AnimHeaderProps(PropertyGroup):
     # Binary
     overwrite0x28: BoolProperty(name="Overwrite 0x28 behaviour command", default=True)
     setListIndex: BoolProperty(name="Set List Entry", default=True)
-    addr0x27: StringProperty(name="0x27 Command Address", default=hex(2215168))
-    addr0x28: StringProperty(name="0x28 Command Address", default=hex(2215176))
+    addr0x27: StringProperty(name="0x27 Command Address", default=intToHex(2215168))
+    addr0x28: StringProperty(name="0x28 Command Address", default=intToHex(2215176))
     table_index: IntProperty(name="Table Index", min=0, max=255)
 
     def get_frame_range(self, action: Action):
@@ -261,7 +262,7 @@ class SM64_AnimHeaderProps(PropertyGroup):
 
         if isinstance(header.flags, int):
             int_flags = header.flags
-            self.custom_flags = hex(header.flags)
+            self.custom_flags = intToHex(header.flags, 2)
             if int_flags >> 6:  # If any non supported bit is active
                 self.set_custom_flags = True
         else:
@@ -278,7 +279,7 @@ class SM64_AnimHeaderProps(PropertyGroup):
                         int_flags |= 1 << index
                     else:
                         self.set_custom_flags = True  # Unknown flag
-        self.custom_int_flags = hex(int_flags)
+        self.custom_int_flags = intToHex(int_flags, 2)
         for index, prop in enumerate(FLAG_PROPS):
             setattr(self, prop, is_bit_active(int_flags, index))
 
@@ -400,8 +401,8 @@ class SM64_ActionProps(PropertyGroup):
     indices_address: StringProperty(name="Indices Table")  # TODO: Toad example
     values_address: StringProperty(name="Value Table")
 
-    start_address: StringProperty(name="Start Address", default=hex(18712880))
-    end_address: StringProperty(name="End Address", default=hex(18874112))
+    start_address: StringProperty(name="Start Address", default=intToHex(18712880))
+    end_address: StringProperty(name="End Address", default=intToHex(18874112))
 
     header: PointerProperty(type=SM64_AnimHeaderProps)
     variants_tab: BoolProperty(name="Header Variants")
@@ -525,7 +526,7 @@ class SM64_ActionProps(PropertyGroup):
         if main_header.file_name:
             action_name = main_header.file_name.rstrip(".c").rstrip(".inc")
         elif is_from_binary:
-            action_name = hex(main_header.reference)
+            action_name = intToHex(main_header.reference)
         else:
             action_name = main_header.reference
 
@@ -539,12 +540,12 @@ class SM64_ActionProps(PropertyGroup):
         values_reference = main_header.values_reference
         if is_from_binary:
             all_references = [x.reference for x in animation.headers] + [indice_reference, values_reference]
-            self.start_address = hex(min(all_references))
-            self.end_address = hex(
+            self.start_address = intToHex(min(all_references))
+            self.end_address = intToHex(
                 max(all_references)
             )  # TODO: This is gonna require keeping track of all start and ends
-            indice_reference = hex(indice_reference)
-            values_reference = hex(values_reference)
+            indice_reference = intToHex(indice_reference)
+            values_reference = intToHex(values_reference)
 
         self.indices_table, self.indices_address = indice_reference, indice_reference
         self.values_table, self.values_address = values_reference, values_reference
@@ -806,7 +807,7 @@ class SM64_TableElementProps(PropertyGroup):
 
     reference: BoolProperty(name="Reference")
     header_name: StringProperty(name="Header Reference", default="toad_seg6_anim_0600B66C")
-    header_address: StringProperty(name="Header Reference", default=hex(0x0600B75C))  # Toad animation 0
+    header_address: StringProperty(name="Header Reference", default=intToHex(0x0600B75C))  # Toad animation 0
     enum_name: StringProperty(name="Enum Name")
 
     @property
@@ -839,11 +840,11 @@ class SM64_TableElementProps(PropertyGroup):
         else:
             self.reference = True
         if isinstance(element.reference, int):
-            self.header_name = hex(element.reference)
-            self.header_address = hex(element.reference)
+            self.header_name = intToHex(element.reference)
+            self.header_address = intToHex(element.reference)
         else:
             self.header_name = element.reference
-            self.header_address = "0x00000000"
+            self.header_address = intToHex(0)
         if element.enum_name:
             self.enum_name = element.enum_name
 
@@ -950,17 +951,17 @@ class SM64_AnimTableProps(PropertyGroup):
 
     insertable_file_name: StringProperty(name="Insertable File Name", default="toad.insertable")
 
-    address: StringProperty(name="Table Address", default=hex(0x0600FC48))  # Toad animation table
+    address: StringProperty(name="Table Address", default=intToHex(0x0600FC48))  # Toad animation table
     # TODO: 0xa3fa60 is where the data starts, maybe this should default to that
     # ends after the table at 0x600FC68
-    end_address: StringProperty(name="End Address", default=hex(0x600FC68))
+    end_address: StringProperty(name="End Address", default=intToHex(0x600FC68))
 
     update_load_command: BoolProperty(name="Update Table Load Command")
     load_command_address: StringProperty(
         name="Table Load Command Address", default="0x21CD08"
     )  # TODO: Change this to castle toad's, use quad64
-    dma_address: StringProperty(name="DMA Table Address", default=hex(0x4EC000))
-    dma_end_address: StringProperty(name="DMA Table End", default=hex(0x4EC000 + 0x8DC20))
+    dma_address: StringProperty(name="DMA Table Address", default=intToHex(0x4EC000))
+    dma_end_address: StringProperty(name="DMA Table End", default=intToHex(0x4EC000 + 0x8DC20))
 
     @property
     def override_files(self):
@@ -1231,8 +1232,8 @@ class SM64_AnimImportProps(PropertyGroup):
     )
     table_index: IntProperty(name="Table Index", min=0)
     ignore_null: BoolProperty(name="Ignore NULL Delimiter")
-    table_address: StringProperty(name="Address", default=hex(0x0600FC48))  # Toad animation table
-    animation_address: StringProperty(name="Address", default=hex(0x0600B75C))  # Toad animation 0
+    table_address: StringProperty(name="Address", default=intToHex(0x0600FC48))  # Toad animation table
+    animation_address: StringProperty(name="Address", default=intToHex(0x0600B75C))  # Toad animation 0
     is_segmented_address: BoolProperty(name="Is Segmented Address", default=True)
     level: EnumProperty(items=level_enums, name="Level", default="IC")
     dma_table_address: StringProperty(name="DMA Table Address", default="0x4EC000")

@@ -269,7 +269,7 @@ def import_insertable_binary_animations(
 ):
     data_type_num = insertable_data_reader.read_value(4, signed=False)
     if data_type_num not in insertableBinaryTypes.values():
-        raise PluginError(f"Unknown data type: {hex(data_type_num)}")
+        raise PluginError(f"Unknown data type: {intToHex(data_type_num)}")
     data_size = insertable_data_reader.read_value(4, signed=False)
     start_address = insertable_data_reader.read_value(4, signed=False)
 

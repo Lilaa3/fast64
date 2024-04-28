@@ -180,16 +180,22 @@ def update_enum_file(
         with open(enum_path, "r") as file:
             text = file.read()
 
+    end_enum = f"{enum_list_name.upper()}_END"
+
     enum_list_index = text.find(enum_list_name)
     if enum_list_index == -1:  # If there is no enum list, add one and find again
-        text = f"enum {enum_list_name} {{\n}};\n" + text
+        text += f"enum {enum_list_name} {{\n"
+        text += f"\t{end_enum}\n"
+        text += "};\n"
         enum_list_index = text.find(enum_list_name)
 
     for enum_name in enum_names:
         if not enum_name:
             continue
         if text.find(enum_name, enum_list_index) == -1:
-            enum_list_end = text.find(f"{enum_list_name.upper()}_END", enum_list_index)
+            enum_list_end = text.find(end_enum, enum_list_index)
+            if enum_list_end == -1:
+                enum_list_end = text.find("}", enum_list_index)
             text = text[:enum_list_end] + f"{enum_name},\n\t" + text[enum_list_end:]
 
     with open(enum_path, "w", newline="\n") as file:

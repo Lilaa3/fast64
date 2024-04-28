@@ -6,7 +6,7 @@ from typing import Optional
 
 from bpy.types import Action
 
-from ...utility import PluginError, is_bit_active, to_s16
+from ...utility import PluginError, is_bit_active, to_s16, intToHex
 from ..sm64_constants import MAX_U16
 
 from .utility import RomReading
@@ -36,14 +36,11 @@ class SM64_ShortArray:
         data = StringIO()
         data.write(f"static const {'s' if self.signed else 'u'}16 {self.name}[] = {{\n\t")
 
-        wrap_counter = 0
-        for short in self.data:
+        for i, short in enumerate(self.data):
             u_short = int.from_bytes(short.to_bytes(2, "big", signed=True), "big", signed=False)
-            data.write(f"0x{format(u_short, '04X')}, ")
-            wrap_counter += 1
-            if wrap_counter > 8:
+            data.write(f"{intToHex(u_short, 2)}, ")
+            if i % 9 == 8:
                 data.write("\n\t")
-                wrap_counter = 0
         data.write("\n};\n")
         return data.getvalue()
 
@@ -182,7 +179,7 @@ class SM64_AnimHeader:
         if isinstance(self.flags, str):
             return self.flags
 
-        return hex(self.flags)
+        return intToHex(self.flags, 2)
 
     def get_values_reference(self, override: Optional[str | int] = None):
         if override:
@@ -208,7 +205,7 @@ class SM64_AnimHeader:
     ):
         return (
             f"static const struct Animation {self.reference}{'[]' if is_dma_structure else ''} = {{\n"
-            + (f"\t{hex(self.get_int_flags())}, " if is_dma_structure else f"\t{self.get_c_flags()}, ")
+            + (f"\t{intToHex(self.get_int_flags(), 2)}, " if is_dma_structure else f"\t{self.get_c_flags()}, ")
             + f"// flags {self.get_flags_comment()}\n"
             f"\t{self.trans_divisor}, // animYTransDivisor\n"
             f"\t{self.start_frame}, // startFrame\n"
@@ -444,11 +441,6 @@ class SM64_DMATable:
         return self
 
 
-def num_to_padded_hex(num: int):
-    hex_str = hex(num)[2:].upper()  # remove the '0x' prefix
-    return hex_str.zfill(2)
-
-
 @dataclasses.dataclass
 class SM64_AnimTableElement:
     reference: str | int = ""
@@ -505,6 +497,11 @@ class SM64_AnimTable:
         return anims
 
     def get_seperate_anims_dma(self):
+
+        def num_to_padded_hex(num: int):
+            hex_str = hex(num)[2:].upper()  # remove the '0x' prefix
+            return hex_str.zfill(2)
+
         anims = []
 
         # For creating duplicates
@@ -551,7 +548,7 @@ class SM64_AnimTable:
             anims.append(SM64_Anim(data, included_headers, file_name))
 
             header_nums.clear()
-            included_headers.clear()
+            included_headers = []
 
         return anims
 
