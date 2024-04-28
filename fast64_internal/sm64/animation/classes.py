@@ -316,9 +316,12 @@ class SM64_AnimHeader:
 
         data_key = (header.indice_reference, header.values_reference)
         if not data_key in animation_data:
-            indices_decl = next(indice for indice in indices_decls if indice.name == header.indice_reference)
-            value_decl = next(value for value in value_decls if value.name == header.values_reference)
-            animation_data[data_key] = SM64_Anim(SM64_AnimData().read_c(indices_decl, value_decl))
+            indices_decl = next((indice for indice in indices_decls if indice.name == header.indice_reference), None)
+            value_decl = next((value for value in value_decls if value.name == header.values_reference), None)
+            animation = SM64_Anim()
+            if indices_decl and value_decl:
+                animation.data = SM64_AnimData().read_c(indices_decl, value_decl)
+            animation_data[data_key] = animation
         animation = animation_data[data_key]
         header.data = animation.data
         header.header_variant = len(animation.headers)
@@ -646,6 +649,38 @@ class SM64_AnimTable:
                 assumed_bone_count,
             )
             self.elements.append(SM64_AnimTableElement(table_reader.start_address, None, header))
+
+    def read_c(
+        self,
+        table_decl: CArrayDeclaration,
+        animation_headers: dict[str, SM64_AnimHeader],
+        animation_data: dict[tuple[str, str], SM64_Anim],
+        header_decls: list[CArrayDeclaration],
+        values_decls: list[CArrayDeclaration],
+        indices_decls: list[CArrayDeclaration],
+    ) -> SM64_AnimHeader | None:
+        self.elements.clear()
+        for value in table_decl.values:
+            enum_name_split: list[str] = value.split("=")
+            header_name = enum_name_split[-1].replace("&", "").strip()
+            enum_name = (
+                enum_name_split[0].replace("[", "", 1).replace("]", "", 1).strip()
+                if len(enum_name_split) == 2
+                else None
+            )
+
+            if header_name not in animation_headers:
+                header_decl = next((header for header in header_decls if header.name == header_name), None)
+                if header_decl:
+                    animation_headers[header_name] = SM64_AnimHeader.read_c(
+                        header_decl, values_decls, indices_decls, animation_headers, animation_data
+                    )
+            self.elements.append(
+                SM64_AnimTableElement(enum_name_split[-1], enum_name, animation_headers.get(header_name, None))
+            )
+        if self.elements and header_name == "NULL":
+            self.elements.pop()  # Remove table end identifier from import
+        return self
 
 
 def create_tables(anims_data: list[SM64_AnimData], values_name: str = None):

@@ -833,6 +833,20 @@ class SM64_TableElementProps(PropertyGroup):
             self.use_main_variant = False
             self.variant = variant
 
+    def from_table_element_class(self, element: SM64_AnimTableElement):
+        if element.data:
+            self.set_variant(element.data.action, element.header.header_variant)
+        else:
+            self.reference = True
+        if isinstance(element.reference, int):
+            self.header_name = hex(element.reference)
+            self.header_address = hex(element.reference)
+        else:
+            self.header_name = element.reference
+            self.header_address = "0x00000000"
+        if element.enum_name:
+            self.enum_name = element.enum_name
+
     # UI
     def draw_reference(self, layout: UILayout, export_type: str = "C", generate_enums: bool = False):
         col = layout.column()
@@ -985,7 +999,7 @@ class SM64_AnimTableProps(PropertyGroup):
             self.elements.clear()
         for element in table.elements:
             self.elements.add()
-            self.elements[-1].set_variant(element.data.action, element.header.header_variant)
+            self.elements[-1].from_table_element_class(element)
 
     def to_table_class(
         self,

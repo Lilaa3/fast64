@@ -177,7 +177,7 @@ def find_decls(
         end_index = c_data.find("};", start_index)
         name = c_data[start_index + len(search_text) : decl_index]
         name = name.replace("[]", "").replace("=", "").rstrip().lstrip()
-        values = [value.rstrip().lstrip() for value in c_data[decl_index + 1 : end_index].split(",")]
+        values = [value.strip() for value in c_data[decl_index + 1 : end_index].split(",")]
         if values[-1] == "":
             values = values[:-1]
         decl_list.append(CArrayDeclaration(name, file_path, values))
@@ -224,10 +224,12 @@ def import_c_animations(
         find_decls(c_data, "static const s16 ", file_path, value_decls)
         find_decls(c_data, "const struct Animation *const ", file_path, table_decls)
 
+    if table_decls:
+        assert len(table_decls) <= 1, "More than 1 table declaration"
+        table.read_c(table_decls[0], animation_headers, animation_data, header_decls, value_decls, indices_decls)
+        return
     for header_decl in header_decls:
         header = SM64_AnimHeader().read_c(header_decl, value_decls, indices_decls, animation_headers, animation_data)
-    assert len(table_decls) <= 1, "More than 1 table declaration"
-    pass
 
 
 def import_binary_animations(
