@@ -49,6 +49,8 @@ class SM64_ShortArray:
 class SM64_AnimPair:
     values: list[int] = dataclasses.field(default_factory=list)
 
+    # Importing
+    end_address: int = 0
     # For compressing
     offset: int = 0
 
@@ -74,6 +76,7 @@ class SM64_AnimPair:
         values_reader = values_reader.branch(values_reader.start_address + offset)
         for _ in range(max_frame):
             self.values.append(values_reader.read_value(2, signed=True))
+        self.end_address = values_reader.address
         return self
 
 
@@ -84,6 +87,10 @@ class SM64_AnimData:
     values_reference: str | int = ""
     indices_file_name: str | int = ""
     values_file_name: str | int = ""
+
+    # Importing
+    value_end_address: int = 0
+    indice_end_address: int = 0
 
     def to_c(self, is_dma_structure: bool = False):
         text_data = StringIO()
@@ -124,6 +131,8 @@ class SM64_AnimData:
             pair = SM64_AnimPair()
             pair.read_binary(indices_reader, values_reader)
             self.pairs.append(pair)
+        self.indice_end_address = indices_reader.address
+        self.value_end_address = max(pair.end_address for pair in self.pairs)
         return self
 
     def read_c(self, indice_decl: CArrayDeclaration, value_decl: CArrayDeclaration):
@@ -159,6 +168,7 @@ class SM64_AnimHeader:
     data: Optional[SM64_AnimData] = None
 
     # Imports
+    end_address: int = 0
     header_variant: int = 0
 
     def get_flags_comment(self):
@@ -273,6 +283,8 @@ class SM64_AnimHeader:
         else:
             header.values_reference = header_reader.read_ptr()
             header.indice_reference = header_reader.read_ptr()
+        length = header_reader.read_value(4, signed=False)
+        header.end_address = header_reader.address
 
         data_key = (str(header.indice_reference), str(header.values_reference))
         if not data_key in animation_data:
@@ -693,6 +705,7 @@ class SM64_AnimTable:
             raise PluginError(
                 "Table address is most likely invalid, iterated through 300 elements and no NULL was found."
             )
+        self.end_address = header_reader.address
         return self
 
     def read_dma_binary(

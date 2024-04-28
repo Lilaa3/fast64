@@ -542,14 +542,8 @@ class SM64_ActionProps(PropertyGroup):
         indice_reference = main_header.indice_reference
         values_reference = main_header.values_reference
         if is_from_binary:
-            all_references = [x.reference for x in animation.headers] + [indice_reference, values_reference]
-            self.start_address = intToHex(min(all_references))
-            self.end_address = intToHex(
-                max(all_references)
-            )  # TODO: This is gonna require keeping track of all start and ends
             indice_reference = intToHex(indice_reference)
             values_reference = intToHex(values_reference)
-
         self.indices_table, self.indices_address = indice_reference, indice_reference
         self.values_table, self.values_address = values_reference, values_reference
 
@@ -559,6 +553,17 @@ class SM64_ActionProps(PropertyGroup):
         else:
             self.custom_file_name = main_header.file_name
             self.reference_tables = True
+
+        if is_from_binary:
+            start_addresses = [x.reference for x in animation.headers]
+            end_addresses = [x.end_address for x in animation.headers]
+            if animation.data:
+                start_addresses.append(animation.data.indice_reference)
+                end_addresses.append(animation.data.indice_reference)
+                start_addresses.append(animation.data.values_reference)
+                end_addresses.append(animation.data.value_end_address)
+            self.start_address = intToHex(min(start_addresses))
+            self.end_address = intToHex(max(end_addresses))
 
         if self.custom_file_name and self.get_anim_file_name(action) != self.custom_file_name:
             self.override_file_name = True
@@ -1001,6 +1006,12 @@ class SM64_AnimTableProps(PropertyGroup):
         for element in table.elements:
             self.elements.add()
             self.elements[-1].from_table_element_class(element)
+
+        if isinstance(table.reference, int):  # Binary
+            self.dma_address = intToHex(table.reference)
+            self.dma_end_address = intToHex(table.end_address)
+            self.address = intToHex(table.reference)
+            self.end_address = intToHex(table.end_address)
 
     def to_table_class(
         self,
