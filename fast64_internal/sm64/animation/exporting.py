@@ -25,21 +25,16 @@ def get_entire_fcurve_data(action: Action, bone: PoseBone, path: str, max_frame:
 
 
 def get_trans_data(action: Action, bone: PoseBone, max_frame: int, blender_to_sm64_scale: float) -> tuple:
-    trasnlation_pairs = (
+    translation_pairs = (
         SM64_AnimPair(),
         SM64_AnimPair(),
         SM64_AnimPair(),
     )
-    data_path = f'pose.bones["{bpy.utils.escape_identifier(bone.name)}"].location'
-    for fcurve in action.fcurves:
-        if fcurve.data_path != data_path:
-            continue
-        for index in range(3):
-            if fcurve.array_index == index:
-                values = trasnlation_pairs[index].values
-                for frame in range(max_frame):
-                    values.append(int(fcurve.evaluate(frame) * blender_to_sm64_scale))
-    return trasnlation_pairs
+    for x, y, z in zip(*get_entire_fcurve_data(action, bone, "location", max_frame, 3)):
+        translation_pairs[0].values.append(int(x * blender_to_sm64_scale))
+        translation_pairs[1].values.append(int(y * blender_to_sm64_scale))
+        translation_pairs[2].values.append(int(z * blender_to_sm64_scale))
+    return translation_pairs
 
 
 def get_rotation_data(action: Action, bone: PoseBone, max_frame: int):
