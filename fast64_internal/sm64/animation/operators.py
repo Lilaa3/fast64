@@ -12,6 +12,7 @@ from bpy.props import (
 
 import os
 
+from ...operators import OperatorBase
 from ...utility import (
     PluginError,
     applyBasicTweaks,
@@ -19,8 +20,6 @@ from ...utility import (
     path_checks,
     filepath_checks,
     toAlnum,
-    raisePluginError,
-    get_mode_set_from_context_mode,
     writeInsertableFile,
     decodeSegmentedAddr,
 )
@@ -93,7 +92,7 @@ def emulate_no_loop(scene: Scene):
             scene.frame_set(loop_start)
 
 
-class SM64_PreviewAnimOperator(Operator):
+class SM64_PreviewAnimOperator(OperatorBase):
     bl_idname = "scene.sm64_preview_animation"
     bl_label = "Preview Animation"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
@@ -102,6 +101,7 @@ class SM64_PreviewAnimOperator(Operator):
     played_action: StringProperty(name="Action")
 
     def execute_operator(self, context: Context):
+        bpy.ops.object.mode_set(mode="OBJECT")
         animation_operator_checks(context)
 
         scene = context.scene
@@ -134,24 +134,11 @@ class SM64_PreviewAnimOperator(Operator):
 
         return {"FINISHED"}
 
-    def execute(self, context: Context):
-        starting_context_mode = context.mode
-        if context.mode != "OBJECT":
-            bpy.ops.object.mode_set(mode="OBJECT")
 
-        try:
-            self.execute_operator(context)
-            return {"FINISHED"}
-        except Exception as exc:
-            raisePluginError(self, exc)
-            return {"CANCELLED"}
-        finally:
-            bpy.ops.object.mode_set(mode=get_mode_set_from_context_mode(starting_context_mode))
-
-
-class SM64_TableOperations(Operator):
+class SM64_TableOperations(OperatorBase):
     bl_idname = "scene.sm64_table_operations"
-    bl_label = ""
+    bl_label = "Table Operations"
+    bl_description = "Move, remove, clear or add table elements"
     bl_options = {"UNDO"}
 
     array_index: IntProperty()
@@ -194,18 +181,11 @@ class SM64_TableOperations(Operator):
 
         return {"FINISHED"}
 
-    def execute(self, context: Context):
-        try:
-            self.execute_operator(context)
-            return {"FINISHED"}
-        except Exception as exc:
-            raisePluginError(self, exc)
-            return {"CANCELLED"}
 
-
-class SM64_AnimVariantOperations(Operator):
+class SM64_AnimVariantOperations(OperatorBase):
     bl_idname = "scene.sm64_header_variant_operations"
-    bl_label = ""
+    bl_label = "Header Variant Operations"
+    bl_description = "Move, remove, clear or add variants"
     bl_options = {"UNDO"}
 
     array_index: IntProperty()
@@ -247,35 +227,18 @@ class SM64_AnimVariantOperations(Operator):
 
         return {"FINISHED"}
 
-    def execute(self, context):
-        try:
-            self.execute_operator(context)
-            return {"FINISHED"}
-        except Exception as exc:
-            raisePluginError(self, exc)
-            return {"CANCELLED"}
 
-
-class SM64_ExportAnimTable(Operator):
+class SM64_ExportAnimTable(OperatorBase):
     bl_idname = "scene.sm64_export_anim_table"
     bl_label = "Export"
     bl_description = "Select an armature with animation data to use"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
 
-    def execute(self, context: Context):
-        starting_context_mode = context.mode
-        try:
-            export_animation_table(context)
-            self.report({"INFO"}, "Animation table exported successfully.")
-            return {"FINISHED"}
-        except Exception as exc:
-            raisePluginError(self, exc)
-            return {"CANCELLED"}
-        finally:
-            bpy.ops.object.mode_set(mode=get_mode_set_from_context_mode(starting_context_mode))
+    def execute_operator(self, context: Context):
+        export_animation_table(context)
 
 
-class SM64_ExportAnim(Operator):
+class SM64_ExportAnim(OperatorBase):
     bl_idname = "scene.sm64_export_anim"
     bl_label = "Export"
     bl_description = "Exports the selected action, select an armature with animation data to use"
@@ -363,20 +326,9 @@ class SM64_ExportAnim(Operator):
             raise PluginError(f"Unimplemented export type ({sm64_props.export_type})")
         self.report({"INFO"}, "Animation exported successfully.")
 
-    def execute(self, context: Context):
-        starting_context_mode = context.mode
-        try:
-            self.execute_operator(context)
-            return {"FINISHED"}
-        except Exception as exc:
-            raisePluginError(self, exc)
-            return {"CANCELLED"}
-        finally:
-            bpy.ops.object.mode_set(mode=get_mode_set_from_context_mode(starting_context_mode))
-
 
 # Importing
-class SM64_ImportAllMarioAnims(Operator):
+class SM64_ImportAllMarioAnims(OperatorBase):
     bl_idname = "scene.sm64_import_mario_anims"
     bl_label = "Import All Mario Animations"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
@@ -429,19 +381,8 @@ class SM64_ImportAllMarioAnims(Operator):
         self.report({"INFO"}, "Success!")
         return {"FINISHED"}
 
-    def execute(self, context: Context):
-        starting_context_mode = context.mode
-        try:
-            self.execute_operator(context)
-            return {"FINISHED"}
-        except Exception as exc:
-            raisePluginError(self, exc)
-            return {"CANCELLED"}
-        finally:
-            bpy.ops.object.mode_set(mode=get_mode_set_from_context_mode(starting_context_mode))
 
-
-class SM64_ImportAnim(Operator):
+class SM64_ImportAnim(OperatorBase):
     bl_idname = "scene.sm64_import_anim"
     bl_label = "Import Animation(s)"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
@@ -528,19 +469,8 @@ class SM64_ImportAnim(Operator):
         self.report({"INFO"}, "Success!")
         return {"FINISHED"}
 
-    def execute(self, context):
-        starting_context_mode = context.mode
-        try:
-            self.execute_operator(context)
-            return {"FINISHED"}
-        except Exception as exc:
-            raisePluginError(self, exc)
-            return {"CANCELLED"}
-        finally:
-            bpy.ops.object.mode_set(mode=get_mode_set_from_context_mode(starting_context_mode))
 
-
-class SM64_SearchMarioAnimEnum(Operator):
+class SM64_SearchMarioAnimEnum(OperatorBase):
     bl_idname = "scene.search_mario_anim_enum_operator"
     bl_label = "Search Mario Animations"
     bl_description = "Search Mario Animations"
@@ -549,7 +479,7 @@ class SM64_SearchMarioAnimEnum(Operator):
 
     mario_animations: EnumProperty(items=marioAnimationNames)
 
-    def execute(self, context):
+    def execute_operator(self, context):
         scene = context.scene
         sm64_props: SM64_Properties = scene.fast64.sm64
         armature_obj: Object = context.selected_objects[0]

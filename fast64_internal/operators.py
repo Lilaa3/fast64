@@ -79,3 +79,22 @@ class ObjectDataExporter(WarningOperator):
 
     def cleanup_temp_object_data(self):
         cleanupTempMeshes()
+
+
+class OperatorBase(Operator):
+    """Base class for operators, keeps track of context mode and sets it back after running
+    execute_operator() and catches exceptions for raisePluginError()"""
+
+    def execute_operator(self, context: Context):
+        raise NotImplementedError()
+
+    def execute(self, context: Context):
+        starting_context_mode = context.mode
+        try:
+            self.execute_operator(context)
+            return {"FINISHED"}
+        except Exception as exc:
+            raisePluginError(self, exc)
+            return {"CANCELLED"}
+        finally:
+            bpy.ops.object.mode_set(mode=get_mode_set_from_context_mode(starting_context_mode))
