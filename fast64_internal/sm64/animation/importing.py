@@ -3,21 +3,30 @@ import os
 import re
 
 import bpy
-from bpy.types import Object, Action
+from bpy.types import Object, Action, Context
 from mathutils import Euler, Vector, Quaternion
 
-from ...utility import PluginError, path_checks, intToHex
+from ...utility import PluginError, decodeSegmentedAddr, filepath_checks, path_checks, intToHex
 from ...utility_anim import stashActionInArmature
 from ..sm64_constants import insertableBinaryTypes
+from ..sm64_level_parser import parseLevelAtPointer
+from ..sm64_utility import import_rom_checks
 
-from .utility import RomReading, get_anim_pose_bones, sm64_to_radian
+from .utility import RomReading, animation_operator_checks, get_anim_pose_bones, sm64_to_radian
 from .classes import (
     SM64_Anim,
     CArrayDeclaration,
     SM64_AnimHeader,
     SM64_AnimPair,
     SM64_AnimTable,
+    SM64_AnimTableElement,
 )
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .properties import SM64_AnimImportProps, SM64_AnimProps, SM64_AnimTableProps
+    from ..settings.properties import SM64_Properties
 
 
 def value_distance(e1: Euler, e2: Euler) -> float:
@@ -296,3 +305,126 @@ def import_insertable_binary_animations(
         table.read_binary(data_reader, animation_headers, animation_data, table_index, ignore_null, assumed_bone_count)
     else:
         raise PluginError(f'Wrong animation data type "{data_type}".')
+
+
+def import_animations(context: Context):
+    animation_operator_checks(context, False)
+
+    scene = context.scene
+    sm64_props: SM64_Properties = scene.fast64.sm64
+    armature_obj: Object = context.selected_objects[0]
+    if context.space_data.type != "VIEW_3D" and context.space_data.context == "OBJECT":
+        animation_props: SM64_AnimProps = armature_obj.fast64.sm64.animation
+    else:
+        animation_props: SM64_AnimProps = sm64_props.animation
+
+    import_props: SM64_AnimImportProps = animation_props.importing
+    table_props: SM64_AnimTableProps = animation_props.table
+
+    animation_data: dict[tuple[str, str], SM64_Anim] = {}
+    animation_headers: dict[str, SM64_AnimHeader] = {}
+    table = SM64_AnimTable()
+
+    if import_props.import_type == "Binary" or (
+        import_props.import_type == "Insertable Binary" and import_props.insertable_read_from_rom
+    ):
+        rom_path = abspath(import_props.rom if import_props.rom else sm64_props.import_rom)
+        import_rom_checks(rom_path)
+        with open(rom_path, "rb") as rom_file:
+            rom_data = rom_file.read()
+            segment_data = parseLevelAtPointer(rom_file, level_pointers[import_props.level]).segmentData
+    else:
+        rom_data, segment_data = None, None
+
+    anim_bones = get_anim_pose_bones(armature_obj)
+    assumed_bone_count = len(anim_bones) if import_props.assume_bone_count else None
+
+    if import_props.import_type == "Binary":
+        address = import_props.address
+        if import_props.binary_import_type != "DMA" and import_props.is_segmented_address:
+            address = decodeSegmentedAddr(address.to_bytes(4, "big"), segment_data)
+        import_binary_animations(
+            RomReading(data=rom_data, start_address=address, rom_data=rom_data, segment_data=segment_data),
+            import_props.binary_import_type,
+            animation_headers,
+            animation_data,
+            table,
+            None if import_props.read_entire_table else import_props.mario_or_table_index,
+            import_props.ignore_null,
+            assumed_bone_count,
+        )
+    elif import_props.import_type == "Insertable Binary":
+        path = abspath(import_props.path)
+        filepath_checks(path)
+
+        with open(path, "rb") as insertable_file:
+            import_insertable_binary_animations(
+                RomReading(insertable_file.read(), 0, None, rom_data, segment_data),
+                animation_headers,
+                animation_data,
+                table,
+                None if import_props.read_entire_table else import_props.mario_or_table_index,
+                import_props.ignore_null,
+                assumed_bone_count,
+            )
+    elif import_props.import_type == "C":
+        path = abspath(import_props.path)
+        path_checks(path)
+        import_c_animations(path, animation_headers, animation_data, table)
+
+    if not table.elements:
+        table.elements = [SM64_AnimTableElement(header=header) for header in animation_headers.values()]
+    for animation in animation_data.values():
+        animation_import_to_blender(
+            context.selected_objects[0],
+            sm64_props.blender_to_sm64_scale,
+            animation,
+            animation_props.actor_name,
+            import_props.remove_name_footer,
+            import_props.use_custom_name,
+        )
+    table_props.from_anim_table_class(table, import_props.clear_table)
+
+
+def import_all_mario_animations(context: Context):
+    animation_operator_checks(context, False)
+    scene = context.scene
+    sm64_props: SM64_Properties = scene.fast64.sm64
+
+    armature_obj: Object = context.selected_objects[0]
+    if context.space_data.type != "VIEW_3D" and context.space_data.context == "OBJECT":
+        animation_props: SM64_AnimProps = armature_obj.fast64.sm64.animation
+    else:
+        animation_props: SM64_AnimProps = sm64_props.animation
+    import_props: SM64_AnimImportProps = animation_props.importing
+
+    animations: dict[str, SM64_Anim] = {}
+    table: SM64_AnimTable = SM64_AnimTable()
+
+    mario_dma_table_address = 0x4EC000
+
+    if import_props.import_type == "Binary":
+        rom_path = abspath(import_props.rom if import_props.rom else sm64_props.import_rom)
+        import_rom_checks(rom_path)
+        with open(rom_path, "rb") as rom:
+            rom_data = rom.read()
+            for entrie_str, name, _ in marioAnimationNames[1:]:
+                entrie_num = int(entrie_str)
+                dma_table = DMATable()
+                dma_table.read_binary(rom_data, mario_dma_table_address)
+                if entrie_num < 0 or entrie_num >= len(dma_table.entries):
+                    raise PluginError(
+                        f"Index {entrie_num} outside of defined table ({len(dma_table.entries)} entries)."
+                    )
+
+                entrie: DMATableEntrie = dma_table.entries[entrie_num]
+                header = import_binary_header(rom_data, entrie.address, True, animations, None)
+                table.elements.append(header)
+                header.reference = toAlnum(name)
+                header.data.action_name = name
+    else:
+        raise PluginError("Unimplemented import type.")
+
+    for _, data in animations.items():
+        animation_import_to_blender(armature_obj, sm64_props.blender_to_sm64_scale, data)
+    sm64_props.animation.table.from_anim_table_class(table)

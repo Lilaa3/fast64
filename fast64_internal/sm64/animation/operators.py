@@ -1,55 +1,18 @@
-import os
-
 import bpy
 from bpy.utils import register_class, unregister_class
-from bpy.types import Context, Object, Scene, Operator, Action
-from bpy.path import abspath
+from bpy.types import Context, Object, Scene, Action
 from bpy.props import (
     EnumProperty,
     StringProperty,
     IntProperty,
 )
 
-import os
-
 from ...operators import OperatorBase
-from ...utility import (
-    PluginError,
-    applyBasicTweaks,
-    copyPropertyGroup,
-    path_checks,
-    filepath_checks,
-    toAlnum,
-    writeInsertableFile,
-    decodeSegmentedAddr,
-)
-from ...utility_anim import stashActionInArmature
-from ..sm64_utility import import_rom_checks
-from ..sm64_level_parser import parseLevelAtPointer
-from ..sm64_constants import level_pointers, insertableBinaryTypes
+from ...utility import copyPropertyGroup
 
-from .classes import (
-    DMATableEntrie,
-    SM64_Anim,
-    SM64_AnimTable,
-    RomReading,
-    SM64_AnimHeader,
-    SM64_AnimTableElement,
-)
-from .importing import (
-    import_binary_animations,
-    animation_import_to_blender,
-    import_c_animations,
-    import_insertable_binary_animations,
-)
-from .exporting import (
-    update_data_file,
-    update_includes,
-    update_table_file,
-    write_anim_header,
-    export_animation_table,
-)
-from .utility import animation_operator_checks, get_action, get_anim_pose_bones
+from .importing import import_all_mario_animations, import_animations
+from .exporting import export_animation, export_animation_table
+from .utility import get_action, animation_operator_checks
 from .constants import marioAnimationNames
 
 from typing import TYPE_CHECKING
@@ -59,7 +22,6 @@ if TYPE_CHECKING:
     from .properties import (
         SM64_AnimProps,
         SM64_AnimImportProps,
-        SM64_AnimTableProps,
         SM64_ActionProps,
     )
 
@@ -96,12 +58,12 @@ class SM64_PreviewAnimOperator(OperatorBase):
     bl_idname = "scene.sm64_preview_animation"
     bl_label = "Preview Animation"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
+    context_mode = "OBJECT"
 
     played_header: IntProperty(name="Header", min=0, default=0)
     played_action: StringProperty(name="Action")
 
     def execute_operator(self, context: Context):
-        bpy.ops.object.mode_set(mode="OBJECT")
         animation_operator_checks(context)
 
         scene = context.scene
@@ -233,6 +195,7 @@ class SM64_ExportAnimTable(OperatorBase):
     bl_label = "Export"
     bl_description = "Select an armature with animation data to use"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
+    context_mode = "OBJECT"
 
     def execute_operator(self, context: Context):
         export_animation_table(context)
@@ -243,88 +206,10 @@ class SM64_ExportAnim(OperatorBase):
     bl_label = "Export"
     bl_description = "Exports the selected action, select an armature with animation data to use"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
+    context_mode = "OBJECT"
 
     def execute_operator(self, context: Context):
-        bpy.ops.object.mode_set(mode="OBJECT")
-        animation_operator_checks(context)
-
-        scene = context.scene
-        sm64_props: SM64_Properties = scene.fast64.sm64
-
-        armature_obj: Object = context.selected_objects[0]
-        if context.space_data.type != "VIEW_3D" and context.space_data.context == "OBJECT":
-            animation_props: SM64_AnimProps = armature_obj.fast64.sm64.animation
-        else:
-            animation_props: SM64_AnimProps = sm64_props.animation
-        table_props: SM64_AnimTableProps = animation_props.table
-
-        action = animation_props.selected_action
-        action_props: SM64_ActionProps = action.fast64.sm64
-        stashActionInArmature(armature_obj, action)
-
-        actor_name = animation_props.actor_name
-        animation: SM64_Anim = action_props.to_animation_class(
-            action,
-            armature_obj,
-            sm64_props.blender_to_sm64_scale,
-            animation_props.quick_read,
-            sm64_props.binary_export or animation_props.header_type == "DMA",
-            not sm64_props.binary_export or not animation_props.is_binary_dma,
-            actor_name,
-            not sm64_props.binary_export and table_props.generate_enums,
-            sm64_props.binary_export,
-        )
-        if sm64_props.export_type == "C":
-            header_type = animation_props.header_type
-
-            anim_dir_path, dir_path, geo_dir_path, level_name = animation_props.get_animation_paths(
-                create_directories=True
-            )
-            anim_file_name = action_props.get_anim_file_name(action)
-            anim_path = os.path.join(anim_dir_path, anim_file_name)
-
-            if header_type != "Custom":
-                applyBasicTweaks(abspath(sm64_props.decomp_path))
-
-            with open(anim_path, "w", newline="\n") as file:
-                file.write(animation.to_c(animation_props.is_c_dma_structure))
-
-            if header_type != "DMA":
-                table_name = table_props.get_anim_table_name(actor_name)
-                enum_list_name = table_props.get_enum_list_name(actor_name)
-
-                if table_props.update_table:
-                    write_anim_header(
-                        os.path.join(geo_dir_path, "anim_header.h"),
-                        table_name,
-                        table_props.generate_enums,
-                    )
-                    update_table_file(
-                        os.path.join(anim_dir_path, "table.inc.c"),
-                        action_props.get_enum_and_header_names(action, actor_name),
-                        table_name,
-                        table_props.generate_enums,
-                        os.path.join(anim_dir_path, "table_enum.h"),
-                        enum_list_name,
-                    )
-                update_data_file(os.path.join(anim_dir_path, "data.inc.c"), [anim_file_name])
-
-            if not header_type in {"Custom", "DMA"}:
-                update_includes(
-                    level_name,
-                    animation_props.group_name,
-                    toAlnum(actor_name),
-                    dir_path,
-                    header_type,
-                    table_props.update_table,
-                )
-        elif sm64_props.export_type == "Insertable Binary":
-            data, ptrs = animation.to_binary(animation_props.is_binary_dma)
-            path = abspath(action_props.get_anim_file_name(action))
-            writeInsertableFile(path, insertableBinaryTypes["Animation"], ptrs, 0, data)
-        else:
-            raise PluginError(f"Unimplemented export type ({sm64_props.export_type})")
-        self.report({"INFO"}, "Animation exported successfully.")
+        export_animation(context)
 
 
 # Importing
@@ -332,142 +217,20 @@ class SM64_ImportAllMarioAnims(OperatorBase):
     bl_idname = "scene.sm64_import_mario_anims"
     bl_label = "Import All Mario Animations"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
+    context_mode = "OBJECT"
 
     def execute_operator(self, context):
-        bpy.ops.object.mode_set(mode="OBJECT")
-        animation_operator_checks(context, False)
-
-        scene = context.scene
-        sm64_props: SM64_Properties = scene.fast64.sm64
-
-        armature_obj: Object = context.selected_objects[0]
-        if context.space_data.type != "VIEW_3D" and context.space_data.context == "OBJECT":
-            animation_props: SM64_AnimProps = armature_obj.fast64.sm64.animation
-        else:
-            animation_props: SM64_AnimProps = sm64_props.animation
-        import_props: SM64_AnimImportProps = animation_props.importing
-
-        animations: dict[str, SM64_Anim] = {}
-        table: SM64_AnimTable = SM64_AnimTable()
-
-        mario_dma_table_address = 0x4EC000
-
-        if import_props.import_type == "Binary":
-            rom_path = abspath(import_props.rom if import_props.rom else sm64_props.import_rom)
-            import_rom_checks(rom_path)
-            with open(rom_path, "rb") as rom:
-                rom_data = rom.read()
-                for entrie_str, name, _ in marioAnimationNames[1:]:
-                    entrie_num = int(entrie_str)
-                    dma_table = DMATable()
-                    dma_table.read_binary(rom_data, mario_dma_table_address)
-                    if entrie_num < 0 or entrie_num >= len(dma_table.entries):
-                        raise PluginError(
-                            f"Index {entrie_num} outside of defined table ({len(dma_table.entries)} entries)."
-                        )
-
-                    entrie: DMATableEntrie = dma_table.entries[entrie_num]
-                    header = import_binary_header(rom_data, entrie.address, True, animations, None)
-                    table.elements.append(header)
-                    header.reference = toAlnum(name)
-                    header.data.action_name = name
-        else:
-            raise PluginError("Unimplemented import type.")
-
-        for _, data in animations.items():
-            animation_import_to_blender(armature_obj, sm64_props.blender_to_sm64_scale, data)
-        sm64_props.animation.table.from_anim_table_class(table)
-
-        self.report({"INFO"}, "Success!")
-        return {"FINISHED"}
+        import_all_mario_animations(context)
 
 
 class SM64_ImportAnim(OperatorBase):
     bl_idname = "scene.sm64_import_anim"
     bl_label = "Import Animation(s)"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
+    context_mode = "OBJECT"
 
     def execute_operator(self, context):
-        bpy.ops.object.mode_set(mode="OBJECT")
-        animation_operator_checks(context, False)
-
-        scene = context.scene
-        sm64_props: SM64_Properties = scene.fast64.sm64
-        armature_obj: Object = context.selected_objects[0]
-        if context.space_data.type != "VIEW_3D" and context.space_data.context == "OBJECT":
-            animation_props: SM64_AnimProps = armature_obj.fast64.sm64.animation
-        else:
-            animation_props: SM64_AnimProps = sm64_props.animation
-
-        import_props: SM64_AnimImportProps = animation_props.importing
-        table_props: SM64_AnimTableProps = animation_props.table
-
-        animation_data: dict[tuple[str, str], SM64_Anim] = {}
-        animation_headers: dict[str, SM64_AnimHeader] = {}
-        table = SM64_AnimTable()
-
-        if import_props.import_type == "Binary" or (
-            import_props.import_type == "Insertable Binary" and import_props.insertable_read_from_rom
-        ):
-            rom_path = abspath(import_props.rom if import_props.rom else sm64_props.import_rom)
-            import_rom_checks(rom_path)
-            with open(rom_path, "rb") as rom_file:
-                rom_data = rom_file.read()
-                segment_data = parseLevelAtPointer(rom_file, level_pointers[import_props.level]).segmentData
-        else:
-            rom_data, segment_data = None, None
-
-        anim_bones = get_anim_pose_bones(armature_obj)
-        assumed_bone_count = len(anim_bones) if import_props.assume_bone_count else None
-
-        if import_props.import_type == "Binary":
-            address = import_props.address
-            if import_props.binary_import_type != "DMA" and import_props.is_segmented_address:
-                address = decodeSegmentedAddr(address.to_bytes(4, "big"), segment_data)
-            import_binary_animations(
-                RomReading(data=rom_data, start_address=address, rom_data=rom_data, segment_data=segment_data),
-                import_props.binary_import_type,
-                animation_headers,
-                animation_data,
-                table,
-                None if import_props.read_entire_table else import_props.mario_or_table_index,
-                import_props.ignore_null,
-                assumed_bone_count,
-            )
-        elif import_props.import_type == "Insertable Binary":
-            path = abspath(import_props.path)
-            filepath_checks(path)
-
-            with open(path, "rb") as insertable_file:
-                import_insertable_binary_animations(
-                    RomReading(insertable_file.read(), 0, None, rom_data, segment_data),
-                    animation_headers,
-                    animation_data,
-                    table,
-                    None if import_props.read_entire_table else import_props.mario_or_table_index,
-                    import_props.ignore_null,
-                    assumed_bone_count,
-                )
-        elif import_props.import_type == "C":
-            path = abspath(import_props.path)
-            path_checks(path)
-            import_c_animations(path, animation_headers, animation_data, table)
-
-        if not table.elements:
-            table.elements = [SM64_AnimTableElement(header=header) for header in animation_headers.values()]
-        for animation in animation_data.values():
-            animation_import_to_blender(
-                context.selected_objects[0],
-                sm64_props.blender_to_sm64_scale,
-                animation,
-                animation_props.actor_name,
-                import_props.remove_name_footer,
-                import_props.use_custom_name,
-            )
-        table_props.from_anim_table_class(table, import_props.clear_table)
-
-        self.report({"INFO"}, "Success!")
-        return {"FINISHED"}
+        import_animations(context)
 
 
 class SM64_SearchMarioAnimEnum(OperatorBase):

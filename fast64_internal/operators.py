@@ -85,13 +85,18 @@ class OperatorBase(Operator):
     """Base class for operators, keeps track of context mode and sets it back after running
     execute_operator() and catches exceptions for raisePluginError()"""
 
+    context_mode: str | None = None
+
     def execute_operator(self, context: Context):
         raise NotImplementedError()
 
     def execute(self, context: Context):
         starting_context_mode = context.mode
         try:
+            if self.context_mode:
+                bpy.ops.object.mode_set(mode=self.context_mode)
             self.execute_operator(context)
+            self.report({"INFO"}, "Sucess!")
             return {"FINISHED"}
         except Exception as exc:
             raisePluginError(self, exc)

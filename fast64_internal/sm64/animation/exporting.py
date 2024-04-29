@@ -1,22 +1,23 @@
 import os
 
 import bpy
-import mathutils
 from bpy.types import Object, Action, PoseBone, Context
 from bpy.path import abspath
+import mathutils
 
 from ...utility import PluginError, writeIfNotFound, radians_to_s16, applyBasicTweaks, toAlnum, writeInsertableFile
 from ...utility_anim import stashActionInArmature
 from ..sm64_constants import insertableBinaryTypes
 
-from .classes import SM64_AnimPair, SM64_AnimTable
+from .classes import SM64_Anim, SM64_AnimPair, SM64_AnimTable
 from .utility import get_anim_pose_bones, animation_operator_checks
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .properties import SM64_AnimProps, SM64_AnimTableProps
+    from .properties import SM64_AnimProps, SM64_AnimTableProps, SM64_ActionProps
     from ..settings.properties import SM64_Properties
+
 
 def get_entire_fcurve_data(action: Action, bone: PoseBone, path: str, max_frame: int, max_index: int = 0) -> list:
     data_path = f'pose.bones["{bpy.utils.escape_identifier(bone.name)}"].{path}'
@@ -357,5 +358,83 @@ def export_animation_table(context: Context):
         data, ptrs = table.to_binary(animation_props.is_binary_dma, 0)
         path = abspath(os.path.join(animation_props.directory_path, table_props.insertable_file_name))
         writeInsertableFile(path, insertableBinaryTypes["Animation Table"], ptrs, 0, data)
+    else:
+        raise PluginError(f"Unimplemented export type ({sm64_props.export_type})")
+
+
+def export_animation(context: Context):
+    animation_operator_checks(context)
+
+    scene = context.scene
+    sm64_props: SM64_Properties = scene.fast64.sm64
+    armature_obj: Object = context.selected_objects[0]
+    if context.space_data.type != "VIEW_3D" and context.space_data.context == "OBJECT":
+        animation_props: SM64_AnimProps = armature_obj.fast64.sm64.animation
+    else:
+        animation_props: SM64_AnimProps = sm64_props.animation
+    table_props: SM64_AnimTableProps = animation_props.table
+
+    action = animation_props.selected_action
+    action_props: SM64_ActionProps = action.fast64.sm64
+    stashActionInArmature(armature_obj, action)
+
+    actor_name = animation_props.actor_name
+    animation: SM64_Anim = action_props.to_animation_class(
+        action,
+        armature_obj,
+        sm64_props.blender_to_sm64_scale,
+        animation_props.quick_read,
+        sm64_props.binary_export or animation_props.header_type == "DMA",
+        not sm64_props.binary_export or not animation_props.is_binary_dma,
+        actor_name,
+        not sm64_props.binary_export and table_props.generate_enums,
+        sm64_props.binary_export,
+    )
+    if sm64_props.export_type == "C":
+        header_type = animation_props.header_type
+
+        anim_dir_path, dir_path, geo_dir_path, level_name = animation_props.get_animation_paths(create_directories=True)
+        anim_file_name = action_props.get_anim_file_name(action)
+        anim_path = os.path.join(anim_dir_path, anim_file_name)
+
+        if header_type != "Custom":
+            applyBasicTweaks(abspath(sm64_props.decomp_path))
+
+        with open(anim_path, "w", encoding="utf-8") as file:
+            file.write(animation.to_c(animation_props.is_c_dma_structure))
+
+        if header_type != "DMA":
+            table_name = table_props.get_anim_table_name(actor_name)
+            enum_list_name = table_props.get_enum_list_name(actor_name)
+
+            if table_props.update_table:
+                write_anim_header(
+                    os.path.join(geo_dir_path, "anim_header.h"),
+                    table_name,
+                    table_props.generate_enums,
+                )
+                update_table_file(
+                    os.path.join(anim_dir_path, "table.inc.c"),
+                    action_props.get_enum_and_header_names(action, actor_name),
+                    table_name,
+                    table_props.generate_enums,
+                    os.path.join(anim_dir_path, "table_enum.h"),
+                    enum_list_name,
+                )
+            update_data_file(os.path.join(anim_dir_path, "data.inc.c"), [anim_file_name])
+
+        if not header_type in {"Custom", "DMA"}:
+            update_includes(
+                level_name,
+                animation_props.group_name,
+                toAlnum(actor_name),
+                dir_path,
+                header_type,
+                table_props.update_table,
+            )
+    elif sm64_props.export_type == "Insertable Binary":
+        data, ptrs = animation.to_binary(animation_props.is_binary_dma)
+        path = abspath(action_props.get_anim_file_name(action))
+        writeInsertableFile(path, insertableBinaryTypes["Animation"], ptrs, 0, data)
     else:
         raise PluginError(f"Unimplemented export type ({sm64_props.export_type})")

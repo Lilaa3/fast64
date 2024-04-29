@@ -51,7 +51,13 @@ from .operators import (
     SM64_AnimVariantOperations,
     SM64_PreviewAnimOperator,
 )
-from .classes import SM64_Anim, SM64_AnimData, SM64_AnimHeader, SM64_AnimTable, SM64_AnimTableElement
+from .classes import (
+    SM64_Anim,
+    SM64_AnimData,
+    SM64_AnimHeader,
+    SM64_AnimTable,
+    SM64_AnimTableElement,
+)
 from .constants import (
     enumAnimImportTypes,
     enumAnimBinaryImportTypes,
@@ -594,19 +600,19 @@ class SM64_ActionProps(PropertyGroup):
         col = layout.column()
 
         row = col.row()
-        remove_op = row.operator(SM64_AnimVariantOperations.bl_idname, icon="REMOVE")
+        remove_op = row.operator(SM64_AnimVariantOperations.bl_idname, text="", icon="REMOVE")
         remove_op.array_index, remove_op.type, remove_op.action_name = (
             array_index,
             "REMOVE",
             action.name,
         )
 
-        add_op = row.operator(SM64_AnimVariantOperations.bl_idname, icon="ADD")
+        add_op = row.operator(SM64_AnimVariantOperations.bl_idname, text="", icon="ADD")
         add_op.array_index, add_op.type, add_op.action_name = array_index, "ADD", action.name
 
         move_up_col = row.column()
         move_up_col.enabled = array_index != 0
-        move_up_op = move_up_col.operator(SM64_AnimVariantOperations.bl_idname, icon="TRIA_UP")
+        move_up_op = move_up_col.operator(SM64_AnimVariantOperations.bl_idname, text="", icon="TRIA_UP")
         move_up_op.array_index, move_up_op.type, move_up_op.action_name = (
             array_index,
             "MOVE_UP",
@@ -615,10 +621,7 @@ class SM64_ActionProps(PropertyGroup):
 
         move_down_col = row.column()
         move_down_col.enabled = array_index != len(self.header_variants) - 1
-        move_down_op = move_down_col.operator(
-            SM64_AnimVariantOperations.bl_idname,
-            icon="TRIA_DOWN",
-        )
+        move_down_op = move_down_col.operator(SM64_AnimVariantOperations.bl_idname, text="", icon="TRIA_DOWN")
         move_down_op.array_index, move_down_op.type, move_down_op.action_name = (
             array_index,
             "MOVE_DOWN",
@@ -688,11 +691,11 @@ class SM64_ActionProps(PropertyGroup):
             return
 
         op_row = col.row()
-        add_op = op_row.operator(SM64_AnimVariantOperations.bl_idname, icon="ADD")
+        add_op = op_row.operator(SM64_AnimVariantOperations.bl_idname, text="", icon="ADD")
         add_op.array_index, add_op.type, add_op.action_name = -1, "ADD", action.name
 
         if self.header_variants:
-            clear_op = op_row.operator(SM64_AnimVariantOperations.bl_idname, icon="TRASH")
+            clear_op = op_row.operator(SM64_AnimVariantOperations.bl_idname, text="", icon="TRASH")
             clear_op.type, clear_op.action_name = "CLEAR", action.name
 
             box = col.box().column()
@@ -897,7 +900,7 @@ class SM64_TableElementProps(PropertyGroup):
             row.prop(self, "variant")
             # Usually I'd use a column for enabled, but it was breaking the UI
             remove_split = row.split()
-            remove_op = remove_split.operator(SM64_AnimVariantOperations.bl_idname, icon="REMOVE")
+            remove_op = remove_split.operator(SM64_AnimVariantOperations.bl_idname, text="", icon="REMOVE")
             remove_op.array_index, remove_op.type, remove_op.action_name = (
                 self.variant - 1,
                 "REMOVE",
@@ -905,7 +908,7 @@ class SM64_TableElementProps(PropertyGroup):
             )
             remove_split.enabled = len(action_props.headers) > 1
 
-            add_op = row.operator(SM64_AnimVariantOperations.bl_idname, icon="ADD")
+            add_op = row.operator(SM64_AnimVariantOperations.bl_idname, text="", icon="ADD")
             add_op.array_index, add_op.type, add_op.action_name = (
                 self.variant - 1,
                 "ADD",
@@ -1116,20 +1119,20 @@ class SM64_AnimTableProps(PropertyGroup):
         op_row.alignment = "RIGHT"
         op_row.label(text=str(table_index))
 
-        add_op = op_row.operator(SM64_TableOperations.bl_idname, icon="ADD")
+        add_op = op_row.operator(SM64_TableOperations.bl_idname, text="", icon="ADD")
         add_op.array_index, add_op.type = table_index, "ADD"
 
-        remove_op = op_row.operator(SM64_TableOperations.bl_idname, icon="REMOVE")
+        remove_op = op_row.operator(SM64_TableOperations.bl_idname, text="", icon="REMOVE")
         remove_op.array_index, remove_op.type = table_index, "REMOVE"
 
         move_up_col = op_row.column()
         move_up_col.enabled = table_index != 0
-        move_up_op = move_up_col.operator(SM64_TableOperations.bl_idname, icon="TRIA_UP")
+        move_up_op = move_up_col.operator(SM64_TableOperations.bl_idname, text="", icon="TRIA_UP")
         move_up_op.array_index, move_up_op.type = table_index, "MOVE_UP"
 
         move_down_col = op_row.column()
         move_down_col.enabled = table_index != len(self.elements) - 1
-        move_down_op = move_down_col.operator(SM64_TableOperations.bl_idname, icon="TRIA_DOWN")
+        move_down_op = move_down_col.operator(SM64_TableOperations.bl_idname, text="", icon="TRIA_DOWN")
         move_down_op.array_index, move_down_op.type = table_index, "MOVE_DOWN"
 
         table_element.draw_props(
@@ -1206,12 +1209,12 @@ class SM64_AnimTableProps(PropertyGroup):
         col.separator()
 
         row = col.row()
-        add_op = row.operator(SM64_TableOperations.bl_idname, icon="ADD")
+        add_op = row.operator(SM64_TableOperations.bl_idname, text="", icon="ADD")
         add_op.type = "ADD"
 
         clear_op_col = col.column()
         clear_op_col.enabled = len(self.elements) > 0
-        clear_op = row.operator(SM64_TableOperations.bl_idname, icon="TRASH")
+        clear_op = row.operator(SM64_TableOperations.bl_idname, text="", icon="TRASH")
         clear_op.type = "CLEAR"
 
         elements_col = col.column()

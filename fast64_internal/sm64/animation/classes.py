@@ -67,8 +67,7 @@ class SM64_AnimPair:
                 if i > 1:
                     self.values = self.values[: -(i - 1)]
                 return
-        else:
-            self.values = self.values[:1]
+        self.values = self.values[:1]
 
     def get_frame(self, frame: int):
         return self.values[min(frame, len(self.values) - 1)]
