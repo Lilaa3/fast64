@@ -1597,81 +1597,78 @@ class SM64_AnimProps(PropertyGroup):
         if self.importing_tab:
             self.importing.draw_props(col, import_rom)
 
-    def draw_binary_settings(self, layout: UILayout, export_type: str):
+    def draw_insertable_binary_settings(self, layout: UILayout):
         col = layout.column()
-        col.prop(self, "is_binary_dma")
+        prop_split(col, self, "directory_path", "Directory")
+        directory_ui_warnings(col, abspath(self.directory_path))
 
-        if export_type == "Binary":
-            if self.is_binary_dma:
-                col.prop(self, "binary_overwrite_dma_entry")
-            else:
-                col.prop(self, "binary_level")
-
-        if export_type == "Insertable Binary":
-            prop_split(col, self, "directory_path", "Directory")
-            directory_ui_warnings(col, abspath(self.directory_path))
+    def draw_binary_settings(self, layout: UILayout):
+        col = layout.column()
+        if self.is_binary_dma:
+            col.prop(self, "binary_overwrite_dma_entry")
+            if self.binary_overwrite_dma_entry:
+                box.prop(self.table, "dma_address")
+                box.prop(self.table, "dma_end_address")
+        else:
+            col.prop(self, "binary_level")
+            box = col.box().column()
+            box.prop(self.table, "update_table")
+            if self.table.update_table:
+                self.table.draw_non_exclusive_settings(box, "Binary", self.actor_name)
 
     def draw_c_settings(self, layout: UILayout):
         col = layout.column()
 
         prop_split(col, self, "header_type", "Export Type")
+        if self.header_type == "DMA":
+            col.prop(self, "dma_folder")
+            decompFolderMessage(col)
+            return
 
-        if self.header_type != "DMA":
-            prop_split(col, self, "actor_name_prop", "Name")
+        box = col.box().column()
+        box.prop(self.table, "update_table")
+        if self.table.update_table:
+            self.table.draw_non_exclusive_settings(box, "C", self.actor_name)
 
         if self.header_type == "Custom":
             col.prop(self, "use_dma_structure")
             col.prop(self, "directory_path")
             if directory_ui_warnings(col, abspath(self.directory_path)):
                 customExportWarning(col)
-        elif self.header_type == "DMA":
-            col.prop(self, "dma_folder")
-            decompFolderMessage(col)
-        else:
-            if self.header_type == "Actor":
-                prop_split(col, self, "group_name", "Group Name")
-            elif self.header_type == "Level":
-                prop_split(col, self, "level_option", "Level")
-                if self.level_option == "custom":
-                    prop_split(col, self, "level_name", "Level Name")
+            return
 
-            decompFolderMessage(col)
-            write_box = makeWriteInfoBox(col).column()
-            writeBoxExportType(
-                write_box,
-                self.header_type,
-                self.actor_name,
-                self.level_name,
-                self.level_option,
-            )
+        prop_split(col, self, "actor_name_prop", "Name")
+        if self.header_type == "Actor":
+            prop_split(col, self, "group_name", "Group Name")
+        elif self.header_type == "Level":
+            prop_split(col, self, "level_option", "Level")
+            if self.level_option == "custom":
+                prop_split(col, self, "level_name", "Level Name")
+
+        decompFolderMessage(col)
+        write_box = makeWriteInfoBox(col).column()
+        writeBoxExportType(write_box, self.header_type, self.actor_name, self.level_name, self.level_option)
 
     def draw_props(
         self,
         layout: UILayout,
-        export_type: str = "C",
+        export_type: str,
         show_importing: bool = True,
         import_rom: os.PathLike | None = None,
     ):
         col = layout.column()
-
-        is_dma = (export_type != "C" and self.is_binary_dma) or self.header_type == "DMA"
-
-        if export_type == "C":
+        is_binary = export_type in {"Binary", "Insertable Binary"}
+        is_dma = (is_binary and self.is_binary_dma) or export_type == "DMA"
+        if is_binary:
+            col.prop(self, "is_binary_dma")
+            if export_type == "Binary":
+                self.draw_binary_settings(col)
+            elif export_type == "Insertable Binary":
+                self.draw_insertable_binary_settings(col)
+        elif export_type == "C":
             self.draw_c_settings(col)
-        else:
-            self.draw_binary_settings(col, export_type)
-        col.separator()
 
-        box = col.box().column()
-        if (export_type == "C" or export_type == "Binary") and not is_dma:
-            box.prop(self.table, "update_table")
-            if self.table.update_table:
-                self.table.draw_non_exclusive_settings(box, export_type, self.actor_name)
-        elif export_type == "Binary":
-            prop_split(box, self.table, "dma_address", "DMA Table Address")
-            prop_split(box, self.table, "dma_end_address", "DMA Table End")
-        box.prop(self, "quick_read")
-        col.separator()
+        col.prop(self, "quick_read")
 
         self.draw_action_properties(col.box(), is_dma, export_type)
         self.draw_table_properties(col.box(), is_dma, export_type)
