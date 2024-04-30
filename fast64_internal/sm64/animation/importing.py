@@ -3,12 +3,13 @@ import os
 import re
 
 import bpy
+from bpy.path import abspath
 from bpy.types import Object, Action, Context
 from mathutils import Euler, Vector, Quaternion
 
 from ...utility import PluginError, decodeSegmentedAddr, filepath_checks, path_checks, intToHex
 from ...utility_anim import stashActionInArmature
-from ..sm64_constants import insertableBinaryTypes
+from ..sm64_constants import insertableBinaryTypes, level_pointers
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_utility import import_rom_checks
 
@@ -325,6 +326,7 @@ def import_animations(context: Context):
     animation_headers: dict[str, SM64_AnimHeader] = {}
     table = SM64_AnimTable()
 
+    rom_data, segment_data = None, None
     if import_props.import_type == "Binary" or (
         import_props.import_type == "Insertable Binary" and import_props.insertable_read_from_rom
     ):
@@ -332,9 +334,8 @@ def import_animations(context: Context):
         import_rom_checks(rom_path)
         with open(rom_path, "rb") as rom_file:
             rom_data = rom_file.read()
-            segment_data = parseLevelAtPointer(rom_file, level_pointers[import_props.level]).segmentData
-    else:
-        rom_data, segment_data = None, None
+            if import_props.is_segmented_address:
+                segment_data = parseLevelAtPointer(rom_file, level_pointers[import_props.level]).segmentData
 
     anim_bones = get_anim_pose_bones(armature_obj)
     assumed_bone_count = len(anim_bones) if import_props.assume_bone_count else None

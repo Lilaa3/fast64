@@ -102,20 +102,20 @@ class SM64_AnimHeaderProps(PropertyGroup):
     )
     backwards: BoolProperty(
         name="Backwards",
-        description="(ANIM_FLAG_FORWARD or ANIM_FLAG_BACKWARD in refresh 16\n"
+        description="(ANIM_FLAG_FORWARD/ANIM_FLAG_BACKWARD\n"
         "When enabled, the animation will loop (or stop if looping is disabled) after reaching "
         "the loop start frame.\n"
         "Tipically used with animations which use acceleration to play an animation backwards",
     )
     no_acceleration: BoolProperty(
         name="No Acceleration",
-        description="(ANIM_FLAG_NO_ACCEL)\n"
+        description="(ANIM_FLAG_NO_ACCEL/ANIM_FLAG_2)\n"
         "When enabled, acceleration will not be used when calculating which animation frame is "
         "next",
     )
     disabled: BoolProperty(
         name="No Shadow Translation",
-        description="(ANIM_FLAG_DISABLED)\n"
+        description="(ANIM_FLAG_DISABLED/ANIM_FLAG_5)\n"
         "When enabled, the animation translation "
         "will not be applied to shadows",
     )
@@ -133,7 +133,7 @@ class SM64_AnimHeaderProps(PropertyGroup):
     )
     no_trans: BoolProperty(
         name="No Translation",
-        description="(ANIM_FLAG_NO_TRANS)\n"
+        description="(ANIM_FLAG_NO_TRANS/ANIM_FLAG_6)\n"
         "When enabled, the animation translation will not be used during rendering "
         "(shadows included), the data will still be exported and included",
     )
@@ -145,22 +145,15 @@ class SM64_AnimHeaderProps(PropertyGroup):
     custom_enum: StringProperty(name="Enum", default="ANIM_00")
 
     # Binary
-    overwrite0x28: BoolProperty(name="Overwrite 0x28 behaviour command", default=True)
-    setListIndex: BoolProperty(name="Set List Entry", default=True)
-    addr0x27: StringProperty(name="0x27 Command Address", default=intToHex(2215168))
-    addr0x28: StringProperty(name="0x28 Command Address", default=intToHex(2215176))
     table_index: IntProperty(name="Table Index", min=0, max=255)
 
-    def get_frame_range(self, action: Action):
+    def get_frame_range(self, action: Action) -> tuple[int, int, int]:
         if self.manual_frame_range:
-            return self.start_frame, self.loop_start, self.loop_end
-
-        if not action:
-            raise PluginError("Cannot auto generate a frame range without a provided action")
+            return (self.start_frame, self.loop_start, self.loop_end)
         loop_start, loop_end = getFrameInterval(action)
-        return 0, loop_start, loop_end + 1
+        return (0, loop_start, loop_end + 1)
 
-    def get_anim_name(self, actor_name: str, action: Action):
+    def get_anim_name(self, actor_name: str, action: Action) -> str:
         if self.override_name:
             return self.custom_name
         if self.header_variant == 0:
@@ -168,39 +161,25 @@ class SM64_AnimHeaderProps(PropertyGroup):
                 name = f"{actor_name}_anim_{action.name}"
             else:
                 name = f"anim_{action.name}"
-        else:
-            main_header_name = action.fast64.sm64.headers[0].get_anim_name(actor_name, action)
-            name = f"{main_header_name}_{self.header_variant}"
+            return toAlnum(name)
+        main_header_name = action.fast64.sm64.headers[0].get_anim_name(actor_name, action)
+        name = f"{main_header_name}_{self.header_variant}"
 
         return toAlnum(name)
 
-    def get_anim_enum(self, actor_name: str, action: Action):
+    def get_anim_enum(self, actor_name: str, action: Action) -> str:
         if self.override_enum:
             return self.custom_enum
-        else:
-            anim_name = self.get_anim_name(actor_name, action)
-            enum_name = anim_name.upper()
-            if anim_name == enum_name:
-                enum_name = f"_{enum_name}"
-            return enum_name
+        anim_name = self.get_anim_name(actor_name, action)
+        enum_name = anim_name.upper()
+        if anim_name == enum_name:
+            enum_name = f"_{enum_name}"
+        return enum_name
 
     def get_int_flags(self):
         flags: int = 0
-        if self.no_loop:
-            flags |= 1 << 0
-        if self.backwards:
-            flags |= 1 << 1
-        if self.no_acceleration:
-            flags |= 1 << 2
-        if self.only_horizontal_trans:
-            flags |= 1 << 3
-        if self.only_vertical_trans:
-            flags |= 1 << 4
-        if self.disabled:
-            flags |= 1 << 5
-        if self.no_trans:
-            flags |= 1 << 6
-
+        for i, flag in enumerate(FLAG_PROPS):
+            flags |= 1 << i if getattr(self, flag) else 0
         return flags
 
     def to_header_class(
@@ -1153,7 +1132,7 @@ class SM64_AnimTableProps(PropertyGroup):
                 "INFO",
             )
 
-    def draw_non_exclusive_settings(self, layout: UILayout, export_type: str = "C", actor_name: str = "mario"):
+    def draw_non_exclusive_settings(self, layout: UILayout, is_dma: bool, export_type, actor_name: str):
         col = layout.column()
         if export_type == "C":
             col.prop(self, "generate_enums")
@@ -1167,6 +1146,10 @@ class SM64_AnimTableProps(PropertyGroup):
                 box.scale_y = 0.5
                 box.label(text=self.get_anim_table_name(actor_name))
         elif export_type == "Binary":
+            if is_dma:
+                prop_split(col, self, "dma_address", "DMA Table Address")
+                prop_split(col, self, "dma_end_address", "DMA Table EndAddress")
+                return
             prop_split(col, self, "address", "Table Address")
             col.prop(self, "update_load_command")
             if self.update_load_command:
@@ -1175,18 +1158,15 @@ class SM64_AnimTableProps(PropertyGroup):
     def draw_props(
         self,
         layout: UILayout,
-        is_dma: bool = False,
-        export_type: str = "C",
+        is_dma: bool,
+        export_type: str,
+        actor_name: str,
         draw_non_exclusive_settings: bool = True,
-        actor_name: str = "mario",
     ):
         col = layout.column()
 
-        can_reference = not is_dma
-
         if draw_non_exclusive_settings:
             self.draw_non_exclusive_settings(col, export_type, actor_name)
-
         if export_type == "Insertable Binary":
             prop_split(col, self, "insertable_file_name", "File Name")
         elif export_type == "C" and not is_dma:
@@ -1217,6 +1197,7 @@ class SM64_AnimTableProps(PropertyGroup):
         clear_op = row.operator(SM64_TableOperations.bl_idname, text="", icon="TRASH")
         clear_op.type = "CLEAR"
 
+        can_reference = not is_dma
         elements_col = col.column()
         elements_col.scale_y = 0.8
         actions = []
@@ -1264,7 +1245,7 @@ class SM64_AnimImportProps(PropertyGroup):
     ignore_null: BoolProperty(name="Ignore NULL Delimiter")
     table_address: StringProperty(name="Address", default=intToHex(0x0600FC48))  # Toad animation table
     animation_address: StringProperty(name="Address", default=intToHex(0x0600B75C))  # Toad animation 0
-    is_segmented_address: BoolProperty(name="Is Segmented Address", default=True)
+    is_segmented_address_prop: BoolProperty(name="Is Segmented Address", default=True)
     level: EnumProperty(items=level_enums, name="Level", default="IC")
     dma_table_address: StringProperty(name="DMA Table Address", default="0x4EC000")
     mario_animation: IntProperty(name="Selected Preset Mario Animation")
@@ -1306,6 +1287,14 @@ class SM64_AnimImportProps(PropertyGroup):
             0,
         )
 
+    @property
+    def is_segmented_address(self):
+        return (
+            self.is_segmented_address_prop
+            if self.import_type == "Binary" and self.binary_import_type in {"Table", "Animation"}
+            else False
+        )
+
     def draw_c(self, layout: UILayout):
         col = layout.column()
 
@@ -1339,7 +1328,7 @@ class SM64_AnimImportProps(PropertyGroup):
                     col.box().label(text=f"{marioAnimationNames[self.mario_animation + 1][1]}")
         else:
             prop_split(col, self, "level", "Level")
-            col.prop(self, "is_segmented_address")
+            col.prop(self, "is_segmented_address_prop")
 
         if self.binary_import_type == "Table":
             prop_split(col, self, "table_address", "Address")
@@ -1449,7 +1438,7 @@ class SM64_AnimProps(PropertyGroup):
         importing: SM64_AnimImportProps = self.importing
 
         importing.animation_address = scene.get("animStartImport", importing.animation_address)
-        importing.is_segmented_address = scene.get("animIsSegPtr", importing.is_segmented_address)
+        importing.is_segmented_address_prop = scene.get("animIsSegPtr", importing.is_segmented_address_prop)
         importing.level = scene.get("levelAnimImport", importing.level)
         importing.table_index = scene.get("animListIndexImport", importing.table_index)
         if importing.get("isDMAImport", False):
@@ -1587,8 +1576,8 @@ class SM64_AnimProps(PropertyGroup):
                 col,
                 is_dma,
                 export_type,
-                not self.table.update_table and not is_dma,
                 self.actor_name,
+                not self.table.update_table and not is_dma,
             )
 
     def draw_importing_properties(self, layout: UILayout, import_rom: os.PathLike | None = None):
@@ -1604,17 +1593,13 @@ class SM64_AnimProps(PropertyGroup):
 
     def draw_binary_settings(self, layout: UILayout):
         col = layout.column()
-        if self.is_binary_dma:
-            col.prop(self, "binary_overwrite_dma_entry")
-            if self.binary_overwrite_dma_entry:
-                box.prop(self.table, "dma_address")
-                box.prop(self.table, "dma_end_address")
-        else:
+        box = col.box().column()
+        if not self.is_binary_dma:
             col.prop(self, "binary_level")
-            box = col.box().column()
             box.prop(self.table, "update_table")
-            if self.table.update_table:
-                self.table.draw_non_exclusive_settings(box, "Binary", self.actor_name)
+            if not self.table.update_table:
+                return
+        self.table.draw_non_exclusive_settings(box, self.is_binary_dma, "Binary", self.actor_name)
 
     def draw_c_settings(self, layout: UILayout):
         col = layout.column()
@@ -1628,7 +1613,7 @@ class SM64_AnimProps(PropertyGroup):
         box = col.box().column()
         box.prop(self.table, "update_table")
         if self.table.update_table:
-            self.table.draw_non_exclusive_settings(box, "C", self.actor_name)
+            self.table.draw_non_exclusive_settings(box, False, "C", self.actor_name)
 
         if self.header_type == "Custom":
             col.prop(self, "use_dma_structure")
@@ -1658,7 +1643,6 @@ class SM64_AnimProps(PropertyGroup):
     ):
         col = layout.column()
         is_binary = export_type in {"Binary", "Insertable Binary"}
-        is_dma = (is_binary and self.is_binary_dma) or export_type == "DMA"
         if is_binary:
             col.prop(self, "is_binary_dma")
             if export_type == "Binary":
@@ -1667,9 +1651,9 @@ class SM64_AnimProps(PropertyGroup):
                 self.draw_insertable_binary_settings(col)
         elif export_type == "C":
             self.draw_c_settings(col)
-
         col.prop(self, "quick_read")
 
+        is_dma = (is_binary and self.is_binary_dma) or self.header_type == "DMA"
         self.draw_action_properties(col.box(), is_dma, export_type)
         self.draw_table_properties(col.box(), is_dma, export_type)
         if show_importing:

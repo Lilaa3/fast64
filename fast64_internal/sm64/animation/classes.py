@@ -436,19 +436,25 @@ class SM64_Anim:
 
 @dataclasses.dataclass
 class DMATableEntrie:
-    address: int
-    size: int
-    offset: int
+    address: int = 0
+    offset: int = 0
+    data: list[int] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass
 class SM64_DMATable:
+    address: int = 0
     address_place_holder: int = 0
     entries: list[DMATableEntrie] = dataclasses.field(default_factory=list)
     table_size: int = 0
     end_address: int = 0
 
+    def to_binary(self):
+        pass
+
     def read_binary(self, dma_table_reader: RomReading):
+        self.address = dma_table_reader.start_address
+
         num_entries = dma_table_reader.read_value(4)  # numEntries
         self.address_place_holder = dma_table_reader.read_value(4)  # addrPlaceholder
 
@@ -456,7 +462,8 @@ class SM64_DMATable:
         for _ in range(num_entries):
             offset = dma_table_reader.read_value(4)
             size = dma_table_reader.read_value(4)
-            self.entries.append(DMATableEntrie(dma_table_reader.start_address + offset, size, offset))
+            address = self.address + offset
+            self.entries.append(DMATableEntrie(address, offset, dma_table_reader.data[address : address + size]))
             end_of_entry = offset + size
             if end_of_entry > self.table_size:
                 self.table_size = end_of_entry
@@ -511,7 +518,6 @@ class SM64_AnimTable:
         for header in headers_set:
             if header in headers_added:
                 continue
-
             ordered_headers: list[SM64_AnimHeader] = []
             for other_header in headers_set:
                 if other_header.data == header.data:
@@ -580,14 +586,45 @@ class SM64_AnimTable:
         data: bytearray = bytearray()
         ptrs: list[int] = []
         self.get_seperate_anims_dma()
+
+        # Add the animation table
+        for i, element in enumerate(self.elements):
+            if element.header:
+                ptrs.append(start_address + len(data))
+                header_offset = headers_offset + (headers_set.index(element.header) * HEADER_SIZE)
+                data.extend(header_offset.to_bytes(4, byteorder="big", signed=False))
+            else:
+                assert isinstance(element.reference, int), f"Reference at element {i} is not an int."
+                data.extend(element.reference.to_bytes(4, byteorder="big", signed=False))
+        data.extend(bytearray([0x00] * 4))  # NULL delimiter
+
+        for anim_header in headers_set:  # Add the headers
+            if not anim_header.data:
+                data.extend(anim_header.to_binary())
+                continue
+            ptrs.extend([start_address + len(data) + 12, start_address + len(data) + 16])
+            indice_offset = indice_tables_offset + sum(
+                len(indice_table.data) * 2 for indice_table in indice_tables[: data_set.index(anim_header.data)]
+            )
+            data.extend(
+                anim_header.to_binary(
+                    values_table_offset,
+                    indice_offset,
+                )
+            )
+        if data_set:  # Add the data
+            for indice_table in indice_tables:
+                data.extend(indice_table.to_binary())
+            data.extend(value_table.to_binary())
+
         return data, ptrs
 
-    def to_binary(self, is_dma: bool = False, start_address: int = 0):
-        # TODO: Handle dma exports
+    def to_combined_binary(self, start_address: int = 0):
         data: bytearray = bytearray()
         ptrs: list[int] = []
         headers_set, data_set = self.get_sets()
 
+        # Pre calculate offsets
         headers_offset = start_address + len(self.elements) * 4 + 4  # Table length
         headers_length = len(headers_set) * HEADER_SIZE
         if data_set:
@@ -597,9 +634,10 @@ class SM64_AnimTable:
                 [len(indice_table.data) * 2 for indice_table in indice_tables]
             )
 
-        for i, element in enumerate(self.elements):  # Add the animation table
+        # Add the animation table
+        for i, element in enumerate(self.elements):
             if element.header:
-                ptrs.append(len(data))
+                ptrs.append(start_address + len(data))
                 header_offset = headers_offset + (headers_set.index(element.header) * HEADER_SIZE)
                 data.extend(header_offset.to_bytes(4, byteorder="big", signed=False))
             else:

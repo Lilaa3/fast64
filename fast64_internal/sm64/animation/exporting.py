@@ -355,11 +355,14 @@ def export_animation_table(context: Context):
     if sm64_props.export_type == "C":
         export_animation_table_c(animation_props, table_props, table, abspath(sm64_props.decomp_path))
     elif sm64_props.export_type == "Insertable Binary":
-        data, ptrs = table.to_binary(animation_props.is_binary_dma, 0)
+        if is_binary_dma:
+            raise UnimplementedError("Insertable Binary DMA not implemented yet")
+        else:
+            data, ptrs = table.to_combined_binary(animation_props.is_binary_dma, 0)
         path = abspath(os.path.join(animation_props.directory_path, table_props.insertable_file_name))
         writeInsertableFile(path, insertableBinaryTypes["Animation Table"], ptrs, 0, data)
     else:
-        raise PluginError(f"Unimplemented export type ({sm64_props.export_type})")
+        raise UnimplementedError(f"Unimplemented export type ({sm64_props.export_type})")
 
 
 def export_animation(context: Context):

@@ -193,7 +193,7 @@ class SM64_AnimVariantOperations(OperatorBase):
 class SM64_ExportAnimTable(OperatorBase):
     bl_idname = "scene.sm64_export_anim_table"
     bl_label = "Export"
-    bl_description = "Select an armature with animation data to use"
+    bl_description = "Exports the animation table found in the call context, scene or object"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
     context_mode = "OBJECT"
 
@@ -204,7 +204,7 @@ class SM64_ExportAnimTable(OperatorBase):
 class SM64_ExportAnim(OperatorBase):
     bl_idname = "scene.sm64_export_anim"
     bl_label = "Export"
-    bl_description = "Exports the selected action, select an armature with animation data to use"
+    bl_description = "Exports the select action found in the call context, scene or object"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
     context_mode = "OBJECT"
 
@@ -216,6 +216,7 @@ class SM64_ExportAnim(OperatorBase):
 class SM64_ImportAllMarioAnims(OperatorBase):
     bl_idname = "scene.sm64_import_mario_anims"
     bl_label = "Import All Mario Animations"
+    bl_description = "Imports all of Mario's animations into the call context's animation propreties, scene or object"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
     context_mode = "OBJECT"
 
@@ -226,6 +227,7 @@ class SM64_ImportAllMarioAnims(OperatorBase):
 class SM64_ImportAnim(OperatorBase):
     bl_idname = "scene.sm64_import_anim"
     bl_label = "Import Animation(s)"
+    bl_description = "Imports animations into the call context's animation propreties, scene or object"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
     context_mode = "OBJECT"
 
