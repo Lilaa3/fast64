@@ -1,7 +1,8 @@
 import os
-from bpy.path import abspath
+import shutil
+from typing import BinaryIO
 
-from ..utility import PluginError, filepath_checks
+from ..utility import PluginError, filepath_checks, intToHex, tempName
 
 
 def starSelectWarning(operator, fileStatus):
@@ -59,3 +60,44 @@ def check_expanded(filepath: str):
         raise PluginError(
             f"ROM at {filepath} is too small.\nYou may be using an unexpanded ROM.\nYou can expand a ROM by opening it in SM64 Editor or ROM Manager."
         )
+
+
+class SM64_BinaryExporter:
+
+    def __init__(
+        self,
+        export_rom: os.PathLike,
+        output_rom: os.PathLike,
+        extended_check: bool = False,
+    ):
+        self.export_rom = export_rom
+        self.output_rom = output_rom
+        self.temp_rom: os.PathLike = tempName(self.output_rom)
+        self.rom_file_output: BinaryIO = None
+        self.extended_check = extended_check
+
+    def __enter__(self):
+        export_rom_checks(self.export_rom, self.extended_check)
+        shutil.copy(self.export_rom, self.temp_rom)
+        self.rom_file_output = open(self.temp_rom, "rb+")
+        return self
+
+    def write_to_range(self, start_address: int, end_address: int, data: bytes):
+        assert (
+            start_address + len(data) <= end_address
+        ), f"Data does not fit in the bounds ({intToHex(start_address)}, {intToHex(end_address)})"
+        self.rom_file_output.seek(start_address)
+        self.rom_file_output.write(data)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.rom_file_output.close()
+        if exc_value:
+            if os.path.exists(self.temp_rom):
+                os.remove(self.temp_rom)
+            print("\nExecution type:", exc_type)
+            print("\nExecution value:", exc_value)
+            print("\nTraceback:", traceback)
+        else:
+            if os.path.exists(self.output_rom):
+                os.remove(self.output_rom)
+            os.rename(self.temp_rom, self.output_rom)
