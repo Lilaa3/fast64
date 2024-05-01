@@ -333,7 +333,7 @@ def import_animations(context: Context):
         import_props.import_type == "Insertable Binary" and import_props.insertable_read_from_rom
     ):
         rom_path = abspath(import_props.rom if import_props.rom else sm64_props.import_rom)
-        import_rom_checks(rom_path)
+        import_rom_checks(rom_path, sm64_props.extended_check)
         with open(rom_path, "rb") as rom_file:
             rom_data = rom_file.read()
             if import_props.is_segmented_address:
@@ -408,7 +408,7 @@ def import_all_mario_animations(context: Context):
 
     if import_props.import_type == "Binary":
         rom_path = abspath(import_props.rom if import_props.rom else sm64_props.import_rom)
-        import_rom_checks(rom_path)
+        import_rom_checks(rom_path, sm64_props.extended_check)
         with open(rom_path, "rb") as rom:
             rom_data = rom.read()
             for entrie_str, name, _ in marioAnimationNames[1:]:

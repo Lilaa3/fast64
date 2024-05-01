@@ -45,6 +45,7 @@ class SM64_Properties(PropertyGroup):
     export_type: EnumProperty(items=enum_export_type, name="Export Type", default="C")
     goal: EnumProperty(items=enum_sm64_goal_type, name="Goal", default="All")
 
+    extended_rom_check: BoolProperty(name="Check for Extended ROM", default=True)
     export_rom: StringProperty(name="Export ROM", subtype="FILE_PATH")
     output_rom: StringProperty(name="Output ROM", subtype="FILE_PATH")
 
@@ -135,6 +136,8 @@ Sets bank 4 range to ({hex(defaultExtendSegment4[0])}, {hex(defaultExtendSegment
 
         prop_split(col, self, "blender_to_sm64_scale", "Blender To SM64 Scale")
 
+        if self.binary_export or self.show_importing_menus:
+            col.prop(self, "extended_rom_check")
         if self.export_type == "Binary":
             col.prop(self, "export_rom")
             try:

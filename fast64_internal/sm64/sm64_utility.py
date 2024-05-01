@@ -24,24 +24,26 @@ def getMemoryCFilePath(decompDir):
     return os.path.join(decompDir, relPath)
 
 
-def import_rom_checks(filepath: str):
+def import_rom_checks(filepath: str, extended_check: bool = True):
     filepath_checks(
         filepath,
         empty_error=f"Import ROM path is empty.",
         doesnt_exist_error=f"Import ROM path does not exist.",
         not_a_file_error=f"Import ROM path is not a file.",
     )
-    check_expanded(filepath)
+    if extended_check:
+        check_expanded(filepath)
 
 
-def export_rom_checks(filepath: str):
+def export_rom_checks(filepath: str, extended_check: bool = True):
     filepath_checks(
         filepath,
         empty_error=f"Export ROM path is empty.",
         doesnt_exist_error=f"Export ROM path does not exist.",
         not_a_file_error=f"Export ROM path is not a file.",
     )
-    check_expanded(filepath)
+    if extended_check:
+        check_expanded(filepath)
 
 
 def check_expanded(filepath: str):

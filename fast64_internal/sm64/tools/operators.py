@@ -45,7 +45,7 @@ class SM64_AddrConv(Operator):
 
         import_rom_path = abspath(sm64_props.import_rom)
 
-        import_rom_checks(import_rom_path)
+        import_rom_checks(import_rom_path, sm64_props.extended_check)
         if not self.address:
             raise PluginError("Empty address")
 

@@ -8,6 +8,7 @@ import mathutils
 
 from ...utility import (
     PluginError,
+    intToHex,
     tempName,
     writeIfNotFound,
     radians_to_s16,
@@ -22,7 +23,7 @@ from ..sm64_utility import export_rom_checks
 from .classes import SM64_Anim, SM64_AnimPair, SM64_AnimTable
 from .utility import get_anim_pose_bones, animation_operator_checks
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, BinaryIO
 
 if TYPE_CHECKING:
     from .properties import SM64_AnimProps, SM64_AnimTableProps, SM64_ActionProps
@@ -329,6 +330,42 @@ def export_animation_table_c(
     )
 
 
+class SM64_BinaryExporter:
+
+    def __init__(self, export_rom: os.PathLike, output_rom: os.PathLike, extended_check: bool = False):
+        self.export_rom = export_rom
+        self.output_rom = output_rom
+        self.temp_rom: os.PathLike = tempName(self.output_rom)
+        self.rom_file_output: BinaryIO = None
+        self.extended_check = extended_check
+
+    def __enter__(self):
+        export_rom_checks(self.export_rom, self.extended_check)
+        shutil.copy(abspath(self.export_rom), abspath(self.temp_rom))
+        self.rom_file_output = open(abspath(self.temp_rom), "rb+")
+        return self
+
+    def write_to_range(self, start_address: int, end_address: int, data: bytes):
+        assert (
+            start_address + len(data) <= end_address
+        ), f"Data does not fit in the bounds ({intToHex(start_address)}, {intToHex(end_address)})"
+        self.rom_file_output.seek(start_address)
+        self.rom_file_output.write(data)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.rom_file_output.close()
+        if exc_value:
+            if os.path.exists(self.temp_rom):
+                os.remove(self.temp_rom)
+            print("\nExecution type:", exc_type)
+            print("\nExecution value:", exc_value)
+            print("\nTraceback:", traceback)
+        else:
+            if os.path.exists(self.output_rom):
+                os.remove(self.output_rom)
+            os.rename(self.temp_rom, self.output_rom)
+
+
 def export_animation_table(context: Context):
     bpy.ops.object.mode_set(mode="OBJECT")
     animation_operator_checks(context)
@@ -373,22 +410,16 @@ def export_animation_table(context: Context):
             data, ptrs = table.to_combined_binary(animation_props.is_binary_dma, 0)
             writeInsertableFile(path, insertableBinaryTypes["Animation Table"], ptrs, 0, data)
     else:
-        # export_rom_checks(abspath(sm64_props.export_rom))
-        tempROM = tempName(sm64_props.output_rom)
-        shutil.copy(abspath(sm64_props.export_rom), abspath(tempROM))
-        romfileOutput = open(abspath(tempROM), "rb+")
-
-        if is_binary_dma:
-            data = table.to_binary_dma()
-            if int(table_props.dma_address, 0) + len(data) > int(table_props.dma_end_address, 0):
-                raise PluginError("")
-            romfileOutput.seek(int(table_props.dma_address, 0))
-            romfileOutput.write(data)
-
-        romfileOutput.close()
-        if os.path.exists(bpy.path.abspath(sm64_props.output_rom)):
-            os.remove(bpy.path.abspath(sm64_props.output_rom))
-        os.rename(bpy.path.abspath(tempROM), bpy.path.abspath(sm64_props.output_rom))
+        with SM64_BinaryExporter(
+            sm64_props.export_rom, sm64_props.output_rom, sm64_props.extended_rom_check
+        ) as rom_file_output:
+            if is_binary_dma:
+                data = table.to_binary_dma()
+                rom_file_output.write_to_range(
+                    int(table_props.dma_address, 0),
+                    int(table_props.dma_end_address, 0),
+                    data,
+                )
 
 
 def export_animation(context: Context):

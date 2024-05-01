@@ -615,7 +615,9 @@ class SM64_ExportDL(bpy.types.Operator):
                 )
                 self.report({"INFO"}, "Success! DL at " + context.scene.DLInsertableBinaryPath + ".")
             else:
-                export_rom_checks(bpy.path.abspath(context.scene.fast64.sm64.export_rom))
+                export_rom_checks(
+                    bpy.path.abspath(context.scene.fast64.sm64.export_rom), context.scene.fast64.sm64.extended_rom_check
+                )
                 tempROM = tempName(context.scene.fast64.sm64.output_rom)
                 romfileExport = open(bpy.path.abspath(context.scene.fast64.sm64.export_rom), "rb")
                 shutil.copy(bpy.path.abspath(context.scene.fast64.sm64.export_rom), bpy.path.abspath(tempROM))
