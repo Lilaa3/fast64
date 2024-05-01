@@ -360,7 +360,7 @@ insertableBinaryTypes = {
     "Animation": 2,
     "Collision": 3,
     "Animation Table": 4,
-    "Animation DMA Table": 4,
+    "Animation DMA Table": 5,
 }
 enumBehaviourPresets = [
     ("Custom", "Custom", "Custom"),

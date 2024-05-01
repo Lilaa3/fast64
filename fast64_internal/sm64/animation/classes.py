@@ -111,20 +111,15 @@ class SM64_AnimData:
 
         return text_data.getvalue()
 
-    def to_binary(self, start_address: int = 0) -> bytearray:
+    def to_binary(self) -> bytearray:
         data: bytearray = bytearray()
 
         value_table, indice_tables = create_tables([self])
         indice_table = indice_tables[0]
-
-        indices_size = len(indice_table.data) * 2
-        values_offset = start_address + indices_size
-        values_address = start_address, values_offset
-
+        values_offset = len(indice_table.data) * 2
         data.extend(indice_table.to_binary())
         data.extend(value_table.to_binary())
-
-        return data, values_address
+        return data, values_offset
 
     def read_binary(self, indices_reader: RomReading, values_reader: RomReading, bone_count: int):
         self.indice_reference = indices_reader.address
@@ -200,7 +195,9 @@ class SM64_AnimHeader:
             reference = self.data.values_reference
         elif self.values_reference:
             reference = self.values_reference
-        assert isinstance(reference, expected_type), f"Value reference must be a {expected_type}."
+        assert isinstance(
+            reference, expected_type
+        ), f"Value reference must be a {expected_type}, but instead is equal to {reference}."
         return reference
 
     def get_indice_reference(self, override: Optional[str | int] = None, expected_type: type = str):
@@ -210,7 +207,9 @@ class SM64_AnimHeader:
             reference = self.data.indice_reference
         elif self.indice_reference:
             reference = self.indice_reference
-        assert isinstance(reference, expected_type), f"Indice reference must be a {expected_type}."
+        assert isinstance(
+            reference, expected_type
+        ), f"Indice reference must be a {expected_type}, but instead is equal to {reference}."
         return reference
 
     def to_c(
@@ -386,30 +385,42 @@ class SM64_Anim:
     # Imports
     action: Action | None = None  # Used in the table class to prop function
 
-    def to_binary(self, is_dma: bool = False, start_address: int = 0) -> bytearray:
+    def to_binary_dma(self):
+        assert self.data
+        headers: list[bytearray] = []
+
+        indice_offset = HEADER_SIZE * len(self.headers)
+        anim_data, values_offset = self.data.to_binary()
+
+        for header in self.headers:
+            header_data = header.to_binary(
+                indice_offset + values_offset if self.data else None,
+                indice_offset if self.data else None,
+            )
+            headers.append(header_data)
+            indice_offset -= HEADER_SIZE
+
+        return headers, anim_data
+
+    def to_binary(self, start_address: int = 0):
         data: bytearray = bytearray()
         ptrs: list[int] = []
-
         if self.data:
-            indice_offset = HEADER_SIZE * len(self.headers)
-            indice_reference = start_address + indice_offset
-            anim_data, values_reference = self.data.to_binary(indice_reference)
-
+            indice_offset = start_address + (HEADER_SIZE * len(self.headers))
+            anim_data, values_offset = self.data.to_binary()
         for header in self.headers:
             ptrs.extend([start_address + len(data) + 12, start_address + len(data) + 16])
             header_data = header.to_binary(
-                indice_reference if self.data else None,
-                values_reference if self.data else None,
+                indice_offset + values_offset if self.data else None,
+                indice_offset if self.data else None,
             )
             data.extend(header_data)
-
         if self.data:
             data.extend(anim_data)
-
-        if is_dma or not self.data:
-            return data, []
-        else:
             return data, ptrs
+
+        if self.data:
+            return data, []
 
     def headers_to_c(self, is_dma_structure: bool) -> str:
         text_data = StringIO()
@@ -435,40 +446,58 @@ class SM64_Anim:
 
 
 @dataclasses.dataclass
-class DMATableEntrie:
-    address: int = 0
+class SM64_DMAElement:
     offset: int = 0
-    data: list[int] = dataclasses.field(default_factory=list)
+    size: int = 0
+    address: int = 0
+    end_address: int = 0
 
 
 @dataclasses.dataclass
 class SM64_DMATable:
-    address: int = 0
     address_place_holder: int = 0
-    entries: list[DMATableEntrie] = dataclasses.field(default_factory=list)
+    entries: list[SM64_DMAElement] = dataclasses.field(default_factory=list)
+    data: bytearray = dataclasses.field(default_factory=bytearray)
+
+    address: int = 0
     table_size: int = 0
     end_address: int = 0
 
     def to_binary(self):
-        pass
+        data = bytearray()
+        data.extend(len(self.entries).to_bytes(4, "big", signed=False))
+        data.extend(self.address_place_holder.to_bytes(4, "big", signed=False))
+
+        entries_offset = 8
+        entries_length = len(self.entries) * 8
+        entrie_data_offset = entries_offset + entries_length
+
+        for entrie in self.entries:
+            offset = entrie_data_offset + entrie.offset
+            data.extend(offset.to_bytes(4, "big", signed=False))
+            data.extend(entrie.size.to_bytes(4, "big", signed=False))
+        data.extend(self.data)
+
+        return data
 
     def read_binary(self, dma_table_reader: RomReading):
         self.address = dma_table_reader.start_address
 
-        num_entries = dma_table_reader.read_value(4)  # numEntries
-        self.address_place_holder = dma_table_reader.read_value(4)  # addrPlaceholder
+        num_entries = dma_table_reader.read_value(4, signed=False)  # numEntries
+        self.address_place_holder = dma_table_reader.read_value(4, signed=False)  # addrPlaceholder
 
         self.table_size = 0
         for _ in range(num_entries):
-            offset = dma_table_reader.read_value(4)
-            size = dma_table_reader.read_value(4)
+            offset = dma_table_reader.read_value(4, signed=False)
+            size = dma_table_reader.read_value(4, signed=False)
             address = self.address + offset
-            self.entries.append(DMATableEntrie(address, offset, dma_table_reader.data[address : address + size]))
+            self.entries.append(SM64_DMAElement(offset, size, address, address + size))
             end_of_entry = offset + size
             if end_of_entry > self.table_size:
                 self.table_size = end_of_entry
-        self.end_address = dma_table_reader.address
-        return self
+        self.end_address = self.address + self.table_size
+        pass
+        # return self
 
 
 @dataclasses.dataclass
@@ -527,7 +556,7 @@ class SM64_AnimTable:
             anims.append(SM64_Anim(header.data, ordered_headers, header.file_name))
         return anims
 
-    def get_seperate_anims_dma(self):
+    def get_seperate_anims_dma(self) -> list[SM64_Anim]:
         def num_to_padded_hex(num: int):
             hex_str = hex(num)[2:].upper()  # remove the '0x' prefix
             return hex_str.zfill(2)
@@ -582,42 +611,18 @@ class SM64_AnimTable:
 
         return anims
 
-    def to_binary_dma(self, start_address: int = 0):
-        data: bytearray = bytearray()
-        ptrs: list[int] = []
-        self.get_seperate_anims_dma()
-
-        # Add the animation table
-        for i, element in enumerate(self.elements):
-            if element.header:
-                ptrs.append(start_address + len(data))
-                header_offset = headers_offset + (headers_set.index(element.header) * HEADER_SIZE)
-                data.extend(header_offset.to_bytes(4, byteorder="big", signed=False))
-            else:
-                assert isinstance(element.reference, int), f"Reference at element {i} is not an int."
-                data.extend(element.reference.to_bytes(4, byteorder="big", signed=False))
-        data.extend(bytearray([0x00] * 4))  # NULL delimiter
-
-        for anim_header in headers_set:  # Add the headers
-            if not anim_header.data:
-                data.extend(anim_header.to_binary())
-                continue
-            ptrs.extend([start_address + len(data) + 12, start_address + len(data) + 16])
-            indice_offset = indice_tables_offset + sum(
-                len(indice_table.data) * 2 for indice_table in indice_tables[: data_set.index(anim_header.data)]
-            )
-            data.extend(
-                anim_header.to_binary(
-                    values_table_offset,
-                    indice_offset,
-                )
-            )
-        if data_set:  # Add the data
-            for indice_table in indice_tables:
-                data.extend(indice_table.to_binary())
-            data.extend(value_table.to_binary())
-
-        return data, ptrs
+    def to_binary_dma(self):
+        dma_table: SM64_DMATable = SM64_DMATable()
+        for animation in self.get_seperate_anims_dma():
+            headers, data = animation.to_binary_dma()
+            end_offset = len(dma_table.data) + (HEADER_SIZE * len(headers)) + len(data)
+            for header in headers:
+                offset = len(dma_table.data)
+                size = end_offset - offset
+                dma_table.entries.append(SM64_DMAElement(offset, size))
+                dma_table.data.extend(header)
+            dma_table.data.extend(data)
+        return dma_table.to_binary()
 
     def to_combined_binary(self, start_address: int = 0):
         data: bytearray = bytearray()
@@ -653,12 +658,7 @@ class SM64_AnimTable:
             indice_offset = indice_tables_offset + sum(
                 len(indice_table.data) * 2 for indice_table in indice_tables[: data_set.index(anim_header.data)]
             )
-            data.extend(
-                anim_header.to_binary(
-                    values_table_offset,
-                    indice_offset,
-                )
-            )
+            data.extend(anim_header.to_binary(values_table_offset, indice_offset))
         if data_set:  # Add the data
             for indice_table in indice_tables:
                 data.extend(indice_table.to_binary())
@@ -768,7 +768,7 @@ class SM64_AnimTable:
             assert table_index >= 0 and table_index < len(
                 dma_table.entries
             ), f"Index {table_index} outside of defined table ({len(dma_table.entries)} entries)."
-            entrie: DMATableEntrie = dma_table.entries[table_index]
+            entrie = dma_table.entries[table_index]
             return SM64_AnimHeader.read_binary(
                 table_reader.branch(entrie.address),
                 animation_headers,

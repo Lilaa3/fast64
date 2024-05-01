@@ -304,6 +304,8 @@ def import_insertable_binary_animations(
         )
     elif data_type == "Animation Table":
         table.read_binary(data_reader, animation_headers, animation_data, table_index, ignore_null, assumed_bone_count)
+    elif data_type == "Animation DMA Table":
+        table.read_dma_binary(data_reader, animation_headers, animation_data, table_index, assumed_bone_count)
     else:
         raise PluginError(f'Wrong animation data type "{data_type}".')
 

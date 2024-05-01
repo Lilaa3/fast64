@@ -18,7 +18,7 @@ class RomReading:
     def __init__(
         self,
         data: bytes,
-        start_address: int,
+        start_address: int = 0,
         insertable_ptrs: list[int] | None = None,
         rom_data: bytes | None = None,
         segment_data: dict[int, tuple[int, int]] | None = None,

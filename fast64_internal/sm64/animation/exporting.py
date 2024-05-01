@@ -1,13 +1,23 @@
 import os
+import shutil
 
 import bpy
 from bpy.types import Object, Action, PoseBone, Context
 from bpy.path import abspath
 import mathutils
 
-from ...utility import PluginError, writeIfNotFound, radians_to_s16, applyBasicTweaks, toAlnum, writeInsertableFile
+from ...utility import (
+    PluginError,
+    tempName,
+    writeIfNotFound,
+    radians_to_s16,
+    applyBasicTweaks,
+    toAlnum,
+    writeInsertableFile,
+)
 from ...utility_anim import stashActionInArmature
 from ..sm64_constants import insertableBinaryTypes
+from ..sm64_utility import export_rom_checks
 
 from .classes import SM64_Anim, SM64_AnimPair, SM64_AnimTable
 from .utility import get_anim_pose_bones, animation_operator_checks
@@ -355,14 +365,30 @@ def export_animation_table(context: Context):
     if sm64_props.export_type == "C":
         export_animation_table_c(animation_props, table_props, table, abspath(sm64_props.decomp_path))
     elif sm64_props.export_type == "Insertable Binary":
+        path = abspath(os.path.join(animation_props.directory_path, table_props.insertable_file_name))
         if is_binary_dma:
-            raise UnimplementedError("Insertable Binary DMA not implemented yet")
+            data = table.to_binary_dma()
+            writeInsertableFile(path, insertableBinaryTypes["Animation DMA Table"], [], 0, data)
         else:
             data, ptrs = table.to_combined_binary(animation_props.is_binary_dma, 0)
-        path = abspath(os.path.join(animation_props.directory_path, table_props.insertable_file_name))
-        writeInsertableFile(path, insertableBinaryTypes["Animation Table"], ptrs, 0, data)
+            writeInsertableFile(path, insertableBinaryTypes["Animation Table"], ptrs, 0, data)
     else:
-        raise UnimplementedError(f"Unimplemented export type ({sm64_props.export_type})")
+        # export_rom_checks(abspath(sm64_props.export_rom))
+        tempROM = tempName(sm64_props.output_rom)
+        shutil.copy(abspath(sm64_props.export_rom), abspath(tempROM))
+        romfileOutput = open(abspath(tempROM), "rb+")
+
+        if is_binary_dma:
+            data = table.to_binary_dma()
+            if int(table_props.dma_address, 0) + len(data) > int(table_props.dma_end_address, 0):
+                raise PluginError("")
+            romfileOutput.seek(int(table_props.dma_address, 0))
+            romfileOutput.write(data)
+
+        romfileOutput.close()
+        if os.path.exists(bpy.path.abspath(sm64_props.output_rom)):
+            os.remove(bpy.path.abspath(sm64_props.output_rom))
+        os.rename(bpy.path.abspath(tempROM), bpy.path.abspath(sm64_props.output_rom))
 
 
 def export_animation(context: Context):
