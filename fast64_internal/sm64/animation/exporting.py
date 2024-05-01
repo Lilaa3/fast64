@@ -136,6 +136,8 @@ def get_animation_pairs(
         armature_obj.animation_data.action = pre_export_action
         bpy.context.scene.frame_current = pre_export_frame
 
+    for pair in pairs:
+        pair.clean_frames()
     return pairs
 
 
@@ -270,15 +272,15 @@ def export_animation_table_c(
     anim_dir_path, dir_path, geo_dir_path, level_name = animation_props.get_animation_paths(True)
 
     print("Creating all C data")
-    if table_props.export_seperately:
-        files_data = table.data_and_headers_to_c(header_type == "DMA")
+    if table_props.export_seperately or animation_props.is_c_dma:
+        files_data = table.data_and_headers_to_c(animation_props.is_c_dma)
         print("Saving all generated data files")
         for file_name, file_data in files_data.items():
             with open(os.path.join(anim_dir_path, file_name), "w", encoding="utf-8") as file:
                 file.write(file_data)
             print(file_name)
         print("All files exported")
-        if header_type != "DMA":
+        if not animation_props.is_c_dma:
             update_data_file(
                 os.path.join(anim_dir_path, "data.inc.c"),
                 files_data.keys(),
@@ -291,7 +293,7 @@ def export_animation_table_c(
             file.write(result)
         print("File exported")
 
-    if header_type == "DMA":
+    if animation_props.is_c_dma:
         return
 
     header_path = os.path.join(geo_dir_path, "anim_header.h")
@@ -339,7 +341,7 @@ def export_animation_table(context: Context):
     table_props: SM64_AnimTableProps = animation_props.table
 
     is_binary_dma = sm64_props.binary_export and animation_props.is_binary_dma
-    is_dma = is_binary_dma or animation_props.header_type == "DMA"
+    is_dma = is_binary_dma or animation_props.is_c_dma
 
     print("Stashing all actions in table")
     for action in table_props.get_actions(not is_dma):
@@ -420,7 +422,7 @@ def export_animation(context: Context):
             applyBasicTweaks(abspath(sm64_props.decomp_path))
 
         with open(anim_path, "w", encoding="utf-8") as file:
-            file.write(animation.to_c(animation_props.is_c_dma_structure))
+            file.write(animation.to_c(animation_props.is_c_dma))
 
         if header_type != "DMA":
             table_name = table_props.get_anim_table_name(actor_name)

@@ -1414,7 +1414,7 @@ class SM64_AnimProps(PropertyGroup):
 
     directory_path: StringProperty(name="Directory Path", subtype="FILE_PATH")
     dma_folder: StringProperty(name="DMA Folder", default="assets/anims/")
-    use_dma_structure: BoolProperty(
+    use_dma_structure_prop: BoolProperty(
         name="Use DMA Structure",
         description="When enabled, the Mario animation converter order is used (headers, indicies, values)",
     )
@@ -1504,11 +1504,11 @@ class SM64_AnimProps(PropertyGroup):
         return self.actor_name_prop if self.header_type != "DMA" else None
 
     @property
-    def is_c_dma_structure(self):
+    def is_c_dma(self):
         if self.header_type == "DMA":
             return True
         if self.header_type == "Custom":
-            return self.use_dma_structure
+            return self.use_dma_structure_prop
         return False
 
     def get_animation_paths(self, create_directories: bool = False):
@@ -1615,12 +1615,14 @@ class SM64_AnimProps(PropertyGroup):
             return
 
         box = col.box().column()
-        box.prop(self.table, "update_table")
-        if self.table.update_table:
-            self.table.draw_non_exclusive_settings(box, False, "C", self.actor_name)
+        if self.header_type == "Custom":
+            box.prop(self, "use_dma_structure_prop")
+        if not self.use_dma_structure_prop:
+            box.prop(self.table, "update_table")
+            if self.table.update_table:
+                self.table.draw_non_exclusive_settings(box, False, "C", self.actor_name)
 
         if self.header_type == "Custom":
-            col.prop(self, "use_dma_structure")
             col.prop(self, "directory_path")
             if directory_ui_warnings(col, abspath(self.directory_path)):
                 customExportWarning(col)
@@ -1657,7 +1659,7 @@ class SM64_AnimProps(PropertyGroup):
             self.draw_c_settings(col)
         col.prop(self, "quick_read")
 
-        is_dma = (is_binary and self.is_binary_dma) or self.header_type == "DMA"
+        is_dma = (is_binary and self.is_binary_dma) or self.is_c_dma
         self.draw_action_properties(col.box(), is_dma, export_type)
         self.draw_table_properties(col.box(), is_dma, export_type)
         if show_importing:

@@ -829,8 +829,6 @@ def create_tables(anims_data: list[SM64_AnimData], values_name: str = None):
 
     # Generate compressed value table and offsets
     for pair in [pair for anim_data in anims_data for pair in anim_data.pairs]:
-        pair.clean_frames()
-
         values = pair.values
         assert len(values) <= MAX_U16, "Pair frame count is higher than the 16 bit max."
 
