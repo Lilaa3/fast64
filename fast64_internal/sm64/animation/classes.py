@@ -167,6 +167,7 @@ class SM64_AnimHeader:
     # Imports
     end_address: int = 0
     header_variant: int = 0
+    table_index: int = 0
 
     def get_flags_comment(self):
         if isinstance(self.flags, str):
@@ -261,6 +262,7 @@ class SM64_AnimHeader:
         animation_data: dict[tuple[str, str], "SM64_Anim"],
         is_dma: bool = False,
         assumed_bone_count: int | None = None,
+        table_index: int | None = None,
     ):
         if str(header_reader.start_address) in animation_headers:
             return animation_headers[str(header_reader.start_address)]
@@ -285,7 +287,9 @@ class SM64_AnimHeader:
             header.values_reference = header_reader.read_ptr()
             header.indice_reference = header_reader.read_ptr()
         length = header_reader.read_value(4, signed=False)
+
         header.end_address = header_reader.address
+        header.table_index = len(animation_headers) if table_index is None else table_index
 
         data_key = (str(header.indice_reference), str(header.values_reference))
         if not data_key in animation_data:
@@ -391,15 +395,10 @@ class SM64_Anim:
 
         indice_offset = HEADER_SIZE * len(self.headers)
         anim_data, values_offset = self.data.to_binary()
-
         for header in self.headers:
-            header_data = header.to_binary(
-                indice_offset + values_offset if self.data else None,
-                indice_offset if self.data else None,
-            )
+            header_data = header.to_binary(indice_offset + values_offset, indice_offset)
             headers.append(header_data)
             indice_offset -= HEADER_SIZE
-
         return headers, anim_data
 
     def to_binary(self, start_address: int = 0):
@@ -496,8 +495,7 @@ class SM64_DMATable:
             if end_of_entry > self.table_size:
                 self.table_size = end_of_entry
         self.end_address = self.address + self.table_size
-        pass
-        # return self
+        return self
 
 
 @dataclasses.dataclass
@@ -562,13 +560,12 @@ class SM64_AnimTable:
             return hex_str.zfill(2)
 
         anims = []
-
-        # For creating duplicates
-        data_already_added = []
-        headers_already_added = []
         header_nums = []
         included_headers = []
         data = None
+        # For creating duplicates
+        data_already_added = []
+        headers_already_added = []
 
         for i, element in enumerate(self.elements):
             assert element.header, f"Header in table element {i} is not set."
@@ -735,11 +732,7 @@ class SM64_AnimTable:
             header_reader = table_reader.branch(ptr)
             if header_reader:
                 header = SM64_AnimHeader.read_binary(
-                    table_reader.branch(ptr),
-                    animation_headers,
-                    animation_data,
-                    False,
-                    assumed_bone_count,
+                    table_reader.branch(ptr), animation_headers, animation_data, False, assumed_bone_count, i
                 )
             else:
                 header = None
@@ -775,18 +768,21 @@ class SM64_AnimTable:
                 animation_data,
                 True,
                 assumed_bone_count,
+                table_index,
             )
 
-        for entrie in dma_table.entries:
+        for i, entrie in enumerate(dma_table.entries):
             header = SM64_AnimHeader.read_binary(
                 table_reader.branch(entrie.address),
                 animation_headers,
                 animation_data,
                 True,
                 assumed_bone_count,
+                i,
             )
             self.elements.append(SM64_AnimTableElement(table_reader.start_address, None, header))
         self.end_address = dma_table.end_address
+        return self
 
     def read_c(
         self,
@@ -833,6 +829,8 @@ def create_tables(anims_data: list[SM64_AnimData], values_name: str = None):
 
     # Generate compressed value table and offsets
     for pair in [pair for anim_data in anims_data for pair in anim_data.pairs]:
+        pair.clean_frames()
+
         values = pair.values
         assert len(values) <= MAX_U16, "Pair frame count is higher than the 16 bit max."
 

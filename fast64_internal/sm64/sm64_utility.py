@@ -62,8 +62,13 @@ def check_expanded(filepath: str):
         )
 
 
-class SM64_BinaryExporter:
+def upgrade_hex_prop(prop_location, old_prop_location, prop_name: str, hex_prop_name: str):
+    value = old_prop_location.get(hex_prop_name, None)
+    if value is not None:
+        prop_location.set(prop_name, intToHex(int(value, 16)))
 
+
+class SM64_BinaryExporter:
     def __init__(
         self,
         export_rom: os.PathLike,

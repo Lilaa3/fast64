@@ -38,7 +38,9 @@ class SM64_ImportDL(Operator):
             raisePluginError(self, e)
             return {"CANCELLED"}
         try:
-            import_rom_checks(abspath(context.scene.fast64.sm64.import_rom), context.scene.fast64.sm64.extended_check)
+            import_rom_checks(
+                abspath(context.scene.fast64.sm64.import_rom), context.scene.fast64.sm64.extended_rom_check
+            )
             romfileSrc = open(abspath(context.scene.fast64.sm64.import_rom), "rb")
             levelParsed = parseLevelAtPointer(romfileSrc, level_pointers[context.scene.levelDLImport])
             segmentData = levelParsed.segmentData

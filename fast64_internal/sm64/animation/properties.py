@@ -17,7 +17,6 @@ from bpy.path import abspath
 
 from ...utility_anim import getFrameInterval
 from ...utility import (
-    PluginError,
     customExportWarning,
     decompFolderMessage,
     directory_ui_warnings,
@@ -72,7 +71,6 @@ from .exporting import get_animation_pairs
 
 class SM64_AnimHeaderProps(PropertyGroup):
     expand_tab_in_action: BoolProperty(name="Header Properties", default=True)
-
     header_variant: IntProperty(name="Header Variant Number", min=0)
 
     override_name: BoolProperty(name="Override Name")
@@ -145,7 +143,7 @@ class SM64_AnimHeaderProps(PropertyGroup):
     custom_enum: StringProperty(name="Enum", default="ANIM_00")
 
     # Binary
-    table_index: IntProperty(name="Table Index", min=0, max=255)
+    table_index: IntProperty(name="Table Index", min=0)
 
     def get_frame_range(self, action: Action) -> tuple[int, int, int]:
         if self.manual_frame_range:
@@ -190,6 +188,7 @@ class SM64_AnimHeaderProps(PropertyGroup):
         use_int_flags: bool = False,
         values_reference: Optional[int | str] = None,
         indice_reference: Optional[int | str] = None,
+        table_index: int | None = None,
         actor_name: str | None = "mario",
         generate_enums: bool = False,
         file_name: str | None = "anim_00.inc.c",
@@ -216,6 +215,7 @@ class SM64_AnimHeaderProps(PropertyGroup):
         header.values_reference = values_reference
         header.indice_reference = indice_reference
         header.bone_count = bone_count
+        header.table_index = self.table_index if table_index is None else table_index
         header.file_name = file_name
 
         header.data = data
@@ -245,6 +245,7 @@ class SM64_AnimHeaderProps(PropertyGroup):
 
         self.trans_divisor = header.trans_divisor
 
+        # Flags
         if isinstance(header.flags, int):
             int_flags = header.flags
             self.custom_flags = intToHex(header.flags, 2)
@@ -257,7 +258,7 @@ class SM64_AnimHeaderProps(PropertyGroup):
             flags = header.flags.replace(" ", "").lstrip("(").rstrip(")").split(" | ")
             try:
                 int_flags = int(header.flags, 0)
-            except Exception:
+            except ValueError:
                 for flag in flags:
                     index = next((index for index, flag_tuple in enumerate(C_FLAGS) if flag in flag_tuple), None)
                     if index is not None:
@@ -267,6 +268,8 @@ class SM64_AnimHeaderProps(PropertyGroup):
         self.custom_int_flags = intToHex(int_flags, 2)
         for index, prop in enumerate(FLAG_PROPS):
             setattr(self, prop, is_bit_active(int_flags, index))
+
+        self.table_index = header.table_index
 
     # UI
     def draw_flag_props(self, layout: UILayout, use_int_flags: bool = False):
@@ -1062,6 +1065,7 @@ class SM64_AnimTableProps(PropertyGroup):
                     use_int_flags,
                     values_reference,
                     indice_reference,
+                    i,
                     actor_name,
                     generate_enums,
                     action_props.get_anim_file_name(action),
@@ -1148,7 +1152,7 @@ class SM64_AnimTableProps(PropertyGroup):
         elif export_type == "Binary":
             if is_dma:
                 prop_split(col, self, "dma_address", "DMA Table Address")
-                prop_split(col, self, "dma_end_address", "DMA Table EndAddress")
+                prop_split(col, self, "dma_end_address", "DMA Table End")
                 return
             prop_split(col, self, "address", "Table Address")
             col.prop(self, "update_load_command")
@@ -1426,6 +1430,10 @@ class SM64_AnimProps(PropertyGroup):
     # Binary
     binary_level: EnumProperty(items=level_enums, name="Level", default="IC")
     is_binary_dma: BoolProperty(name="Is DMA", default=True)
+    assume_bone_count: BoolProperty(
+        name="Assume Bone Count",
+        description="When importing a DMA table for insertion, assume the bone count based on the armature instead of the headers",
+    )
 
     # Insertable
     insertable_directory_path: StringProperty(name="Directory Path", subtype="FILE_PATH")
@@ -1437,7 +1445,7 @@ class SM64_AnimProps(PropertyGroup):
     def update_version_0(self, scene: Scene):
         importing: SM64_AnimImportProps = self.importing
 
-        importing.animation_address = scene.get("animStartImport", importing.animation_address)
+        upgrade_hex_prop(importing, scene, "animation_address", "animStartImport")
         importing.is_segmented_address_prop = scene.get("animIsSegPtr", importing.is_segmented_address_prop)
         importing.level = scene.get("levelAnimImport", importing.level)
         importing.table_index = scene.get("animListIndexImport", importing.table_index)
@@ -1450,8 +1458,8 @@ class SM64_AnimProps(PropertyGroup):
         for action in bpy.data.actions:
             action_props: SM64_ActionProps = action.fast64.sm64
             action_props.header.no_loop = not scene.get("loopAnimation", not action_props.header.no_loop)
-            action_props.start_address = scene.get("animExportStart", action_props.start_address)
-            action_props.end_address = scene.get("animExportEnd", action_props.end_address)
+            upgrade_hex_prop(action_props, scene, "start_address", "animExportStart")
+            upgrade_hex_prop(action_props, scene, "end_address", "animExportEnd")
         custom_export = scene.get("animCustomExport", False)
         if custom_export:
             self.header_type = "Custom"
@@ -1476,9 +1484,9 @@ class SM64_AnimProps(PropertyGroup):
 
         table: SM64_AnimTableProps = self.table
         table.update_table = scene.get("setAnimListIndex", table.update_table)
-        table.address = scene.get("addr_0x27", table.address)
+        upgrade_hex_prop(table, scene, "address", "addr_0x27")
         table.update_load_command = scene.get("overwrite_0x28", table.update_load_command)
-        table.load_command_address = scene.get("addr_0x28", table.load_command_address)
+        upgrade_hex_prop(table, scene, "load_command_address", "addr_0x28")
         self.binary_level = scene.get("levelAnimExport", self.binary_level)
 
         self.version = 1
@@ -1512,13 +1520,9 @@ class SM64_AnimProps(PropertyGroup):
             self.level_option,
             self.level_name,
         )
-
         dir_name = toAlnum(self.actor_name)
-
         if self.header_type == "DMA":
-            anim_dir_path = os.path.join(export_path, self.dma_folder)
-            dir_path = ""
-            geo_dir_path = ""
+            anim_dir_path, dir_path, geo_dir_path = os.path.join(export_path, self.dma_folder), "", ""
         else:
             dir_path = getExportDir(
                 custom_export,
@@ -1535,10 +1539,8 @@ class SM64_AnimProps(PropertyGroup):
                     os.mkdir(dir_path)
                 if not os.path.exists(geo_dir_path):
                     os.mkdir(geo_dir_path)
-
         if create_directories and not os.path.exists(anim_dir_path):
             os.mkdir(anim_dir_path)
-
         return (
             abspath(anim_dir_path),
             abspath(dir_path),
@@ -1594,7 +1596,9 @@ class SM64_AnimProps(PropertyGroup):
     def draw_binary_settings(self, layout: UILayout):
         col = layout.column()
         box = col.box().column()
-        if not self.is_binary_dma:
+        if self.is_binary_dma:
+            col.prop(self, "assume_bone_count")
+        else:
             col.prop(self, "binary_level")
             box.prop(self.table, "update_table")
             if not self.table.update_table:

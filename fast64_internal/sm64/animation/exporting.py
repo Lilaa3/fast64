@@ -17,8 +17,8 @@ from ...utility_anim import stashActionInArmature
 from ..sm64_constants import insertableBinaryTypes
 from ..sm64_utility import SM64_BinaryExporter
 
-from .classes import SM64_Anim, SM64_AnimPair, SM64_AnimTable
-from .utility import get_anim_pose_bones, animation_operator_checks
+from .classes import SM64_Anim, SM64_AnimHeader, SM64_AnimData, SM64_AnimPair, SM64_AnimTable, SM64_AnimTableElement
+from .utility import RomReading, get_anim_pose_bones, animation_operator_checks
 
 from typing import TYPE_CHECKING
 
@@ -136,8 +136,6 @@ def get_animation_pairs(
         armature_obj.animation_data.action = pre_export_action
         bpy.context.scene.frame_current = pre_export_frame
 
-    for pair in pairs:
-        pair.clean_frames()
     return pairs
 
 
@@ -373,10 +371,10 @@ def export_animation_table(context: Context):
     else:
         with SM64_BinaryExporter(
             abspath(sm64_props.export_rom), abspath(sm64_props.output_rom), sm64_props.extended_rom_check
-        ) as rom_file_output:
+        ) as binary_exporter:
             if is_binary_dma:
                 data = table.to_binary_dma()
-                rom_file_output.write_to_range(
+                binary_exporter.write_to_range(
                     int(table_props.dma_address, 0),
                     int(table_props.dma_end_address, 0),
                     data,
@@ -458,4 +456,30 @@ def export_animation(context: Context):
         path = abspath(action_props.get_anim_file_name(action))
         writeInsertableFile(path, insertableBinaryTypes["Animation"], ptrs, 0, data)
     else:
-        raise PluginError(f"Unimplemented export type ({sm64_props.export_type})")
+        with SM64_BinaryExporter(
+            abspath(sm64_props.export_rom), abspath(sm64_props.output_rom), sm64_props.extended_rom_check
+        ) as binary_exporter:
+            if animation_props.is_binary_dma:
+                dma_address = int(table_props.dma_address, 0)
+                bone_count = len(get_anim_pose_bones(armature_obj))
+                print("Reading DMA table")
+                table = SM64_AnimTable().read_dma_binary(
+                    RomReading(open(binary_exporter.export_rom, "rb").read(), dma_address),
+                    {},
+                    {},
+                    None,
+                    bone_count if animation_props.assume_bone_count else None,
+                )
+                empty_data = SM64_AnimData()
+                for header in animation.headers:
+                    while header.table_index >= len(table.elements):
+                        table.elements.append(table.elements[-1])
+                    table.elements[header.table_index] = SM64_AnimTableElement(header=SM64_AnimHeader(data=empty_data))
+                print("Converting to binary data")
+                data = table.to_binary_dma()
+                print("Writing to ROM")
+                binary_exporter.write_to_range(
+                    dma_address,
+                    int(table_props.dma_end_address, 0),
+                    data,
+                )

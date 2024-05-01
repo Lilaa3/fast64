@@ -2868,7 +2868,9 @@ class SM64_ExportGeolayoutObject(ObjectDataExporter):
                 self.report({"INFO"}, "Success! Data at " + context.scene.geoInsertableBinaryPath)
             else:
                 tempROM = tempName(context.scene.fast64.sm64.output_rom)
-                export_rom_checks(bpy.path.abspath(context.scene.fast64.sm64.export_rom), context.scene.fast64.sm64.extended_rom_check)
+                export_rom_checks(
+                    bpy.path.abspath(context.scene.fast64.sm64.export_rom), context.scene.fast64.sm64.extended_rom_check
+                )
                 romfileExport = open(bpy.path.abspath(context.scene.fast64.sm64.export_rom), "rb")
                 shutil.copy(bpy.path.abspath(context.scene.fast64.sm64.export_rom), bpy.path.abspath(tempROM))
                 romfileExport.close()
@@ -3073,7 +3075,9 @@ class SM64_ExportGeolayoutArmature(bpy.types.Operator):
                 self.report({"INFO"}, "Success! Data at " + context.scene.geoInsertableBinaryPath)
             else:
                 tempROM = tempName(context.scene.fast64.sm64.output_rom)
-                export_rom_checks(bpy.path.abspath(context.scene.fast64.sm64.export_rom), context.scene.fast64.sm64.extended_rom_check)
+                export_rom_checks(
+                    bpy.path.abspath(context.scene.fast64.sm64.export_rom), context.scene.fast64.sm64.extended_rom_check
+                )
                 romfileExport = open(bpy.path.abspath(context.scene.fast64.sm64.export_rom), "rb")
                 shutil.copy(bpy.path.abspath(context.scene.fast64.sm64.export_rom), bpy.path.abspath(tempROM))
                 romfileExport.close()
