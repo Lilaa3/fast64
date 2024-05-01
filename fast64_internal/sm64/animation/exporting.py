@@ -370,7 +370,7 @@ def export_animation_table(context: Context):
         else:
             data, ptrs = table.to_combined_binary(animation_props.is_binary_dma, 0)
             writeInsertableFile(path, insertableBinaryTypes["Animation Table"], ptrs, 0, data)
-    else:
+    elif sm64_props.export_type == "Binary":
         with SM64_BinaryExporter(
             abspath(sm64_props.export_rom), abspath(sm64_props.output_rom), sm64_props.extended_rom_check
         ) as binary_exporter:
@@ -381,6 +381,8 @@ def export_animation_table(context: Context):
                     int(table_props.dma_end_address, 0),
                     data,
                 )
+    else:
+        raise NotImplementedError(f"Export type {sm64_props.export_type} is not implemented")
 
 
 def export_animation(context: Context):
