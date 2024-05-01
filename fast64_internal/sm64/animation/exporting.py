@@ -15,10 +15,10 @@ from ...utility import (
 )
 from ...utility_anim import stashActionInArmature
 from ..sm64_constants import insertableBinaryTypes
-from ..sm64_utility import SM64_BinaryExporter
+from ..sm64_utility import SM64_BinaryExporter, RomReading
 
 from .classes import SM64_Anim, SM64_AnimHeader, SM64_AnimData, SM64_AnimPair, SM64_AnimTable, SM64_AnimTableElement
-from .utility import RomReading, get_anim_pose_bones, animation_operator_checks
+from .utility import get_anim_pose_bones, animation_operator_checks
 
 from typing import TYPE_CHECKING
 

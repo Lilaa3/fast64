@@ -11,9 +11,9 @@ from ...utility import PluginError, decodeSegmentedAddr, filepath_checks, path_c
 from ...utility_anim import stashActionInArmature
 from ..sm64_constants import insertableBinaryTypes, level_pointers
 from ..sm64_level_parser import parseLevelAtPointer
-from ..sm64_utility import import_rom_checks
+from ..sm64_utility import import_rom_checks, RomReading
 
-from .utility import RomReading, animation_operator_checks, get_anim_pose_bones, sm64_to_radian
+from .utility import animation_operator_checks, get_anim_pose_bones, sm64_to_radian
 from .classes import (
     SM64_Anim,
     CArrayDeclaration,
@@ -237,7 +237,7 @@ def import_c_animations(
         table.read_c(table_decls[0], animation_headers, animation_data, header_decls, value_decls, indices_decls)
         return
     for header_decl in header_decls:
-        header = SM64_AnimHeader().read_c(header_decl, value_decls, indices_decls, animation_headers, animation_data)
+        SM64_AnimHeader().read_c(header_decl, value_decls, indices_decls, animation_headers, animation_data)
 
 
 def import_binary_animations(

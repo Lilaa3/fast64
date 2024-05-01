@@ -8,8 +8,8 @@ from bpy.types import Action
 
 from ...utility import PluginError, is_bit_active, to_s16, intToHex
 from ..sm64_constants import MAX_U16
+from ..sm64_utility import RomReading
 
-from .utility import RomReading
 from .constants import HEADER_SIZE, C_FLAGS
 
 

@@ -1,3 +1,4 @@
+import dataclasses
 import os
 import shutil
 from typing import BinaryIO
@@ -66,6 +67,69 @@ def upgrade_hex_prop(prop_location, old_prop_location, prop_name: str, hex_prop_
     value = old_prop_location.get(hex_prop_name, None)
     if value is not None:
         prop_location.set(prop_name, intToHex(int(value, 16)))
+
+
+@dataclasses.dataclass
+class RomReading:
+    """
+    Simple class that simplifies reading data continously from a starting address.
+    Accounts for insertable binary data.
+    """
+
+    def __init__(
+        self,
+        data: bytes,
+        start_address: int = 0,
+        insertable_ptrs: list[int] | None = None,
+        rom_data: bytes | None = None,
+        segment_data: dict[int, tuple[int, int]] | None = None,
+    ):
+        self.start_address = start_address
+        self.address = start_address
+        self.data = data
+        self.rom_data = rom_data
+        if not insertable_ptrs:
+            insertable_ptrs = []
+        self.insertable_ptrs = insertable_ptrs
+        self.segment_data = segment_data
+
+    def branch(self, start_address: int | None = None, data: bytes | None = None):
+        if start_address and start_address > len(self.data):
+            if self.rom_data and self.insertable_ptrs:
+                data = self.rom_data
+            else:
+                return None
+        branch = RomReading(
+            data if data else self.data,
+            start_address if start_address is not None else self.address,
+            self.insertable_ptrs,
+            self.rom_data,
+            self.segment_data,
+        )
+        return branch
+
+    def read_ptr(self):
+        ptr_address = self.address
+        self.address += 4
+        in_bytes = self.data[ptr_address : ptr_address + 4]
+        ptr = int.from_bytes(in_bytes, "big", signed=False)
+
+        if ptr == 0:
+            return None
+
+        if ptr_address not in self.insertable_ptrs and self.segment_data:
+            ptr_in_bytes: bytes = ptr.to_bytes(4, "big")
+            if ptr_in_bytes[0] not in self.segment_data:
+                raise PluginError(f"Address {intToHex(ptr)} does not belong to the current segment.")
+            return decodeSegmentedAddr(ptr_in_bytes, self.segment_data)
+        return ptr
+
+    def read_value(self, size, offset: int = None, signed=True):
+        if offset:
+            self.address = self.start_address + offset
+        in_bytes = self.data[self.address : self.address + size]
+        self.address += size
+        return int.from_bytes(in_bytes, "big", signed=signed)
 
 
 class SM64_BinaryExporter:
