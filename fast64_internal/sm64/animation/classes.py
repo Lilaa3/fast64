@@ -93,6 +93,8 @@ class SM64_AnimData:
     # Importing
     value_end_address: int = 0
     indice_end_address: int = 0
+    start_address: int = 0
+    end_address: int = 0
 
     def to_c(self, is_dma_structure: bool = False):
         text_data = StringIO()
@@ -122,14 +124,17 @@ class SM64_AnimData:
         return data, values_offset
 
     def read_binary(self, indices_reader: RomReading, values_reader: RomReading, bone_count: int):
-        self.indice_reference = indices_reader.address
-        self.values_reference = values_reader.address
+        self.indice_reference = indices_reader.start_address
+        self.values_reference = values_reader.start_address
         for _ in range((bone_count + 1) * 3):
             pair = SM64_AnimPair()
             pair.read_binary(indices_reader, values_reader)
             self.pairs.append(pair)
         self.indice_end_address = indices_reader.address
         self.value_end_address = max(pair.end_address for pair in self.pairs)
+
+        self.start_address = min(self.indice_reference, self.values_reference)
+        self.end_address = max(self.indice_end_address, self.value_end_address)
         return self
 
     def read_c(self, indice_decl: CArrayDeclaration, value_decl: CArrayDeclaration):
@@ -621,7 +626,7 @@ class SM64_AnimTable:
             dma_table.data.extend(data)
         return dma_table.to_binary()
 
-    def to_combined_binary(self, start_address: int = 0):
+    def to_combined_binary(self, table_start_address: int = 0, data_start_address: int = 0) -> bytearray:
         data: bytearray = bytearray()
         ptrs: list[int] = []
         headers_set, data_set = self.get_sets()
@@ -743,7 +748,7 @@ class SM64_AnimTable:
             raise PluginError(
                 "Table address is most likely invalid, iterated through 300 elements and no NULL was found."
             )
-        self.end_address = header_reader.address
+        self.end_address = table_reader.address
         return self
 
     def read_dma_binary(

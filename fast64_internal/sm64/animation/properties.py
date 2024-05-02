@@ -944,15 +944,25 @@ class SM64_AnimTableProps(PropertyGroup):
 
     insertable_file_name: StringProperty(name="Insertable File Name", default="toad.insertable")
 
-    address: StringProperty(name="Table Address", default=intToHex(0x0600FC48))  # Toad animation table
-    # TODO: 0xa3fa60 is where the data starts, maybe this should default to that
-    # ends after the table at 0x600FC68
-    end_address: StringProperty(name="End Address", default=intToHex(0x600FC68))
+    data_address: StringProperty(
+        name="Data Address",
+        default=intToHex(0x6008CF0),  # Toad animation table data
+    )
+    data_end_address: StringProperty(
+        name="Data End",
+        default=intToHex(0x0600FC48),
+    )
+    address: StringProperty(
+        name="Table Address",
+        default=intToHex(0x0600FC48),  # Toad animation table
+    )
+    end_address: StringProperty(name="Table End", default=intToHex(0x0600FC6C))
 
     update_load_command: BoolProperty(name="Update Table Load Command")
     load_command_address: StringProperty(
-        name="Table Load Command Address", default="0x21CD08"
-    )  # TODO: Change this to castle toad's, use quad64
+        name="Table Load Command Address",
+        default=intToHex(0x13002EF8 + (4 * 2)),  # Message toad (bhvToadMessage) animation load command
+    )
     dma_address: StringProperty(name="DMA Table Address", default=intToHex(0x4EC000))
     dma_end_address: StringProperty(name="DMA Table End", default=intToHex(0x4EC000 + 0x8DC20))
 
@@ -997,6 +1007,16 @@ class SM64_AnimTableProps(PropertyGroup):
             self.dma_end_address = intToHex(table.end_address)
             self.address = intToHex(table.reference)
             self.end_address = intToHex(table.end_address)
+
+            # Data
+            start_addresses = []
+            end_addresses = []
+            for element in table.elements:
+                if element.header and element.header.data:
+                    start_addresses.append(element.header.data.start_address)
+                    end_addresses.append(element.header.data.end_address)
+            self.data_address = intToHex(min(start_addresses))
+            self.data_end_address = intToHex(max(end_addresses))
 
     def to_table_class(
         self,
@@ -1155,6 +1175,7 @@ class SM64_AnimTableProps(PropertyGroup):
                 prop_split(col, self, "dma_end_address", "DMA Table End")
                 return
             prop_split(col, self, "address", "Table Address")
+            prop_split(col, self, "end_address", "Table End")
             col.prop(self, "update_load_command")
             if self.update_load_command:
                 prop_split(col, self, "load_command_address", "Command Address")
@@ -1171,12 +1192,17 @@ class SM64_AnimTableProps(PropertyGroup):
 
         if draw_non_exclusive_settings:
             self.draw_non_exclusive_settings(col, export_type, actor_name)
+
+        if not is_dma:
+            if export_type == "Binary":
+                prop_split(col, self, "data_address", "Data Address")
+                prop_split(col, self, "data_end_address", "Data End")
+            elif export_type == "C":
+                col.prop(self, "export_seperately")
+                if self.export_seperately:
+                    col.prop(self, "override_files_prop")
         if export_type == "Insertable Binary":
             prop_split(col, self, "insertable_file_name", "File Name")
-        elif export_type == "C" and not is_dma:
-            col.prop(self, "export_seperately")
-            if self.export_seperately:
-                col.prop(self, "override_files_prop")
 
         if self.elements:
             col.operator(SM64_ExportAnimTable.bl_idname, icon="EXPORT")

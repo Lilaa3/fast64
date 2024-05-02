@@ -3,7 +3,7 @@ import os
 import shutil
 from typing import BinaryIO
 
-from ..utility import PluginError, filepath_checks, intToHex, tempName
+from ..utility import PluginError, decodeSegmentedAddr, filepath_checks, intToHex, tempName
 
 
 def starSelectWarning(operator, fileStatus):
