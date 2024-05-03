@@ -923,12 +923,6 @@ class SM64_TableElementProps(PropertyGroup):
 
 
 class SM64_AnimTableProps(PropertyGroup):
-    update_table: BoolProperty(
-        name="Update Table On Action Export",
-        description="Update table outside of table exports",
-        default=True,
-    )
-
     export_seperately: BoolProperty(name="Export All Seperately")
     override_files_prop: BoolProperty(name="Override Table and Data Files", default=True)
     elements: CollectionProperty(type=SM64_TableElementProps)
@@ -1180,14 +1174,14 @@ class SM64_AnimTableProps(PropertyGroup):
     def draw_props(
         self,
         layout: UILayout,
-        is_dma: bool,
-        export_type: str,
-        actor_name: str,
-        draw_non_exclusive_settings: bool = True,
+        is_dma: bool = False,
+        non_exclusive_settings: bool = True,
+        export_type: str = "C",
+        actor_name: str = "mario",
     ):
         col = layout.column()
 
-        if draw_non_exclusive_settings:
+        if non_exclusive_settings:
             self.draw_non_exclusive_settings(col, is_dma, export_type, actor_name)
 
         if not is_dma:
@@ -1431,6 +1425,12 @@ class SM64_AnimProps(PropertyGroup):
 
     table_tab: BoolProperty(name="Table")
     table: PointerProperty(type=SM64_AnimTableProps)
+    update_table: BoolProperty(
+        name="Update Table On Action Export",
+        description="Update table outside of table exports",
+        default=True,
+    )
+
     importing_tab: BoolProperty(name="Importing")
     importing: PointerProperty(type=SM64_AnimImportProps)
 
@@ -1507,8 +1507,8 @@ class SM64_AnimProps(PropertyGroup):
             # Ignores file name
             self.insertable_directory_path = os.path.split(insertable_directory_path)[0]
 
+        self.update_table = scene.get("setAnimListIndex", self.update_table)
         table: SM64_AnimTableProps = self.table
-        table.update_table = scene.get("setAnimListIndex", table.update_table)
         # upgrade_hex_prop(table, scene, "", "addr_0x27")
         table.overwrite_begining_animation = scene.get("overwrite_0x28", table.overwrite_begining_animation)
         upgrade_hex_prop(table, scene, "animate_command_address", "addr_0x28")
@@ -1573,40 +1573,6 @@ class SM64_AnimProps(PropertyGroup):
             level_name,
         )
 
-    def draw_action_properties(self, layout: UILayout, is_dma: bool, export_type: str):
-        col = layout.column()
-
-        col.prop(self, "action_tab", icon="TRIA_DOWN" if self.action_tab else "TRIA_RIGHT")
-        if not self.action_tab:
-            return
-
-        col.prop(self, "selected_action")
-        if self.selected_action:
-            action_props: SM64_ActionProps = self.selected_action.fast64.sm64
-            action_props.draw_props(
-                layout=col,
-                action=self.selected_action,
-                draw_references=export_type in {"C"} or not is_dma,
-                export_type=export_type,
-                actor_name=self.actor_name,
-                generate_enums=self.table.generate_enums,
-                draw_table_index=self.table.update_table,
-                draw_names=export_type in {"C"},
-                is_dma=is_dma,
-            )
-
-    def draw_table_properties(self, layout: UILayout, is_dma: bool, export_type: str):
-        col = layout.column()
-        col.prop(self, "table_tab", icon="TRIA_DOWN" if self.table_tab else "TRIA_RIGHT")
-        if self.table_tab:
-            self.table.draw_props(
-                col,
-                is_dma,
-                export_type,
-                self.actor_name,
-                not self.table.update_table and not is_dma,
-            )
-
     def draw_importing_properties(self, layout: UILayout, import_rom: os.PathLike | None = None):
         col = layout.column()
         col.prop(self, "importing_tab", icon="TRIA_DOWN" if self.importing_tab else "TRIA_RIGHT")
@@ -1625,8 +1591,8 @@ class SM64_AnimProps(PropertyGroup):
             col.prop(self, "assume_bone_count")
         else:
             col.prop(self, "binary_level")
-            box.prop(self.table, "update_table")
-            if not self.table.update_table:
+            box.prop(self, "update_table")
+            if not self.update_table:
                 return
         self.table.draw_non_exclusive_settings(box, self.is_binary_dma, "Binary", self.actor_name)
 
@@ -1643,8 +1609,8 @@ class SM64_AnimProps(PropertyGroup):
         if self.header_type == "Custom":
             box.prop(self, "use_dma_structure_prop")
         if not self.use_dma_structure_prop:
-            box.prop(self.table, "update_table")
-            if self.table.update_table:
+            box.prop(self, "update_table")
+            if self.update_table:
                 self.table.draw_non_exclusive_settings(box, False, "C", self.actor_name)
 
         if self.header_type == "Custom":
@@ -1685,8 +1651,32 @@ class SM64_AnimProps(PropertyGroup):
         col.prop(self, "quick_read")
 
         is_dma = (is_binary and self.is_binary_dma) or self.is_c_dma
-        self.draw_action_properties(col.box(), is_dma, export_type)
-        self.draw_table_properties(col.box(), is_dma, export_type)
+
+        box = col.box()
+        box.prop(self, "action_tab", icon="TRIA_DOWN" if self.action_tab else "TRIA_RIGHT")
+        if not self.action_tab:
+            return
+
+        box.prop(self, "selected_action")
+        if self.selected_action:
+            action_props: SM64_ActionProps = self.selected_action.fast64.sm64
+            action_props.draw_props(
+                layout=box,
+                action=self.selected_action,
+                draw_references=export_type in {"C"} or not is_dma,
+                export_type=export_type,
+                actor_name=self.actor_name,
+                generate_enums=self.table.generate_enums,
+                draw_table_index=self.update_table,
+                draw_names=export_type in {"C"},
+                is_dma=is_dma,
+            )
+
+        box = col.box()
+        col.prop(self, "table_tab", icon="TRIA_DOWN" if self.table_tab else "TRIA_RIGHT")
+        if self.table_tab:
+            self.table.draw_props(box, is_dma, not self.update_table and not is_dma, export_type, self.actor_name)
+
         if show_importing:
             self.draw_importing_properties(col.box(), import_rom)
 
