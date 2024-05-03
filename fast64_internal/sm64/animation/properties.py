@@ -31,7 +31,7 @@ from ...utility import (
     is_bit_active,
     intToHex,
 )
-from ..sm64_utility import import_rom_checks
+from ..sm64_utility import import_rom_checks, upgrade_hex_prop
 from ..sm64_constants import (
     MAX_U16,
     MIN_S16,
@@ -345,13 +345,13 @@ class SM64_AnimHeaderProps(PropertyGroup):
         self,
         layout: UILayout,
         action: Action,
-        draw_table_operations: bool = True,
+        is_in_table: bool = False,
         draw_names: bool = True,
         draw_int_flags: bool = False,
         export_type: str = "C",
         actor_name: str = "mario",
         generate_enums: bool = False,
-        draw_table_index: bool = True,
+        draw_table_index: bool = False,
     ):
         col = layout.column()
 
@@ -359,13 +359,12 @@ class SM64_AnimHeaderProps(PropertyGroup):
         preview_op.played_header = self.header_variant
         preview_op.played_action = action.name
 
-        if draw_table_operations:
+        if not is_in_table:
             add_op = col.row().operator(SM64_TableOperations.bl_idname, text="Add to Table", icon="ADD")
             add_op.type = "ADD"
             add_op.action_name, add_op.header_variant = action.name, self.header_variant
-
-        if export_type == "Binary" and draw_table_index:
-            prop_split(col, self, "table_index", "Table Index")
+            if export_type == "Binary" and draw_table_index:
+                prop_split(col, self, "table_index", "Table Index")
         if draw_names:
             self.draw_names(col, action, actor_name, generate_enums)
         col.separator()
@@ -495,6 +494,7 @@ class SM64_ActionProps(PropertyGroup):
                     use_int_flags,
                     values_reference,
                     indice_reference,
+                    None,
                     actor_name,
                     generate_enums,
                     animation.file_name,
@@ -571,7 +571,7 @@ class SM64_ActionProps(PropertyGroup):
         action: Action,
         header: SM64_AnimHeaderProps,
         array_index: int,
-        draw_table_operations: bool = True,
+        is_in_table: bool = False,
         draw_names: bool = True,
         draw_int_flags: bool = False,
         export_type: str = "C",
@@ -622,7 +622,7 @@ class SM64_ActionProps(PropertyGroup):
         header.draw_props(
             col,
             action,
-            draw_table_operations,
+            is_in_table,
             draw_names,
             draw_int_flags,
             export_type,
@@ -635,7 +635,7 @@ class SM64_ActionProps(PropertyGroup):
         self,
         layout: UILayout,
         action: Action,
-        draw_table_operations: bool = True,
+        is_in_table: bool = False,
         draw_names: bool = True,
         draw_int_flags: bool = False,
         export_type: str = "C",
@@ -655,7 +655,7 @@ class SM64_ActionProps(PropertyGroup):
             self.header.draw_props(
                 col,
                 action,
-                draw_table_operations,
+                is_in_table,
                 draw_names,
                 draw_int_flags,
                 export_type,
@@ -716,10 +716,9 @@ class SM64_ActionProps(PropertyGroup):
         layout: UILayout,
         action: Action,
         specific_variant: int | None = None,
-        draw_export_operation: bool = True,
-        draw_table_operations: bool = True,
         draw_names: bool = True,
         draw_references: bool = True,
+        is_in_table: bool = False,
         draw_file_name: bool = True,
         export_type: str = "C",
         actor_name: str = "mario",
@@ -730,27 +729,24 @@ class SM64_ActionProps(PropertyGroup):
         col = layout.column()
         draw_int_flags = is_dma or export_type != "C"
 
-        if draw_export_operation:
+        if not is_in_table:
             col.operator(SM64_ExportAnim.bl_idname, icon="EXPORT")
-
-        if draw_table_operations:
             add_op = col.operator(SM64_TableOperations.bl_idname, text="Add All Variants to Table", icon="ADD")
             add_op.type = "ADD_ALL"
             add_op.action_name = action.name
 
-        if export_type == "Binary":
-            if not is_dma:
+            if export_type == "Binary" and not is_dma:
                 prop_split(col, self, "start_address", "Start Address")
                 prop_split(col, self, "end_address", "End Address")
-        elif draw_file_name:
-            name_split = col.split(factor=0.5)
-            name_split.prop(self, "override_file_name")
-            if self.override_file_name:
-                name_split.prop(self, "custom_file_name", text="")
-            else:
-                box = name_split.box()
-                box.scale_y = 0.5
-                box.label(text=self.get_anim_file_name(action))
+            elif draw_file_name:
+                name_split = col.split(factor=0.5)
+                name_split.prop(self, "override_file_name")
+                if self.override_file_name:
+                    name_split.prop(self, "custom_file_name", text="")
+                else:
+                    box = name_split.box()
+                    box.scale_y = 0.5
+                    box.label(text=self.get_anim_file_name(action))
 
         if draw_references:
             self.draw_references(col, export_type in {"Binary", "Insertable Binary"})
@@ -770,7 +766,7 @@ class SM64_ActionProps(PropertyGroup):
             self.headers[specific_variant].draw_props(
                 col,
                 action,
-                draw_table_operations,
+                is_in_table,
                 draw_names,
                 draw_int_flags,
                 export_type,
@@ -782,7 +778,7 @@ class SM64_ActionProps(PropertyGroup):
             self.draw_variants(
                 col,
                 action,
-                draw_table_operations,
+                is_in_table,
                 draw_names,
                 draw_int_flags,
                 export_type,
@@ -916,10 +912,9 @@ class SM64_TableElementProps(PropertyGroup):
                 action=self.action_prop,
                 export_type=export_type,
                 specific_variant=variant,
-                draw_export_operation=False,
-                draw_table_operations=False,
                 draw_names=c_not_dma,
                 draw_references=not is_dma,
+                is_in_table=True,
                 draw_file_name=c_not_dma and export_seperately,
                 actor_name=actor_name,
                 generate_enums=generate_enums,
@@ -944,25 +939,25 @@ class SM64_AnimTableProps(PropertyGroup):
 
     insertable_file_name: StringProperty(name="Insertable File Name", default="toad.insertable")
 
+    write_data_seperately: BoolProperty(name="Write Data Seperately")
     data_address: StringProperty(
         name="Data Address",
         default=intToHex(0x6008CF0),  # Toad animation table data
     )
     data_end_address: StringProperty(
         name="Data End",
-        default=intToHex(0x0600FC48),
+        default=intToHex(0x600FC48),
     )
     address: StringProperty(
         name="Table Address",
-        default=intToHex(0x0600FC48),  # Toad animation table
+        default=intToHex(0x600FC48),  # Toad animation table
     )
-    end_address: StringProperty(name="Table End", default=intToHex(0x0600FC6C))
+    end_address: StringProperty(name="Table End", default=intToHex(0x600FC6C))
+    overwrite_begining_animation: BoolProperty(name="Overwrite Begining Animation", default=True)
+    # Toad message behavior's ANIMATE command address
+    animate_command_address: StringProperty(name="Animate Command Address", default=intToHex(0x0021CCF8 + (4 * 4)))
+    begining_animation: StringProperty(name="Begining Animation", default="0x00")
 
-    update_load_command: BoolProperty(name="Update Table Load Command")
-    load_command_address: StringProperty(
-        name="Table Load Command Address",
-        default=intToHex(0x13002EF8 + (4 * 2)),  # Message toad (bhvToadMessage) animation load command
-    )
     dma_address: StringProperty(name="DMA Table Address", default=intToHex(0x4EC000))
     dma_end_address: StringProperty(name="DMA Table End", default=intToHex(0x4EC000 + 0x8DC20))
 
@@ -1015,6 +1010,7 @@ class SM64_AnimTableProps(PropertyGroup):
                 if element.header and element.header.data:
                     start_addresses.append(element.header.data.start_address)
                     end_addresses.append(element.header.data.end_address)
+            self.write_data_seperately = True
             self.data_address = intToHex(min(start_addresses))
             self.data_end_address = intToHex(max(end_addresses))
 
@@ -1176,9 +1172,10 @@ class SM64_AnimTableProps(PropertyGroup):
                 return
             prop_split(col, self, "address", "Table Address")
             prop_split(col, self, "end_address", "Table End")
-            col.prop(self, "update_load_command")
-            if self.update_load_command:
-                prop_split(col, self, "load_command_address", "Command Address")
+            col.prop(self, "overwrite_begining_animation")
+            if self.overwrite_begining_animation:
+                prop_split(col, self, "animate_command_address", "ANIMATE Command Address")
+                prop_split(col, self, "begining_animation", "Index")
 
     def draw_props(
         self,
@@ -1191,12 +1188,14 @@ class SM64_AnimTableProps(PropertyGroup):
         col = layout.column()
 
         if draw_non_exclusive_settings:
-            self.draw_non_exclusive_settings(col, export_type, actor_name)
+            self.draw_non_exclusive_settings(col, is_dma, export_type, actor_name)
 
         if not is_dma:
             if export_type == "Binary":
-                prop_split(col, self, "data_address", "Data Address")
-                prop_split(col, self, "data_end_address", "Data End")
+                col.prop(self, "write_data_seperately")
+                if self.write_data_seperately:
+                    prop_split(col, self, "data_address", "Data Address")
+                    prop_split(col, self, "data_end_address", "Data End")
             elif export_type == "C":
                 col.prop(self, "export_seperately")
                 if self.export_seperately:
@@ -1510,9 +1509,9 @@ class SM64_AnimProps(PropertyGroup):
 
         table: SM64_AnimTableProps = self.table
         table.update_table = scene.get("setAnimListIndex", table.update_table)
-        upgrade_hex_prop(table, scene, "address", "addr_0x27")
-        table.update_load_command = scene.get("overwrite_0x28", table.update_load_command)
-        upgrade_hex_prop(table, scene, "load_command_address", "addr_0x28")
+        # upgrade_hex_prop(table, scene, "", "addr_0x27")
+        table.overwrite_begining_animation = scene.get("overwrite_0x28", table.overwrite_begining_animation)
+        upgrade_hex_prop(table, scene, "animate_command_address", "addr_0x28")
         self.binary_level = scene.get("levelAnimExport", self.binary_level)
 
         self.version = 1

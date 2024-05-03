@@ -7,6 +7,9 @@ import mathutils
 
 from ...utility import (
     PluginError,
+    encodeSegmentedAddr,
+    decodeSegmentedAddr,
+    get64bitAlignedAddr,
     writeIfNotFound,
     radians_to_s16,
     applyBasicTweaks,
@@ -14,11 +17,14 @@ from ...utility import (
     writeInsertableFile,
 )
 from ...utility_anim import stashActionInArmature
-from ..sm64_constants import insertableBinaryTypes
+from ..sm64_constants import insertableBinaryTypes, defaultExtendSegment4, level_pointers
 from ..sm64_utility import SM64_BinaryExporter, RomReading
+from ..sm64_level_parser import parseLevelAtPointer
+from ..sm64_rom_tweaks import ExtendBank0x04
 
 from .classes import SM64_Anim, SM64_AnimHeader, SM64_AnimData, SM64_AnimPair, SM64_AnimTable, SM64_AnimTableElement
 from .utility import get_anim_pose_bones, animation_operator_checks
+from .constants import HEADER_SIZE
 
 from typing import TYPE_CHECKING
 
@@ -261,7 +267,12 @@ def update_data_file(data_file_path: os.PathLike, anim_file_names: list, overrid
 
 
 def export_animation_table_binary(
-    binary_exporter: SM64_BinaryExporter, table_props: "SM64_AnimTableProps", table: SM64_AnimTable, is_binary_dma: bool
+    binary_exporter: SM64_BinaryExporter,
+    table_props: "SM64_AnimTableProps",
+    table: SM64_AnimTable,
+    is_binary_dma: bool,
+    level_option: str,
+    extend_bank_4: bool,
 ):
     if is_binary_dma:
         data = table.to_binary_dma()
@@ -270,14 +281,41 @@ def export_animation_table_binary(
             int(table_props.dma_end_address, 0),
             data,
         )
-    else:
-        data = table.to_binary_dma()
+        return
+
+    level_parsed = parseLevelAtPointer(binary_exporter.rom_file_output, level_pointers[level_option])
+    segment_data = level_parsed.segmentData
+    if extend_bank_4:
+        ExtendBank0x04(binary_exporter.rom_file_output, segment_data, defaultExtendSegment4)
+
+    table_address = get64bitAlignedAddr(int(table_props.address, 0))
+    table_end_address = int(table_props.end_address, 0)
+
+    if table_props.write_data_seperately:
+        data_address = get64bitAlignedAddr(int(table_props.data_address, 0))
+        data_end_address = int(table_props.data_end_address, 0)
+        table_data, data = table.to_combined_binary(table_address, data_address, segment_data)[:2]
         binary_exporter.write_to_range(
-            int(table_props.dma_address, 0),
-            int(table_props.dma_end_address, 0),
+            table_address,
+            table_end_address,
+            table_data,
+        )
+        binary_exporter.write_to_range(
+            data_address,
+            data_end_address,
             data,
         )
-        raise NotImplementedError("Not implemented")
+    else:
+        table_data, data = table.to_combined_binary(table_address, -1, segment_data)[:2]
+        binary_exporter.write_to_range(
+            table_address,
+            table_end_address,
+            table_data + data,
+        )
+    if table_props.overwrite_begining_animation:
+        address = int(table_props.animate_command_address, 0) + 1
+        binary_exporter.rom_file_output.seek(address)
+        binary_exporter.rom_file_output.write(int(table_props.begining_animation, 0).to_bytes(1, "big"))
 
 
 def export_animation_table_insertable(
@@ -291,8 +329,8 @@ def export_animation_table_insertable(
         data = table.to_binary_dma()
         writeInsertableFile(path, insertableBinaryTypes["Animation DMA Table"], [], 0, data)
     else:
-        data, ptrs = table.to_combined_binary(animation_props.is_binary_dma, 0)
-        writeInsertableFile(path, insertableBinaryTypes["Animation Table"], ptrs, 0, data)
+        table_data, data, ptrs = table.to_combined_binary()
+        writeInsertableFile(path, insertableBinaryTypes["Animation Table"], ptrs, 0, table_data + data)
 
 
 def export_animation_table_c(
@@ -403,7 +441,14 @@ def export_animation_table(context: Context):
         with SM64_BinaryExporter(
             abspath(sm64_props.export_rom), abspath(sm64_props.output_rom), sm64_props.extended_rom_check
         ) as binary_exporter:
-            export_animation_table_binary(binary_exporter, table_props, table, is_binary_dma)
+            export_animation_table_binary(
+                binary_exporter,
+                table_props,
+                table,
+                is_binary_dma,
+                animation_props.binary_level,
+                sm64_props.extend_bank_4,
+            )
     else:
         raise NotImplementedError(f"Export type {sm64_props.export_type} is not implemented")
 
@@ -411,9 +456,12 @@ def export_animation_table(context: Context):
 def export_animation_binary(
     binary_exporter: SM64_BinaryExporter,
     animation: SM64_Anim,
+    action_props: "SM64_ActionProps",
     table_props: "SM64_AnimTableProps",
     animation_props: "SM64_AnimProps",
     bone_count: int,
+    level_option: str,
+    extend_bank_4: bool,
 ):
     if animation_props.is_binary_dma:
         dma_address = int(table_props.dma_address, 0)
@@ -438,6 +486,33 @@ def export_animation_binary(
             int(table_props.dma_end_address, 0),
             data,
         )
+        return
+    level_parsed = parseLevelAtPointer(binary_exporter.rom_file_output, level_pointers[level_option])
+    segment_data = level_parsed.segmentData
+    if extend_bank_4:
+        ExtendBank0x04(binary_exporter.rom_file_output, segment_data, defaultExtendSegment4)
+
+    animation_address = get64bitAlignedAddr(int(action_props.start_address, 0))
+    animation_end_address = int(action_props.end_address, 0)
+
+    data = animation.to_binary(animation_address, segment_data)[0]
+    binary_exporter.write_to_range(
+        animation_address,
+        animation_end_address,
+        data,
+    )
+    if table_props.update_table:
+        table_address = get64bitAlignedAddr(int(table_props.address, 0))
+        for i, header in enumerate(animation.headers):
+            element_address = table_address + (4 * header.table_index)
+            binary_exporter.rom_file_output.seek(element_address)
+            binary_exporter.rom_file_output.write(
+                encodeSegmentedAddr(animation_address + (i * HEADER_SIZE), segment_data)
+            )
+    if table_props.overwrite_begining_animation:
+        address = int(table_props.animate_command_address, 0) + 1
+        binary_exporter.rom_file_output.seek(address)
+        binary_exporter.rom_file_output.write(int(table_props.begining_animation, 0).to_bytes(1, "big"))
 
 
 def export_animation_insertable(animation: SM64_Anim, animation_props: "SM64_AnimProps", anim_file_name: str):
@@ -545,6 +620,15 @@ def export_animation(context: Context):
         with SM64_BinaryExporter(
             abspath(sm64_props.export_rom), abspath(sm64_props.output_rom), sm64_props.extended_rom_check
         ) as binary_exporter:
-            export_animation_binary(binary_exporter, animation, table_props, animation_props, bone_count)
+            export_animation_binary(
+                binary_exporter,
+                animation,
+                action_props,
+                table_props,
+                animation_props,
+                bone_count,
+                animation_props.binary_level,
+                sm64_props.extend_bank_4,
+            )
     else:
         raise NotImplementedError(f"Export type {sm64_props.export_type} is not implemented")
