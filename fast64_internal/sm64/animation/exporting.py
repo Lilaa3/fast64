@@ -501,7 +501,7 @@ def export_animation_binary(
         animation_end_address,
         data,
     )
-    if table_props.update_table:
+    if animation_props.update_table:
         table_address = get64bitAlignedAddr(int(table_props.address, 0))
         for i, header in enumerate(animation.headers):
             element_address = table_address + (4 * header.table_index)
@@ -546,7 +546,7 @@ def export_animation_c(
         table_name = table_props.get_anim_table_name(actor_name)
         enum_list_name = table_props.get_enum_list_name(actor_name)
 
-        if table_props.update_table:
+        if animation_props.update_table:
             write_anim_header(
                 os.path.join(geo_dir_path, "anim_header.h"),
                 table_name,
@@ -569,7 +569,7 @@ def export_animation_c(
             toAlnum(actor_name),
             dir_path,
             header_type,
-            table_props.update_table,
+            animation_props.update_table,
         )
 
 
