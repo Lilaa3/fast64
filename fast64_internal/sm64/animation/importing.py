@@ -142,6 +142,31 @@ def from_anim_class(
     self.update_header_variant_numbers()
 
 
+def from_anim_table_class(self, table: SM64_AnimTable, clear_table: bool = False):
+    if clear_table:
+        self.elements.clear()
+    for element in table.elements:
+        self.elements.add()
+        self.elements[-1].from_table_element_class(element)
+
+    if isinstance(table.reference, int):  # Binary
+        self.dma_address = intToHex(table.reference)
+        self.dma_end_address = intToHex(table.end_address)
+        self.address = intToHex(table.reference)
+        self.end_address = intToHex(table.end_address)
+
+        # Data
+        start_addresses = []
+        end_addresses = []
+        for element in table.elements:
+            if element.header and element.header.data:
+                start_addresses.append(element.header.data.start_address)
+                end_addresses.append(element.header.data.end_address)
+        self.write_data_seperately = True
+        self.data_address = intToHex(min(start_addresses))
+        self.data_end_address = intToHex(max(end_addresses))
+
+
 def value_distance(e1: Euler, e2: Euler) -> float:
     result = 0
     for x1, x2 in zip(e1, e2):
