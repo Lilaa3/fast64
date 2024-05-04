@@ -232,7 +232,6 @@ class SM64_AnimHeaderProps(PropertyGroup):
         export_type: str = "C",
         actor_name: str = "mario",
         generate_enums: bool = False,
-        draw_table_index: bool = False,
     ):
         col = layout.column()
         binary = export_type in {"Binary", "Insertable Binary"}
@@ -250,7 +249,7 @@ class SM64_AnimHeaderProps(PropertyGroup):
                 icon="LINKED",
             )
             add_op.action_name, add_op.header_variant = action.name, self.header_variant
-            if export_type == "Binary" and draw_table_index:
+            if export_type == "Binary":
                 prop_split(col, self, "table_index", "Table Index")
             if not binary:
                 self.draw_names(col, action, actor_name, generate_enums)
@@ -292,7 +291,6 @@ class SM64_ActionProps(PropertyGroup):
         export_type: str = "C",
         actor_name: str = "mario",
         generate_enums: bool = False,
-        draw_table_index: bool = False,
     ):
         col = layout.column()
 
@@ -329,7 +327,6 @@ class SM64_ActionProps(PropertyGroup):
             export_type,
             actor_name,
             generate_enums,
-            draw_table_index,
         )
 
     def draw_variants(
@@ -341,7 +338,6 @@ class SM64_ActionProps(PropertyGroup):
         export_type: str = "C",
         actor_name: str = "mario",
         generate_enums: bool = False,
-        draw_table_index: bool = False,
     ):
         col = layout.column()
 
@@ -360,7 +356,6 @@ class SM64_ActionProps(PropertyGroup):
                 export_type,
                 actor_name,
                 generate_enums,
-                draw_table_index,
             )
 
         col.prop(
@@ -388,7 +383,6 @@ class SM64_ActionProps(PropertyGroup):
                 export_type,
                 actor_name,
                 generate_enums,
-                draw_table_index,
             )
 
     def draw_references(self, layout: UILayout, is_binary: bool = False):
@@ -408,7 +402,6 @@ class SM64_ActionProps(PropertyGroup):
         layout: UILayout,
         action: Action,
         specific_variant: int | None = None,
-        draw_names: bool = True,
         draw_references: bool = True,
         is_in_table: bool = False,
         draw_file_name: bool = True,
@@ -416,7 +409,6 @@ class SM64_ActionProps(PropertyGroup):
         actor_name: str = "mario",
         generate_enums: bool = False,
         is_dma: bool = False,
-        draw_table_index: bool = False,
     ):
         col = layout.column()
 
@@ -462,7 +454,6 @@ class SM64_ActionProps(PropertyGroup):
                 export_type,
                 actor_name,
                 generate_enums,
-                draw_table_index,
             )
         else:
             self.draw_variants(
@@ -473,7 +464,6 @@ class SM64_ActionProps(PropertyGroup):
                 export_type,
                 actor_name,
                 generate_enums,
-                draw_table_index,
             )
 
 
@@ -568,7 +558,6 @@ class SM64_TableElementProps(PropertyGroup):
                 action=self.action_prop,
                 export_type=export_type,
                 specific_variant=variant,
-                draw_names=c_not_dma,
                 draw_references=not is_dma,
                 is_in_table=True,
                 draw_file_name=c_not_dma and export_seperately,
@@ -1123,8 +1112,6 @@ class SM64_AnimProps(PropertyGroup):
                     export_type=export_type,
                     actor_name=self.actor_name,
                     generate_enums=self.table.generate_enums,
-                    draw_table_index=self.update_table,
-                    draw_names=export_type in {"C"},
                     is_dma=is_dma,
                 )
 
