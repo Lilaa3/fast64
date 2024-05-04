@@ -72,29 +72,25 @@ def draw_list_op(
     text="",
     icon="",
 ):
+    col = layout.column()
     if not collection:
         collection = []
     if not icon:
         icon = {
-            "ADD_ALL": "LINKED",
             "MOVE_UP": "TRIA_UP",
             "MOVE_DOWN": "TRIA_DOWN",
             "CLEAR": "TRASH",
         }.get(op_name, op_name)
-    enable = (
-        index > 0
-        if op_name == "MOVE_DOWN"
-        else (
-            index + 1 < len(collection)
-            if op_name == "MOVE_UP"
-            else index < len(collection) if op_name == "REMOVE" else len(collection) > 0 if op_name == "CLEAR" else True
-        )
-    )
-    row = layout.column()
-    row.enabled = enable
-    op = row.operator(op_cls.bl_idname, text=text, icon=icon)
-    op.array_index = index
-    op.type = op_name
+    if op_name == "MOVE_UP":
+        col.enabled = index > 0
+    elif op_name == "MOVE_DOWN":
+        col.enabled = index + 1 < len(collection)
+    elif op_name == "CLEAR":
+        col.enabled = True if collection else False
+    elif op_name == "REMOVE":
+        col.enabled = index < len(collection)
+    op = col.operator(op_cls.bl_idname, text=text, icon=icon)
+    op.array_index, op.type = index, op_name
     return op
 
 
