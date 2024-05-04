@@ -8,7 +8,6 @@ import mathutils
 from ...utility import (
     PluginError,
     encodeSegmentedAddr,
-    decodeSegmentedAddr,
     get64bitAlignedAddr,
     writeIfNotFound,
     radians_to_s16,
@@ -22,8 +21,28 @@ from ..sm64_utility import SM64_BinaryExporter, RomReading
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_rom_tweaks import ExtendBank0x04
 
-from .classes import SM64_Anim, SM64_AnimHeader, SM64_AnimData, SM64_AnimPair, SM64_AnimTable, SM64_AnimTableElement
-from .utility import get_anim_pose_bones, animation_operator_checks
+from .classes import (
+    SM64_Anim,
+    SM64_AnimHeader,
+    SM64_AnimData,
+    SM64_AnimPair,
+    SM64_AnimTable,
+    SM64_AnimTableElement,
+)
+from .utility import (
+    get_anim_pose_bones,
+    animation_operator_checks,
+    get_element_header,
+    get_element_action,
+    get_frame_range,
+    get_max_frame,
+    get_max_frame,
+    get_anim_file_name,
+    get_anim_name,
+    get_anim_enum,
+    get_int_flags,
+    get_anim_table_name,
+)
 from .constants import HEADER_SIZE
 
 from typing import TYPE_CHECKING
@@ -159,17 +178,17 @@ def to_header_class(
     data: SM64_AnimData,
     action: Action,
     use_int_flags: bool = False,
-    values_reference: Optional[int | str] = None,
-    indice_reference: Optional[int | str] = None,
+    values_reference: int | str | None = None,
+    indice_reference: int | str | None = None,
     table_index: int | None = None,
     actor_name: str | None = "mario",
     generate_enums: bool = False,
     file_name: str | None = "anim_00.inc.c",
 ):
     header = SM64_AnimHeader()
-    header.reference = header_props.get_anim_name(actor_name, action)
+    header.reference = get_anim_name(actor_name, action, header_props)
     if generate_enums:
-        header.enum_reference = header_props.get_anim_enum(actor_name, action)
+        header.enum_reference = get_anim_enum(actor_name, action, header_props)
 
     if header_props.set_custom_flags:
         if use_int_flags:
@@ -177,10 +196,10 @@ def to_header_class(
         else:
             header.flags = header_props.custom_flags
     else:
-        header.flags = header_props.get_int_flags()
+        header.flags = get_int_flags(header_props)
 
     header.trans_divisor = header_props.trans_divisor
-    header.start_frame, header.loop_start, header.loop_end = header_props.get_frame_range(action)
+    header.start_frame, header.loop_start, header.loop_end = get_frame_range(action, header_props)
     header.values_reference = values_reference
     header.indice_reference = indice_reference
     header.bone_count = bone_count
@@ -191,7 +210,6 @@ def to_header_class(
 
 
 def to_data_class(
-    self,
     action: Action,
     armature_obj: Object,
     blender_to_sm64_scale: float,
@@ -200,7 +218,11 @@ def to_data_class(
 ):
     data = SM64_AnimData()
     pairs = get_animation_pairs(
-        blender_to_sm64_scale, action.fast64.sm64.get_max_frame(action), action, armature_obj, quick_read
+        blender_to_sm64_scale,
+        get_max_frame(action, action.fast64.sm64),
+        action,
+        armature_obj,
+        quick_read,
     )
     data_name: str = toAlnum(f"anim_{action.name}")
     values_reference = f"{data_name}_values"
@@ -212,7 +234,7 @@ def to_data_class(
 
 
 def to_animation_class(
-    self,
+    action_props: "SM64_ActionProps",
     action: Action,
     armature_obj: Object,
     blender_to_sm64_scale: float,
@@ -224,23 +246,24 @@ def to_animation_class(
     use_addresses_for_references: bool = False,
 ):
     animation = SM64_Anim()
-    animation.file_name = self.get_anim_file_name(action)
+    animation.file_name = get_anim_file_name(action, action_props)
 
-    if can_use_references and self.reference_tables:
+    if can_use_references and action_props.reference_tables:
         if use_addresses_for_references:
-            values_reference, indice_reference = int(self.values_address, 0), int(self.indices_address, 0)
+            values_reference, indice_reference = int(action_props.values_address, 0), int(
+                action_props.indices_address, 0
+            )
         else:
-            values_reference, indice_reference = self.values_table, self.indices_table
+            values_reference, indice_reference = action_props.values_table, action_props.indices_table
     else:
-        animation.data = self.to_data_class(
-            action, armature_obj, blender_to_sm64_scale, quick_read, animation.file_name
-        )
+        animation.data = to_data_class(action, armature_obj, blender_to_sm64_scale, quick_read, animation.file_name)
         values_reference = animation.data.values_reference
         indice_reference = animation.data.indice_reference
     bone_count = len(get_anim_pose_bones(armature_obj))
-    for header_props in self.headers:
+    for header_props in action_props.headers:
         animation.headers.append(
-            header_props.to_header_class(
+            to_header_class(
+                header_props,
                 bone_count,
                 animation.data,
                 action,
@@ -257,8 +280,12 @@ def to_animation_class(
     return animation
 
 
+def get_enum_list_name(actor_name: str):
+    return f"{actor_name}Anims".title()
+
+
 def to_table_class(
-    self,
+    table_props: "SM64_AnimTableProps",
     armature_obj: Object,
     blender_to_sm64_scale: float,
     quick_read: bool,
@@ -267,10 +294,10 @@ def to_table_class(
     actor_name: str = "mario",
     generate_enums: bool = False,
     use_addresses_for_references: bool = False,
-):
+) -> SM64_AnimTable:
     table = SM64_AnimTable()
-    table.reference = self.get_anim_table_name(actor_name)
-    table.enum_list_reference = self.get_enum_list_name(actor_name)
+    table.reference = get_anim_table_name(table_props, actor_name)
+    table.enum_list_reference = get_enum_list_name(actor_name)
     table.file_name = "table_animations.inc.c"
     table.values_reference = toAlnum(f"anim_{actor_name}_values")
 
@@ -279,22 +306,29 @@ def to_table_class(
     existing_data: dict[Action, SM64_AnimData] = {}
     existing_headers: dict[SM64_AnimHeaderProps, SM64_AnimHeader] = {}
 
-    element: SM64_TableElementProps
-    for i, element in enumerate(self.elements):
+    element_props: SM64_TableElementProps
+    for i, element_props in enumerate(table_props.elements):
         reference = SM64_AnimTableElement()
-        if can_reference and element.reference:
-            header = int(element.header_address, 0) if use_addresses_for_references else element.header_name
+        if can_reference and element_props.reference:
+            header = (
+                int(
+                    element_props.header_address,
+                    0,
+                )
+                if use_addresses_for_references
+                else element_props.header_name
+            )
             assert header, f"Reference in table element {i} is not set."
             reference.reference = header
             if generate_enums:
-                assert element.enum_name, f"Enum name in table element {i} is not set."
-                reference.enum_name = element.enum_name
+                assert element_props.enum_name, f"Enum name in table element {i} is not set."
+                reference.enum_name = element_props.enum_name
             table.elements.append(reference)
             continue
 
-        header: SM64_AnimHeaderProps = element.get_header(can_reference)
+        header: SM64_AnimHeaderProps = get_element_header(element_props, can_reference)
         assert header, f"Header in table element {i} is not set."
-        action: Action = element.get_action(can_reference)
+        action: Action = get_element_action(element_props, can_reference)
         assert action, f"Action in table element {i} is not set."
 
         action_props: SM64_ActionProps = action.fast64.sm64
@@ -309,15 +343,14 @@ def to_table_class(
             data = None
         else:
             if not action in existing_data:
-                existing_data[action] = action_props.to_data_class(
-                    action, armature_obj, blender_to_sm64_scale, quick_read
-                )
+                existing_data[action] = to_data_class(action, armature_obj, blender_to_sm64_scale, quick_read)
             data = existing_data[action]
             values_reference, indice_reference = data.values_reference, data.indice_reference
 
         reference.header = existing_headers.get(
             header,
-            header.to_header_class(
+            to_header_class(
+                header,
                 bone_count,
                 data,
                 action,
@@ -327,7 +360,7 @@ def to_table_class(
                 i,
                 actor_name,
                 generate_enums,
-                action_props.get_anim_file_name(action),
+                get_anim_file_name(action, action_props),
             ),
         )
         reference.reference = reference.header.reference
@@ -337,23 +370,23 @@ def to_table_class(
     return table
 
 
-def get_animation_paths(self, create_directories: bool = False):
-    custom_export = self.header_type == "Custom"
+def get_animation_paths(animation_props: "SM64_AnimProps", create_directories: bool = True):
+    custom_export = animation_props.header_type == "Custom"
 
     export_path, level_name = getPathAndLevel(
         custom_export,
-        self.directory_path,
-        self.level_option,
-        self.level_name,
+        animation_props.directory_path,
+        animation_props.level_option,
+        animation_props.level_name,
     )
-    dir_name = toAlnum(self.actor_name)
-    if self.header_type == "DMA":
-        anim_dir_path, dir_path, geo_dir_path = os.path.join(export_path, self.dma_folder), "", ""
+    dir_name = toAlnum(animation_props.actor_name)
+    if animation_props.header_type == "DMA":
+        anim_dir_path, dir_path, geo_dir_path = os.path.join(export_path, animation_props.dma_folder), "", ""
     else:
         dir_path = getExportDir(
             custom_export,
             export_path,
-            self.header_type,
+            animation_props.header_type,
             level_name,
             "",
             dir_name,
@@ -373,6 +406,25 @@ def get_animation_paths(self, create_directories: bool = False):
         abspath(geo_dir_path),
         level_name,
     )
+
+
+def get_enum_and_header_names(action: Action, action_props: "SM64_ActionProps", actor_name: str):
+    return [
+        (
+            get_anim_enum(actor_name, action, header_props),
+            get_anim_name(actor_name, action, header_props),
+        )
+        for header_props in action_props.headers
+    ]
+
+
+def get_table_actions(table_props: "SM64_AnimTableProps", can_reference: bool) -> list[Action]:
+    actions = []
+    for element_props in table_props.elements:
+        action = get_element_action(element_props, can_reference)
+        if action and action not in actions:
+            actions.append(action)
+    return actions
 
 
 def update_includes(
@@ -570,7 +622,7 @@ def export_animation_table_c(
     header_type = animation_props.header_type
     if header_type != "Custom":
         applyBasicTweaks(decomp_path)
-    anim_dir_path, dir_path, geo_dir_path, level_name = animation_props.get_animation_paths(True)
+    anim_dir_path, dir_path, geo_dir_path, level_name = get_animation_paths(animation_props)
 
     print("Creating all C data")
     if table_props.export_seperately or animation_props.is_c_dma:
@@ -645,11 +697,12 @@ def export_animation_table(context: Context):
     is_dma = is_binary_dma or animation_props.is_c_dma
 
     print("Stashing all actions in table")
-    for action in table_props.get_actions(not is_dma):
+    for action in get_table_actions(table_props, not is_dma):
         stashActionInArmature(armature_obj, action)
 
     print("Reading table data from fast64")
-    table: SM64_AnimTable = table_props.to_table_class(
+    table = to_table_class(
+        table_props,
         armature_obj,
         sm64_props.blender_to_sm64_scale,
         animation_props.quick_read,
@@ -761,7 +814,7 @@ def export_animation_c(
 ):
     header_type = animation_props.header_type
 
-    anim_dir_path, dir_path, geo_dir_path, level_name = animation_props.get_animation_paths(create_directories=True)
+    anim_dir_path, dir_path, geo_dir_path, level_name = get_animation_paths(animation_props)
     anim_path = os.path.join(anim_dir_path, anim_file_name)
 
     if header_type != "Custom":
@@ -771,8 +824,8 @@ def export_animation_c(
         file.write(animation.to_c(animation_props.is_c_dma))
 
     if not animation_props.is_c_dma:
-        table_name = table_props.get_anim_table_name(actor_name)
-        enum_list_name = table_props.get_enum_list_name(actor_name)
+        table_name = get_anim_table_name(table_props, actor_name)
+        enum_list_name = get_enum_list_name(actor_name)
 
         if animation_props.update_table:
             write_anim_header(
@@ -782,7 +835,7 @@ def export_animation_c(
             )
             update_table_file(
                 os.path.join(anim_dir_path, "table.inc.c"),
-                action_props.get_enum_and_header_names(action, actor_name),
+                get_enum_and_header_names(action, action_props, actor_name),
                 table_name,
                 table_props.generate_enums,
                 os.path.join(anim_dir_path, "table_enum.h"),
@@ -819,7 +872,8 @@ def export_animation(context: Context):
     bone_count = len(get_anim_pose_bones(armature_obj))
 
     actor_name = animation_props.actor_name
-    animation: SM64_Anim = action_props.to_animation_class(
+    animation: SM64_Anim = to_animation_class(
+        action_props,
         action,
         armature_obj,
         sm64_props.blender_to_sm64_scale,
@@ -830,7 +884,7 @@ def export_animation(context: Context):
         not sm64_props.binary_export and table_props.generate_enums,
         sm64_props.binary_export,
     )
-    anim_file_name = action_props.get_anim_file_name(action)
+    anim_file_name = get_anim_file_name(action, action_props)
     if sm64_props.export_type == "C":
         export_animation_c(
             animation,

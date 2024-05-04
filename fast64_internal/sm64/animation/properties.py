@@ -1,9 +1,7 @@
 import os
-import re
-from typing import Optional
 
 import bpy
-from bpy.types import PropertyGroup, Action, UILayout, Object, Scene
+from bpy.types import PropertyGroup, Action, UILayout, Scene
 from bpy.utils import register_class, unregister_class
 from bpy.props import (
     BoolProperty,
@@ -15,20 +13,15 @@ from bpy.props import (
 )
 from bpy.path import abspath
 
-from ...utility_anim import getFrameInterval
 from ...utility import (
     customExportWarning,
     decompFolderMessage,
     directory_ui_warnings,
-    getExportDir,
-    getPathAndLevel,
     makeWriteInfoBox,
     multilineLabel,
     path_ui_warnings,
     prop_split,
-    toAlnum,
     writeBoxExportType,
-    is_bit_active,
     intToHex,
 )
 from ..sm64_utility import import_rom_checks, upgrade_hex_prop
@@ -50,23 +43,22 @@ from .operators import (
     SM64_AnimVariantOperations,
     SM64_PreviewAnimOperator,
 )
-from .classes import (
-    SM64_Anim,
-    SM64_AnimData,
-    SM64_AnimHeader,
-    SM64_AnimTable,
-    SM64_AnimTableElement,
-)
+
 from .constants import (
     enumAnimImportTypes,
     enumAnimBinaryImportTypes,
     marioAnimationNames,
     enumAnimExportTypes,
-    C_FLAGS,
-    FLAG_PROPS,
 )
-from .utility import get_anim_pose_bones
-from .exporting import get_animation_pairs
+from .utility import (
+    get_anim_enum,
+    get_anim_file_name,
+    get_anim_table_name,
+    get_max_frame,
+    get_anim_name,
+    get_element_action,
+    get_element_header,
+)
 
 
 class SM64_AnimHeaderProps(PropertyGroup):
@@ -198,7 +190,7 @@ class SM64_AnimHeaderProps(PropertyGroup):
         else:
             auto_name_box = name_split.row().box()
             auto_name_box.scale_y = 0.5
-            auto_name_box.label(text=self.get_anim_name(actor_name, action))
+            auto_name_box.label(text=get_anim_name(actor_name, action, self))
 
         if generate_enums:
             enum_split = col.split(factor=0.4)
@@ -208,7 +200,7 @@ class SM64_AnimHeaderProps(PropertyGroup):
             else:
                 auto_enum_box = enum_split.row().box()
                 auto_enum_box.scale_y = 0.5
-                auto_enum_box.label(text=self.get_anim_enum(actor_name, action))
+                auto_enum_box.label(text=get_anim_enum(actor_name, action, self))
 
     def draw_props(
         self,
@@ -447,7 +439,7 @@ class SM64_ActionProps(PropertyGroup):
                 else:
                     box = name_split.box()
                     box.scale_y = 0.5
-                    box.label(text=self.get_anim_file_name(action))
+                    box.label(text=get_anim_file_name(action, self))
 
         if draw_references:
             self.draw_references(col, export_type in {"Binary", "Insertable Binary"})
@@ -460,7 +452,7 @@ class SM64_ActionProps(PropertyGroup):
             else:
                 box = max_frame_split.box()
                 box.scale_y = 0.4
-                box.label(text=f"{action.fast64.sm64.get_max_frame(action)}")
+                box.label(text=f"{get_max_frame(action, self)}")
         col.separator()
 
         if specific_variant is not None:
@@ -494,26 +486,10 @@ class SM64_TableElementProps(PropertyGroup):
     action_prop: PointerProperty(name="Action", type=Action)
     use_main_variant: BoolProperty(name="Use Main Variant", default=True)
     variant: IntProperty(name="Variant", min=1, default=1)
-
     reference: BoolProperty(name="Reference")
     header_name: StringProperty(name="Header Reference", default="toad_seg6_anim_0600B66C")
     header_address: StringProperty(name="Header Reference", default=intToHex(0x0600B75C))  # Toad animation 0
     enum_name: StringProperty(name="Enum Name")
-
-    def get_header(self, use_reference: bool) -> SM64_AnimHeaderProps:
-        if use_reference and self.reference:
-            return None
-        action = self.get_action(use_reference)
-        if not action:
-            return None
-        if self.use_main_variant:
-            return action.fast64.sm64.header
-        return action.fast64.sm64.headers[self.variant]
-
-    def get_action(self, use_reference: bool) -> Action:
-        if use_reference and self.reference:
-            return None
-        return self.action_prop
 
     def set_variant(self, action: Action, variant: int):
         self.action_prop = action
@@ -523,21 +499,6 @@ class SM64_TableElementProps(PropertyGroup):
             self.use_main_variant = False
             self.variant = variant
 
-    def from_table_element_class(self, element: SM64_AnimTableElement):
-        if element.header:
-            self.set_variant(element.header.action, element.header.header_variant)
-        else:
-            self.reference = True
-        if isinstance(element.reference, int):
-            self.header_name = intToHex(element.reference)
-            self.header_address = intToHex(element.reference)
-        else:
-            self.header_name = element.reference
-            self.header_address = intToHex(0)
-        if element.enum_name:
-            self.enum_name = element.enum_name
-
-    # UI
     def draw_reference(self, layout: UILayout, export_type: str = "C", generate_enums: bool = False):
         col = layout.column()
         if export_type in {"C"}:
@@ -599,12 +560,13 @@ class SM64_TableElementProps(PropertyGroup):
                 return
             variant = self.variant
 
+        header_props = get_element_header(self, can_reference)
         prop_box = col.box().column()
         prop_box.prop(
             self,
             "expand_tab",
             icon="TRIA_DOWN" if self.expand_tab else "TRIA_RIGHT",
-            text=f"{self.get_header(can_reference).get_anim_name(actor_name, self.action_prop)} Properties",
+            text=f"{get_anim_name(actor_name, action_props, header_props)} Properties",
         )
         c_not_dma = export_type == "C" and not is_dma
         if self.expand_tab:
@@ -660,32 +622,6 @@ class SM64_AnimTableProps(PropertyGroup):
     def override_files(self):
         return self.export_seperately and self.override_files_prop
 
-    def get_actions(self, can_reference: bool) -> list[Action]:
-        actions = []
-        for table_element in self.elements:
-            action = table_element.get_action(can_reference)
-            if action and action not in actions:
-                actions.append(action)
-
-        return actions
-
-    def get_headers(self, can_reference: bool) -> list[SM64_AnimHeaderProps]:
-        headers = []
-        for table_element in self.elements:
-            header = table_element.get_header(can_reference)
-            if header and header not in headers:
-                headers.append(header)
-        return headers
-
-    def get_anim_table_name(self, actor_name: str) -> str:
-        if self.override_table_name:
-            return self.custom_table_name
-        return f"{actor_name}_anims"
-
-    def get_enum_list_name(self, actor_name: str):
-        return f"{actor_name}Anims".title()
-
-    # UI
     def draw_element(
         self,
         layout: UILayout,
@@ -756,7 +692,7 @@ class SM64_AnimTableProps(PropertyGroup):
             else:
                 box = name_split.row().box()
                 box.scale_y = 0.5
-                box.label(text=self.get_anim_table_name(actor_name))
+                box.label(text=get_anim_table_name(self, actor_name))
         elif export_type == "Binary":
             if is_dma:
                 prop_split(col, self, "dma_address", "DMA Table Address")
@@ -822,8 +758,10 @@ class SM64_AnimTableProps(PropertyGroup):
         elements_col = col.column()
         elements_col.scale_y = 0.8
         actions = []
-        for table_index, table_element in enumerate(self.elements):
-            action = table_element.get_action(can_reference)
+
+        element_props: SM64_TableElementProps
+        for table_index, element_props in enumerate(self.elements):
+            action = get_element_action(element_props, can_reference)
             if action in actions and actions[-1] != action:
                 duplicate_index = actions.index(action)
             else:
@@ -831,7 +769,7 @@ class SM64_AnimTableProps(PropertyGroup):
             self.draw_element(
                 elements_col,
                 table_index,
-                table_element,
+                element_props,
                 is_dma,
                 can_reference,
                 duplicate_index,
@@ -1041,7 +979,7 @@ class SM64_AnimProps(PropertyGroup):
         name="Use DMA Structure",
         description="When enabled, the Mario animation converter order is used (headers, indicies, values)",
     )
-    actor_name_prop: StringProperty(name="Name", default="mario") # TODO: Does this need to be passed to a @property?
+    actor_name_prop: StringProperty(name="Name", default="mario")  # TODO: Does this need to be passed to a @property?
     # TODO: Ideally, this pr will be merged after combined exports, so this should be updated to use the group enum there
     group_name: StringProperty(name="Group Name", default="group0")
     header_type: EnumProperty(items=enumAnimExportTypes, name="Header Export", default="Actor")
@@ -1120,7 +1058,7 @@ class SM64_AnimProps(PropertyGroup):
 
     @property
     def is_c_dma(self):
-        return self.use_dma_structure if self.header_type == "Custom" self.header_type == "DMA"
+        return self.use_dma_structure if self.header_type == "Custom" else self.header_type == "DMA"
 
     def draw_insertable_binary_settings(self, layout: UILayout):
         col = layout.column()
@@ -1197,34 +1135,32 @@ class SM64_AnimProps(PropertyGroup):
 
         box = col.box()
         box.prop(self, "action_tab", icon="TRIA_DOWN" if self.action_tab else "TRIA_RIGHT")
-        if not self.action_tab:
-            return
-
-        box.prop(self, "selected_action")
-        if self.selected_action:
-            action_props: SM64_ActionProps = self.selected_action.fast64.sm64
-            action_props.draw_props(
-                layout=box,
-                action=self.selected_action,
-                draw_references=export_type in {"C"} or not is_dma,
-                export_type=export_type,
-                actor_name=self.actor_name,
-                generate_enums=self.table.generate_enums,
-                draw_table_index=self.update_table,
-                draw_names=export_type in {"C"},
-                is_dma=is_dma,
-            )
+        if self.action_tab:
+            box.prop(self, "selected_action")
+            if self.selected_action:
+                action_props: SM64_ActionProps = self.selected_action.fast64.sm64
+                action_props.draw_props(
+                    layout=box,
+                    action=self.selected_action,
+                    draw_references=export_type in {"C"} or not is_dma,
+                    export_type=export_type,
+                    actor_name=self.actor_name,
+                    generate_enums=self.table.generate_enums,
+                    draw_table_index=self.update_table,
+                    draw_names=export_type in {"C"},
+                    is_dma=is_dma,
+                )
 
         box = col.box()
-        col.prop(self, "table_tab", icon="TRIA_DOWN" if self.table_tab else "TRIA_RIGHT")
+        box.prop(self, "table_tab", icon="TRIA_DOWN" if self.table_tab else "TRIA_RIGHT")
         if self.table_tab:
             self.table.draw_props(box, is_dma, not self.update_table and not is_dma, export_type, self.actor_name)
 
         if show_importing:
             box = col.box()
-            col.prop(self, "importing_tab", icon="TRIA_DOWN" if self.importing_tab else "TRIA_RIGHT")
+            box.prop(self, "importing_tab", icon="TRIA_DOWN" if self.importing_tab else "TRIA_RIGHT")
             if self.importing_tab:
-                self.importing.draw_props(col, import_rom)
+                self.importing.draw_props(box, import_rom)
 
 
 properties = (

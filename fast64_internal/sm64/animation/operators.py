@@ -12,7 +12,13 @@ from ...utility import copyPropertyGroup
 
 from .importing import import_all_mario_animations, import_animations
 from .exporting import export_animation, export_animation_table
-from .utility import get_action, animation_operator_checks
+from .utility import (
+    get_action,
+    animation_operator_checks,
+    get_anim_name,
+    get_frame_range,
+    update_header_variant_numbers,
+)
 from .constants import marioAnimationNames
 
 from typing import TYPE_CHECKING
@@ -39,16 +45,16 @@ def emulate_no_loop(scene: Scene):
         return
     frame = scene.frame_current
 
-    header = played_action.fast64.sm64.headers[animation_props.played_header]
-    loop_start, loop_end = header.get_frame_range(played_action)[1:3]
-    if header.backwards:
+    header_props = played_action.fast64.sm64.headers[animation_props.played_header]
+    loop_start, loop_end = get_frame_range(played_action, header_props)[1:3]
+    if header_props.backwards:
         if frame < loop_start:
-            if header.no_loop:
+            if header_props.no_loop:
                 scene.frame_set(loop_start)
             else:
                 scene.frame_set(loop_end - 1)
     elif frame >= loop_end:
-        if header.no_loop:
+        if header_props.no_loop:
             scene.frame_set(loop_end - 1)
         else:
             scene.frame_set(loop_start)
@@ -80,8 +86,8 @@ class SM64_PreviewAnimOperator(OperatorBase):
         context.selected_objects[0].animation_data.action = played_action
         action_props: SM64_ActionProps = played_action.fast64.sm64
         assert self.played_header < len(action_props.headers), "Invalid header index"
-        header = action_props.headers[self.played_header]
-        start_frame = header.get_frame_range(played_action)[0]
+        header_props = action_props.headers[self.played_header]
+        start_frame = get_frame_range(played_action, header_props)[0]
         scene.frame_set(start_frame)
         scene.render.fps = 30
 
@@ -170,21 +176,19 @@ class SM64_AnimVariantOperations(OperatorBase):
             copyPropertyGroup(action_props.headers[self.array_index + 1], added_variant)
 
             variants.move(len(variants) - 1, self.array_index + 1)
-            action_props.update_header_variant_numbers()
+            update_header_variant_numbers(action_props)
 
             added_variant.expand_tab = True
             added_variant.override_name = False
             added_variant.override_enum = False
-            added_variant.custom_name = added_variant.get_anim_name(
-                context.scene.fast64.sm64.animation.actor_name, action
+            added_variant.custom_name = get_anim_name(
+                context.scene.fast64.sm64.animation.actor_name, action, added_variant
             )
         elif self.type == "REMOVE":
             variants.remove(self.array_index)
         if self.type == "CLEAR":
             variants.clear()
-
-        action_props.update_header_variant_numbers()
-
+        update_header_variant_numbers(action_props)
         return {"FINISHED"}
 
 

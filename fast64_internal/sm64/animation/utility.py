@@ -1,11 +1,15 @@
-import dataclasses
 import math
+import re
 
 import bpy
-from bpy.types import Object, Armature
+from bpy.types import Object, Armature, Action
 
-from ...utility import findStartBones, PluginError, decodeSegmentedAddr, intToHex
+from ...utility_anim import getFrameInterval
+from ...utility import findStartBones, PluginError, toAlnum
 from ..sm64_geolayout_bone import animatableBoneTypes
+
+from .constants import FLAG_PROPS
+
 
 def animation_operator_checks(context, requires_animation_data=True):
     if len(context.selected_objects) > 1:
@@ -59,78 +63,91 @@ def get_anim_pose_bones(armature_obj: Armature):
     return anim_bones
 
 
-# Header properties utility
-def get_frame_range(self, action: Action) -> tuple[int, int, int]:
-    if self.manual_frame_range:
-        return (self.start_frame, self.loop_start, self.loop_end)
+def get_frame_range(action: Action, header_props: "SM64_AnimHeaderProps") -> tuple[int, int, int]:
+    if header_props.manual_frame_range:
+        return (header_props.start_frame, header_props.loop_start, header_props.loop_end)
     loop_start, loop_end = getFrameInterval(action)
     return (0, loop_start, loop_end + 1)
 
 
-def get_anim_name(self, actor_name: str, action: Action) -> str:
-    if self.override_name:
-        return self.custom_name
-    if self.header_variant == 0:
+def get_anim_name(actor_name: str, action: Action, header_props: "SM64_AnimHeaderProps") -> str:
+    if header_props.override_name:
+        return header_props.custom_name
+    if header_props.header_variant == 0:
         if actor_name:
             name = f"{actor_name}_anim_{action.name}"
         else:
             name = f"anim_{action.name}"
         return toAlnum(name)
-    main_header_name = action.fast64.sm64.headers[0].get_anim_name(actor_name, action)
-    name = f"{main_header_name}_{self.header_variant}"
+    main_header_name = get_anim_name(actor_name, action, action.fast64.sm64.headers[0])
+    name = f"{main_header_name}_{header_props.header_variant}"
 
     return toAlnum(name)
 
 
-def get_anim_enum(self, actor_name: str, action: Action) -> str:
-    if self.override_enum:
-        return self.custom_enum
-    anim_name = self.get_anim_name(actor_name, action)
+def get_anim_enum(actor_name: str, action: Action, header_props: "SM64_AnimHeaderProps") -> str:
+    if header_props.override_enum:
+        return header_props.custom_enum
+    anim_name = get_anim_name(actor_name, action, header_props)
     enum_name = anim_name.upper()
     if anim_name == enum_name:
         enum_name = f"_{enum_name}"
     return enum_name
 
 
-def get_int_flags(self):
+def get_int_flags(header_props: "SM64_AnimHeaderProps"):
     flags: int = 0
     for i, flag in enumerate(FLAG_PROPS):
-        flags |= 1 << i if getattr(self, flag) else 0
+        flags |= 1 << i if getattr(header_props, flag) else 0
     return flags
 
 
-# Action properties utility
-def update_header_variant_numbers(self):
-    for i, variant in enumerate(self.headers):
+def update_header_variant_numbers(action_props: "SM64_ActionProps"):
+    for i, variant in enumerate(action_props.headers):
         variant.header_variant = i
 
 
-def get_anim_file_name(self, action: Action):
-    if self.override_file_name:
-        name = self.custom_file_name
-    else:
-        name = f"anim_{action.name}.inc.c"
-
+def get_anim_file_name(action: Action, action_props: "SM64_ActionProps") -> str:
+    name = action_props.custom_file_name if action_props.override_file_name else f"anim_{action.name}.inc.c"
     # Replace any invalid characters with an underscore
     # TODO: Could this be an issue anywhere else in fast64?
     name = re.sub(r'[/\\?%*:|"<>]', " ", name)
-
     return name
 
 
-def get_max_frame(self, action: Action) -> int:
-    if self.override_max_frame:
-        return self.custom_max_frame
+def get_max_frame(action: Action, action_props: "SM64_ActionProps") -> int:
+    if action_props.override_max_frame:
+        return action_props.custom_max_frame
 
     loop_ends: list[int] = [getFrameInterval(action)[1]]
-    for header in self.headers:
-        loop_end = header.get_frame_range(action)[2]
+    for header_props in action_props.headers:
+        loop_end = get_frame_range(action, header_props)[2]
         loop_ends.append(loop_end)
 
     return max(loop_ends)
 
 
-def get_enum_and_header_names(self, action: Action, actor_name: str):
-    return [
-        (header.get_anim_enum(actor_name, action), header.get_anim_name(actor_name, action)) for header in self.headers
-    ]
+def get_element_header(
+    element_props: "SM64_AnimTableElementProps",
+    use_reference: bool,
+) -> "SM64_AnimHeaderProps":
+    if use_reference and element_props.reference:
+        return None
+    action = get_element_action(element_props, use_reference)
+    if not action:
+        return None
+    if element_props.use_main_variant:
+        return action.fast64.sm64.header
+    return action.fast64.sm64.headers[element_props.variant]
+
+
+def get_element_action(element_props: "SM64_AnimTableElementProps", use_reference: bool) -> Action:
+    if use_reference and element_props.reference:
+        return None
+    return element_props.action_prop
+
+
+def get_anim_table_name(table_props: "SM64_AnimTableProps", actor_name: str) -> str:
+    if table_props.override_table_name:
+        return table_props.custom_table_name
+    return f"{actor_name}_anims"

@@ -7,13 +7,21 @@ from bpy.path import abspath
 from bpy.types import Object, Action, Context
 from mathutils import Euler, Vector, Quaternion
 
-from ...utility import PluginError, decodeSegmentedAddr, filepath_checks, path_checks, intToHex
+from ...utility import PluginError, decodeSegmentedAddr, filepath_checks, is_bit_active, path_checks, intToHex
 from ...utility_anim import stashActionInArmature
 from ..sm64_constants import insertableBinaryTypes, level_pointers
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_utility import import_rom_checks, RomReading
 
-from .utility import animation_operator_checks, get_anim_pose_bones, sm64_to_radian
+from .utility import (
+    animation_operator_checks,
+    get_anim_file_name,
+    get_anim_name,
+    get_anim_pose_bones,
+    get_frame_range,
+    sm64_to_radian,
+    update_header_variant_numbers,
+)
 from .classes import (
     SM64_Anim,
     CArrayDeclaration,
@@ -22,16 +30,23 @@ from .classes import (
     SM64_AnimTable,
     SM64_AnimTableElement,
 )
+from .constants import FLAG_PROPS
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .properties import SM64_AnimImportProps, SM64_AnimProps, SM64_AnimTableProps
+    from .properties import (
+        SM64_AnimImportProps,
+        SM64_AnimProps,
+        SM64_AnimHeaderProps,
+        SM64_AnimTableProps,
+        SM64_ActionProps,
+    )
     from ..settings.properties import SM64_Properties
 
 
 def from_header_class(
-    self,
+    header_props: "SM64_AnimHeaderProps",
     header: SM64_AnimHeader,
     action: Action,
     actor_name: str = "mario",
@@ -39,28 +54,28 @@ def from_header_class(
 ):
     if (
         isinstance(header.reference, str)
-        and header.reference != self.get_anim_name(actor_name, action)
+        and header.reference != get_anim_name(actor_name, action, header_props)
         and use_custom_name
     ):
-        self.custom_name = header.reference
-        self.override_name = True
+        header_props.custom_name = header.reference
+        header_props.override_name = True
 
     correct_frame_range = header.start_frame, header.loop_start, header.loop_end
-    self.start_frame, self.loop_start, self.loop_end = correct_frame_range
-    auto_frame_range = self.get_frame_range(action)
+    header_props.start_frame, header_props.loop_start, header_props.loop_end = correct_frame_range
+    auto_frame_range = get_frame_range(action, header_props)
     if correct_frame_range != auto_frame_range:
-        self.manual_frame_range = True
+        header_props.manual_frame_range = True
 
-    self.trans_divisor = header.trans_divisor
+    header_props.trans_divisor = header.trans_divisor
 
     # Flags
     if isinstance(header.flags, int):
         int_flags = header.flags
-        self.custom_flags = intToHex(header.flags, 2)
+        header_props.custom_flags = intToHex(header.flags, 2)
         if int_flags >> 6:  # If any non supported bit is active
-            self.set_custom_flags = True
+            header_props.set_custom_flags = True
     else:
-        self.custom_flags = header.flags
+        header_props.custom_flags = header.flags
         int_flags = 0
 
         flags = header.flags.replace(" ", "").lstrip("(").rstrip(")").split(" | ")
@@ -72,18 +87,18 @@ def from_header_class(
                 if index is not None:
                     int_flags |= 1 << index
                 else:
-                    self.set_custom_flags = True  # Unknown flag
-    self.custom_int_flags = intToHex(int_flags, 2)
+                    header_props.set_custom_flags = True  # Unknown flag
+    header_props.custom_int_flags = intToHex(int_flags, 2)
     for index, prop in enumerate(FLAG_PROPS):
-        setattr(self, prop, is_bit_active(int_flags, index))
+        setattr(header_props, prop, is_bit_active(int_flags, index))
 
-    self.table_index = header.table_index
+    header_props.table_index = header.table_index
 
 
 def from_anim_class(
-    self,
-    animation: SM64_Anim,
+    action_props: "SM64_ActionProps",
     action: Action,
+    animation: SM64_Anim,
     actor_name: str,
     remove_name_footer: bool = True,
     use_custom_name: bool = True,
@@ -109,15 +124,15 @@ def from_anim_class(
     if is_from_binary:
         indice_reference = intToHex(indice_reference)
         values_reference = intToHex(values_reference)
-    self.indices_table, self.indices_address = indice_reference, indice_reference
-    self.values_table, self.values_address = values_reference, values_reference
+    action_props.indices_table, action_props.indices_address = indice_reference, indice_reference
+    action_props.values_table, action_props.values_address = values_reference, values_reference
 
     if animation.data:
-        self.custom_file_name = animation.data.indices_file_name
-        self.custom_max_frame = max([1] + [len(x.values) for x in animation.data.pairs])
+        action_props.custom_file_name = animation.data.indices_file_name
+        action_props.custom_max_frame = max([1] + [len(x.values) for x in animation.data.pairs])
     else:
-        self.custom_file_name = main_header.file_name
-        self.reference_tables = True
+        action_props.custom_file_name = main_header.file_name
+        action_props.reference_tables = True
 
     if is_from_binary:
         start_addresses = [x.reference for x in animation.headers]
@@ -127,33 +142,48 @@ def from_anim_class(
             end_addresses.append(animation.data.indice_reference)
             start_addresses.append(animation.data.values_reference)
             end_addresses.append(animation.data.value_end_address)
-        self.start_address = intToHex(min(start_addresses))
-        self.end_address = intToHex(max(end_addresses))
+        action_props.start_address = intToHex(min(start_addresses))
+        action_props.end_address = intToHex(max(end_addresses))
 
-    if self.custom_file_name and self.get_anim_file_name(action) != self.custom_file_name:
-        self.override_file_name = True
+    if action_props.custom_file_name and get_anim_file_name(action, action_props) != action_props.custom_file_name:
+        action_props.override_file_name = True
 
     for i in range(len(animation.headers) - 1):
-        self.header_variants.add()
-    for header, header_props in zip(animation.headers, self.headers):
+        action_props.header_variants.add()
+    for header, header_props in zip(animation.headers, action_props.headers):
         header.action = action  # Used in table class to prop
-        header_props.from_header_class(header, action, actor_name, use_custom_name)
+        from_header_class(header_props, header, action, actor_name, use_custom_name)
 
-    self.update_header_variant_numbers()
+    update_header_variant_numbers(action_props)
 
 
-def from_anim_table_class(self, table: SM64_AnimTable, clear_table: bool = False):
+def from_table_element_class(element_props: "SM64_AnimTableElementProps", element: SM64_AnimTableElement):
+    if element.header:
+        element_props.set_variant(element.header.action, element.header.header_variant)
+    else:
+        element_props.reference = True
+    if isinstance(element.reference, int):
+        element_props.header_name = intToHex(element.reference)
+        element_props.header_address = intToHex(element.reference)
+    else:
+        element_props.header_name = element.reference
+        element_props.header_address = intToHex(0)
+    if element.enum_name:
+        element_props.enum_name = element.enum_name
+
+
+def from_anim_table_class(table_props: "SM64_AnimTableProps", table: SM64_AnimTable, clear_table: bool = False):
     if clear_table:
-        self.elements.clear()
+        table_props.elements.clear()
     for element in table.elements:
-        self.elements.add()
-        self.elements[-1].from_table_element_class(element)
+        table_props.elements.add()
+        from_table_element_class(table_props.elements[-1], element)
 
     if isinstance(table.reference, int):  # Binary
-        self.dma_address = intToHex(table.reference)
-        self.dma_end_address = intToHex(table.end_address)
-        self.address = intToHex(table.reference)
-        self.end_address = intToHex(table.end_address)
+        table_props.dma_address = intToHex(table.reference)
+        table_props.dma_end_address = intToHex(table.end_address)
+        table_props.address = intToHex(table.reference)
+        table_props.end_address = intToHex(table.end_address)
 
         # Data
         start_addresses = []
@@ -162,9 +192,9 @@ def from_anim_table_class(self, table: SM64_AnimTable, clear_table: bool = False
             if element.header and element.header.data:
                 start_addresses.append(element.header.data.start_address)
                 end_addresses.append(element.header.data.end_address)
-        self.write_data_seperately = True
-        self.data_address = intToHex(min(start_addresses))
-        self.data_end_address = intToHex(max(end_addresses))
+        table_props.write_data_seperately = True
+        table_props.data_address = intToHex(min(start_addresses))
+        table_props.data_end_address = intToHex(max(end_addresses))
 
 
 def value_distance(e1: Euler, e2: Euler) -> float:
@@ -302,7 +332,7 @@ def animation_import_to_blender(
             action=action,
         )
 
-    action.fast64.sm64.from_anim_class(anim_import, action, actor_name, remove_name_footer, use_custom_name)
+    from_anim_class(action.fast64.sm64, action, anim_import, actor_name, remove_name_footer, use_custom_name)
 
     stashActionInArmature(armature_obj, action)
     armature_obj.animation_data.action = action
@@ -354,12 +384,20 @@ def import_c_animations(
     if os.path.isfile(path):
         file_paths = [path]
     else:
-        file_paths = sorted(os.listdir(path))
-        file_paths = [os.path.join(path, file_name) for file_name in file_paths]
+        file_paths = sorted(
+            [
+                os.path.join(
+                    root,
+                    filename,
+                )
+                for root, _, files in os.walk(path)
+                for filename in files
+            ]
+        )
 
     for file_path in file_paths:
         print("Reading from: " + file_path)
-        with open(file_path, "r") as file:
+        with open(file_path, "r", encoding="utf-8") as file:
             c_data = comment_remover(file.read())
 
         find_decls(c_data, "static const struct Animation ", file_path, header_decls)
@@ -369,10 +407,23 @@ def import_c_animations(
 
     if table_decls:
         assert len(table_decls) <= 1, "More than 1 table declaration"
-        table.read_c(table_decls[0], animation_headers, animation_data, header_decls, value_decls, indices_decls)
+        table.read_c(
+            table_decls[0],
+            animation_headers,
+            animation_data,
+            header_decls,
+            value_decls,
+            indices_decls,
+        )
         return
     for header_decl in header_decls:
-        SM64_AnimHeader().read_c(header_decl, value_decls, indices_decls, animation_headers, animation_data)
+        SM64_AnimHeader().read_c(
+            header_decl,
+            value_decls,
+            indices_decls,
+            animation_headers,
+            animation_data,
+        )
 
 
 def import_binary_animations(
@@ -521,7 +572,7 @@ def import_animations(context: Context):
             import_props.remove_name_footer,
             import_props.use_custom_name,
         )
-    table_props.from_anim_table_class(table, import_props.clear_table)
+    from_anim_table_class(table_props, table, import_props.clear_table)
 
 
 def import_all_mario_animations(context: Context):
@@ -565,4 +616,4 @@ def import_all_mario_animations(context: Context):
 
     for _, data in animations.items():
         animation_import_to_blender(armature_obj, sm64_props.blender_to_sm64_scale, data)
-    sm64_props.animation.table.from_anim_table_class(table)
+    from_anim_table_class(sm64_props.animation.table, table)

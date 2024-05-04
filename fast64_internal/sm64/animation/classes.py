@@ -184,10 +184,6 @@ class SM64_AnimHeader:
 
         return ", ".join(flags_list)
 
-    def get_int_flags(self):
-        assert isinstance(self.flags, int), "Flags must be in an int."
-        return self.flags
-
     def get_c_flags(self):
         if isinstance(self.flags, str):
             return self.flags
@@ -226,7 +222,7 @@ class SM64_AnimHeader:
     ):
         return (
             f"static const struct Animation {self.reference}{'[]' if is_dma_structure else ''} = {{\n"
-            + (f"\t{intToHex(self.get_int_flags(), 2)}, " if is_dma_structure else f"\t{self.get_c_flags()}, ")
+            + (f"\t{intToHex(self.flags, 2)}, " if is_dma_structure else f"\t{self.get_c_flags()}, ")
             + f"// flags {self.get_flags_comment()}\n"
             f"\t{self.trans_divisor}, // animYTransDivisor\n"
             f"\t{self.start_frame}, // startFrame\n"
@@ -246,7 +242,7 @@ class SM64_AnimHeader:
         segment_data: dict[int, tuple[int, int]] = None,
     ):
         data = bytearray()
-        data.extend(self.get_int_flags().to_bytes(2, byteorder="big", signed=False))  # 0x00
+        data.extend(self.flags.to_bytes(2, byteorder="big", signed=False))  # 0x00
         data.extend(self.trans_divisor.to_bytes(2, byteorder="big", signed=True))  # 0x02
         data.extend(self.start_frame.to_bytes(2, byteorder="big", signed=True))  # 0x04
         data.extend(self.loop_start.to_bytes(2, byteorder="big", signed=True))  # 0x06
