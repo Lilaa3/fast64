@@ -119,7 +119,7 @@ class SM64_AnimHeaderProps(PropertyGroup):
     )
     backwards: BoolProperty(
         name="Backwards",
-        description="(ANIM_FLAG_FORWARD/ANIM_FLAG_BACKWARD\n"
+        description="(ANIM_FLAG_FORWARD/ANIM_FLAG_BACKWARD)\n"
         "When enabled, the animation will loop (or stop if looping is disabled) after reaching "
         "the loop start frame.\n"
         "Tipically used with animations which use acceleration to play an animation backwards",
@@ -156,7 +156,6 @@ class SM64_AnimHeaderProps(PropertyGroup):
     )
     set_custom_flags: BoolProperty(name="Set Custom Flags")
     custom_flags: StringProperty(name="Flags", default="ANIM_NO_LOOP")
-
     # Binary
     table_index: IntProperty(name="Table Index", min=0)
     custom_int_flags: StringProperty(name="Flags", default="0x01")
@@ -165,7 +164,6 @@ class SM64_AnimHeaderProps(PropertyGroup):
         col = layout.column()
 
         col.prop(self, "set_custom_flags")
-
         if self.set_custom_flags:
             if use_int_flags:
                 col.prop(self, "custom_int_flags")
@@ -184,7 +182,6 @@ class SM64_AnimHeaderProps(PropertyGroup):
         hor_col = row.column()
         hor_col.enabled = not self.only_horizontal_trans and not self.no_trans
         hor_col.prop(self, "only_vertical_trans")
-
         no_col = row.column()
         no_col.enabled = not self.only_horizontal_trans and not self.only_vertical_trans
         no_col.prop(self, "no_trans")
@@ -193,14 +190,12 @@ class SM64_AnimHeaderProps(PropertyGroup):
         vert_col = row.column()
         vert_col.enabled = not self.only_vertical_trans and not self.no_trans
         vert_col.prop(self, "only_horizontal_trans")
-
         disabled_col = row.column()
         disabled_col.enabled = not self.only_vertical_trans and not self.no_trans
         disabled_col.prop(self, "disabled")
 
     def draw_frame_range(self, layout: UILayout):
         col = layout.column()
-
         col.prop(self, "manual_frame_range")
         if self.manual_frame_range:
             split = col.split()
@@ -210,7 +205,6 @@ class SM64_AnimHeaderProps(PropertyGroup):
 
     def draw_names(self, layout: UILayout, action: Action, actor_name: str, generate_enums: bool):
         col = layout.column()
-
         name_split = col.split(factor=0.4)
         name_split.prop(self, "override_name")
         if self.override_name:
@@ -219,7 +213,6 @@ class SM64_AnimHeaderProps(PropertyGroup):
             auto_name_box = name_split.row().box()
             auto_name_box.scale_y = 0.5
             auto_name_box.label(text=get_anim_name(actor_name, action, self))
-
         if generate_enums:
             enum_split = col.split(factor=0.4)
             enum_split.prop(self, "override_enum")
@@ -235,15 +228,14 @@ class SM64_AnimHeaderProps(PropertyGroup):
         layout: UILayout,
         action: Action,
         is_in_table: bool = False,
-        draw_names: bool = True,
-        draw_int_flags: bool = False,
+        is_dma: bool = False,
         export_type: str = "C",
         actor_name: str = "mario",
         generate_enums: bool = False,
         draw_table_index: bool = False,
     ):
         col = layout.column()
-
+        binary = export_type in {"Binary", "Insertable Binary"}
         split = col.split()
         preview_op = split.operator(SM64_PreviewAnimOperator.bl_idname, icon="PLAY")
         preview_op.played_header = self.header_variant
@@ -260,11 +252,11 @@ class SM64_AnimHeaderProps(PropertyGroup):
             add_op.action_name, add_op.header_variant = action.name, self.header_variant
             if export_type == "Binary" and draw_table_index:
                 prop_split(col, self, "table_index", "Table Index")
-        if draw_names:
-            self.draw_names(col, action, actor_name, generate_enums)
+            if not binary:
+                self.draw_names(col, action, actor_name, generate_enums)
         prop_split(col, self, "trans_divisor", "Translation Divisor")
         self.draw_frame_range(col)
-        self.draw_flag_props(col, draw_int_flags)
+        self.draw_flag_props(col, is_dma or binary)
 
 
 class SM64_ActionProps(PropertyGroup):
@@ -296,8 +288,7 @@ class SM64_ActionProps(PropertyGroup):
         header: SM64_AnimHeaderProps,
         index: int,
         is_in_table: bool = False,
-        draw_names: bool = True,
-        draw_int_flags: bool = False,
+        is_dma: bool = False,
         export_type: str = "C",
         actor_name: str = "mario",
         generate_enums: bool = False,
@@ -334,8 +325,7 @@ class SM64_ActionProps(PropertyGroup):
             col,
             action,
             is_in_table,
-            draw_names,
-            draw_int_flags,
+            is_dma,
             export_type,
             actor_name,
             generate_enums,
@@ -347,8 +337,7 @@ class SM64_ActionProps(PropertyGroup):
         layout: UILayout,
         action: Action,
         is_in_table: bool = False,
-        draw_names: bool = True,
-        draw_int_flags: bool = False,
+        is_dma: bool = False,
         export_type: str = "C",
         actor_name: str = "mario",
         generate_enums: bool = False,
@@ -367,8 +356,7 @@ class SM64_ActionProps(PropertyGroup):
                 col,
                 action,
                 is_in_table,
-                draw_names,
-                draw_int_flags,
+                is_dma,
                 export_type,
                 actor_name,
                 generate_enums,
@@ -396,8 +384,7 @@ class SM64_ActionProps(PropertyGroup):
                 variant,
                 i,
                 is_in_table,
-                draw_names,
-                draw_int_flags,
+                is_dma,
                 export_type,
                 actor_name,
                 generate_enums,
@@ -432,7 +419,6 @@ class SM64_ActionProps(PropertyGroup):
         draw_table_index: bool = False,
     ):
         col = layout.column()
-        draw_int_flags = is_dma or export_type != "C"
 
         if not is_in_table:
             split = col.split()
@@ -472,8 +458,7 @@ class SM64_ActionProps(PropertyGroup):
                 col,
                 action,
                 is_in_table,
-                draw_names,
-                draw_int_flags,
+                is_dma,
                 export_type,
                 actor_name,
                 generate_enums,
@@ -484,8 +469,7 @@ class SM64_ActionProps(PropertyGroup):
                 col,
                 action,
                 is_in_table,
-                draw_names,
-                draw_int_flags,
+                is_dma,
                 export_type,
                 actor_name,
                 generate_enums,
