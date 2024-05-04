@@ -26,13 +26,7 @@ from ...utility import (
     intToHex,
 )
 from ..sm64_utility import import_rom_checks, upgrade_hex_prop
-from ..sm64_constants import (
-    MAX_U16,
-    MIN_S16,
-    MAX_S16,
-    level_enums,
-    enumLevelNames,
-)
+from ..sm64_constants import MAX_U16, MIN_S16, MAX_S16, level_enums, enumLevelNames
 
 from .operators import (
     SM64_SearchMarioAnimEnum,
@@ -46,12 +40,7 @@ from .operators import (
 )
 
 
-from .constants import (
-    enumAnimImportTypes,
-    enumAnimBinaryImportTypes,
-    marioAnimationNames,
-    enumAnimExportTypes,
-)
+from .constants import enumAnimImportTypes, enumAnimBinaryImportTypes, marioAnimationNames, enumAnimExportTypes
 from .utility import (
     get_anim_enum,
     get_anim_file_name,
@@ -316,18 +305,16 @@ class SM64_ActionProps(PropertyGroup):
             text=f"Variant {index + 1}",
             icon="TRIA_DOWN" if header.expand_tab_in_action else "TRIA_RIGHT",
         )
-        if not header.expand_tab_in_action:
-            return
-
-        header.draw_props(
-            col,
-            action,
-            is_in_table,
-            is_dma,
-            export_type,
-            actor_name,
-            generate_enums,
-        )
+        if header.expand_tab_in_action:
+            header.draw_props(
+                col,
+                action,
+                is_in_table,
+                is_dma,
+                export_type,
+                actor_name,
+                generate_enums,
+            )
 
     def draw_variants(
         self,
@@ -340,7 +327,6 @@ class SM64_ActionProps(PropertyGroup):
         generate_enums: bool = False,
     ):
         col = layout.column()
-
         col.prop(
             self.header,
             "expand_tab_in_action",
@@ -402,7 +388,6 @@ class SM64_ActionProps(PropertyGroup):
         layout: UILayout,
         action: Action,
         specific_variant: int | None = None,
-        draw_references: bool = True,
         is_in_table: bool = False,
         draw_file_name: bool = True,
         export_type: str = "C",
@@ -417,7 +402,6 @@ class SM64_ActionProps(PropertyGroup):
             split.operator(SM64_ExportAnim.bl_idname, icon="EXPORT")
             add_all_op = draw_list_op(split, SM64_TableOperations, "ADD_ALL", text="Add All To Table", icon="LINKED")
             add_all_op.action_name = action.name
-
             if export_type == "Binary" and not is_dma:
                 prop_split(col, self, "start_address", "Start Address")
                 prop_split(col, self, "end_address", "End Address")
@@ -431,10 +415,9 @@ class SM64_ActionProps(PropertyGroup):
                     box.scale_y = 0.5
                     box.label(text=get_anim_file_name(action, self))
 
-        if draw_references:
+        if not is_dma:
             self.draw_references(col, export_type in {"Binary", "Insertable Binary"})
-
-        if not self.reference_tables:
+        if is_dma or not self.reference_tables:
             max_frame_split = col.split(factor=0.5)
             max_frame_split.prop(self, "override_max_frame")
             if self.override_max_frame:
@@ -443,7 +426,6 @@ class SM64_ActionProps(PropertyGroup):
                 box = max_frame_split.box()
                 box.scale_y = 0.4
                 box.label(text=f"{get_max_frame(action, self)}")
-        col.separator()
 
         if specific_variant is not None:
             self.headers[specific_variant].draw_props(
@@ -455,16 +437,16 @@ class SM64_ActionProps(PropertyGroup):
                 actor_name,
                 generate_enums,
             )
-        else:
-            self.draw_variants(
-                col,
-                action,
-                is_in_table,
-                is_dma,
-                export_type,
-                actor_name,
-                generate_enums,
-            )
+            return
+        self.draw_variants(
+            col,
+            action,
+            is_in_table,
+            is_dma,
+            export_type,
+            actor_name,
+            generate_enums,
+        )
 
 
 class SM64_TableElementProps(PropertyGroup):
@@ -558,7 +540,6 @@ class SM64_TableElementProps(PropertyGroup):
                 action=self.action_prop,
                 export_type=export_type,
                 specific_variant=variant,
-                draw_references=not is_dma,
                 is_in_table=True,
                 draw_file_name=c_not_dma and export_seperately,
                 actor_name=actor_name,
@@ -1108,7 +1089,6 @@ class SM64_AnimProps(PropertyGroup):
                 action_props.draw_props(
                     layout=box,
                     action=self.selected_action,
-                    draw_references=export_type in {"C"} or not is_dma,
                     export_type=export_type,
                     actor_name=self.actor_name,
                     generate_enums=self.table.generate_enums,
