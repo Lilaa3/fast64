@@ -1,5 +1,5 @@
 import os
-from typing import Iterable
+from typing import Iterable, Optional
 
 import bpy
 from bpy.types import PropertyGroup, Action, UILayout, Scene
@@ -65,33 +65,36 @@ from .utility import (
 
 def draw_list_op(
     layout: UILayout,
-    cls: type,
-    op_type: str,
-    table_index: int = -1,
-    collection: None | Iterable = None,
-    text: str | None = "",
-    icon: str = "",
+    op_cls: type,
+    op_name: str,
+    index=-1,
+    collection: Optional[Iterable] = None,
+    text="",
+    icon="",
 ):
-    col = layout.column()
-    if icon:
-        pass
-    elif op_type == "ADD_ALL":
-        icon = "LINKED"
-    elif op_type == "MOVE_UP":
-        icon = "TRIA_UP"
-        col.enabled = table_index > 0
-    elif op_type == "MOVE_DOWN":
-        icon = "TRIA_DOWN"
-        col.enabled = table_index + 1 < len(collection) if collection else True
-    elif op_type == "CLEAR":
-        icon = "TRASH"
-        col.enabled = True if collection else False
-    else:
-        if op_type == "REMOVE":
-            col.enabled = table_index < len(collection) if collection else True
-        icon = op_type
-    op = col.operator(cls.bl_idname, text=text, icon=icon)
-    op.array_index, op.type = table_index, op_type
+    if not collection:
+        collection = []
+    if not icon:
+        icon = {
+            "ADD_ALL": "LINKED",
+            "MOVE_UP": "TRIA_UP",
+            "MOVE_DOWN": "TRIA_DOWN",
+            "CLEAR": "TRASH",
+        }.get(op_name, op_name)
+    enable = (
+        index > 0
+        if op_name == "MOVE_DOWN"
+        else (
+            index + 1 < len(collection)
+            if op_name == "MOVE_UP"
+            else index < len(collection) if op_name == "REMOVE" else len(collection) > 0 if op_name == "CLEAR" else True
+        )
+    )
+    row = layout.column()
+    row.enabled = enable
+    op = row.operator(op_cls.bl_idname, text=text, icon=icon)
+    op.array_index = index
+    op.type = op_name
     return op
 
 
