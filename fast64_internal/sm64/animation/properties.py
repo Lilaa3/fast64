@@ -1,4 +1,5 @@
 import os
+from typing import Iterable
 
 import bpy
 from bpy.types import PropertyGroup, Action, UILayout, Scene
@@ -44,6 +45,7 @@ from .operators import (
     SM64_PreviewAnimOperator,
 )
 
+
 from .constants import (
     enumAnimImportTypes,
     enumAnimBinaryImportTypes,
@@ -61,6 +63,38 @@ from .utility import (
 )
 
 
+def draw_list_op(
+    layout: UILayout,
+    cls: type,
+    op_type: str,
+    table_index: int = -1,
+    collection: None | Iterable = None,
+    text: str | None = "",
+    icon: str = "",
+):
+    col = layout.column()
+    if icon:
+        pass
+    elif op_type == "ADD_ALL":
+        icon = "LINKED"
+    elif op_type == "MOVE_UP":
+        icon = "TRIA_UP"
+        col.enabled = table_index > 0
+    elif op_type == "MOVE_DOWN":
+        icon = "TRIA_DOWN"
+        col.enabled = table_index + 1 < len(collection) if collection else True
+    elif op_type == "CLEAR":
+        icon = "TRASH"
+        col.enabled = True if collection else False
+    else:
+        if op_type == "REMOVE":
+            col.enabled = table_index < len(collection) if collection else True
+        icon = op_type
+    op = col.operator(cls.bl_idname, text=text, icon=icon)
+    op.array_index, op.type = table_index, op_type
+    return op
+
+
 class SM64_AnimHeaderProps(PropertyGroup):
     expand_tab_in_action: BoolProperty(name="Header Properties", default=True)
     header_variant: IntProperty(name="Header Variant Number", min=0)
@@ -69,8 +103,8 @@ class SM64_AnimHeaderProps(PropertyGroup):
     custom_name: StringProperty(name="Name", default="anim_00")
     override_enum: BoolProperty(name="Override Enum")
     custom_enum: StringProperty(name="Enum", default="ANIM_00")
-    manual_frame_range: BoolProperty(name="Manual Frame Range")
-    start_frame: IntProperty(name="Start Frame", min=0, max=MAX_S16)
+    manual_frame_range: BoolProperty(name="Manual Range")
+    start_frame: IntProperty(name="Start", min=0, max=MAX_S16)
     loop_start: IntProperty(name="Loop Start", min=0, max=MAX_S16)
     loop_end: IntProperty(name="Loop End", min=0, max=MAX_S16)
     trans_divisor: IntProperty(
@@ -150,7 +184,7 @@ class SM64_AnimHeaderProps(PropertyGroup):
         row.prop(self, "no_acceleration")
         row.prop(self, "backwards")
         if self.no_acceleration and self.backwards:
-            col.label(text="Backwards has no porpuse without acceleration (read description).", icon="INFO")
+            col.label(text="Backwards has no porpuse without acceleration.", icon="INFO")
 
         row = col.row()
         hor_col = row.column()
@@ -175,10 +209,10 @@ class SM64_AnimHeaderProps(PropertyGroup):
 
         col.prop(self, "manual_frame_range")
         if self.manual_frame_range:
-            row = col.row()
-            prop_split(row, self, "loop_start", "Loop Start")
-            prop_split(row, self, "loop_end", "Loop End")
-            prop_split(col, self, "start_frame", "Start")
+            split = col.split()
+            split.prop(self, "start_frame")
+            split.prop(self, "loop_start")
+            split.prop(self, "loop_end")
 
     def draw_names(self, layout: UILayout, action: Action, actor_name: str, generate_enums: bool):
         col = layout.column()
@@ -216,23 +250,26 @@ class SM64_AnimHeaderProps(PropertyGroup):
     ):
         col = layout.column()
 
-        preview_op = col.operator(SM64_PreviewAnimOperator.bl_idname, icon="PLAY")
+        split = col.split()
+        preview_op = split.operator(SM64_PreviewAnimOperator.bl_idname, icon="PLAY")
         preview_op.played_header = self.header_variant
         preview_op.played_action = action.name
 
         if not is_in_table:
-            add_op = col.row().operator(SM64_TableOperations.bl_idname, text="Add to Table", icon="ADD")
-            add_op.type = "ADD"
+            add_op = draw_list_op(
+                split,
+                SM64_TableOperations,
+                "ADD",
+                text="Add To Table",
+                icon="LINKED",
+            )
             add_op.action_name, add_op.header_variant = action.name, self.header_variant
             if export_type == "Binary" and draw_table_index:
                 prop_split(col, self, "table_index", "Table Index")
         if draw_names:
             self.draw_names(col, action, actor_name, generate_enums)
-        col.separator()
         prop_split(col, self, "trans_divisor", "Translation Divisor")
-        col.separator()
         self.draw_frame_range(col)
-        col.separator()
         self.draw_flag_props(col, draw_int_flags)
 
 
@@ -263,7 +300,7 @@ class SM64_ActionProps(PropertyGroup):
         layout: UILayout,
         action: Action,
         header: SM64_AnimHeaderProps,
-        array_index: int,
+        index: int,
         is_in_table: bool = False,
         draw_names: bool = True,
         draw_int_flags: bool = False,
@@ -275,38 +312,25 @@ class SM64_ActionProps(PropertyGroup):
         col = layout.column()
 
         row = col.row()
-        remove_op = row.operator(SM64_AnimVariantOperations.bl_idname, text="", icon="REMOVE")
-        remove_op.array_index, remove_op.type, remove_op.action_name = (
-            array_index,
-            "REMOVE",
-            action.name,
-        )
-
-        add_op = row.operator(SM64_AnimVariantOperations.bl_idname, text="", icon="ADD")
-        add_op.array_index, add_op.type, add_op.action_name = array_index, "ADD", action.name
-
-        move_up_col = row.column()
-        move_up_col.enabled = array_index != 0
-        move_up_op = move_up_col.operator(SM64_AnimVariantOperations.bl_idname, text="", icon="TRIA_UP")
-        move_up_op.array_index, move_up_op.type, move_up_op.action_name = (
-            array_index,
-            "MOVE_UP",
-            action.name,
-        )
-
-        move_down_col = row.column()
-        move_down_col.enabled = array_index != len(self.header_variants) - 1
-        move_down_op = move_down_col.operator(SM64_AnimVariantOperations.bl_idname, text="", icon="TRIA_DOWN")
-        move_down_op.array_index, move_down_op.type, move_down_op.action_name = (
-            array_index,
+        remove_op = draw_list_op(row, SM64_AnimVariantOperations, "REMOVE", index)
+        remove_op.action_name = action.name
+        add_op = draw_list_op(row, SM64_AnimVariantOperations, "ADD", index)
+        add_op.action_name = action.name
+        up_op = draw_list_op(row, SM64_AnimVariantOperations, "MOVE_UP", index)
+        up_op.action_name = action.name
+        down_op = draw_list_op(
+            row,
+            SM64_AnimVariantOperations,
             "MOVE_DOWN",
-            action.name,
+            index,
+            collection=self.header_variants,
         )
+        down_op.action_name = action.name
 
         row.prop(
             header,
             "expand_tab_in_action",
-            text=f"Variant {array_index + 1}",
+            text=f"Variant {index + 1}",
             icon="TRIA_DOWN" if header.expand_tab_in_action else "TRIA_RIGHT",
         )
         if not header.expand_tab_in_action:
@@ -366,24 +390,18 @@ class SM64_ActionProps(PropertyGroup):
             return
 
         op_row = col.row()
-        add_op = op_row.operator(SM64_AnimVariantOperations.bl_idname, text="", icon="ADD")
-        add_op.array_index, add_op.type, add_op.action_name = -1, "ADD", action.name
-
-        if self.header_variants:
-            clear_op = op_row.operator(SM64_AnimVariantOperations.bl_idname, text="", icon="TRASH")
-            clear_op.type, clear_op.action_name = "CLEAR", action.name
-
-            box = col.box().column()
+        add_op = draw_list_op(op_row, SM64_AnimVariantOperations, "ADD")
+        add_op.action_name = action.name
+        clear_op = draw_list_op(op_row, SM64_AnimVariantOperations, "CLEAR", collection=self.header_variants)
+        clear_op.action_name = action.name
 
         for i, variant in enumerate(self.header_variants):
-            if i != 0:
-                box.separator(factor=2.0)
             self.draw_variant(
-                box,
+                col.box(),
                 action,
                 variant,
                 i,
-                draw_table_operations,
+                is_in_table,
                 draw_names,
                 draw_int_flags,
                 export_type,
@@ -423,10 +441,10 @@ class SM64_ActionProps(PropertyGroup):
         draw_int_flags = is_dma or export_type != "C"
 
         if not is_in_table:
-            col.operator(SM64_ExportAnim.bl_idname, icon="EXPORT")
-            add_op = col.operator(SM64_TableOperations.bl_idname, text="Add All Variants to Table", icon="ADD")
-            add_op.type = "ADD_ALL"
-            add_op.action_name = action.name
+            split = col.split()
+            split.operator(SM64_ExportAnim.bl_idname, icon="EXPORT")
+            add_all_op = draw_list_op(split, SM64_TableOperations, "ADD_ALL", text="Add To Table")
+            add_all_op.action_name = action.name
 
             if export_type == "Binary" and not is_dma:
                 prop_split(col, self, "start_address", "Start Address")
@@ -511,6 +529,7 @@ class SM64_TableElementProps(PropertyGroup):
     def draw_props(
         self,
         layout: UILayout,
+        prop_layout: UILayout,
         is_dma: bool = False,
         can_reference: bool = True,
         export_seperately: bool = True,
@@ -533,27 +552,23 @@ class SM64_TableElementProps(PropertyGroup):
             return
         action_props: SM64_ActionProps = self.action_prop.fast64.sm64
 
-        row = col.row(align=True)
-        row.prop(self, "use_main_variant")
+        split = col.split(factor=0.35)
+        split.prop(self, "use_main_variant")
         variant = 0
         if not self.use_main_variant:
-            row.prop(self, "variant")
-            # Usually I'd use a column for enabled, but it was breaking the UI
-            remove_split = row.split()
-            remove_op = remove_split.operator(SM64_AnimVariantOperations.bl_idname, text="", icon="REMOVE")
-            remove_op.array_index, remove_op.type, remove_op.action_name = (
-                self.variant - 1,
+            split = split.split()
+            split.prop(self, "variant")
+            split = split.split()
+            remove_op = draw_list_op(
+                split,
+                SM64_AnimVariantOperations,
                 "REMOVE",
-                self.action_prop.name,
-            )
-            remove_split.enabled = len(action_props.headers) > 1
-
-            add_op = row.operator(SM64_AnimVariantOperations.bl_idname, text="", icon="ADD")
-            add_op.array_index, add_op.type, add_op.action_name = (
                 self.variant - 1,
-                "ADD",
-                self.action_prop.name,
+                action_props.header_variants,
             )
+            remove_op.action_name = self.action_prop.name
+            add_op = draw_list_op(split, SM64_AnimVariantOperations, "ADD", self.variant - 1)
+            add_op.action_name = self.action_prop.name
 
             if not 0 <= self.variant < len(action_props.headers):
                 col.box().label(text="Header variant does not exist.", icon="ERROR")
@@ -561,12 +576,12 @@ class SM64_TableElementProps(PropertyGroup):
             variant = self.variant
 
         header_props = get_element_header(self, can_reference)
-        prop_box = col.box().column()
+        prop_box = prop_layout.box().column()
         prop_box.prop(
             self,
             "expand_tab",
             icon="TRIA_DOWN" if self.expand_tab else "TRIA_RIGHT",
-            text=f"{get_anim_name(actor_name, action_props, header_props)} Properties",
+            text=f"{get_anim_name(actor_name, self.action_prop, header_props)} Properties",
         )
         c_not_dma = export_type == "C" and not is_dma
         if self.expand_tab:
@@ -625,7 +640,7 @@ class SM64_AnimTableProps(PropertyGroup):
     def draw_element(
         self,
         layout: UILayout,
-        table_index: int,
+        index: int,
         table_element: SM64_TableElementProps,
         is_dma: bool = False,
         can_reference: bool = True,
@@ -644,26 +659,16 @@ class SM64_AnimTableProps(PropertyGroup):
 
         op_row = row.row()
         op_row.alignment = "RIGHT"
-        op_row.label(text=str(table_index))
+        op_row.label(text=str(index))
 
-        add_op = op_row.operator(SM64_TableOperations.bl_idname, text="", icon="ADD")
-        add_op.array_index, add_op.type = table_index, "ADD"
-
-        remove_op = op_row.operator(SM64_TableOperations.bl_idname, text="", icon="REMOVE")
-        remove_op.array_index, remove_op.type = table_index, "REMOVE"
-
-        move_up_col = op_row.column()
-        move_up_col.enabled = table_index != 0
-        move_up_op = move_up_col.operator(SM64_TableOperations.bl_idname, text="", icon="TRIA_UP")
-        move_up_op.array_index, move_up_op.type = table_index, "MOVE_UP"
-
-        move_down_col = op_row.column()
-        move_down_col.enabled = table_index != len(self.elements) - 1
-        move_down_op = move_down_col.operator(SM64_TableOperations.bl_idname, text="", icon="TRIA_DOWN")
-        move_down_op.array_index, move_down_op.type = table_index, "MOVE_DOWN"
+        draw_list_op(op_row, SM64_TableOperations, "ADD", index)
+        draw_list_op(op_row, SM64_TableOperations, "REMOVE", index)
+        draw_list_op(op_row, SM64_TableOperations, "MOVE_UP", index)
+        draw_list_op(op_row, SM64_TableOperations, "MOVE_DOWN", index, self.elements)
 
         table_element.draw_props(
-            info_col.box(),
+            info_col,
+            col,
             is_dma,
             can_reference,
             self.export_seperately,
@@ -731,10 +736,9 @@ class SM64_AnimTableProps(PropertyGroup):
         if export_type == "Insertable Binary":
             prop_split(col, self, "insertable_file_name", "File Name")
 
-        if self.elements:
-            col.operator(SM64_ExportAnimTable.bl_idname, icon="EXPORT")
-        else:
-            col.label(icon="INFO", text="Empty table, add headers to do a table export.")
+        export_col = col.column()
+        export_col.operator(SM64_ExportAnimTable.bl_idname, icon="EXPORT")
+        export_col.enabled = True if self.elements else False
 
         if is_dma and export_type == "C":
             multilineLabel(
@@ -745,14 +749,9 @@ class SM64_AnimTableProps(PropertyGroup):
 
         col.separator()
 
-        row = col.row()
-        add_op = row.operator(SM64_TableOperations.bl_idname, text="", icon="ADD")
-        add_op.type = "ADD"
-
-        clear_op_col = col.column()
-        clear_op_col.enabled = len(self.elements) > 0
-        clear_op = row.operator(SM64_TableOperations.bl_idname, text="", icon="TRASH")
-        clear_op.type = "CLEAR"
+        op_row = col.row()
+        draw_list_op(op_row, SM64_TableOperations, "ADD")
+        draw_list_op(op_row, SM64_TableOperations, "CLEAR", collection=self.elements)
 
         can_reference = not is_dma
         elements_col = col.column()
@@ -767,7 +766,7 @@ class SM64_AnimTableProps(PropertyGroup):
             else:
                 duplicate_index = None
             self.draw_element(
-                elements_col,
+                elements_col.box(),
                 table_index,
                 element_props,
                 is_dma,

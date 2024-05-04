@@ -96,7 +96,6 @@ class OperatorBase(Operator):
             if self.context_mode:
                 bpy.ops.object.mode_set(mode=self.context_mode)
             self.execute_operator(context)
-            self.report({"INFO"}, "Sucess!")
             return {"FINISHED"}
         except Exception as exc:
             raisePluginError(self, exc)

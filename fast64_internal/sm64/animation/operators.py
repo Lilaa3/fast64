@@ -119,11 +119,10 @@ class SM64_TableOperations(OperatorBase):
             animation_props: SM64_AnimProps = context.scene.fast64.sm64.animation
         table_elements = animation_props.table.elements
 
-        if self.array_index < len(table_elements):
+        if self.array_index != -1:
             table_element = table_elements[self.array_index]
         else:
             table_element = None
-
         if self.type == "MOVE_UP":
             table_elements.move(self.array_index, self.array_index - 1)
         elif self.type == "MOVE_DOWN":
