@@ -73,20 +73,15 @@ def draw_list_op(
     icon="",
 ):
     col = layout.column()
-    if not collection:
-        collection = []
+    collection = collection if collection else []
     if not icon:
-        icon = {
-            "MOVE_UP": "TRIA_UP",
-            "MOVE_DOWN": "TRIA_DOWN",
-            "CLEAR": "TRASH",
-        }.get(op_name, op_name)
+        icon = {"MOVE_UP": "TRIA_UP", "MOVE_DOWN": "TRIA_DOWN", "CLEAR": "TRASH"}.get(op_name, op_name)
     if op_name == "MOVE_UP":
         col.enabled = index > 0
     elif op_name == "MOVE_DOWN":
         col.enabled = index + 1 < len(collection)
     elif op_name == "CLEAR":
-        col.enabled = True if collection else False
+        col.enabled = len(collection) > 0
     elif op_name == "REMOVE":
         col.enabled = index < len(collection)
     op = col.operator(op_cls.bl_idname, text=text, icon=icon)
@@ -442,7 +437,7 @@ class SM64_ActionProps(PropertyGroup):
         if not is_in_table:
             split = col.split()
             split.operator(SM64_ExportAnim.bl_idname, icon="EXPORT")
-            add_all_op = draw_list_op(split, SM64_TableOperations, "ADD_ALL", text="Add To Table")
+            add_all_op = draw_list_op(split, SM64_TableOperations, "ADD_ALL", text="Add All To Table", icon="LINKED")
             add_all_op.action_name = action.name
 
             if export_type == "Binary" and not is_dma:
