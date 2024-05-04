@@ -147,6 +147,148 @@ def get_animation_pairs(
     return pairs
 
 
+def to_header_class(
+    self,
+    bone_count: int,
+    data: SM64_AnimData,
+    action: Action,
+    use_int_flags: bool = False,
+    values_reference: Optional[int | str] = None,
+    indice_reference: Optional[int | str] = None,
+    table_index: int | None = None,
+    actor_name: str | None = "mario",
+    generate_enums: bool = False,
+    file_name: str | None = "anim_00.inc.c",
+):
+    header = SM64_AnimHeader()
+    header.reference = self.get_anim_name(actor_name, action)
+    if generate_enums:
+        header.enum_reference = self.get_anim_enum(actor_name, action)
+
+    if self.set_custom_flags:
+        if use_int_flags:
+            header.flags = int(self.custom_int_flags, 0)
+        else:
+            header.flags = self.custom_flags
+    else:
+        header.flags = self.get_int_flags()
+
+    header.trans_divisor = self.trans_divisor
+    header.start_frame, header.loop_start, header.loop_end = self.get_frame_range(action)
+    header.values_reference = values_reference
+    header.indice_reference = indice_reference
+    header.bone_count = bone_count
+    header.table_index = self.table_index if table_index is None else table_index
+    header.file_name = file_name
+    header.data = data
+    return header
+
+
+def to_data_class(
+    self,
+    action: Action,
+    armature_obj: Object,
+    blender_to_sm64_scale: float,
+    quick_read: bool,
+    file_name: str = "anim_00.inc.c",
+):
+    data = SM64_AnimData()
+    pairs = get_animation_pairs(
+        blender_to_sm64_scale, action.fast64.sm64.get_max_frame(action), action, armature_obj, quick_read
+    )
+    data_name: str = toAlnum(f"anim_{action.name}")
+    values_reference = f"{data_name}_values"
+    indice_reference = f"{data_name}_indices"
+    data.pairs = pairs
+    data.values_reference, data.indice_reference = values_reference, indice_reference
+    data.values_file_name, data.indices_file_name = file_name, file_name
+    return data
+
+
+def to_animation_class(
+    self,
+    action: Action,
+    armature_obj: Object,
+    blender_to_sm64_scale: float,
+    quick_read: bool,
+    can_use_references: bool,
+    use_int_flags: bool,
+    actor_name: str = "mario",
+    generate_enums: bool = False,
+    use_addresses_for_references: bool = False,
+):
+    animation = SM64_Anim()
+    animation.file_name = self.get_anim_file_name(action)
+
+    if can_use_references and self.reference_tables:
+        if use_addresses_for_references:
+            values_reference, indice_reference = int(self.values_address, 0), int(self.indices_address, 0)
+        else:
+            values_reference, indice_reference = self.values_table, self.indices_table
+    else:
+        animation.data = self.to_data_class(
+            action, armature_obj, blender_to_sm64_scale, quick_read, animation.file_name
+        )
+        values_reference = animation.data.values_reference
+        indice_reference = animation.data.indice_reference
+    bone_count = len(get_anim_pose_bones(armature_obj))
+    for header_props in self.headers:
+        animation.headers.append(
+            header_props.to_header_class(
+                bone_count,
+                animation.data,
+                action,
+                use_int_flags,
+                values_reference,
+                indice_reference,
+                None,
+                actor_name,
+                generate_enums,
+                animation.file_name,
+            )
+        )
+
+    return animation
+
+
+def get_animation_paths(self, create_directories: bool = False):
+    custom_export = self.header_type == "Custom"
+
+    export_path, level_name = getPathAndLevel(
+        custom_export,
+        self.directory_path,
+        self.level_option,
+        self.level_name,
+    )
+    dir_name = toAlnum(self.actor_name)
+    if self.header_type == "DMA":
+        anim_dir_path, dir_path, geo_dir_path = os.path.join(export_path, self.dma_folder), "", ""
+    else:
+        dir_path = getExportDir(
+            custom_export,
+            export_path,
+            self.header_type,
+            level_name,
+            "",
+            dir_name,
+        )[0]
+        geo_dir_path = os.path.join(dir_path, dir_name)
+        anim_dir_path = os.path.join(geo_dir_path, "anims")
+        if create_directories:
+            if not os.path.exists(dir_path):
+                os.mkdir(dir_path)
+            if not os.path.exists(geo_dir_path):
+                os.mkdir(geo_dir_path)
+    if create_directories and not os.path.exists(anim_dir_path):
+        os.mkdir(anim_dir_path)
+    return (
+        abspath(anim_dir_path),
+        abspath(dir_path),
+        abspath(geo_dir_path),
+        level_name,
+    )
+
+
 def update_includes(
     level_name: str,
     group_name: str,

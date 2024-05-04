@@ -77,18 +77,16 @@ class SM64_PreviewAnimOperator(OperatorBase):
             played_action = get_action(self.played_action)
         else:
             played_action = animation_props.selected_action
-        header = played_action.fast64.sm64.header_from_index(self.played_header)
-
+        context.selected_objects[0].animation_data.action = played_action
+        action_props: SM64_ActionProps = played_action.fast64.sm64
+        assert self.played_header < len(action_props.headers), "Invalid header index"
+        header = action_props.headers[self.played_header]
         start_frame = header.get_frame_range(played_action)[0]
-
         scene.frame_set(start_frame)
         scene.render.fps = 30
 
-        context.selected_objects[0].animation_data.action = played_action
-
         if bpy.context.screen.is_animation_playing:
-            bpy.ops.screen.animation_play()
-
+            bpy.ops.screen.animation_play()  # in case it was already playing, stop it
         bpy.ops.screen.animation_play()
 
         scene_anim_props.played_header = self.played_header

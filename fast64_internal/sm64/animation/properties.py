@@ -75,12 +75,12 @@ class SM64_AnimHeaderProps(PropertyGroup):
 
     override_name: BoolProperty(name="Override Name")
     custom_name: StringProperty(name="Name", default="anim_00")
-
+    override_enum: BoolProperty(name="Override Enum")
+    custom_enum: StringProperty(name="Enum", default="ANIM_00")
     manual_frame_range: BoolProperty(name="Manual Frame Range")
     start_frame: IntProperty(name="Start Frame", min=0, max=MAX_S16)
     loop_start: IntProperty(name="Loop Start", min=0, max=MAX_S16)
     loop_end: IntProperty(name="Loop End", min=0, max=MAX_S16)
-
     trans_divisor: IntProperty(
         name="Translation Divisor",
         description="(animYTransDivisor)\n"
@@ -90,7 +90,6 @@ class SM64_AnimHeaderProps(PropertyGroup):
         min=MIN_S16,
         max=MAX_S16,
     )
-
     # Flags
     no_loop: BoolProperty(
         name="No Loop",
@@ -137,141 +136,11 @@ class SM64_AnimHeaderProps(PropertyGroup):
     )
     set_custom_flags: BoolProperty(name="Set Custom Flags")
     custom_flags: StringProperty(name="Flags", default="ANIM_NO_LOOP")
-    custom_int_flags: StringProperty(name="Flags", default="0x01")
-
-    override_enum: BoolProperty(name="Override Enum")
-    custom_enum: StringProperty(name="Enum", default="ANIM_00")
 
     # Binary
     table_index: IntProperty(name="Table Index", min=0)
+    custom_int_flags: StringProperty(name="Flags", default="0x01")
 
-    def get_frame_range(self, action: Action) -> tuple[int, int, int]:
-        if self.manual_frame_range:
-            return (self.start_frame, self.loop_start, self.loop_end)
-        loop_start, loop_end = getFrameInterval(action)
-        return (0, loop_start, loop_end + 1)
-
-    def get_anim_name(self, actor_name: str, action: Action) -> str:
-        if self.override_name:
-            return self.custom_name
-        if self.header_variant == 0:
-            if actor_name:
-                name = f"{actor_name}_anim_{action.name}"
-            else:
-                name = f"anim_{action.name}"
-            return toAlnum(name)
-        main_header_name = action.fast64.sm64.headers[0].get_anim_name(actor_name, action)
-        name = f"{main_header_name}_{self.header_variant}"
-
-        return toAlnum(name)
-
-    def get_anim_enum(self, actor_name: str, action: Action) -> str:
-        if self.override_enum:
-            return self.custom_enum
-        anim_name = self.get_anim_name(actor_name, action)
-        enum_name = anim_name.upper()
-        if anim_name == enum_name:
-            enum_name = f"_{enum_name}"
-        return enum_name
-
-    def get_int_flags(self):
-        flags: int = 0
-        for i, flag in enumerate(FLAG_PROPS):
-            flags |= 1 << i if getattr(self, flag) else 0
-        return flags
-
-    def to_header_class(
-        self,
-        bone_count: int,
-        data: SM64_AnimData,
-        action: Action,
-        use_int_flags: bool = False,
-        values_reference: Optional[int | str] = None,
-        indice_reference: Optional[int | str] = None,
-        table_index: int | None = None,
-        actor_name: str | None = "mario",
-        generate_enums: bool = False,
-        file_name: str | None = "anim_00.inc.c",
-    ):
-        header = SM64_AnimHeader()
-        header.reference = self.get_anim_name(actor_name, action)
-        if generate_enums:
-            header.enum_reference = self.get_anim_enum(actor_name, action)
-
-        if self.set_custom_flags:
-            if use_int_flags:
-                header.flags = int(self.custom_int_flags, 0)
-            else:
-                header.flags = self.custom_flags
-        else:
-            header.flags = self.get_int_flags()
-
-        start_frame, loop_start, loop_end = self.get_frame_range(action)
-
-        header.trans_divisor = self.trans_divisor
-        header.start_frame = start_frame
-        header.loop_start = loop_start
-        header.loop_end = loop_end
-        header.values_reference = values_reference
-        header.indice_reference = indice_reference
-        header.bone_count = bone_count
-        header.table_index = self.table_index if table_index is None else table_index
-        header.file_name = file_name
-
-        header.data = data
-
-        return header
-
-    def from_header_class(
-        self,
-        header: SM64_AnimHeader,
-        action: Action,
-        actor_name: str = "mario",
-        use_custom_name: bool = True,
-    ):
-        if (
-            isinstance(header.reference, str)
-            and header.reference != self.get_anim_name(actor_name, action)
-            and use_custom_name
-        ):
-            self.custom_name = header.reference
-            self.override_name = True
-
-        correct_frame_range = header.start_frame, header.loop_start, header.loop_end
-        self.start_frame, self.loop_start, self.loop_end = correct_frame_range
-        auto_frame_range = self.get_frame_range(action)
-        if correct_frame_range != auto_frame_range:
-            self.manual_frame_range = True
-
-        self.trans_divisor = header.trans_divisor
-
-        # Flags
-        if isinstance(header.flags, int):
-            int_flags = header.flags
-            self.custom_flags = intToHex(header.flags, 2)
-            if int_flags >> 6:  # If any non supported bit is active
-                self.set_custom_flags = True
-        else:
-            self.custom_flags = header.flags
-            int_flags = 0
-
-            flags = header.flags.replace(" ", "").lstrip("(").rstrip(")").split(" | ")
-            try:
-                int_flags = int(header.flags, 0)
-            except ValueError:
-                for flag in flags:
-                    index = next((index for index, flag_tuple in enumerate(C_FLAGS) if flag in flag_tuple), None)
-                    if index is not None:
-                        int_flags |= 1 << index
-                    else:
-                        self.set_custom_flags = True  # Unknown flag
-        self.custom_int_flags = intToHex(int_flags, 2)
-        for index, prop in enumerate(FLAG_PROPS):
-            setattr(self, prop, is_bit_active(int_flags, index))
-
-        self.table_index = header.table_index
-
-    # UI
     def draw_flag_props(self, layout: UILayout, use_int_flags: bool = False):
         col = layout.column()
 
@@ -376,195 +245,27 @@ class SM64_AnimHeaderProps(PropertyGroup):
 
 
 class SM64_ActionProps(PropertyGroup):
-    override_file_name: BoolProperty(name="Override File Name")
-    custom_file_name: StringProperty(name="File Name", default="anim_00.inc.c")
-
-    override_max_frame: BoolProperty(name="Override Max Frame")
-    custom_max_frame: IntProperty(name="Max Frame", min=1, max=MAX_U16, default=1)
-
-    reference_tables: BoolProperty(name="Reference Tables")
-    indices_table: StringProperty(name="Indices Table", default="anim_00_indices")
-    values_table: StringProperty(name="Value Table", default="anim_00_values")
-    indices_address: StringProperty(name="Indices Table")  # TODO: Toad example
-    values_address: StringProperty(name="Value Table")
-
-    start_address: StringProperty(name="Start Address", default=intToHex(18712880))
-    end_address: StringProperty(name="End Address", default=intToHex(18874112))
-
     header: PointerProperty(type=SM64_AnimHeaderProps)
     variants_tab: BoolProperty(name="Header Variants")
     header_variants: CollectionProperty(type=SM64_AnimHeaderProps)
+    override_file_name: BoolProperty(name="Override File Name")
+    custom_file_name: StringProperty(name="File Name", default="anim_00.inc.c")
+    override_max_frame: BoolProperty(name="Override Max Frame")
+    custom_max_frame: IntProperty(name="Max Frame", min=1, max=MAX_U16, default=1)
+    reference_tables: BoolProperty(name="Reference Tables")
+    indices_table: StringProperty(name="Indices Table", default="anim_00_indices")
+    values_table: StringProperty(name="Value Table", default="anim_00_values")
+
+    # Binary
+    indices_address: StringProperty(name="Indices Table")  # TODO: Toad example
+    values_address: StringProperty(name="Value Table")
+    start_address: StringProperty(name="Start Address", default=intToHex(18712880))
+    end_address: StringProperty(name="End Address", default=intToHex(18874112))
 
     @property
     def headers(self) -> list[SM64_AnimHeaderProps]:
         return [self.header] + list(self.header_variants)
 
-    def header_from_index(self, header_variant=0) -> SM64_AnimHeaderProps:
-        try:
-            return self.headers[header_variant]
-        except IndexError as exc:
-            raise ValueError("Header variant does not exist.") from exc
-
-    def update_header_variant_numbers(self):
-        for i, variant in enumerate(self.headers):
-            variant.header_variant = i
-
-    def get_anim_file_name(self, action: Action):
-        if self.override_file_name:
-            name = self.custom_file_name
-        else:
-            name = f"anim_{action.name}.inc.c"
-
-        # Replace any invalid characters with an underscore
-        # TODO: Could this be an issue anywhere else in fast64?
-        name = re.sub(r'[/\\?%*:|"<>]', " ", name)
-
-        return name
-
-    def get_max_frame(self, action: Action) -> int:
-        if self.override_max_frame:
-            return self.custom_max_frame
-
-        loop_ends: list[int] = [getFrameInterval(action)[1]]
-        for header in self.headers:
-            loop_end = header.get_frame_range(action)[2]
-            loop_ends.append(loop_end)
-
-        return max(loop_ends)
-
-    def get_enum_and_header_names(self, action: Action, actor_name: str):
-        return [
-            (header.get_anim_enum(actor_name, action), header.get_anim_name(actor_name, action))
-            for header in self.headers
-        ]
-
-    def to_data_class(
-        self,
-        action: Action,
-        armature_obj: Object,
-        blender_to_sm64_scale: float,
-        quick_read: bool,
-        file_name: str = "anim_00.inc.c",
-    ):
-        data = SM64_AnimData()
-        pairs = get_animation_pairs(
-            blender_to_sm64_scale, action.fast64.sm64.get_max_frame(action), action, armature_obj, quick_read
-        )
-        data_name: str = toAlnum(f"anim_{action.name}")
-        values_reference = f"{data_name}_values"
-        indice_reference = f"{data_name}_indices"
-        data.pairs = pairs
-        data.values_reference, data.indice_reference = values_reference, indice_reference
-        data.values_file_name, data.indices_file_name = file_name, file_name
-        return data
-
-    def to_animation_class(
-        self,
-        action: Action,
-        armature_obj: Object,
-        blender_to_sm64_scale: float,
-        quick_read: bool,
-        can_use_references: bool,
-        use_int_flags: bool,
-        actor_name: str = "mario",
-        generate_enums: bool = False,
-        use_addresses_for_references: bool = False,
-    ):
-        animation = SM64_Anim()
-        animation.file_name = self.get_anim_file_name(action)
-
-        if can_use_references and self.reference_tables:
-            if use_addresses_for_references:
-                values_reference, indice_reference = int(self.values_address, 0), int(self.indices_address, 0)
-            else:
-                values_reference, indice_reference = self.values_table, self.indices_table
-        else:
-            animation.data = self.to_data_class(
-                action, armature_obj, blender_to_sm64_scale, quick_read, animation.file_name
-            )
-            values_reference = animation.data.values_reference
-            indice_reference = animation.data.indice_reference
-        bone_count = len(get_anim_pose_bones(armature_obj))
-        for header_props in self.headers:
-            animation.headers.append(
-                header_props.to_header_class(
-                    bone_count,
-                    animation.data,
-                    action,
-                    use_int_flags,
-                    values_reference,
-                    indice_reference,
-                    None,
-                    actor_name,
-                    generate_enums,
-                    animation.file_name,
-                )
-            )
-
-        return animation
-
-    def from_anim_class(
-        self,
-        animation: SM64_Anim,
-        action: Action,
-        actor_name: str,
-        remove_name_footer: bool = True,
-        use_custom_name: bool = True,
-    ):
-        main_header = animation.headers[0]
-        is_from_binary = isinstance(main_header.reference, int)
-
-        if main_header.file_name:
-            action_name = main_header.file_name.rstrip(".c").rstrip(".inc")
-        elif is_from_binary:
-            action_name = intToHex(main_header.reference)
-        else:
-            action_name = main_header.reference
-
-        if remove_name_footer:
-            index = action_name.find("anim_")
-            if index != -1:
-                action_name = action_name[index + 5 :]
-        action.name = action_name
-
-        indice_reference = main_header.indice_reference
-        values_reference = main_header.values_reference
-        if is_from_binary:
-            indice_reference = intToHex(indice_reference)
-            values_reference = intToHex(values_reference)
-        self.indices_table, self.indices_address = indice_reference, indice_reference
-        self.values_table, self.values_address = values_reference, values_reference
-
-        if animation.data:
-            self.custom_file_name = animation.data.indices_file_name
-            self.custom_max_frame = max([1] + [len(x.values) for x in animation.data.pairs])
-        else:
-            self.custom_file_name = main_header.file_name
-            self.reference_tables = True
-
-        if is_from_binary:
-            start_addresses = [x.reference for x in animation.headers]
-            end_addresses = [x.end_address for x in animation.headers]
-            if animation.data:
-                start_addresses.append(animation.data.indice_reference)
-                end_addresses.append(animation.data.indice_reference)
-                start_addresses.append(animation.data.values_reference)
-                end_addresses.append(animation.data.value_end_address)
-            self.start_address = intToHex(min(start_addresses))
-            self.end_address = intToHex(max(end_addresses))
-
-        if self.custom_file_name and self.get_anim_file_name(action) != self.custom_file_name:
-            self.override_file_name = True
-
-        for i in range(len(animation.headers) - 1):
-            self.header_variants.add()
-        for header, header_props in zip(animation.headers, self.headers):
-            header.action = action  # Used in table class to prop
-            header_props.from_header_class(header, action, actor_name, use_custom_name)
-
-        self.update_header_variant_numbers()
-
-    # UI
     def draw_variant(
         self,
         layout: UILayout,
@@ -1419,35 +1120,33 @@ class SM64_AnimImportProps(PropertyGroup):
 class SM64_AnimProps(PropertyGroup):
     version: bpy.props.IntProperty(name="SM64_AnimProps Version", default=0)
     cur_version = 1  # version after property migration
-
     played_header: IntProperty(min=0)
     played_action: PointerProperty(name="Action", type=Action)
 
     table_tab: BoolProperty(name="Table")
     table: PointerProperty(type=SM64_AnimTableProps)
+    importing_tab: BoolProperty(name="Importing")
+    importing: PointerProperty(type=SM64_AnimImportProps)
+    action_tab: BoolProperty(name="Action", default=True)
+    selected_action: PointerProperty(name="Action", type=Action)
+
     update_table: BoolProperty(
         name="Update Table On Action Export",
         description="Update table outside of table exports",
         default=True,
     )
-
-    importing_tab: BoolProperty(name="Importing")
-    importing: PointerProperty(type=SM64_AnimImportProps)
-
-    action_tab: BoolProperty(name="Action", default=True)
-    selected_action: PointerProperty(name="Action", type=Action)
-
+    quick_read: BoolProperty(
+        name="Quick Data Read", default=True, description="Read fcurves directly, should work with the majority of rigs"
+    )
     directory_path: StringProperty(name="Directory Path", subtype="FILE_PATH")
     dma_folder: StringProperty(name="DMA Folder", default="assets/anims/")
-    use_dma_structure_prop: BoolProperty(
+    use_dma_structure: BoolProperty(
         name="Use DMA Structure",
         description="When enabled, the Mario animation converter order is used (headers, indicies, values)",
     )
-    actor_name_prop: StringProperty(name="Name", default="mario")
-    group_name: StringProperty(
-        name="Group Name",
-        default="group0",
-    )  # TODO: Ideally, this pr will be merged after combined exports, so this should be updated to use the group enum there
+    actor_name_prop: StringProperty(name="Name", default="mario") # TODO: Does this need to be passed to a @property?
+    # TODO: Ideally, this pr will be merged after combined exports, so this should be updated to use the group enum there
+    group_name: StringProperty(name="Group Name", default="group0")
     header_type: EnumProperty(items=enumAnimExportTypes, name="Header Export", default="Actor")
     level_name: StringProperty(name="Level", default="bob")
     level_option: EnumProperty(items=enumLevelNames, name="Level", default="bob")
@@ -1459,13 +1158,7 @@ class SM64_AnimProps(PropertyGroup):
         name="Assume Bone Count",
         description="When importing a DMA table for insertion, assume the bone count based on the armature instead of the headers",
     )
-
-    # Insertable
-    insertable_directory_path: StringProperty(name="Directory Path", subtype="FILE_PATH")
-
-    quick_read: BoolProperty(
-        name="Quick Data Read", default=True, description="Read fcurves directly, should work with the majority of rigs"
-    )
+    insertable_directory_path: StringProperty(name="Directory Path", subtype="FILE_PATH")  # Insertable
 
     def update_version_0(self, scene: Scene):
         importing: SM64_AnimImportProps = self.importing
@@ -1530,54 +1223,7 @@ class SM64_AnimProps(PropertyGroup):
 
     @property
     def is_c_dma(self):
-        if self.header_type == "DMA":
-            return True
-        if self.header_type == "Custom":
-            return self.use_dma_structure_prop
-        return False
-
-    def get_animation_paths(self, create_directories: bool = False):
-        custom_export = self.header_type == "Custom"
-
-        export_path, level_name = getPathAndLevel(
-            custom_export,
-            self.directory_path,
-            self.level_option,
-            self.level_name,
-        )
-        dir_name = toAlnum(self.actor_name)
-        if self.header_type == "DMA":
-            anim_dir_path, dir_path, geo_dir_path = os.path.join(export_path, self.dma_folder), "", ""
-        else:
-            dir_path = getExportDir(
-                custom_export,
-                export_path,
-                self.header_type,
-                level_name,
-                "",
-                dir_name,
-            )[0]
-            geo_dir_path = os.path.join(dir_path, dir_name)
-            anim_dir_path = os.path.join(geo_dir_path, "anims")
-            if create_directories:
-                if not os.path.exists(dir_path):
-                    os.mkdir(dir_path)
-                if not os.path.exists(geo_dir_path):
-                    os.mkdir(geo_dir_path)
-        if create_directories and not os.path.exists(anim_dir_path):
-            os.mkdir(anim_dir_path)
-        return (
-            abspath(anim_dir_path),
-            abspath(dir_path),
-            abspath(geo_dir_path),
-            level_name,
-        )
-
-    def draw_importing_properties(self, layout: UILayout, import_rom: os.PathLike | None = None):
-        col = layout.column()
-        col.prop(self, "importing_tab", icon="TRIA_DOWN" if self.importing_tab else "TRIA_RIGHT")
-        if self.importing_tab:
-            self.importing.draw_props(col, import_rom)
+        return self.use_dma_structure if self.header_type == "Custom" self.header_type == "DMA"
 
     def draw_insertable_binary_settings(self, layout: UILayout):
         col = layout.column()
@@ -1607,8 +1253,8 @@ class SM64_AnimProps(PropertyGroup):
 
         box = col.box().column()
         if self.header_type == "Custom":
-            box.prop(self, "use_dma_structure_prop")
-        if not self.use_dma_structure_prop:
+            box.prop(self, "use_dma_structure")
+        if not self.use_dma_structure:
             box.prop(self, "update_table")
             if self.update_table:
                 self.table.draw_non_exclusive_settings(box, False, "C", self.actor_name)
@@ -1678,7 +1324,10 @@ class SM64_AnimProps(PropertyGroup):
             self.table.draw_props(box, is_dma, not self.update_table and not is_dma, export_type, self.actor_name)
 
         if show_importing:
-            self.draw_importing_properties(col.box(), import_rom)
+            box = col.box()
+            col.prop(self, "importing_tab", icon="TRIA_DOWN" if self.importing_tab else "TRIA_RIGHT")
+            if self.importing_tab:
+                self.importing.draw_props(col, import_rom)
 
 
 properties = (

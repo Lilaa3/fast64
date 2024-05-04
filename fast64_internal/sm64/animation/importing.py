@@ -30,6 +30,118 @@ if TYPE_CHECKING:
     from ..settings.properties import SM64_Properties
 
 
+def from_header_class(
+    self,
+    header: SM64_AnimHeader,
+    action: Action,
+    actor_name: str = "mario",
+    use_custom_name: bool = True,
+):
+    if (
+        isinstance(header.reference, str)
+        and header.reference != self.get_anim_name(actor_name, action)
+        and use_custom_name
+    ):
+        self.custom_name = header.reference
+        self.override_name = True
+
+    correct_frame_range = header.start_frame, header.loop_start, header.loop_end
+    self.start_frame, self.loop_start, self.loop_end = correct_frame_range
+    auto_frame_range = self.get_frame_range(action)
+    if correct_frame_range != auto_frame_range:
+        self.manual_frame_range = True
+
+    self.trans_divisor = header.trans_divisor
+
+    # Flags
+    if isinstance(header.flags, int):
+        int_flags = header.flags
+        self.custom_flags = intToHex(header.flags, 2)
+        if int_flags >> 6:  # If any non supported bit is active
+            self.set_custom_flags = True
+    else:
+        self.custom_flags = header.flags
+        int_flags = 0
+
+        flags = header.flags.replace(" ", "").lstrip("(").rstrip(")").split(" | ")
+        try:
+            int_flags = int(header.flags, 0)
+        except ValueError:
+            for flag in flags:
+                index = next((index for index, flag_tuple in enumerate(C_FLAGS) if flag in flag_tuple), None)
+                if index is not None:
+                    int_flags |= 1 << index
+                else:
+                    self.set_custom_flags = True  # Unknown flag
+    self.custom_int_flags = intToHex(int_flags, 2)
+    for index, prop in enumerate(FLAG_PROPS):
+        setattr(self, prop, is_bit_active(int_flags, index))
+
+    self.table_index = header.table_index
+
+
+def from_anim_class(
+    self,
+    animation: SM64_Anim,
+    action: Action,
+    actor_name: str,
+    remove_name_footer: bool = True,
+    use_custom_name: bool = True,
+):
+    main_header = animation.headers[0]
+    is_from_binary = isinstance(main_header.reference, int)
+
+    if main_header.file_name:
+        action_name = main_header.file_name.rstrip(".c").rstrip(".inc")
+    elif is_from_binary:
+        action_name = intToHex(main_header.reference)
+    else:
+        action_name = main_header.reference
+
+    if remove_name_footer:
+        index = action_name.find("anim_")
+        if index != -1:
+            action_name = action_name[index + 5 :]
+    action.name = action_name
+
+    indice_reference = main_header.indice_reference
+    values_reference = main_header.values_reference
+    if is_from_binary:
+        indice_reference = intToHex(indice_reference)
+        values_reference = intToHex(values_reference)
+    self.indices_table, self.indices_address = indice_reference, indice_reference
+    self.values_table, self.values_address = values_reference, values_reference
+
+    if animation.data:
+        self.custom_file_name = animation.data.indices_file_name
+        self.custom_max_frame = max([1] + [len(x.values) for x in animation.data.pairs])
+    else:
+        self.custom_file_name = main_header.file_name
+        self.reference_tables = True
+
+    if is_from_binary:
+        start_addresses = [x.reference for x in animation.headers]
+        end_addresses = [x.end_address for x in animation.headers]
+        if animation.data:
+            start_addresses.append(animation.data.indice_reference)
+            end_addresses.append(animation.data.indice_reference)
+            start_addresses.append(animation.data.values_reference)
+            end_addresses.append(animation.data.value_end_address)
+        self.start_address = intToHex(min(start_addresses))
+        self.end_address = intToHex(max(end_addresses))
+
+    if self.custom_file_name and self.get_anim_file_name(action) != self.custom_file_name:
+        self.override_file_name = True
+
+    for i in range(len(animation.headers) - 1):
+        self.header_variants.add()
+    for header, header_props in zip(animation.headers, self.headers):
+        header.action = action  # Used in table class to prop
+        header_props.from_header_class(header, action, actor_name, use_custom_name)
+
+    self.update_header_variant_numbers()
+
+
 def value_distance(e1: Euler, e2: Euler) -> float:
     result = 0
     for x1, x2 in zip(e1, e2):
