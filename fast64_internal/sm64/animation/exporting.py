@@ -8,6 +8,7 @@ import mathutils
 from ...utility import (
     PluginError,
     encodeSegmentedAddr,
+    decodeSegmentedAddr,
     get64bitAlignedAddr,
     writeIfNotFound,
     radians_to_s16,
@@ -16,7 +17,13 @@ from ...utility import (
     writeInsertableFile,
 )
 from ...utility_anim import stashActionInArmature
-from ..sm64_constants import insertableBinaryTypes, defaultExtendSegment4, level_pointers
+from ..sm64_constants import (
+    BEHAVIOR_COMMANDS,
+    BEHAVIOR_EXITS,
+    insertableBinaryTypes,
+    defaultExtendSegment4,
+    level_pointers,
+)
 from ..sm64_utility import SM64_BinaryExporter, RomReading
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_rom_tweaks import ExtendBank0x04
@@ -546,6 +553,32 @@ def update_data_file(data_file_path: os.PathLike, anim_file_names: list, overrid
         writeIfNotFound(data_file_path, f'#include "{anim_file_name}"\n', "")
 
 
+def update_behaviour_binary(
+    binary_exporter: SM64_BinaryExporter, address: int, table_address: bytes, beginning_animation: int
+):
+    load_set = False
+    animate_set = False
+    exited = False
+    while not exited:
+        binary_exporter.rom_file_output.seek(address)
+        command_index = int.from_bytes(binary_exporter.rom_file_output.read(1), "big")
+        name, size = BEHAVIOR_COMMANDS[command_index]
+        if name in BEHAVIOR_EXITS:
+            exited = True
+        if name == "LOAD_ANIMATIONS":
+            binary_exporter.rom_file_output.seek(address + 4)
+            binary_exporter.rom_file_output.write(table_address)
+            load_set = True
+        elif name == "ANIMATE":
+            binary_exporter.rom_file_output.seek(address + 1)
+            binary_exporter.rom_file_output.write(beginning_animation.to_bytes(1, "big"))
+            animate_set = True
+        address += 4 * size
+    if exited:
+        assert load_set, "Could not find LOAD_ANIMATIONS command"
+        assert animate_set, "Could not find ANIMATE command"
+
+
 def export_animation_table_binary(
     binary_exporter: SM64_BinaryExporter,
     table_props: "SM64_AnimTableProps",
@@ -592,10 +625,13 @@ def export_animation_table_binary(
             table_end_address,
             table_data + data,
         )
-    if table_props.overwrite_begining_animation:
-        address = int(table_props.animate_command_address, 0) + 1
-        binary_exporter.rom_file_output.seek(address)
-        binary_exporter.rom_file_output.write(int(table_props.begining_animation, 0).to_bytes(1, "big"))
+    if table_props.update_behavior:
+        update_behaviour_binary(
+            binary_exporter,
+            decodeSegmentedAddr(table_props.behavior_address.to_bytes(4, "big"), segment_data),
+            encodeSegmentedAddr(table_address, segment_data),
+            int(table_props.begining_animation, 0),
+        )
 
 
 def export_animation_table_insertable(
@@ -782,18 +818,21 @@ def export_animation_binary(
         animation_end_address,
         data,
     )
+    table_address = get64bitAlignedAddr(int(table_props.address, 0))
     if animation_props.update_table:
-        table_address = get64bitAlignedAddr(int(table_props.address, 0))
         for i, header in enumerate(animation.headers):
             element_address = table_address + (4 * header.table_index)
             binary_exporter.rom_file_output.seek(element_address)
             binary_exporter.rom_file_output.write(
                 encodeSegmentedAddr(animation_address + (i * HEADER_SIZE), segment_data)
             )
-    if table_props.overwrite_begining_animation:
-        address = int(table_props.animate_command_address, 0) + 1
-        binary_exporter.rom_file_output.seek(address)
-        binary_exporter.rom_file_output.write(int(table_props.begining_animation, 0).to_bytes(1, "big"))
+    if table_props.update_behavior:
+        update_behaviour_binary(
+            binary_exporter,
+            decodeSegmentedAddr(table_props.behavior_address.to_bytes(4, "big"), segment_data),
+            encodeSegmentedAddr(table_address, segment_data),
+            int(table_props.begining_animation, 0),
+        )
 
 
 def export_animation_insertable(animation: SM64_Anim, animation_props: "SM64_AnimProps", anim_file_name: str):

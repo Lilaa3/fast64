@@ -1858,3 +1858,73 @@ groupsSeg6 = [
     ("Do Not Write", "Do Not Write", "Do Not Write"),
     ("Custom", "Custom", "Custom"),
 ]
+
+BEHAVIOR_EXITS = [
+    "RETURN",
+    "GOTO",
+    "END_LOOP",
+    "END_REPEAT",
+    "END_REPEAT_CONTINUE",
+    "BREAK",
+    "BREAK_UNUSED",
+    "DEACTIVATE",
+]
+BEHAVIOR_COMMANDS = [
+    # Name, Size
+    ("BEGIN", 1),  # bhv_cmd_begin
+    ("DELAY", 1),  # bhv_cmd_delay
+    ("CALL", 1),  # bhv_cmd_call
+    ("RETURN", 1),  # bhv_cmd_return
+    ("GOTO", 1),  # bhv_cmd_goto
+    ("BEGIN_REPEAT", 1),  # bhv_cmd_begin_repeat
+    ("END_REPEAT", 1),  # bhv_cmd_end_repeat
+    ("END_REPEAT_CONTINUE", 1),  # bhv_cmd_end_repeat_continue
+    ("BEGIN_LOOP", 1),  # bhv_cmd_begin_loop
+    ("END_LOOP", 1),  # bhv_cmd_end_loop
+    ("BREAK", 1),  # bhv_cmd_break
+    ("BREAK_UNUSED", 1),  # bhv_cmd_break_unused
+    ("CALL_NATIVE", 2),  # bhv_cmd_call_native
+    ("ADD_FLOAT", 1),  # bhv_cmd_add_float
+    ("SET_FLOAT", 1),  # bhv_cmd_set_float
+    ("ADD_INT", 1),  # bhv_cmd_add_int
+    ("SET_INT", 1),  # bhv_cmd_set_int
+    ("OR_INT", 1),  # bhv_cmd_or_int
+    ("BIT_CLEAR", 1),  # bhv_cmd_bit_clear
+    ("SET_INT_RAND_RSHIFT", 2),  # bhv_cmd_set_int_rand_rshift
+    ("SET_RANDOM_FLOAT", 2),  # bhv_cmd_set_random_float
+    ("SET_RANDOM_INT", 2),  # bhv_cmd_set_random_int
+    ("ADD_RANDOM_FLOAT", 2),  # bhv_cmd_add_random_float
+    ("ADD_INT_RAND_RSHIFT", 2),  # bhv_cmd_add_int_rand_rshift
+    ("NOP_1", 1),  # bhv_cmd_nop_1
+    ("NOP_2", 1),  # bhv_cmd_nop_2
+    ("NOP_3", 1),  # bhv_cmd_nop_3
+    ("SET_MODEL", 1),  # bhv_cmd_set_model
+    ("SPAWN_CHILD", 3),  # bhv_cmd_spawn_child
+    ("DEACTIVATE", 1),  # bhv_cmd_deactivate
+    ("DROP_TO_FLOOR", 1),  # bhv_cmd_drop_to_floor
+    ("SUM_FLOAT", 1),  # bhv_cmd_sum_float
+    ("SUM_INT", 1),  # bhv_cmd_sum_int
+    ("BILLBOARD", 1),  # bhv_cmd_billboard
+    ("HIDE", 1),  # bhv_cmd_hide
+    ("SET_HITBOX", 2),  # bhv_cmd_set_hitbox
+    ("NOP_4", 1),  # bhv_cmd_nop_4
+    ("DELAY_VAR", 1),  # bhv_cmd_delay_var
+    ("BEGIN_REPEAT_UNUSED", 1),  # bhv_cmd_begin_repeat_unused
+    ("LOAD_ANIMATIONS", 2),  # bhv_cmd_load_animations
+    ("ANIMATE", 1),  # bhv_cmd_animate
+    ("SPAWN_CHILD_WITH_PARAM", 3),  # bhv_cmd_spawn_child_with_param
+    ("LOAD_COLLISION_DATA", 2),  # bhv_cmd_load_collision_data
+    ("SET_HITBOX_WITH_OFFSET", 3),  # bhv_cmd_set_hitbox_with_offset
+    ("SPAWN_OBJ", 3),  # bhv_cmd_spawn_obj
+    ("SET_HOME", 1),  # bhv_cmd_set_home
+    ("SET_HURTBOX", 2),  # bhv_cmd_set_hurtbox
+    ("SET_INTERACT_TYPE", 2),  # bhv_cmd_set_interact_type
+    ("SET_OBJ_PHYSICS", 5),  # bhv_cmd_set_obj_physics
+    ("SET_INTERACT_SUBTYPE", 2),  # bhv_cmd_set_interact_subtype
+    ("SCALE", 1),  # bhv_cmd_scale
+    ("PARENT_BIT_CLEAR", 2),  # bhv_cmd_parent_bit_clear
+    ("ANIMATE_TEXTURE", 1),  # bhv_cmd_animate_texture
+    ("DISABLE_RENDERING", 1),  # bhv_cmd_disable_rendering
+    ("SET_INT_UNUSED", 2),  # bhv_cmd_set_int_unused
+    ("SPAWN_WATER_DROPLET", 2),  # bhv_cmd_spawn_water_droplet
+]

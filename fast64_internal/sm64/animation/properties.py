@@ -40,7 +40,13 @@ from .operators import (
 )
 
 
-from .constants import enumAnimImportTypes, enumAnimBinaryImportTypes, marioAnimationNames, enumAnimExportTypes
+from .constants import (
+    enumAnimImportTypes,
+    enumAnimBinaryImportTypes,
+    marioAnimationNames,
+    enumAnimExportTypes,
+    enumAnimatedBehaviours,
+)
 from .utility import (
     get_anim_enum,
     get_anim_file_name,
@@ -568,14 +574,15 @@ class SM64_AnimTableProps(PropertyGroup):
     end_address: StringProperty(name="Table End", default=intToHex(0x600FC6C))
     dma_address: StringProperty(name="DMA Table Address", default=intToHex(0x4EC000))
     dma_end_address: StringProperty(name="DMA Table End", default=intToHex(0x4EC000 + 0x8DC20))
-    overwrite_begining_animation: BoolProperty(name="Overwrite Begining Animation", default=True)
-    # Toad message behavior's ANIMATE command address
-    animate_command_address: StringProperty(
-        name="Animate Command Address",
-        default=intToHex(0x0021CCF8 + (4 * 4)),  # Toad message behavior's ANIMATE command address
-    )
+    update_behavior: BoolProperty(name="Update Behavior", default=True)
+    behaviour: bpy.props.EnumProperty(items=enumAnimatedBehaviours, default="13002ef8")
+    behavior_address_prop: StringProperty(name="Behavior Address", default=intToHex(0x13002EF8))
     begining_animation: StringProperty(name="Begining Animation", default="0x00")
     insertable_file_name: StringProperty(name="Insertable File Name", default="toad.insertable")
+
+    @property
+    def behavior_address(self):
+        return int(self.behavior if self.behaviour == "Custom" else self.behavior_address_prop, 0)
 
     @property
     def override_files(self):
@@ -593,7 +600,6 @@ class SM64_AnimTableProps(PropertyGroup):
         actor_name: str = "mario",
     ):
         col = layout.column()
-
         row = col.row()
 
         info_row = row.row()
@@ -650,10 +656,14 @@ class SM64_AnimTableProps(PropertyGroup):
             prop_split(col, self, "address", "Table Address")
             prop_split(col, self, "end_address", "Table End")
 
-            col.prop(self, "overwrite_begining_animation")
-            if self.overwrite_begining_animation:
-                prop_split(col, self, "animate_command_address", "ANIMATE Command Address")
-                prop_split(col, self, "begining_animation", "Index")
+            box = col.box().column()
+            box.prop(self, "update_behavior")
+            if self.update_behavior:
+                prop_split(box, self, "behaviour", "Behaviour Name")
+                if self.behaviour == "Custom":
+                    prop_split(box, self, "behavior_address_prop", "Behavior Address")
+                box.label(text="Will update the LOAD_ANIMATIONS's address", icon="INFO")
+                prop_split(box, self, "begining_animation", "Beginning Animation")
 
     def draw_props(
         self,
@@ -688,7 +698,8 @@ class SM64_AnimTableProps(PropertyGroup):
         if is_dma and export_type == "C":
             multilineLabel(
                 col,
-                "The export will follow the vanilla DMA naming\nconventions (anim_xx.inc.c, anim_xx, anim_xx_values, etc).",
+                "The export will follow the vanilla DMA naming\n"
+                "conventions (anim_xx.inc.c, anim_xx, anim_xx_values, etc).",
                 icon="INFO",
             )
 
@@ -758,20 +769,13 @@ class SM64_AnimImportProps(PropertyGroup):
         description="When enabled, the importer will read from the import ROM given a non defined address",
     )
 
-    path: StringProperty(
-        name="Path",
-        subtype="FILE_PATH",
-        default="anims/",
-    )
+    path: StringProperty(name="Path", subtype="FILE_PATH", default="anims/")
     remove_name_footer: BoolProperty(
         name="Remove Name Footers",
         description='Remove "anim_" from imported animations',
         default=True,
     )
-    use_custom_name: BoolProperty(
-        name="Use Custom Name",
-        default=True,
-    )
+    use_custom_name: BoolProperty(name="Use Custom Name", default=True)
 
     @property
     def mario_or_table_index(self):
