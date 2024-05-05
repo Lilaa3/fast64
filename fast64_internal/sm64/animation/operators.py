@@ -107,8 +107,8 @@ class SM64_TableOperations(OperatorBase):
     bl_description = "Move, remove, clear or add table elements"
     bl_options = {"UNDO"}
 
-    array_index: IntProperty()
-    type: StringProperty()
+    index: IntProperty()
+    op_name: StringProperty()
     action_name: StringProperty(name="Action")
     header_variant: IntProperty()
 
@@ -119,29 +119,29 @@ class SM64_TableOperations(OperatorBase):
             animation_props: SM64_AnimProps = context.scene.fast64.sm64.animation
         table_elements = animation_props.table.elements
 
-        if self.array_index != -1:
-            table_element = table_elements[self.array_index]
+        if self.index != -1:
+            table_element = table_elements[self.index]
         else:
             table_element = None
-        if self.type == "MOVE_UP":
-            table_elements.move(self.array_index, self.array_index - 1)
-        elif self.type == "MOVE_DOWN":
-            table_elements.move(self.array_index, self.array_index + 1)
-        elif self.type == "ADD":
+        if self.op_name == "MOVE_UP":
+            table_elements.move(self.index, self.index - 1)
+        elif self.op_name == "MOVE_DOWN":
+            table_elements.move(self.index, self.index + 1)
+        elif self.op_name == "ADD":
             table_elements.add()
             if self.action_name and self.header_variant:
                 table_elements[-1].set_variant(bpy.data.actions[self.action_name], self.header_variant)
             elif table_element:
                 copyPropertyGroup(table_element, table_elements[-1])
-                table_elements.move(len(table_elements) - 1, self.array_index + 1)
-        elif self.type == "ADD_ALL":
+                table_elements.move(len(table_elements) - 1, self.index + 1)
+        elif self.op_name == "ADD_ALL":
             action = bpy.data.actions[self.action_name]
             for header_variant in range(len(action.fast64.sm64.headers)):
                 table_elements.add()
                 table_elements[-1].set_variant(action, header_variant)
-        elif self.type == "REMOVE":
-            table_elements.remove(self.array_index)
-        if self.type == "CLEAR":
+        elif self.op_name == "REMOVE":
+            table_elements.remove(self.index)
+        if self.op_name == "CLEAR":
             table_elements.clear()
 
         return {"FINISHED"}
@@ -153,8 +153,8 @@ class SM64_AnimVariantOperations(OperatorBase):
     bl_description = "Move, remove, clear or add variants"
     bl_options = {"UNDO"}
 
-    array_index: IntProperty()
-    type: StringProperty()
+    index: IntProperty()
+    op_name: StringProperty()
     action_name: StringProperty(name="Action")
 
     def execute_operator(self, context):
@@ -163,18 +163,18 @@ class SM64_AnimVariantOperations(OperatorBase):
 
         variants = action_props.header_variants
 
-        if self.type == "MOVE_UP":
-            variants.move(self.array_index, self.array_index - 1)
-        elif self.type == "MOVE_DOWN":
-            variants.move(self.array_index, self.array_index + 1)
-        elif self.type == "ADD":
+        if self.op_name == "MOVE_UP":
+            variants.move(self.index, self.index - 1)
+        elif self.op_name == "MOVE_DOWN":
+            variants.move(self.index, self.index + 1)
+        elif self.op_name == "ADD":
             variants.add()
             added_variant = variants[-1]
             added_variant.action = action
 
-            copyPropertyGroup(action_props.headers[self.array_index + 1], added_variant)
+            copyPropertyGroup(action_props.headers[self.index + 1], added_variant)
 
-            variants.move(len(variants) - 1, self.array_index + 1)
+            variants.move(len(variants) - 1, self.index + 1)
             update_header_variant_numbers(action_props)
 
             added_variant.expand_tab = True
@@ -183,12 +183,11 @@ class SM64_AnimVariantOperations(OperatorBase):
             added_variant.custom_name = get_anim_name(
                 context.scene.fast64.sm64.animation.actor_name, action, added_variant
             )
-        elif self.type == "REMOVE":
-            variants.remove(self.array_index)
-        if self.type == "CLEAR":
+        elif self.op_name == "REMOVE":
+            variants.remove(self.index)
+        if self.op_name == "CLEAR":
             variants.clear()
         update_header_variant_numbers(action_props)
-        return {"FINISHED"}
 
 
 class SM64_ExportAnimTable(OperatorBase):
@@ -257,7 +256,6 @@ class SM64_SearchMarioAnimEnum(OperatorBase):
         context.region.tag_redraw()
         import_props.mario_animation = int(self.mario_animations)
         self.report({"INFO"}, "Selected: " + self.mario_animations)
-        return {"FINISHED"}
 
     def invoke(self, context, event):
         context.window_manager.invoke_search_popup(self)

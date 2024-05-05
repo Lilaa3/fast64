@@ -74,7 +74,7 @@ def draw_list_op(
     elif op_name == "REMOVE":
         col.enabled = index < len(collection)
     op = col.operator(op_cls.bl_idname, text=text, icon=icon)
-    op.array_index, op.type = index, op_name
+    op.index, op.op_name = index, op_name
     return op
 
 
@@ -99,7 +99,8 @@ class SM64_AnimHeaderProps(PropertyGroup):
         min=MIN_S16,
         max=MAX_S16,
     )
-    # Flags
+    set_custom_flags: BoolProperty(name="Set Custom Flags")
+    custom_flags: StringProperty(name="Flags", default="ANIM_NO_LOOP")
     no_loop: BoolProperty(
         name="No Loop",
         description="(ANIM_FLAG_NOLOOP)\n"
@@ -143,15 +144,12 @@ class SM64_AnimHeaderProps(PropertyGroup):
         "When enabled, the animation translation will not be used during rendering "
         "(shadows included), the data will still be exported and included",
     )
-    set_custom_flags: BoolProperty(name="Set Custom Flags")
-    custom_flags: StringProperty(name="Flags", default="ANIM_NO_LOOP")
     # Binary
     table_index: IntProperty(name="Table Index", min=0)
     custom_int_flags: StringProperty(name="Flags", default="0x01")
 
     def draw_flag_props(self, layout: UILayout, use_int_flags: bool = False):
         col = layout.column()
-
         col.prop(self, "set_custom_flags")
         if self.set_custom_flags:
             if use_int_flags:
@@ -228,7 +226,6 @@ class SM64_AnimHeaderProps(PropertyGroup):
         preview_op = split.operator(SM64_PreviewAnimOperator.bl_idname, icon="PLAY")
         preview_op.played_header = self.header_variant
         preview_op.played_action = action.name
-
         if not is_in_table:
             add_op = draw_list_op(
                 split,
