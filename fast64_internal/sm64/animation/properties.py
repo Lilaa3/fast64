@@ -574,6 +574,7 @@ class SM64_AnimTableProps(PropertyGroup):
         name="Animate Command Address",
         default=intToHex(0x0021CCF8 + (4 * 4)),  # Toad message behavior's ANIMATE command address
     )
+    begining_animation: StringProperty(name="Begining Animation", default="0x00")
     insertable_file_name: StringProperty(name="Insertable File Name", default="toad.insertable")
 
     @property
@@ -648,6 +649,7 @@ class SM64_AnimTableProps(PropertyGroup):
                 return
             prop_split(col, self, "address", "Table Address")
             prop_split(col, self, "end_address", "Table End")
+
             col.prop(self, "overwrite_begining_animation")
             if self.overwrite_begining_animation:
                 prop_split(col, self, "animate_command_address", "ANIMATE Command Address")
@@ -749,7 +751,7 @@ class SM64_AnimImportProps(PropertyGroup):
     is_segmented_address_prop: BoolProperty(name="Is Segmented Address", default=True)
     level: EnumProperty(items=level_enums, name="Level", default="IC")
     dma_table_address: StringProperty(name="DMA Table Address", default="0x4EC000")
-    mario_animation: IntProperty(name="Selected Preset Mario Animation")
+    mario_animation: EnumProperty(name="Selected Preset Mario Animation", items=marioAnimationNames)
 
     insertable_read_from_rom: BoolProperty(
         name="Read From Import ROM",
@@ -774,8 +776,8 @@ class SM64_AnimImportProps(PropertyGroup):
     @property
     def mario_or_table_index(self):
         return (
-            self.mario_animation
-            if self.binary_import_type == "DMA" and self.mario_animation != -1
+            int(self.mario_animation, 0)
+            if self.binary_import_type == "DMA" and self.mario_animation != "Custom"
             else self.table_index
         )
 
@@ -822,11 +824,10 @@ class SM64_AnimImportProps(PropertyGroup):
 
             col.prop(self, "read_entire_table")
             if not self.read_entire_table:
-                col.operator(SM64_SearchMarioAnimEnum.bl_idname, icon="VIEWZOOM")
-                if self.mario_animation == -1:
+                prop_split(col, self, "mario_animation", "Animation")
+                if self.mario_animation == "Custom":
                     prop_split(col, self, "table_index", "Entry")
-                else:
-                    col.box().label(text=f"{marioAnimationNames[self.mario_animation + 1][1]}")
+                col.operator(SM64_SearchMarioAnimEnum.bl_idname, icon="VIEWZOOM")
         else:
             prop_split(col, self, "level", "Level")
             col.prop(self, "is_segmented_address_prop")
@@ -982,6 +983,7 @@ class SM64_AnimProps(PropertyGroup):
         # upgrade_hex_prop(table, scene, "", "addr_0x27")
         table.overwrite_begining_animation = scene.get("overwrite_0x28", table.overwrite_begining_animation)
         upgrade_hex_prop(table, scene, "animate_command_address", "addr_0x28")
+        table.begining_animation = scene.get("animListIndexExport", table.begining_animation)
         self.binary_level = scene.get("levelAnimExport", self.binary_level)
 
         self.version = 1

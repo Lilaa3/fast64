@@ -45,7 +45,7 @@ enumAnimBinaryImportTypes = [
 ]
 
 marioAnimationNames = [
-    ("-1", "Custom", "Custom"),
+    ("Custom", "Custom", "Custom"),
     ("0", "Slow ledge climb up", "0"),
     ("1", "Fall over backwards", "1"),
     ("2", "Backward air kb", "2"),

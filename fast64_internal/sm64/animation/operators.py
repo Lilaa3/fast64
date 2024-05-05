@@ -245,8 +245,7 @@ class SM64_SearchMarioAnimEnum(OperatorBase):
     bl_options = {"UNDO"}
 
     mario_animations: EnumProperty(items=marioAnimationNames)
-
-    def execute_operator(self, context):
+    def execute_operator(self, context: Context):
         scene = context.scene
         sm64_props: SM64_Properties = scene.fast64.sm64
         armature_obj: Object = context.selected_objects[0]
@@ -254,12 +253,11 @@ class SM64_SearchMarioAnimEnum(OperatorBase):
             import_props: SM64_AnimImportProps = armature_obj.fast64.sm64.animation.importing
         else:
             import_props: SM64_AnimImportProps = sm64_props.animation.anim_import.importing
-
         context.region.tag_redraw()
-        import_props.mario_animation = int(self.mario_animations)
+        import_props.mario_animation = self.mario_animations
         self.report({"INFO"}, "Selected: " + self.mario_animations)
 
-    def invoke(self, context, event):
+    def invoke(self, context: Context, _):
         context.window_manager.invoke_search_popup(self)
         return {"RUNNING_MODAL"}
 
