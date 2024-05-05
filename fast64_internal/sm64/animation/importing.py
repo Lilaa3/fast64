@@ -124,8 +124,9 @@ def from_anim_class(
     if is_from_binary:
         indice_reference = intToHex(indice_reference)
         values_reference = intToHex(values_reference)
-    action_props.indices_table, action_props.indices_address = indice_reference, indice_reference
-    action_props.values_table, action_props.values_address = values_reference, values_reference
+        action_props.indices_address, action_props.values_address = indice_reference, values_reference
+    action_props.indices_table = indice_reference
+    action_props.values_table = values_reference
 
     if animation.data:
         action_props.custom_file_name = animation.data.indices_file_name

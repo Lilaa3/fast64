@@ -155,8 +155,20 @@ class SM64_BinaryExporter:
         assert (
             start_address + len(data) <= end_address
         ), f"Data does not fit in the bounds ({intToHex(start_address)}, {intToHex(end_address)})"
-        self.rom_file_output.seek(start_address)
-        self.rom_file_output.write(data)
+        self.write(data, start_address)
+
+    def seek(self, offset: int, whence: int = 0):
+        self.rom_file_output.seek(offset, whence)
+
+    def read(self, n=-1, offset=-1):
+        if offset != -1:
+            self.seek(offset)
+        return self.rom_file_output.read(n)
+
+    def write(self, s: bytes, offset=-1):
+        if offset != -1:
+            self.seek(offset)
+        return self.rom_file_output.write(s)
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.rom_file_output.close()

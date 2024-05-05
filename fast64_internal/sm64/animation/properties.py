@@ -561,28 +561,28 @@ class SM64_AnimTableProps(PropertyGroup):
     write_data_seperately: BoolProperty(name="Write Data Seperately")
     data_address: StringProperty(
         name="Data Address",
-        default=intToHex(0x6008CF0),  # Toad animation table data
+        default=intToHex(0x00A3F7E0),  # Toad animation table data
     )
     data_end_address: StringProperty(
         name="Data End",
-        default=intToHex(0x600FC48),
+        default=intToHex(0x00A466C0),
     )
     address: StringProperty(
         name="Table Address",
-        default=intToHex(0x600FC48),  # Toad animation table
+        default=intToHex(0x00A46738),  # Toad animation table
     )
-    end_address: StringProperty(name="Table End", default=intToHex(0x600FC6C))
+    end_address: StringProperty(name="Table End", default=intToHex(0x00A4675C))
     dma_address: StringProperty(name="DMA Table Address", default=intToHex(0x4EC000))
     dma_end_address: StringProperty(name="DMA Table End", default=intToHex(0x4EC000 + 0x8DC20))
     update_behavior: BoolProperty(name="Update Behavior", default=True)
-    behaviour: bpy.props.EnumProperty(items=enumAnimatedBehaviours, default="13002ef8")
+    behaviour: bpy.props.EnumProperty(items=enumAnimatedBehaviours, default=intToHex(0x13002EF8))
     behavior_address_prop: StringProperty(name="Behavior Address", default=intToHex(0x13002EF8))
     begining_animation: StringProperty(name="Begining Animation", default="0x00")
     insertable_file_name: StringProperty(name="Insertable File Name", default="toad.insertable")
 
     @property
     def behavior_address(self):
-        return int(self.behavior if self.behaviour == "Custom" else self.behavior_address_prop, 0)
+        return int(self.behavior_address_prop if self.behaviour == "Custom" else self.behaviour, 0)
 
     @property
     def override_files(self):
@@ -659,10 +659,15 @@ class SM64_AnimTableProps(PropertyGroup):
             box = col.box().column()
             box.prop(self, "update_behavior")
             if self.update_behavior:
+                multilineLabel(
+                    box,
+                    "Will update the LOAD_ANIMATIONS and ANIMATE commands.\n"
+                    "Does not raise an error if there is no ANIMATE command",
+                    "INFO",
+                )
                 prop_split(box, self, "behaviour", "Behaviour Name")
                 if self.behaviour == "Custom":
                     prop_split(box, self, "behavior_address_prop", "Behavior Address")
-                box.label(text="Will update the LOAD_ANIMATIONS's address", icon="INFO")
                 prop_split(box, self, "begining_animation", "Beginning Animation")
 
     def draw_props(
@@ -1015,7 +1020,7 @@ class SM64_AnimProps(PropertyGroup):
 
     def draw_binary_settings(self, layout: UILayout):
         col = layout.column()
-        box = col.box().column()
+        box = layout.box().column()
         if self.is_binary_dma:
             col.prop(self, "assume_bone_count")
         else:

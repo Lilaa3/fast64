@@ -7,9 +7,11 @@ import mathutils
 
 from ...utility import (
     PluginError,
+    bytesToHex,
     encodeSegmentedAddr,
     decodeSegmentedAddr,
     get64bitAlignedAddr,
+    intToHex,
     writeIfNotFound,
     radians_to_s16,
     applyBasicTweaks,
@@ -560,23 +562,31 @@ def update_behaviour_binary(
     animate_set = False
     exited = False
     while not exited:
-        binary_exporter.rom_file_output.seek(address)
-        command_index = int.from_bytes(binary_exporter.rom_file_output.read(1), "big")
+        command_index = int.from_bytes(binary_exporter.read(1, address), "big")
         name, size = BEHAVIOR_COMMANDS[command_index]
         if name in BEHAVIOR_EXITS:
             exited = True
         if name == "LOAD_ANIMATIONS":
-            binary_exporter.rom_file_output.seek(address + 4)
-            binary_exporter.rom_file_output.write(table_address)
+            binary_exporter.seek(address + 4)
+            print(
+                f"Found LOAD_ANIMATIONS at {intToHex(address)}, "
+                f"replacing {bytesToHex(binary_exporter.read(4))} with {bytesToHex(table_address)}"
+            )
+            binary_exporter.write(table_address)
             load_set = True
         elif name == "ANIMATE":
-            binary_exporter.rom_file_output.seek(address + 1)
-            binary_exporter.rom_file_output.write(beginning_animation.to_bytes(1, "big"))
+            binary_exporter.seek(address + 1)
+            print(
+                f"Found ANIMATE at {hex(address)}, "
+                f"replacing {bytesToHex(binary_exporter.read(1))} with {beginning_animation}"
+            )
+            binary_exporter.write(beginning_animation.to_bytes(1, "big"))
             animate_set = True
         address += 4 * size
     if exited:
         assert load_set, "Could not find LOAD_ANIMATIONS command"
-        assert animate_set, "Could not find ANIMATE command"
+        if not animate_set:
+            print("Could not find ANIMATE command")
 
 
 def export_animation_table_binary(
@@ -822,10 +832,8 @@ def export_animation_binary(
     if animation_props.update_table:
         for i, header in enumerate(animation.headers):
             element_address = table_address + (4 * header.table_index)
-            binary_exporter.rom_file_output.seek(element_address)
-            binary_exporter.rom_file_output.write(
-                encodeSegmentedAddr(animation_address + (i * HEADER_SIZE), segment_data)
-            )
+            binary_exporter.seek(element_address)
+            binary_exporter.write(encodeSegmentedAddr(animation_address + (i * HEADER_SIZE), segment_data))
     if table_props.update_behavior:
         update_behaviour_binary(
             binary_exporter,
