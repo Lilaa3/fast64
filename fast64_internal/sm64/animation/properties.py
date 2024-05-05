@@ -551,9 +551,7 @@ class SM64_AnimTableProps(PropertyGroup):
     generate_enums: BoolProperty(name="Generate Enums", default=True)
     override_table_name: BoolProperty(name="Override Table Name")
     custom_table_name: StringProperty(name="Table Name", default="mario_anims")
-
-    insertable_file_name: StringProperty(name="Insertable File Name", default="toad.insertable")
-
+    # Binary
     write_data_seperately: BoolProperty(name="Write Data Seperately")
     data_address: StringProperty(
         name="Data Address",
@@ -568,13 +566,15 @@ class SM64_AnimTableProps(PropertyGroup):
         default=intToHex(0x600FC48),  # Toad animation table
     )
     end_address: StringProperty(name="Table End", default=intToHex(0x600FC6C))
-    overwrite_begining_animation: BoolProperty(name="Overwrite Begining Animation", default=True)
-    # Toad message behavior's ANIMATE command address
-    animate_command_address: StringProperty(name="Animate Command Address", default=intToHex(0x0021CCF8 + (4 * 4)))
-    begining_animation: StringProperty(name="Begining Animation", default="0x00")
-
     dma_address: StringProperty(name="DMA Table Address", default=intToHex(0x4EC000))
     dma_end_address: StringProperty(name="DMA Table End", default=intToHex(0x4EC000 + 0x8DC20))
+    overwrite_begining_animation: BoolProperty(name="Overwrite Begining Animation", default=True)
+    # Toad message behavior's ANIMATE command address
+    animate_command_address: StringProperty(
+        name="Animate Command Address",
+        default=intToHex(0x0021CCF8 + (4 * 4)),  # Toad message behavior's ANIMATE command address
+    )
+    insertable_file_name: StringProperty(name="Insertable File Name", default="toad.insertable")
 
     @property
     def override_files(self):
