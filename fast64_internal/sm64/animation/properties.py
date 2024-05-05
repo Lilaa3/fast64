@@ -255,7 +255,6 @@ class SM64_ActionProps(PropertyGroup):
     reference_tables: BoolProperty(name="Reference Tables")
     indices_table: StringProperty(name="Indices Table", default="anim_00_indices")
     values_table: StringProperty(name="Value Table", default="anim_00_values")
-
     # Binary
     indices_address: StringProperty(name="Indices Table")  # TODO: Toad example
     values_address: StringProperty(name="Value Table")
@@ -530,7 +529,6 @@ class SM64_TableElementProps(PropertyGroup):
             icon="TRIA_DOWN" if self.expand_tab else "TRIA_RIGHT",
             text=f"{get_anim_name(actor_name, self.action_prop, header_props)} Properties",
         )
-        c_not_dma = export_type == "C" and not is_dma
         if self.expand_tab:
             action_props.draw_props(
                 layout=prop_box,
@@ -538,7 +536,7 @@ class SM64_TableElementProps(PropertyGroup):
                 export_type=export_type,
                 specific_variant=variant,
                 is_in_table=True,
-                draw_file_name=c_not_dma and export_seperately,
+                draw_file_name=export_type == "C" and not is_dma and export_seperately,
                 actor_name=actor_name,
                 generate_enums=generate_enums,
                 is_dma=is_dma,
@@ -1065,6 +1063,7 @@ class SM64_AnimProps(PropertyGroup):
     ):
         col = layout.column()
         is_binary = export_type in {"Binary", "Insertable Binary"}
+        is_dma = (is_binary and self.is_binary_dma) or (not is_binary and self.is_c_dma)
         if is_binary:
             col.prop(self, "is_binary_dma")
             if export_type == "Binary":
@@ -1074,9 +1073,6 @@ class SM64_AnimProps(PropertyGroup):
         elif export_type == "C":
             self.draw_c_settings(col)
         col.prop(self, "quick_read")
-
-        is_dma = (is_binary and self.is_binary_dma) or self.is_c_dma
-
         box = col.box()
         box.prop(self, "action_tab", icon="TRIA_DOWN" if self.action_tab else "TRIA_RIGHT")
         if self.action_tab:

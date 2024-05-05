@@ -199,6 +199,7 @@ class SM64_ExportAnimTable(OperatorBase):
 
     def execute_operator(self, context: Context):
         export_animation_table(context)
+        self.report({"INFO"}, "Exported animation table successfully!")
 
 
 class SM64_ExportAnim(OperatorBase):
@@ -210,6 +211,7 @@ class SM64_ExportAnim(OperatorBase):
 
     def execute_operator(self, context: Context):
         export_animation(context)
+        self.report({"INFO"}, "Exported animation successfully!")
 
 
 # Importing

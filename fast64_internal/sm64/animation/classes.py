@@ -420,15 +420,13 @@ class SM64_Anim:
             header_data = header.to_binary(
                 indice_offset + values_offset if self.data else None,
                 indice_offset if self.data else None,
-                segment_data if self.data else None,
+                segment_data,
             )
             data.extend(header_data)
         if self.data:
             data.extend(anim_data)
             return data, ptrs
-
-        if self.data:
-            return data, []
+        return data, []
 
     def headers_to_c(self, is_dma_structure: bool) -> str:
         text_data = StringIO()
