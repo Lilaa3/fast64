@@ -2105,7 +2105,7 @@ ACTOR_PRESET_INFO = {
         "SML",
         geolayouts={"Chilly Chief (Small)": 0x06003754, "Chilly Chief (Big)": 0x06003874},
         animation_table=0x06003994,
-        animated_behaviours={"hilly Chief (Small)": 0x130036C8, "hilly Chief (Big)": 0x13003700},
+        animated_behaviours={"Chilly Chief (Small)": 0x130036C8, "Chilly Chief (Big)": 0x13003700},
     ),
     "Chuckya": ActorPresetInfo(
         "actors/chuckya",
