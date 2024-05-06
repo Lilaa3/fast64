@@ -53,6 +53,7 @@ class SM64_AnimPair:
     values: list[int] = dataclasses.field(default_factory=list)
 
     # Importing
+    address: int = 0
     end_address: int = 0
     # For compressing
     offset: int = 0
@@ -74,8 +75,9 @@ class SM64_AnimPair:
 
     def read_binary(self, indices_reader: RomReading, values_reader: RomReading):
         max_frame = indices_reader.read_value(2, signed=False)
-        offset = indices_reader.read_value(2, signed=False) * 2
-        values_reader = values_reader.branch(values_reader.start_address + offset)
+        self.offset = indices_reader.read_value(2, signed=False) * 2
+        values_reader = values_reader.branch(values_reader.start_address + self.offset)
+        self.address = values_reader.address
         for _ in range(max_frame):
             self.values.append(values_reader.read_value(2, signed=True))
         self.end_address = values_reader.address

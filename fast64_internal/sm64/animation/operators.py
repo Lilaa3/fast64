@@ -245,6 +245,7 @@ class SM64_SearchMarioAnimEnum(OperatorBase):
     bl_options = {"UNDO"}
 
     mario_animations: EnumProperty(items=marioAnimationNames)
+
     def execute_operator(self, context: Context):
         scene = context.scene
         sm64_props: SM64_Properties = scene.fast64.sm64

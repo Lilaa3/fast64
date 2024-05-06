@@ -193,9 +193,10 @@ def from_anim_table_class(table_props: "SM64_AnimTableProps", table: SM64_AnimTa
             if element.header and element.header.data:
                 start_addresses.append(element.header.data.start_address)
                 end_addresses.append(element.header.data.end_address)
-        table_props.write_data_seperately = True
-        table_props.data_address = intToHex(min(start_addresses))
-        table_props.data_end_address = intToHex(max(end_addresses))
+        if start_addresses and end_addresses:
+            table_props.write_data_seperately = True
+            table_props.data_address = intToHex(min(start_addresses))
+            table_props.data_end_address = intToHex(max(end_addresses))
 
 
 def value_distance(e1: Euler, e2: Euler) -> float:
