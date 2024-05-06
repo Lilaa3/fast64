@@ -1999,7 +1999,11 @@ ACTOR_PRESET_INFO = {
         "HH",
         geolayouts={"Bobomb": 0x0F0007B8, "Bobomb Buddy": 0x0F0008F4},
         animation_table=0x0802396C,
-        animated_behaviours={"Bobomb": 0x13003174, "Bobomb Buddy": 0x130031DC},
+        animated_behaviours={
+            "Bobomb": 0x13003174,
+            "Bobomb Buddy": 0x130031DC,
+            "Bobomb Buddy (Opens Cannon)": 13003228,
+        },
     ),
     "Bomb": ActorPresetInfo("actors/bomb", "BFB", geolayouts=0x0D000BBC),
     "Boo": ActorPresetInfo("actors/boo", "HH", geolayouts=0x0C000224),
@@ -2026,12 +2030,22 @@ ACTOR_PRESET_INFO = {
     ),
     "Bowser Flame": ActorPresetInfo("actors/bowser_flame", "BFB", geolayouts=0x0D000000),
     "Bowser Key": ActorPresetInfo(
+        "actors/bowser_key",
+        "BFB",
+        animation_table=0x030172D0,
+        table_size=2,
+        geolayouts={"Bowser Key": 0x16000A84, "Bowser Key (Cutscene)": 0x16000AB0},
+        animated_behaviours={
+            "Bowser Key (Unlock Door)": 0x13001BB4,
+            "Bowser Key (Course Exit)": 0x13001BD4,
+        },
+    ),
+    "Breakable Box": ActorPresetInfo(
         "actors/breakable_box",
         "HH",
         collision=0x08012D70,
         geolayouts={"Breakable Box": 0x0F0005D0, "Breakable Box (Small)": 0x0F000610},
     ),
-    "Breakable Box": ActorPresetInfo("actors/breakable_box", "HH", geolayouts=0x0F0005B8),
     "Bub": ActorPresetInfo(
         "actors/bub",
         "THI",
@@ -2045,7 +2059,11 @@ ACTOR_PRESET_INFO = {
         "actors/bully",
         "LLL",
         animation_table=0x0500470C,
-        animated_behaviours={"Big Bully": 0x13003660, "Big Bully With Minions": 0x13003694, "Small Bully": 0x1300362C},
+        animated_behaviours={
+            "Bully (Big)": 0x13003660,
+            "Bully (Big With Minions)": 0x13003694,
+            "Bully (Small)": 0x1300362C,
+        },
     ),
     "Burn Smoke": ActorPresetInfo("actors/burn_smoke", "HH", geolayouts=0x17000084),
     "Butterfly": ActorPresetInfo(
@@ -2068,6 +2086,7 @@ ACTOR_PRESET_INFO = {
     "Chain Chomp": ActorPresetInfo(
         "actors/chain_chomp",
         "BOB",
+        geolayouts=0x0D0005EC,
         animation_table=0x06025178,
         animated_behaviours=0x1300478C,
     ),
@@ -2086,7 +2105,7 @@ ACTOR_PRESET_INFO = {
         "SML",
         geolayouts={"Chilly Chief (Small)": 0x06003754, "Chilly Chief (Big)": 0x06003874},
         animation_table=0x06003994,
-        animated_behaviours={"Small Chill Buly": 0x130036C8, "Big Chill Bully": 0x13003700},
+        animated_behaviours={"hilly Chief (Small)": 0x130036C8, "hilly Chief (Big)": 0x13003700},
     ),
     "Chuckya": ActorPresetInfo(
         "actors/chuckya",
@@ -2175,7 +2194,7 @@ ACTOR_PRESET_INFO = {
         "HH",
         geolayouts={"Red Flame (With Shadow)": 0x16000B10, "Red Flame": 0x16000B2C, "Blue Flame": 0x16000B8C},
     ),
-    "Flyguy": ActorPresetInfo(
+    "Fly Guy": ActorPresetInfo(
         "actors/flyguy",
         "SSL",
         geolayouts=0x0F000518,
@@ -2253,7 +2272,7 @@ ACTOR_PRESET_INFO = {
         "IC",
         geolayouts=0x0D000000,
         animation_table=0x060058F8,
-        animated_behaviours={"Beginning Lakitu": 0x13005610, "Camera Lakitu": 0x13004954},
+        animated_behaviours={"Lakitu (Beginning)": 0x13005610, "Lakitu (Cameraman)": 0x13004954},
     ),
     "Lakitu Enemy": ActorPresetInfo(
         "actors/lakitu_enemy",
@@ -2283,9 +2302,18 @@ ACTOR_PRESET_INFO = {
         animation_table=0x4EC000,
         dma_animation=True,
     ),
-    "Metal Box": ActorPresetInfo("actors/metal_box", "HH", collision=0x08024C28, geolayouts=0x0F000A30),
+    "Metal Box": ActorPresetInfo(
+        "actors/metal_box",
+        "HH",
+        collision=0x08024C28,
+        geolayouts=0x0F000A30,
+    ),
     "Mips": ActorPresetInfo(
-        "actors/mips", "IC", geolayouts=0x0D000448, animation_table=0x06015724, animated_behaviours=0x130044FC
+        "actors/mips",
+        "IC",
+        geolayouts=0x0D000448,
+        animation_table=0x06015724,
+        animated_behaviours=0x130044FC,
     ),
     "Mist": ActorPresetInfo(
         "actors/mist",
@@ -2293,7 +2321,11 @@ ACTOR_PRESET_INFO = {
         geolayouts={"Mist": 0x16000000, "White Puff": 0x16000020},
     ),
     "Moneybag": ActorPresetInfo(
-        "actors/moneybag", "CCM", geolayouts=0x0D0000F0, animation_table=0x06005E5C, animated_behaviours=0x130039A0
+        "actors/moneybag",
+        "CCM",
+        geolayouts=0x0D0000F0,
+        animation_table=0x06005E5C,
+        animated_behaviours=0x130039A0,
     ),
     "Monty Mole": ActorPresetInfo(
         "actors/monty_mole",
@@ -2312,7 +2344,7 @@ ACTOR_PRESET_INFO = {
         "CG",
         geolayouts=0x0C000410,
         animation_table=0x0501C50C,
-        animated_behaviours={"Beginning Peach": 0x13005638, "End Peach": 0x13000EAC},
+        animated_behaviours={"Peach (Beginning)": 0x13005638, "Peach (End)": 0x13000EAC},
     ),
     "Pebble": ActorPresetInfo("actors/pebble", "HH", displaylists=0x0301CB00),
     "Penguin": ActorPresetInfo(
@@ -2323,9 +2355,10 @@ ACTOR_PRESET_INFO = {
         animation_table=0x05008B74,
         table_size=5,
         animated_behaviours={
-            "Penguin Baby": 0x130020D8,
+            "Penguin (Tuxies Mother)": 0x13002088,
+            "Penguin (Small)": 0x130020E8,
+            "Penguin (SML)": 0x13002E58,
             "Racing Penguin": 0x13005380,
-            "Small Penguin": 0x130020E8,
         },
     ),
     "Piranha Plant": ActorPresetInfo(
@@ -2437,7 +2470,7 @@ ACTOR_PRESET_INFO = {
         "JRB",
         geolayouts=0x0C000068,
         animation_table=0x0500AE54,
-        animated_behaviours={"Sushi Shark": 0x13002338},
+        animated_behaviours=0x13002338,
         table_size=1,
     ),
     "Swoop": ActorPresetInfo(
@@ -2445,7 +2478,7 @@ ACTOR_PRESET_INFO = {
         "HH",
         geolayouts=0x0D0000DC,
         animation_table=0x060070D0,
-        animated_behaviours={"Swoop": 0x13004698},
+        animated_behaviours=0x13004698,
         table_size=2,
     ),
     "Test Plataform": ActorPresetInfo("actors/test_plataform", "HH", collision=0x080262F8),
@@ -2494,7 +2527,7 @@ ACTOR_PRESET_INFO = {
         "HMC",
         geolayouts=0x0C000110,
         animation_table=0x05015784,
-        animated_behaviours={"Macro Ukiki": 0x13001CB0, "Ukiki": 0x13000F08},
+        animated_behaviours={"Ukiki": 0x13001CB0},
     ),
     "Unagi": ActorPresetInfo(
         "actors/unagi",
@@ -2534,6 +2567,10 @@ ACTOR_PRESET_INFO = {
         "WDW",
         geolayouts=0x0D000414,
         animation_table=0x06013F7C,
+        animated_behaviours={
+            "Water Ring (Jet Stream)": 0x13003750,
+            "Water Ring (Manta Ray)": 13003798,
+        },
     ),
     "Water Splash": ActorPresetInfo(
         "actors/water_splash",
@@ -2592,8 +2629,16 @@ ACTOR_PRESET_INFO = {
         "actors/yoshi",
         "CG",
         geolayouts=0x0C000468,
-        animation_table=050241e8,
+        animation_table=0x050241E8,
         animated_behaviours=0x13004538,
     ),
     "Yoshi Egg": ActorPresetInfo("actors/yoshi_egg", "WDW", geolayouts=0x0C0001E4),
+    "Castle Flag": ActorPresetInfo(
+        "levels/castle_grounds/areas/1/11",
+        "HH",
+        geolayouts=0x0E000660,
+        animation_table=0x0700C95C,
+        table_size=1,
+        animated_behaviours=0x13003C58,
+    ),
 }

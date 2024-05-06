@@ -49,11 +49,30 @@ enumAnimBinaryImportTypes = [
 ]
 
 
-enumAnimatedBehaviours = []
+enumAnimatedBehaviours = [("Custom", "Custom Behavior", "Custom")]
+enumAnimationTables = [("Custom", "Custom Table", "Custom")]
 for actor_name, preset_info in ACTOR_PRESET_INFO.items():
     behaviours = ActorPresetInfo.get_member_dict(actor_name, preset_info.animated_behaviours)
     enumAnimatedBehaviours.extend(
-        [(intToHex(address), name, f"{name} ({address})") for name, address in behaviours.items()],
+        [
+            (
+                intToHex(address),
+                name,
+                f"{name} ({intToHex(address)})",
+            )
+            for name, address in behaviours.items()
+        ],
+    )
+    tables = ActorPresetInfo.get_member_dict(actor_name, preset_info.animation_table)
+    enumAnimationTables.extend(
+        [
+            (
+                name,
+                name,
+                f"{name} ({intToHex(address)}), {preset_info.level}",
+            )
+            for name, address in tables.items()
+        ],
     )
 
 marioAnimationNames = [

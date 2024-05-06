@@ -46,6 +46,7 @@ from .constants import (
     marioAnimationNames,
     enumAnimExportTypes,
     enumAnimatedBehaviours,
+    enumAnimationTables,
 )
 from .utility import (
     get_anim_enum,
@@ -741,9 +742,9 @@ class SM64_AnimTableProps(PropertyGroup):
 
 
 class SM64_AnimImportProps(PropertyGroup):
-    import_type: EnumProperty(items=enumAnimImportTypes, name="Type", default="C")
-
     clear_table: BoolProperty(name="Clear Table On Import", default=True)
+    import_type: EnumProperty(items=enumAnimImportTypes, name="Type", default="C")
+    preset: bpy.props.EnumProperty(items=enumAnimationTables, name="Preset", default="Mario")
     binary_import_type: EnumProperty(
         items=enumAnimBinaryImportTypes,
         name="Type",
@@ -751,9 +752,8 @@ class SM64_AnimImportProps(PropertyGroup):
     )
     assume_bone_count: BoolProperty(
         name="Assume Bone Count",
-        default=True,
-        description="When enabled, the selected armature's bone count will be used instead of the header's, "
-        "as old fast64 binary exports did no export this value",
+        description="When enabled, the selected armature's bone count will be used instead of "
+        "the header's, as old fast64 binary exports did no export this value",
     )
 
     rom: StringProperty(name="Import ROM", subtype="FILE_PATH")
@@ -815,7 +815,6 @@ class SM64_AnimImportProps(PropertyGroup):
 
     def draw_binary(self, layout: UILayout, import_rom: os.PathLike | None = None):
         col = layout.column()
-
         col.prop(self, "rom")
         col.label(text="Uses scene import ROM by default", icon="INFO")
         try:
@@ -825,9 +824,10 @@ class SM64_AnimImportProps(PropertyGroup):
             multilineLabel(col.box(), str(exc), "ERROR")
             col = col.column()
             col.enabled = False
+        if self.preset != "Custom":
+            return
 
         prop_split(col, self, "binary_import_type", "Binary Type")
-
         if self.binary_import_type == "DMA":
             prop_split(col, self, "dma_table_address", "DMA Table Address")
 
@@ -888,6 +888,8 @@ class SM64_AnimImportProps(PropertyGroup):
             col.label(text="Folders and individual files are supported as the path", icon="INFO")
             path_ui_warnings(col, abspath(self.path))
 
+        if self.import_type in {"C", "Binary"}:
+            prop_split(col, self, "preset", "Preset")
         if self.import_type == "C":
             self.draw_c(col)
         else:
@@ -900,8 +902,8 @@ class SM64_AnimImportProps(PropertyGroup):
         col.separator()
 
         col.operator(SM64_ImportAnim.bl_idname, icon="IMPORT")
-        if self.import_type in {"C", "Binary"}:
-            layout.operator(SM64_ImportAllMarioAnims.bl_idname, icon="IMPORT")
+        # if self.import_type in {"C", "Binary"}:
+        # layout.operator(SM64_ImportAllMarioAnims.bl_idname, icon="IMPORT")
 
 
 class SM64_AnimProps(PropertyGroup):
@@ -943,7 +945,8 @@ class SM64_AnimProps(PropertyGroup):
     is_binary_dma: BoolProperty(name="Is DMA", default=True)
     assume_bone_count: BoolProperty(
         name="Assume Bone Count",
-        description="When importing a DMA table for insertion, assume the bone count based on the armature instead of the headers",
+        description="When importing a DMA table for insertion, "
+        "assume the bone count based on the armature instead of the headers",
     )
     insertable_directory_path: StringProperty(name="Directory Path", subtype="FILE_PATH")  # Insertable
 
