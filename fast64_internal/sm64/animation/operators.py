@@ -20,7 +20,7 @@ from .utility import (
     update_header_variant_numbers,
     get_animation_props,
 )
-from .constants import marioAnimationNames
+from .constants import marioAnimationNames, enumAnimatedBehaviours
 
 from typing import TYPE_CHECKING
 
@@ -233,12 +233,21 @@ class SM64_ImportAnim(OperatorBase):
         import_animations(context)
 
 
-class SM64_SearchMarioAnimEnum(SearchEnumOperatorBase):
+class SM64_SearchMarioAnim(SearchEnumOperatorBase):
     bl_idname = "scene.search_mario_anim_enum_operator"
     bl_property = "mario_animations"
     mario_animations: EnumProperty(items=marioAnimationNames)
     def update_enum(self, context: Context):
         get_animation_props(context).importing.mario_animation = self.mario_animations
+
+
+class SM64_SearchAnimatedBehavior(SearchEnumOperatorBase):
+    bl_idname = "scene.search_animated_behavior_enum_operator"
+    bl_property = "behaviour"
+    behaviour: EnumProperty(items=enumAnimatedBehaviours)
+
+    def update_enum(self, context: Context):
+        get_animation_props(context).table.behaviour = self.behaviour
 
 
 operators = (
@@ -249,7 +258,8 @@ operators = (
     SM64_AnimVariantOperations,
     SM64_ImportAnim,
     SM64_ImportAllMarioAnims,
-    SM64_SearchMarioAnimEnum,
+    SM64_SearchMarioAnim,
+    SM64_SearchAnimatedBehavior,
 )
 
 

@@ -30,7 +30,8 @@ from ..sm64_utility import import_rom_checks, upgrade_hex_prop
 from ..sm64_constants import MAX_U16, MIN_S16, MAX_S16, level_enums, enumLevelNames
 
 from .operators import (
-    SM64_SearchMarioAnimEnum,
+    SM64_SearchMarioAnim,
+    SM64_SearchAnimatedBehavior,
     SM64_ImportAllMarioAnims,
     SM64_ImportAnim,
     SM64_ExportAnim,
@@ -644,7 +645,7 @@ class SM64_AnimTableProps(PropertyGroup):
                     "Does not raise an error if there is no ANIMATE command",
                     "INFO",
                 )
-                prop_split(box, self, "behaviour", "Behaviour Name")
+                SM64_SearchAnimatedBehavior.draw_props(box, self, "behaviour", "Behaviour")
                 if self.behaviour == "Custom":
                     prop_split(box, self, "behavior_address_prop", "Behavior Address")
                 prop_split(box, self, "begining_animation", "Beginning Animation")
@@ -811,7 +812,7 @@ class SM64_AnimImportProps(PropertyGroup):
 
             col.prop(self, "read_entire_table")
             if not self.read_entire_table:
-                SM64_SearchMarioAnimEnum.draw_props(col, self, "mario_animation", "Mario Animations")
+                SM64_SearchMarioAnim.draw_props(col, self, "mario_animation", "Mario Animations")
                 if self.mario_animation == "Custom":
                     prop_split(col, self, "table_index", "Entry")
         else:
