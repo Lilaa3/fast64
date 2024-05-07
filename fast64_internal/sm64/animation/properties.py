@@ -912,6 +912,8 @@ class SM64_AnimProps(PropertyGroup):
     played_header: IntProperty(min=0)
     played_action: PointerProperty(name="Action", type=Action)
     object_menu_tab: BoolProperty(name="SM64 Animation Inspector")
+    use_selected_object: BoolProperty(name="Use Selected Object", default=True)
+
     table_tab: BoolProperty(name="Table")
     table: PointerProperty(type=SM64_AnimTableProps)
     importing_tab: BoolProperty(name="Importing")
