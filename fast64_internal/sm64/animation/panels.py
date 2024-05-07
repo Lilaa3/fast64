@@ -1,6 +1,7 @@
 from bpy.utils import register_class, unregister_class
 from bpy.types import Context, Panel
 
+from ...utility import draw_and_check_tab
 from ...panels import SM64_Panel
 
 from typing import TYPE_CHECKING
@@ -65,12 +66,7 @@ class SM64_ObjAnimPanel(Panel):
         box = self.layout.box().column()
         sm64_props: SM64_Properties = context.scene.fast64.sm64
         animation_props: SM64_AnimProps = context.object.fast64.sm64.animation
-        box.prop(
-            animation_props,
-            "object_menu_tab",
-            icon="TRIA_DOWN" if animation_props.object_menu_tab else "TRIA_RIGHT",
-        )
-        if animation_props.object_menu_tab:
+        if draw_and_check_tab(box, animation_props, "object_menu_tab"):
             animation_props.draw_props(
                 box,
                 sm64_props.export_type,

@@ -18,6 +18,7 @@ from ...utility import (
     customExportWarning,
     decompFolderMessage,
     directory_ui_warnings,
+    draw_and_check_tab,
     makeWriteInfoBox,
     multilineLabel,
     path_ui_warnings,
@@ -302,13 +303,7 @@ class SM64_ActionProps(PropertyGroup):
         )
         down_op.action_name = action.name
 
-        row.prop(
-            header,
-            "expand_tab_in_action",
-            text=f"Variant {index + 1}",
-            icon="TRIA_DOWN" if header.expand_tab_in_action else "TRIA_RIGHT",
-        )
-        if header.expand_tab_in_action:
+        if draw_and_check_tab(row, header, "expand_tab_in_action", f"Variant {index + 1}"):
             header.draw_props(
                 col,
                 action,
@@ -330,13 +325,7 @@ class SM64_ActionProps(PropertyGroup):
         generate_enums: bool = False,
     ):
         col = layout.column()
-        col.prop(
-            self.header,
-            "expand_tab_in_action",
-            text="Main Variant",
-            icon="TRIA_DOWN" if self.header.expand_tab_in_action else "TRIA_RIGHT",
-        )
-        if self.header.expand_tab_in_action:
+        if draw_and_check_tab(col, self.header, "expand_tab_in_action", "Main Variant"):
             self.header.draw_props(
                 col,
                 action,
@@ -346,14 +335,6 @@ class SM64_ActionProps(PropertyGroup):
                 actor_name,
                 generate_enums,
             )
-
-        col.prop(
-            self,
-            "variants_tab",
-            icon="TRIA_DOWN" if self.variants_tab else "TRIA_RIGHT",
-        )
-        if not self.variants_tab:
-            return
 
         op_row = col.row()
         add_op = draw_list_op(op_row, SM64_AnimVariantOperations, "ADD")
@@ -527,18 +508,15 @@ class SM64_TableElementProps(PropertyGroup):
                 col.box().label(text="Header variant does not exist.", icon="ERROR")
                 return
             variant = self.variant
-
         header_props = get_element_header(self, can_reference)
-        prop_box = prop_layout.box().column()
-        prop_box.prop(
+        if draw_and_check_tab(
+            prop_layout,
             self,
             "expand_tab",
-            icon="TRIA_DOWN" if self.expand_tab else "TRIA_RIGHT",
-            text=f"{get_anim_name(actor_name, self.action_prop, header_props)} Properties",
-        )
-        if self.expand_tab:
+            f"{get_anim_name(actor_name, self.action_prop, header_props)} Properties",
+        ):
             action_props.draw_props(
-                layout=prop_box,
+                layout=prop_layout,
                 action=self.action_prop,
                 export_type=export_type,
                 specific_variant=variant,
@@ -1094,13 +1072,12 @@ class SM64_AnimProps(PropertyGroup):
         elif export_type == "C":
             self.draw_c_settings(col)
         col.prop(self, "quick_read")
+
         box = col.box()
-        box.prop(self, "action_tab", icon="TRIA_DOWN" if self.action_tab else "TRIA_RIGHT")
-        if self.action_tab:
+        if draw_and_check_tab(box, self, "action_tab", "Action"):
             box.prop(self, "selected_action")
             if self.selected_action:
-                action_props: SM64_ActionProps = self.selected_action.fast64.sm64
-                action_props.draw_props(
+                self.selected_action.fast64.sm64.draw_props(
                     layout=box,
                     action=self.selected_action,
                     export_type=export_type,
@@ -1110,14 +1087,18 @@ class SM64_AnimProps(PropertyGroup):
                 )
 
         box = col.box()
-        box.prop(self, "table_tab", icon="TRIA_DOWN" if self.table_tab else "TRIA_RIGHT")
-        if self.table_tab:
-            self.table.draw_props(box, is_dma, not self.update_table and not is_dma, export_type, self.actor_name)
+        if draw_and_check_tab(box, self, "table_tab"):
+            self.table.draw_props(
+                box,
+                is_dma,
+                not self.update_table and not is_dma,
+                export_type,
+                self.actor_name,
+            )
 
         if show_importing:
             box = col.box()
-            box.prop(self, "importing_tab", icon="TRIA_DOWN" if self.importing_tab else "TRIA_RIGHT")
-            if self.importing_tab:
+            if draw_and_check_tab(box, self, "importing_tab"):
                 self.importing.draw_props(box, import_rom)
 
 
