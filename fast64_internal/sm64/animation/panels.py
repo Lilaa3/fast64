@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..settings.properties import SM64_Properties
+    from .properties import SM64_AnimProps
 
 
 class SM64_AnimPanel(SM64_Panel):
@@ -33,7 +34,9 @@ class SM64_ObjAnimPanel(Panel):
     bl_options = {"HIDE_HEADER"}
 
     @classmethod
-    def poll(cls, context):
+    def poll(_, context: Context):
+        if not context.object or context.object.type != "ARMATURE":
+            return False
         scene = context.scene
         if scene.gameEditorMode != "SM64":
             return False
@@ -42,14 +45,20 @@ class SM64_ObjAnimPanel(Panel):
 
     def draw(self, context: Context):
         box = self.layout.box().column()
-        box.box().label(text=self.bl_label)
         sm64_props: SM64_Properties = context.scene.fast64.sm64
-        context.object.fast64.sm64.animation.draw_props(
-            self.layout.column(),
-            sm64_props.export_type,
-            sm64_props.show_importing_menus,
-            sm64_props.import_rom,
+        animation_props: SM64_AnimProps = context.object.fast64.sm64.animation
+        box.prop(
+            animation_props,
+            "object_menu_tab",
+            icon="TRIA_DOWN" if animation_props.object_menu_tab else "TRIA_RIGHT",
         )
+        if animation_props.object_menu_tab:
+            animation_props.draw_props(
+                box,
+                sm64_props.export_type,
+                sm64_props.show_importing_menus,
+                sm64_props.import_rom,
+            )
 
 
 panels = (

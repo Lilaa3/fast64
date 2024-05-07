@@ -1950,10 +1950,9 @@ class ActorPresetInfo:
     def get_member_dict(name: str, member: Any | dict[str, Any]) -> dict[str, Any]:
         if isinstance(member, dict):
             return member
-        if member:
+        elif member:
             return {name: member}
-        else:
-            return {}
+        return {}
 
 
 ACTOR_PRESET_INFO = {

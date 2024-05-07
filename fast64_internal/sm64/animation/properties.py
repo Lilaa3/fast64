@@ -911,7 +911,7 @@ class SM64_AnimProps(PropertyGroup):
     cur_version = 1  # version after property migration
     played_header: IntProperty(min=0)
     played_action: PointerProperty(name="Action", type=Action)
-
+    object_menu_tab: BoolProperty(name="SM64 Animation Inspector")
     table_tab: BoolProperty(name="Table")
     table: PointerProperty(type=SM64_AnimTableProps)
     importing_tab: BoolProperty(name="Importing")
@@ -954,18 +954,23 @@ class SM64_AnimProps(PropertyGroup):
         importing: SM64_AnimImportProps = self.importing
 
         upgrade_hex_prop(importing, scene, "animation_address", "animStartImport")
-        importing.is_segmented_address_prop = scene.get("animIsSegPtr", importing.is_segmented_address_prop)
+        importing.is_segmented_address_prop = scene.get(
+            "animIsSegPtr",
+            importing.is_segmented_address_prop,
+        )
         importing.level = scene.get("levelAnimImport", importing.level)
         importing.table_index = scene.get("animListIndexImport", importing.table_index)
         if importing.get("isDMAImport", False):
             importing.binary_import_type = "DMA"
         elif importing.get("animIsAnimList", True):
             importing.binary_import_type = "Table"
-
         # Export
         for action in bpy.data.actions:
             action_props: SM64_ActionProps = action.fast64.sm64
-            action_props.header.no_loop = not scene.get("loopAnimation", not action_props.header.no_loop)
+            action_props.header.no_loop = not scene.get(
+                "loopAnimation",
+                not action_props.header.no_loop,
+            )
             upgrade_hex_prop(action_props, scene, "start_address", "animExportStart")
             upgrade_hex_prop(action_props, scene, "end_address", "animExportEnd")
         custom_export = scene.get("animCustomExport", False)
