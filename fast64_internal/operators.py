@@ -126,6 +126,7 @@ class SearchEnumOperatorBase(OperatorBase):
         assert self.bl_property
         self.report({"INFO"}, f"Selected: {getattr(self, self.bl_property)}")
         self.update_enum(context)
+        context.region.tag_redraw()
 
     def invoke(self, context: Context, _):
         context.window_manager.invoke_search_popup(self)

@@ -811,7 +811,7 @@ class SM64_AnimImportProps(PropertyGroup):
 
             col.prop(self, "read_entire_table")
             if not self.read_entire_table:
-                SM64_SearchMarioAnimEnum.draw_props(col, self, "mario_animation", "Entry")
+                SM64_SearchMarioAnimEnum.draw_props(col, self, "mario_animation", "Mario Animations")
                 if self.mario_animation == "Custom":
                     prop_split(col, self, "table_index", "Entry")
         else:
