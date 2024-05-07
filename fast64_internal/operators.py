@@ -107,15 +107,17 @@ class OperatorBase(Operator):
 
 class SearchEnumOperatorBase(OperatorBase):
     bl_description = "Search Enum"
-    bl_label = None
+    bl_label = "Search"
     bl_property = None
     bl_options = {"UNDO"}
     result: EnumProperty = None
 
     @classmethod
     def draw_props(cls, layout: UILayout, data, prop: str, name: str):
-        prop_split(layout, data, prop, name)
-        layout.operator(cls.bl_idname, icon="VIEWZOOM")
+        row = layout.row()
+        row.label(text=name)
+        row.prop(data, prop, text="")
+        row.operator(cls.bl_idname, icon="VIEWZOOM", text="")
 
     def update_enum(self, context: Context):
         raise NotImplementedError()

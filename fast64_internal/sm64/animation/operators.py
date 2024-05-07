@@ -235,7 +235,6 @@ class SM64_ImportAnim(OperatorBase):
 
 class SM64_SearchMarioAnimEnum(SearchEnumOperatorBase):
     bl_idname = "scene.search_mario_anim_enum_operator"
-    bl_label = "Search Mario Animations"
     bl_property = "mario_animations"
     mario_animations: EnumProperty(items=marioAnimationNames)
     def update_enum(self, context: Context):
