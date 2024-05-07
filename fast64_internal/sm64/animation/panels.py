@@ -52,7 +52,7 @@ class SM64_ObjAnimPanel(Panel):
     bl_options = {"HIDE_HEADER"}
 
     @classmethod
-    def poll(_, context: Context):
+    def poll(cls, context: Context):
         if not context.object or context.object.type != "ARMATURE":
             return False
         scene = context.scene
