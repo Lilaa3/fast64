@@ -2,7 +2,7 @@ import math
 import re
 
 import bpy
-from bpy.types import Object, Armature, Action
+from bpy.types import Context, Object, Armature, Action
 
 from ...utility_anim import getFrameInterval
 from ...utility import findStartBones, PluginError, toAlnum
@@ -11,18 +11,26 @@ from ..sm64_geolayout_bone import animatableBoneTypes
 from .constants import FLAG_PROPS
 
 
-def animation_operator_checks(context, requires_animation_data=True):
+def animation_operator_checks(context: Context, requires_animation_data=True):
     if len(context.selected_objects) > 1:
         raise PluginError("Multiple objects selected at once, make sure to select only one armature.")
     if len(context.selected_objects) == 0:
         raise PluginError("No armature selected.")
 
     armature_obj: Object = context.selected_objects[0]
-    if not isinstance(armature_obj.data, Armature):
+    if armature_obj.type != "ARMATURE":
         raise PluginError("Selected object is not an armature.")
-
     if requires_animation_data and armature_obj.animation_data is None:
         raise PluginError("Armature has no animation data.")
+
+
+def get_animation_props(context: Context) -> "SM64_AnimProps":
+    scene = context.scene
+    sm64_props: "SM64_Properties" = scene.fast64.sm64
+    if context.space_data.type != "VIEW_3D" or sm64_props.animation.use_selected_object:
+        if context.object and context.object.type == "ARMATURE":
+            return context.object.fast64.sm64.animation
+    return sm64_props.animation
 
 
 def get_action(action_name: str):

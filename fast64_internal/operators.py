@@ -102,3 +102,22 @@ class OperatorBase(Operator):
             return {"CANCELLED"}
         finally:
             bpy.ops.object.mode_set(mode=get_mode_set_from_context_mode(starting_context_mode))
+
+
+class SearchEnumOperatorBase(OperatorBase):
+    bl_description = "Search Enum"
+    bl_property = None
+    bl_options = {"UNDO"}
+
+    def update_enum(self, context: Context):
+        raise NotImplementedError()
+
+    def execute_operator(self, context: Context):
+        assert self.bl_property
+        selected_enum = getattr(self, self.bl_property)
+        self.report({"INFO"}, "Selected: " + selected_enum)
+        self.update_enum(selected_enum)
+
+    def invoke(self, context: Context, _):
+        context.window_manager.invoke_search_popup(self)
+        return {"RUNNING_MODAL"}

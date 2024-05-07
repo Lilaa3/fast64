@@ -7,7 +7,7 @@ from bpy.props import (
     IntProperty,
 )
 
-from ...operators import OperatorBase
+from ...operators import OperatorBase, SearchEnumOperatorBase
 from ...utility import copyPropertyGroup
 
 from .importing import import_all_mario_animations, import_animations
@@ -18,6 +18,7 @@ from .utility import (
     get_anim_name,
     get_frame_range,
     update_header_variant_numbers,
+    get_animation_props,
 )
 from .constants import marioAnimationNames
 
@@ -113,11 +114,7 @@ class SM64_TableOperations(OperatorBase):
     header_variant: IntProperty()
 
     def execute_operator(self, context: Context):
-        if context.space_data.type != "VIEW_3D" and context.space_data.context == "OBJECT":
-            animation_props: SM64_AnimProps = context.object.fast64.sm64.animation
-        else:
-            animation_props: SM64_AnimProps = context.scene.fast64.sm64.animation
-        table_elements = animation_props.table.elements
+        table_elements = get_animation_props(context).table.elements
 
         if self.index != -1:
             table_element = table_elements[self.index]
@@ -237,30 +234,15 @@ class SM64_ImportAnim(OperatorBase):
         import_animations(context)
 
 
-class SM64_SearchMarioAnimEnum(OperatorBase):
+class SM64_SearchMarioAnimEnum(SearchEnumOperatorBase):
     bl_idname = "scene.search_mario_anim_enum_operator"
     bl_label = "Search Mario Animations"
-    bl_description = "Search Mario Animations"
     bl_property = "mario_animations"
-    bl_options = {"UNDO"}
-
     mario_animations: EnumProperty(items=marioAnimationNames)
 
-    def execute_operator(self, context: Context):
-        scene = context.scene
-        sm64_props: SM64_Properties = scene.fast64.sm64
-        armature_obj: Object = context.selected_objects[0]
-        if context.space_data.type != "VIEW_3D" and context.space_data.context == "OBJECT":
-            import_props: SM64_AnimImportProps = armature_obj.fast64.sm64.animation.importing
-        else:
-            import_props: SM64_AnimImportProps = sm64_props.animation.anim_import.importing
-        context.region.tag_redraw()
-        import_props.mario_animation = self.mario_animations
-        self.report({"INFO"}, "Selected: " + self.mario_animations)
-
-    def invoke(self, context: Context, _):
-        context.window_manager.invoke_search_popup(self)
-        return {"RUNNING_MODAL"}
+    def update_enum(self, context: Context):
+        animation_props = get_animation_props(context)
+        animation_props.importing.mario_animation = self.mario_animations
 
 
 operators = (

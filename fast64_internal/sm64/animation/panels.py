@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class SM64_AnimPanel(SM64_Panel):
-    bl_idname = "SM64_PT_export_anim"
+    bl_idname = "SM64_PT_anim_panel"
     bl_label = "SM64 Animations"
     goal = "Export Object/Actor/Anim"
 
@@ -46,10 +46,10 @@ class SM64_AnimPanel(SM64_Panel):
 
 class SM64_ObjAnimPanel(Panel):
     bl_label = "Object Animation Inspector"
-    bl_idname = "OBJECT_PT_SM64_Obj_Anim_Inspector"
+    bl_idname = "OBJECT_PT_SM64_Anim_Inspector"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
-    bl_context = "object"
+    bl_context = "bone"
     bl_options = {"HIDE_HEADER"}
 
     @classmethod

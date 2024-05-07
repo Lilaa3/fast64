@@ -18,6 +18,7 @@ from .utility import (
     get_anim_file_name,
     get_anim_name,
     get_anim_pose_bones,
+    get_animation_props,
     get_frame_range,
     sm64_to_radian,
     update_header_variant_numbers,
@@ -503,14 +504,10 @@ def import_animations(context: Context):
 
     scene = context.scene
     sm64_props: SM64_Properties = scene.fast64.sm64
-    armature_obj: Object = context.selected_objects[0]
-    if context.space_data.type != "VIEW_3D" and context.space_data.context == "OBJECT":
-        animation_props: SM64_AnimProps = armature_obj.fast64.sm64.animation
-    else:
-        animation_props: SM64_AnimProps = sm64_props.animation
-
+    animation_props: SM64_AnimProps = get_animation_props(context)
     import_props: SM64_AnimImportProps = animation_props.importing
     table_props: SM64_AnimTableProps = animation_props.table
+    armature_obj: Object = context.selected_objects[0]
 
     animation_data: dict[tuple[str, str], SM64_Anim] = {}
     animation_headers: dict[str, SM64_AnimHeader] = {}
@@ -582,11 +579,7 @@ def import_all_mario_animations(context: Context):
     scene = context.scene
     sm64_props: SM64_Properties = scene.fast64.sm64
 
-    armature_obj: Object = context.selected_objects[0]
-    if context.space_data.type != "VIEW_3D" and context.space_data.context == "OBJECT":
-        animation_props: SM64_AnimProps = armature_obj.fast64.sm64.animation
-    else:
-        animation_props: SM64_AnimProps = sm64_props.animation
+    animation_props: SM64_AnimProps = get_animation_props(context)
     import_props: SM64_AnimImportProps = animation_props.importing
 
     animations: dict[str, SM64_Anim] = {}
