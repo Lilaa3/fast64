@@ -32,6 +32,7 @@ from ..sm64_constants import MAX_U16, MIN_S16, MAX_S16, level_enums, enumLevelNa
 from .operators import (
     SM64_SearchMarioAnim,
     SM64_SearchAnimatedBehavior,
+    SM64_SearchTableAnim,
     SM64_ImportAllMarioAnims,
     SM64_ImportAnim,
     SM64_ExportAnim,
@@ -867,7 +868,7 @@ class SM64_AnimImportProps(PropertyGroup):
             path_ui_warnings(col, abspath(self.path))
 
         if self.import_type in {"C", "Binary"}:
-            prop_split(col, self, "preset", "Preset")
+            SM64_SearchTableAnim.draw_props(col, self, "preset", "Table Preset")
         if self.import_type == "C":
             self.draw_c(col)
         else:
