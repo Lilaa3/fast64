@@ -811,10 +811,9 @@ class SM64_AnimImportProps(PropertyGroup):
 
             col.prop(self, "read_entire_table")
             if not self.read_entire_table:
-                prop_split(col, self, "mario_animation", "Animation")
+                SM64_SearchMarioAnimEnum.draw_props(col, self, "mario_animation", "Entry")
                 if self.mario_animation == "Custom":
                     prop_split(col, self, "table_index", "Entry")
-                col.operator(SM64_SearchMarioAnimEnum.bl_idname, icon="VIEWZOOM")
         else:
             prop_split(col, self, "level", "Level")
             col.prop(self, "is_segmented_address_prop")

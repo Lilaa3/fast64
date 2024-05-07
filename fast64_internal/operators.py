@@ -1,4 +1,5 @@
 import bpy, mathutils, math
+from bpy.types import EnumProperty
 from bpy.utils import register_class, unregister_class
 from .utility import *
 from .f3d.f3d_material import *
@@ -106,17 +107,23 @@ class OperatorBase(Operator):
 
 class SearchEnumOperatorBase(OperatorBase):
     bl_description = "Search Enum"
+    bl_label = None
     bl_property = None
     bl_options = {"UNDO"}
+    result: EnumProperty = None
+
+    @classmethod
+    def draw_props(cls, layout: UILayout, data, prop: str, name: str):
+        prop_split(layout, data, prop, name)
+        layout.operator(cls.bl_idname, icon="VIEWZOOM")
 
     def update_enum(self, context: Context):
         raise NotImplementedError()
 
     def execute_operator(self, context: Context):
         assert self.bl_property
-        selected_enum = getattr(self, self.bl_property)
-        self.report({"INFO"}, "Selected: " + selected_enum)
-        self.update_enum(selected_enum)
+        self.report({"INFO"}, f"Selected: {getattr(self, self.bl_property)}")
+        self.update_enum(context)
 
     def invoke(self, context: Context, _):
         context.window_manager.invoke_search_popup(self)

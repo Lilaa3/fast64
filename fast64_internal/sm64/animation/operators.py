@@ -211,7 +211,6 @@ class SM64_ExportAnim(OperatorBase):
         self.report({"INFO"}, "Exported animation successfully!")
 
 
-# Importing
 class SM64_ImportAllMarioAnims(OperatorBase):
     bl_idname = "scene.sm64_import_mario_anims"
     bl_label = "Import All Mario Animations"
@@ -239,23 +238,19 @@ class SM64_SearchMarioAnimEnum(SearchEnumOperatorBase):
     bl_label = "Search Mario Animations"
     bl_property = "mario_animations"
     mario_animations: EnumProperty(items=marioAnimationNames)
-
     def update_enum(self, context: Context):
-        animation_props = get_animation_props(context)
-        animation_props.importing.mario_animation = self.mario_animations
+        get_animation_props(context).importing.mario_animation = self.mario_animations
 
 
 operators = (
-    # Exporting
     SM64_ExportAnimTable,
     SM64_ExportAnim,
     SM64_PreviewAnimOperator,
     SM64_TableOperations,
     SM64_AnimVariantOperations,
-    # Importing
-    SM64_SearchMarioAnimEnum,
     SM64_ImportAnim,
     SM64_ImportAllMarioAnims,
+    SM64_SearchMarioAnimEnum,
 )
 
 
