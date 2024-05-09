@@ -750,7 +750,7 @@ class SM64_AnimImportProps(PropertyGroup):
     dma_table_address: StringProperty(name="DMA Table Address", default="0x4EC000")
     mario_animation: EnumProperty(name="Selected Preset Mario Animation", items=marioAnimationNames)
 
-    insertable_read_from_rom: BoolProperty(
+    read_from_rom_prop: BoolProperty(
         name="Read From Import ROM",
         description="When enabled, the importer will read from the import ROM given a non defined address",
     )
@@ -791,6 +791,10 @@ class SM64_AnimImportProps(PropertyGroup):
             if self.import_type == "Binary" and self.binary_import_type in {"Table", "Animation"}
             else False
         )
+
+    @property
+    def insertable_read_from_rom(self):
+        return not self.read_from_rom_prop if self.import_type == "Insertable Binary" else False
 
     def draw_c(self, layout: UILayout):
         col = layout.column()
@@ -846,8 +850,8 @@ class SM64_AnimImportProps(PropertyGroup):
         col.separator()
 
         from_rom_box = col.box().column()
-        from_rom_box.prop(self, "insertable_read_from_rom")
-        if self.insertable_read_from_rom:
+        from_rom_box.prop(self, "read_from_rom_prop")
+        if self.read_from_rom_prop:
             col.label(text="Uses scene import ROM by default", icon="INFO")
             try:
                 if self.rom or import_rom is None:

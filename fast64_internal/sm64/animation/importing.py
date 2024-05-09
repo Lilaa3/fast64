@@ -527,15 +527,14 @@ def import_animations(context: Context):
         address = preset.animation_table
         table_size = preset.table_size
         binary_import_type = "DMA" if preset.dma_animation else "Table"
+
     rom_data, segment_data = None, None
-    if import_props.import_type == "Binary" or (
-        import_props.import_type == "Insertable Binary" and import_props.insertable_read_from_rom
-    ):
+    if import_props.import_type == "Binary" or import_props.insertable_read_from_rom:
         rom_path = abspath(import_props.rom if import_props.rom else sm64_props.import_rom)
         import_rom_checks(rom_path, sm64_props.extended_rom_check)
         with open(rom_path, "rb") as rom_file:
             rom_data = rom_file.read()
-            if is_segmented_address:  # ?
+            if import_props.insertable_read_from_rom or import_props.binary_import_type != "DMA":
                 segment_data = parseLevelAtPointer(rom_file, level_pointers[level]).segmentData
     anim_bones = get_anim_pose_bones(armature_obj)
     assumed_bone_count = len(anim_bones) if import_props.assume_bone_count else None
