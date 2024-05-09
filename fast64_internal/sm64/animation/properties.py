@@ -82,7 +82,7 @@ def draw_list_op(
     elif op_name == "CLEAR":
         col.enabled = len(collection) > 0
     elif op_name == "REMOVE":
-        col.enabled = index < len(collection)
+        col.enabled = index <= len(collection)
     op = col.operator(op_cls.bl_idname, text=text, icon=icon)
     op.index, op.op_name = index, op_name
     return op
