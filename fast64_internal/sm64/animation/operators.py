@@ -242,7 +242,7 @@ class SM64_SearchMarioAnim(SearchEnumOperatorBase):
 
 
 class SM64_SearchTableAnim(SearchEnumOperatorBase):
-    bl_idname = "scene.search_mario_anim_enum_operator"
+    bl_idname = "scene.search_anim_table_enum_operator"
     bl_property = "preset"
     preset: EnumProperty(items=enumAnimationTables)
 

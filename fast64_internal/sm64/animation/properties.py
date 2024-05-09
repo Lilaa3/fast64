@@ -740,8 +740,9 @@ class SM64_AnimImportProps(PropertyGroup):
     read_entire_table: BoolProperty(
         name="Read All Animations",
     )
+    table_size: IntProperty(name="Table Size", min=0)
     table_index: IntProperty(name="Table Index", min=0)
-    ignore_null: BoolProperty(name="Ignore NULL Delimiter")
+    check_null: BoolProperty(name="Check NULL Delimiter", default=True)
     table_address: StringProperty(name="Address", default=intToHex(0x0600FC48))  # Toad animation table
     animation_address: StringProperty(name="Address", default=intToHex(0x0600B75C))  # Toad animation 0
     is_segmented_address_prop: BoolProperty(name="Is Segmented Address", default=True)
@@ -764,6 +765,8 @@ class SM64_AnimImportProps(PropertyGroup):
 
     @property
     def mario_or_table_index(self):
+        if self.import_type != "Binary":
+            return
         return (
             int(self.mario_animation, 0)
             if self.binary_import_type == "DMA" and self.mario_animation != "Custom"
@@ -772,6 +775,8 @@ class SM64_AnimImportProps(PropertyGroup):
 
     @property
     def address(self):
+        if self.import_type != "Binary":
+            return
         return int(
             self.dma_table_address
             if self.binary_import_type == "DMA"
@@ -805,6 +810,9 @@ class SM64_AnimImportProps(PropertyGroup):
             col = col.column()
             col.enabled = False
         if self.preset != "Custom":
+            col.prop(self, "read_entire_table")
+            if not self.read_entire_table:
+                prop_split(col, self, "table_index", "List Index")
             return
 
         prop_split(col, self, "binary_import_type", "Binary Type")
@@ -822,10 +830,12 @@ class SM64_AnimImportProps(PropertyGroup):
 
         if self.binary_import_type == "Table":
             prop_split(col, self, "table_address", "Address")
+            col.prop(self, "check_null")
+            if not self.check_null:
+                prop_split(col, self, "table_size", "Table Size")
             col.prop(self, "read_entire_table")
             if not self.read_entire_table:
                 prop_split(col, self, "table_index", "List Index")
-                col.prop(self, "ignore_null")
         elif self.binary_import_type == "Animation":
             prop_split(col, self, "animation_address", "Address")
 
@@ -854,7 +864,7 @@ class SM64_AnimImportProps(PropertyGroup):
         table_box.prop(self, "read_entire_table")
         if not self.read_entire_table:
             prop_split(table_box, self, "table_index", "List Index")
-            table_box.prop(self, "ignore_null")
+            table_box.prop(self, "check_null")
 
     def draw_props(self, layout: UILayout, import_rom: os.PathLike | None = None):
         col = layout.column()
@@ -979,7 +989,10 @@ class SM64_AnimProps(PropertyGroup):
         self.update_table = scene.get("setAnimListIndex", self.update_table)
         table: SM64_AnimTableProps = self.table
         # upgrade_hex_prop(table, scene, "", "addr_0x27")
-        table.overwrite_begining_animation = scene.get("overwrite_0x28", table.overwrite_begining_animation)
+        table.overwrite_begining_animation = scene.get(
+            "overwrite_0x28",
+            table.overwrite_begining_animation,
+        )
         upgrade_hex_prop(table, scene, "animate_command_address", "addr_0x28")
         table.begining_animation = scene.get("animListIndexExport", table.begining_animation)
         self.binary_level = scene.get("levelAnimExport", self.binary_level)

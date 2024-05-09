@@ -737,14 +737,17 @@ class SM64_AnimTable:
         animation_headers: dict[str, SM64_AnimHeader],
         animation_data: dict[tuple[str, str], SM64_Anim],
         table_index: int | None = None,
-        ignore_null: bool = False,
         assumed_bone_count: int | None = 0,
+        table_size: int | None = None,
     ) -> SM64_AnimHeader | None:
         self.elements.clear()
         self.reference = table_reader.start_address
-        for i in range(table_index + 1 if table_index is not None else 300):
+        range_size = table_size if table_size else 300
+        if table_index is not None:
+            range_size = min(range_size, table_index + 1)
+        for i in range(range_size):
             ptr = table_reader.read_ptr()
-            if ptr is None and not ignore_null:
+            if ptr is None and table_size is None:
                 if table_index is not None:
                     raise PluginError("Table index not in table.")
                 break
@@ -762,9 +765,10 @@ class SM64_AnimTable:
             if table_index is not None:
                 return header
         else:
-            raise PluginError(
-                "Table address is most likely invalid, iterated through 300 elements and no NULL was found."
-            )
+            if table_size is None:
+                raise PluginError(
+                    "Table address is most likely invalid, iterated through 300 elements and no NULL was found."
+                )
         self.end_address = table_reader.address
         return self
 

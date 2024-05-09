@@ -31,7 +31,7 @@ from .classes import (
     SM64_AnimTable,
     SM64_AnimTableElement,
 )
-from .constants import FLAG_PROPS
+from .constants import FLAG_PROPS, ACTOR_PRESET_INFO
 
 from typing import TYPE_CHECKING
 
@@ -436,11 +436,11 @@ def import_binary_animations(
     animation_data: dict[tuple[str, str], SM64_Anim],
     table: SM64_AnimTable,
     table_index: int | None = None,
-    ignore_null: bool = False,
     assumed_bone_count: int | None = None,
+    table_size: int | None = None,
 ):
     if import_type == "Table":
-        table.read_binary(data_reader, animation_headers, animation_data, table_index, ignore_null, assumed_bone_count)
+        table.read_binary(data_reader, animation_headers, animation_data, table_index, assumed_bone_count, table_size)
     elif import_type == "DMA":
         table.read_dma_binary(data_reader, animation_headers, animation_data, table_index, assumed_bone_count)
     elif import_type == "Animation":
@@ -450,6 +450,7 @@ def import_binary_animations(
             animation_data,
             False,
             assumed_bone_count,
+            table_size,
         )
     else:
         raise PluginError("Unimplemented binary import type.")
@@ -461,8 +462,8 @@ def import_insertable_binary_animations(
     animation_data: dict[tuple[str, str], SM64_Anim],
     table: SM64_AnimTable,
     table_index: int | None = None,
-    ignore_null: bool = False,
     assumed_bone_count: int | None = None,
+    table_size: int | None = None,
 ):
     data_type_num = insertable_data_reader.read_value(4, signed=False)
     if data_type_num not in insertableBinaryTypes.values():
@@ -492,7 +493,7 @@ def import_insertable_binary_animations(
             assumed_bone_count,
         )
     elif data_type == "Animation Table":
-        table.read_binary(data_reader, animation_headers, animation_data, table_index, ignore_null, assumed_bone_count)
+        table.read_binary(data_reader, animation_headers, animation_data, table_index, table_size, assumed_bone_count)
     elif data_type == "Animation DMA Table":
         table.read_dma_binary(data_reader, animation_headers, animation_data, table_index, assumed_bone_count)
     else:
@@ -513,6 +514,19 @@ def import_animations(context: Context):
     animation_headers: dict[str, SM64_AnimHeader] = {}
     table = SM64_AnimTable()
 
+    if import_props.preset == "Custom":
+        is_segmented_address = import_props.binary_import_type != "DMA" and import_props.is_segmented_address
+        level = import_props.level
+        address = import_props.address
+        table_size = None if import_props.check_null else import_props.table_size
+        binary_import_type = import_props.binary_import_type
+    else:
+        preset = ACTOR_PRESET_INFO[import_props.preset]
+        is_segmented_address = True
+        level = preset.level
+        address = preset.animation_table
+        table_size = preset.table_size
+        binary_import_type = "DMA" if preset.dma_animation else "Table"
     rom_data, segment_data = None, None
     if import_props.import_type == "Binary" or (
         import_props.import_type == "Insertable Binary" and import_props.insertable_read_from_rom
@@ -521,25 +535,23 @@ def import_animations(context: Context):
         import_rom_checks(rom_path, sm64_props.extended_rom_check)
         with open(rom_path, "rb") as rom_file:
             rom_data = rom_file.read()
-            if import_props.is_segmented_address:
-                segment_data = parseLevelAtPointer(rom_file, level_pointers[import_props.level]).segmentData
-
+            if is_segmented_address:  # ?
+                segment_data = parseLevelAtPointer(rom_file, level_pointers[level]).segmentData
     anim_bones = get_anim_pose_bones(armature_obj)
     assumed_bone_count = len(anim_bones) if import_props.assume_bone_count else None
 
     if import_props.import_type == "Binary":
-        address = import_props.address
-        if import_props.binary_import_type != "DMA" and import_props.is_segmented_address:
+        if is_segmented_address:
             address = decodeSegmentedAddr(address.to_bytes(4, "big"), segment_data)
         import_binary_animations(
             RomReading(data=rom_data, start_address=address, rom_data=rom_data, segment_data=segment_data),
-            import_props.binary_import_type,
+            binary_import_type,
             animation_headers,
             animation_data,
             table,
             None if import_props.read_entire_table else import_props.mario_or_table_index,
-            import_props.ignore_null,
             assumed_bone_count,
+            table_size,
         )
     elif import_props.import_type == "Insertable Binary":
         path = abspath(import_props.path)
@@ -552,7 +564,6 @@ def import_animations(context: Context):
                 animation_data,
                 table,
                 None if import_props.read_entire_table else import_props.mario_or_table_index,
-                import_props.ignore_null,
                 assumed_bone_count,
             )
     elif import_props.import_type == "C":

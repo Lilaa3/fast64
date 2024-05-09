@@ -113,10 +113,8 @@ class RomReading:
         self.address += 4
         in_bytes = self.data[ptr_address : ptr_address + 4]
         ptr = int.from_bytes(in_bytes, "big", signed=False)
-
         if ptr == 0:
             return None
-
         if ptr_address not in self.insertable_ptrs and self.segment_data:
             ptr_in_bytes: bytes = ptr.to_bytes(4, "big")
             if ptr_in_bytes[0] not in self.segment_data:
