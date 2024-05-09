@@ -725,6 +725,7 @@ class SM64_AnimImportProps(PropertyGroup):
     clear_table: BoolProperty(name="Clear Table On Import", default=True)
     import_type: EnumProperty(items=enumAnimImportTypes, name="Type", default="C")
     preset: bpy.props.EnumProperty(items=enumAnimationTables, name="Preset", default="Mario")
+    decomp_path: StringProperty(name="Decomp Path", subtype="FILE_PATH", default="/home/user/sm64")
     binary_import_type: EnumProperty(
         items=enumAnimBinaryImportTypes,
         name="Type",
@@ -796,9 +797,18 @@ class SM64_AnimImportProps(PropertyGroup):
     def insertable_read_from_rom(self):
         return not self.read_from_rom_prop if self.import_type == "Insertable Binary" else False
 
+    def draw_path(self, layout: UILayout):
+        prop_split(layout, self, "path", "Path")
+        layout.label(text="Folders and individual files are supported as the path", icon="INFO")
+        path_ui_warnings(layout, abspath(self.path))
+
     def draw_c(self, layout: UILayout):
         col = layout.column()
-
+        if self.preset == "Custom":
+            self.draw_path(col)
+        else:
+            prop_split(col, self, "decomp_path", "Decomp Path")
+            directory_ui_warnings(col, abspath(self.decomp_path))
         col.prop(self, "remove_name_footer")
         col.prop(self, "use_custom_name")
 
@@ -845,10 +855,8 @@ class SM64_AnimImportProps(PropertyGroup):
 
     def draw_insertable_binary(self, layout: UILayout, import_rom: os.PathLike | None = None):
         col = layout.column()
-
-        col.label(text="Type will be read from the data type of the files")
+        col.label(text="Type will be read from the data type of the files", icon="INFO")
         col.separator()
-
         from_rom_box = col.box().column()
         from_rom_box.prop(self, "read_from_rom_prop")
         if self.read_from_rom_prop:
@@ -862,7 +870,7 @@ class SM64_AnimImportProps(PropertyGroup):
                 from_rom_box.enabled = False
 
             prop_split(from_rom_box, self, "level", "Level")
-
+        self.draw_path(col)
         table_box = col.box().column()
         table_box.label(text="Table Imports")
         table_box.prop(self, "read_entire_table")
@@ -875,11 +883,6 @@ class SM64_AnimImportProps(PropertyGroup):
 
         prop_split(col, self, "import_type", "Type")
         col.separator()
-
-        if self.import_type in {"C", "Insertable Binary"}:
-            prop_split(col, self, "path", "Path")
-            col.label(text="Folders and individual files are supported as the path", icon="INFO")
-            path_ui_warnings(col, abspath(self.path))
 
         if self.import_type in {"C", "Binary"}:
             SM64_SearchTableAnim.draw_props(col, self, "preset", "Table Preset")

@@ -400,7 +400,7 @@ def import_c_animations(
 
     for file_path in file_paths:
         print("Reading from: " + file_path)
-        with open(file_path, "r", encoding="utf-8") as file:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
             c_data = comment_remover(file.read())
 
         find_decls(c_data, "static const struct Animation ", file_path, header_decls)
@@ -520,6 +520,7 @@ def import_animations(context: Context):
         address = import_props.address
         table_size = None if import_props.check_null else import_props.table_size
         binary_import_type = import_props.binary_import_type
+        c_path = abspath(import_props._path)
     else:
         preset = ACTOR_PRESET_INFO[import_props.preset]
         is_segmented_address = True
@@ -527,6 +528,7 @@ def import_animations(context: Context):
         address = preset.animation_table
         table_size = preset.table_size
         binary_import_type = "DMA" if preset.dma_animation else "Table"
+        c_path = os.path.join(import_props.decomp_path, preset.decomp_path)
 
     rom_data, segment_data = None, None
     if import_props.import_type == "Binary" or import_props.insertable_read_from_rom:
@@ -555,7 +557,6 @@ def import_animations(context: Context):
     elif import_props.import_type == "Insertable Binary":
         path = abspath(import_props.path)
         filepath_checks(path)
-
         with open(path, "rb") as insertable_file:
             import_insertable_binary_animations(
                 RomReading(insertable_file.read(), 0, None, rom_data, segment_data),
@@ -566,9 +567,8 @@ def import_animations(context: Context):
                 assumed_bone_count,
             )
     elif import_props.import_type == "C":
-        path = abspath(import_props.path)
-        path_checks(path)
-        import_c_animations(path, animation_headers, animation_data, table)
+        path_checks(c_path)
+        import_c_animations(c_path, animation_headers, animation_data, table)
 
     if not table.elements:
         table.elements = [SM64_AnimTableElement(header=header) for header in animation_headers.values()]
