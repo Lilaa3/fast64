@@ -34,6 +34,8 @@ if TYPE_CHECKING:
 
 
 def emulate_no_loop(scene: Scene):
+    if scene.gameEditorMode != "SM64":
+        return
     animation_props: SM64_AnimProps = scene.fast64.sm64.animation
     played_action: Action = animation_props.played_action
 
