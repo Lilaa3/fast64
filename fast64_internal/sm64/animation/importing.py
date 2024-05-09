@@ -516,12 +516,12 @@ def import_animations(context: Context):
     table = SM64_AnimTable()
 
     if import_props.preset == "Custom":
-        is_segmented_address = import_props.binary_import_type != "DMA" and import_props.is_segmented_address
+        is_segmented_address = import_props.is_segmented_address
         level = import_props.level
         address = import_props.address
-        table_size = None if import_props.check_null else import_props.table_size
+        table_size = import_props.table_size
         binary_import_type = import_props.binary_import_type
-        c_path = abspath(import_props._path)
+        c_path = abspath(import_props.path)
     else:
         preset = ACTOR_PRESET_INFO[import_props.preset]
         is_segmented_address = True

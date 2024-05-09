@@ -729,7 +729,7 @@ class SM64_AnimImportProps(PropertyGroup):
     binary_import_type: EnumProperty(
         items=enumAnimBinaryImportTypes,
         name="Type",
-        default="Animation",
+        default="Table",
     )
     assume_bone_count: BoolProperty(
         name="Assume Bone Count",
@@ -738,12 +738,10 @@ class SM64_AnimImportProps(PropertyGroup):
     )
 
     rom: StringProperty(name="Import ROM", subtype="FILE_PATH")
-    read_entire_table: BoolProperty(
-        name="Read All Animations",
-    )
-    table_size: IntProperty(name="Table Size", min=0)
-    table_index: IntProperty(name="Table Index", min=0)
+    read_entire_table: BoolProperty(name="Read All Animations")
     check_null: BoolProperty(name="Check NULL Delimiter", default=True)
+    table_size_prop: IntProperty(name="Table Size", min=0)
+    table_index: IntProperty(name="Table Index", min=0)
     table_address: StringProperty(name="Address", default=intToHex(0x0600FC48))  # Toad animation table
     animation_address: StringProperty(name="Address", default=intToHex(0x0600B75C))  # Toad animation 0
     is_segmented_address_prop: BoolProperty(name="Is Segmented Address", default=True)
@@ -797,6 +795,10 @@ class SM64_AnimImportProps(PropertyGroup):
     def insertable_read_from_rom(self):
         return not self.read_from_rom_prop if self.import_type == "Insertable Binary" else False
 
+    @property
+    def table_size(self):
+        return None if self.check_null else self.table_size
+
     def draw_path(self, layout: UILayout):
         prop_split(layout, self, "path", "Path")
         layout.label(text="Folders and individual files are supported as the path", icon="INFO")
@@ -844,11 +846,12 @@ class SM64_AnimImportProps(PropertyGroup):
 
         if self.binary_import_type == "Table":
             prop_split(col, self, "table_address", "Address")
-            col.prop(self, "check_null")
-            if not self.check_null:
-                prop_split(col, self, "table_size", "Table Size")
             col.prop(self, "read_entire_table")
-            if not self.read_entire_table:
+            col.prop(self, "check_null")
+            if self.read_entire_table:
+                if not self.check_null:
+                    prop_split(col, self, "table_size_prop", "Table Size")
+            else:
                 prop_split(col, self, "table_index", "List Index")
         elif self.binary_import_type == "Animation":
             prop_split(col, self, "animation_address", "Address")
