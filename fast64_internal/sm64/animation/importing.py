@@ -409,7 +409,8 @@ def import_c_animations(
         find_decls(c_data, "const struct Animation *const ", file_path, table_decls)
 
     if table_decls:
-        assert len(table_decls) <= 1, "More than 1 table declaration"
+        if len(table_decls) > 1:
+            raise ValueError("More than 1 table declaration")
         table.read_c(
             table_decls[0],
             animation_headers,

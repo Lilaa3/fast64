@@ -320,7 +320,7 @@ def to_table_class(
     for i, element_props in enumerate(table_props.elements):
         reference = SM64_AnimTableElement()
         if can_reference and element_props.reference:
-            header = (
+            header_reference = (
                 int(
                     element_props.header_address,
                     0,
@@ -328,18 +328,22 @@ def to_table_class(
                 if use_addresses_for_references
                 else element_props.header_name
             )
-            assert header, f"Reference in table element {i} is not set."
-            reference.reference = header
+            if not header_reference:
+                raise ValueError(f"Header in table element {i} is not set.")
+            reference.reference = header_reference
             if generate_enums:
-                assert element_props.enum_name, f"Enum name in table element {i} is not set."
+                if not element_props.enum_name:
+                    raise ValueError(f"Enum Name in table element {i} is not set.")
                 reference.enum_name = element_props.enum_name
             table.elements.append(reference)
             continue
 
         header: SM64_AnimHeaderProps = get_element_header(element_props, can_reference)
-        assert header, f"Header in table element {i} is not set."
+        if not header:
+            raise ValueError(f"Header in table element {i} is not set.")
         action: Action = get_element_action(element_props, can_reference)
-        assert action, f"Action in table element {i} is not set."
+        if not action:
+            raise ValueError(f"Action in table element {i} is not set.")
 
         action_props: SM64_ActionProps = action.fast64.sm64
         if can_reference and action_props.reference_tables:
@@ -585,7 +589,8 @@ def update_behaviour_binary(
             animate_set = True
         address += 4 * size
     if exited:
-        assert load_set, "Could not find LOAD_ANIMATIONS command"
+        if not load_set:
+            raise IndexError("Could not find LOAD_ANIMATIONS command")
         if not animate_set:
             print("Could not find ANIMATE command")
 

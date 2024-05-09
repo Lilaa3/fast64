@@ -328,9 +328,10 @@ class SM64_AnimHeader:
         animation_headers: dict[str, "SM64_AnimHeader"],
         animation_data: dict[tuple[str, str], "SM64_Anim"],
     ):
-        assert len(header_decl.values) == 9, "Header declarion does not have 9 elements"
         if header_decl.name in animation_headers:
             return animation_headers[header_decl.name]
+        if len(header_decl.values) != 9:
+            raise ValueError(f"Header declarion has {len(header_decl.values)} values instead of 9.\n {header_decl}")
 
         header = SM64_AnimHeader()
         animation_headers[header_decl.name] = header
