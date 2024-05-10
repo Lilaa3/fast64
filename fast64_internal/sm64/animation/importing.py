@@ -266,7 +266,7 @@ class SM64_AnimBone:
                 e = fe
             prev = e
 
-            self.rotation.append(e.to_quaternion())
+            self.rotation.append(e.to_matrix())
 
 
 def animation_data_to_blender(
@@ -276,14 +276,10 @@ def animation_data_to_blender(
     action: Action,
 ):
     anim_bones = get_anim_pose_bones(armature_obj)
-    for pose_bone in anim_bones:
-        pose_bone.rotation_mode = "QUATERNION"
 
     bone_anim_data: list[SM64_AnimBone] = []
-
     # TODO: Duplicate keyframe filter
     pairs = anim_import.data.pairs
-
     for pair_num in range(3, len(pairs), 3):
         bone = SM64_AnimBone()
         if pair_num == 3:
@@ -296,7 +292,7 @@ def animation_data_to_blender(
         if is_root:
             for property_index in range(3):
                 f_curve = action.fcurves.new(
-                    data_path='pose.bones["' + pose_bone.name + '"].location',
+                    data_path=f'pose.bones["{pose_bone.name}"].location',
                     index=property_index,
                     action_group=pose_bone.name,
                 )
@@ -304,13 +300,25 @@ def animation_data_to_blender(
                     f_curve.keyframe_points.insert(frame, translation[property_index])
             is_root = False
 
-        for property_index in range(4):
+        rotation_mode = pose_bone.rotation_mode
+        rotation_mode_name = {
+            "QUATERNION": "rotation_quaternion",
+            "AXIS_ANGLE": "rotation_axis_angle",
+        }.get(rotation_mode, "rotation_euler")
+        data_path = f'pose.bones["{pose_bone.name}"].{rotation_mode_name}'
+        if rotation_mode == "QUATERNION":
+            rotations = [rotation.to_quaternion() for rotation in bone_data.rotation]
+        elif rotation_mode == "AXIS_ANGLE":
+            rotations = [rotation.to_axis_angle() for rotation in bone_data.rotation]
+        else:
+            rotations = [rotation.to_euler(rotation_mode) for rotation in bone_data.rotation]
+        for property_index in range(len(rotations[0])):
             f_curve = action.fcurves.new(
-                data_path='pose.bones["' + pose_bone.name + '"].rotation_quaternion',
+                data_path=data_path,
                 index=property_index,
                 action_group=pose_bone.name,
             )
-            for frame, rotation in enumerate(bone_data.rotation):
+            for frame, rotation in enumerate(rotations):
                 f_curve.keyframe_points.insert(frame, rotation[property_index])
 
 

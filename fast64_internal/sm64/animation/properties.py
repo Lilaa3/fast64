@@ -741,7 +741,7 @@ class SM64_AnimImportProps(PropertyGroup):
     )
 
     rom: StringProperty(name="Import ROM", subtype="FILE_PATH")
-    read_entire_table: BoolProperty(name="Read All Animations")
+    read_entire_table: BoolProperty(name="Read Entire Table", default=True)
     check_null: BoolProperty(name="Check NULL Delimiter", default=True)
     table_size_prop: IntProperty(name="Table Size", min=0)
     table_index_prop: IntProperty(name="Table Index", min=0)
@@ -768,16 +768,16 @@ class SM64_AnimImportProps(PropertyGroup):
     @property
     def dma_table_index(self):
         return (
-            int(self.mario_animation, 0)
+            None
+            if self.read_entire_table
+            else int(self.mario_animation, 0)
             if self.mario_animation != "Custom"
             else self.table_index
-            if self.read_entire_table
-            else None
         )
 
     @property
     def table_index(self):
-        return self.table_index_prop if self.read_entire_table else None
+        return None if self.read_entire_table else self.table_index_prop
 
     @property
     def address(self):

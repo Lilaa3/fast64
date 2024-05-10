@@ -47,7 +47,6 @@ from .utility import (
     get_element_action,
     get_frame_range,
     get_max_frame,
-    get_max_frame,
     get_anim_file_name,
     get_anim_name,
     get_anim_enum,
