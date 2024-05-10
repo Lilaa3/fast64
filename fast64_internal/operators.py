@@ -114,7 +114,8 @@ class SearchEnumOperatorBase(OperatorBase):
     @classmethod
     def draw_props(cls, layout: UILayout, data, prop: str, name: str):
         row = layout.row()
-        row.label(text=name)
+        if name:
+            row.label(text=name)
         row.prop(data, prop, text="")
         row.operator(cls.bl_idname, icon="VIEWZOOM", text="")
 

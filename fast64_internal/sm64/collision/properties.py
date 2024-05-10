@@ -130,14 +130,14 @@ class SM64_HackerSM64CollisionType(PropertyGroup):
         elif self.special in ["COL_TYPE_FORCE_AS_SPEED"]:
             return self.speed
 
-    def draw_enum_or_custom(self, layout: UILayout, propName: str, text: str):
+    def draw_enum_or_custom(self, layout: UILayout, prop_name: str, text: str):
         col = layout.column()
-        if getattr(self, propName) == "CUSTOM":
-            col = col.box().column()
-            prop_split(col, self, propName, text)
-            col.prop(self, f"{propName}_custom")
+        if getattr(self, prop_name) == "CUSTOM":
+            split = col.split()
+            prop_split(split, self, prop_name, text)
+            split.prop(self, f"{prop_name}_custom", text="")
         else:
-            prop_split(col, self, propName, text)
+            prop_split(col, self, prop_name, text)
 
     specialTypesWithForceProps = [
         "QUICKSAND",
@@ -231,11 +231,11 @@ class SM64_VanillaCollisionType(bpy.types.PropertyGroup):
         prop_split(split, self, "options", "Options")
 
         if self.options == "ALL":
-            SM64_SearchCollisionEnum.draw_props(split, self, "type", "Collision Type")
+            SM64_SearchCollisionEnum.draw_props(split, self, "type", None)
         elif self.options == "SIMPLE":
-            prop_split(split, self, "simple_type", "Collision Type")
+            split.prop(self, "simple_type", text="")
         elif self.options == "CUSTOM":
-            prop_split(split, self, "custom", "Collision Type")
+            split.prop(self, "custom", text="")
 
 
 class SM64_MaterialCollisionProps(bpy.types.PropertyGroup):
