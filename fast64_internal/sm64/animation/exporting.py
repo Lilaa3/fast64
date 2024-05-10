@@ -386,45 +386,6 @@ def to_table_class(
     return table
 
 
-def get_animation_paths(animation_props: "SM64_AnimProps", create_directories: bool = True):
-    custom_export = animation_props.header_type == "Custom"
-
-    path, level = getPathAndLevel(
-        custom_export,
-        animation_props.directory_path,
-        animation_props.level_option,
-        animation_props.level_name,
-    )
-    dir_name = toAlnum(animation_props.actor_name)
-    if animation_props.header_type == "DMA":
-        anim_dir_path = os.path.join(path, animation_props.dma_folder)
-        dir_path, geo_dir_path = "", ""
-    else:
-        dir_path = getExportDir(
-            custom_export,
-            path,
-            animation_props.header_type,
-            level,
-            "",
-            dir_name,
-        )[0]
-        geo_dir_path = os.path.join(dir_path, dir_name)
-        anim_dir_path = os.path.join(geo_dir_path, "anims")
-        if create_directories:
-            if not os.path.exists(dir_path):
-                os.mkdir(dir_path)
-            if not os.path.exists(geo_dir_path):
-                os.mkdir(geo_dir_path)
-    if create_directories and not os.path.exists(anim_dir_path):
-        os.mkdir(anim_dir_path)
-    return (
-        abspath(anim_dir_path),
-        abspath(dir_path),
-        abspath(geo_dir_path),
-        level_name,
-    )
-
-
 def get_table_actions(table_props: "SM64_AnimTableProps", can_reference: bool) -> list[Action]:
     actions = []
     for element_props in table_props.elements:
@@ -658,16 +619,27 @@ def export_animation_table_insertable(
         writeInsertableFile(path, insertableBinaryTypes["Animation Table"], ptrs, 0, table_data + data)
 
 
+def create_and_get_paths(animation_props: "SM64_AnimProps", decomp: os.PathLike):
+    anim_dir_path, geo_dir_path, header_dir_path = animation_props.get_c_paths(decomp)
+    if anim_dir_path and not os.path.exists(anim_dir_path):
+        os.mkdir(anim_dir_path)
+    if geo_dir_path and not os.path.exists(geo_dir_path):
+        os.mkdir(geo_dir_path)
+    if geo_dir_path and not os.path.exists(header_dir_path):
+        os.mkdir(header_dir_path)
+    return anim_dir_path, geo_dir_path, header_dir_path
+
+
 def export_animation_table_c(
     animation_props: "SM64_AnimProps",
     table_props: "SM64_AnimTableProps",
     table: SM64_AnimTable,
-    decomp_path: os.PathLike,
+    decomp: os.PathLike,
 ):
     header_type = animation_props.header_type
     if header_type != "Custom":
-        applyBasicTweaks(decomp_path)
-    anim_dir_path, dir_path, geo_dir_path, level_name = get_animation_paths(animation_props)
+        applyBasicTweaks(decomp)
+    anim_dir_path, geo_dir_path, header_dir_path = create_and_get_paths(animation_props, decomp)
 
     print("Creating all C data")
     if table_props.export_seperately or animation_props.is_c_dma:
@@ -690,7 +662,6 @@ def export_animation_table_c(
         with open(os.path.join(anim_dir_path, "data.inc.c"), "w", encoding="utf-8") as file:
             file.write(result)
         print("File exported")
-
     if animation_props.is_c_dma:
         return
 
@@ -713,16 +684,15 @@ def export_animation_table_c(
             table.enum_list_reference,
         )
 
-    if header_type == "Custom":
-        return
-    update_includes(
-        level_name,
-        animation_props.group_name,
-        toAlnum(animation_props.actor_name),
-        dir_path,
-        header_type,
-        True,
-    )
+    if header_type != "Custom":
+        update_includes(
+            animation_props.level_name,
+            animation_props.group_name,
+            toAlnum(animation_props.actor_name),
+            header_dir_path,
+            header_type,
+            True,
+        )
 
 
 def export_animation_binary(
@@ -798,45 +768,44 @@ def export_animation_c(
     animation: SM64_Anim,
     animation_props: "SM64_AnimProps",
     table_props: "SM64_AnimTableProps",
-    decomp_path: os.PathLike,
+    decomp: os.PathLike,
     anim_file_name: str,
     actor_name: str,
 ):
     header_type = animation_props.header_type
     if header_type != "Custom":
-        applyBasicTweaks(decomp_path)
+        applyBasicTweaks(decomp)
 
-    anim_dir_path, dir_path, geo_dir_path, level_name = get_animation_paths(animation_props)
+    anim_dir_path, geo_dir_path, header_dir_path = create_and_get_paths(animation_props, decomp)
     anim_path = os.path.join(anim_dir_path, anim_file_name)
     with open(anim_path, "w", encoding="utf-8") as file:
         file.write(animation.to_c(animation_props.is_c_dma))
+    if animation_props.is_c_dma:
+        return
+    table_name = get_anim_table_name(table_props, actor_name)
+    enum_list_name = get_enum_list_name(actor_name)
 
-    if not animation_props.is_c_dma:
-        table_name = get_anim_table_name(table_props, actor_name)
-        enum_list_name = get_enum_list_name(actor_name)
-
-        if animation_props.update_table:
-            write_anim_header(
-                os.path.join(geo_dir_path, "anim_header.h"),
-                table_name,
-                table_props.generate_enums,
-            )
-            update_table_file(
-                os.path.join(anim_dir_path, "table.inc.c"),
-                animation.enum_and_header_names,
-                table_name,
-                table_props.generate_enums,
-                os.path.join(anim_dir_path, "table_enum.h"),
-                enum_list_name,
-            )
-        update_data_file(os.path.join(anim_dir_path, "data.inc.c"), [anim_file_name])
-
-    if not header_type in {"Custom", "DMA"}:
+    if animation_props.update_table:
+        write_anim_header(
+            os.path.join(geo_dir_path, "anim_header.h"),
+            table_name,
+            table_props.generate_enums,
+        )
+        update_table_file(
+            os.path.join(anim_dir_path, "table.inc.c"),
+            animation.enum_and_header_names,
+            table_name,
+            table_props.generate_enums,
+            os.path.join(anim_dir_path, "table_enum.h"),
+            enum_list_name,
+        )
+    update_data_file(os.path.join(anim_dir_path, "data.inc.c"), [anim_file_name])
+    if header_type != "Custom":
         update_includes(
-            level_name,
+            animation_props.level_name,
             animation_props.group_name,
             toAlnum(actor_name),
-            dir_path,
+            header_dir_path,
             header_type,
             animation_props.update_table,
         )

@@ -18,11 +18,14 @@ from ...utility import (
     customExportWarning,
     decompFolderMessage,
     directory_ui_warnings,
+    directory_path_checks,
+    path_ui_warnings,
     draw_and_check_tab,
+    getExportDir,
     makeWriteInfoBox,
     multilineLabel,
-    path_ui_warnings,
     prop_split,
+    toAlnum,
     writeBoxExportType,
     intToHex,
 )
@@ -942,7 +945,7 @@ class SM64_AnimProps(PropertyGroup):
     # TODO: Ideally, this pr will be merged after combined exports, so this should be updated to use the group enum there
     group_name: StringProperty(name="Group Name", default="group0")
     header_type: EnumProperty(items=enumAnimExportTypes, name="Header Export", default="Actor")
-    level_name: StringProperty(name="Level", default="bob")
+    custom_level_name: StringProperty(name="Level", default="bob")
     level_option: EnumProperty(items=enumLevelNames, name="Level", default="bob")
 
     # Binary
@@ -992,7 +995,7 @@ class SM64_AnimProps(PropertyGroup):
         level_option = scene.get("animLevelOption", None)
         if level_option:
             self.level_option = enumLevelNames[level_option][0]
-        self.level_name = scene.get("animLevelName", self.level_name)
+        self.custom_level_name = scene.get("animLevelName", self.custom_level_name)
         self.is_binary_dma = scene.get("isDMAExport", self.is_binary_dma)
 
         insertable_directory_path = scene.get("animInsertableBinaryPath", "")
@@ -1028,6 +1031,33 @@ class SM64_AnimProps(PropertyGroup):
     @property
     def is_c_dma(self):
         return self.use_dma_structure if self.header_type == "Custom" else self.header_type == "DMA"
+
+    @property
+    def level_name(self):
+        return self.custom_level_name if self.level_option == "Custom" else self.level_option
+
+    def get_c_paths(self, decomp: os.PathLike):
+        custom_export = self.header_type == "Custom"
+        base_path = self.directory_path if custom_export else decomp
+        if self.is_c_dma:  # DMA or Custom with DMA structure
+            anim_dir_path: os.PathLike = abspath(os.path.join(base_path, self.dma_folder))
+            directory_path_checks(anim_dir_path)
+            return (anim_dir_path, None, None)
+        dir_name = toAlnum(self.actor_name)
+        header_dir_path: os.PathLike = abspath(
+            getExportDir(
+                custom_export,
+                base_path,
+                self.header_type,
+                self.level_name,
+                "",
+                dir_name,
+            )[0]
+        )
+        directory_path_checks(header_dir_path)
+        geo_dir_path: os.PathLike = abspath(os.path.join(header_dir_path, dir_name))
+        anim_dir_path: os.PathLike = abspath(os.path.join(geo_dir_path, "anims"))
+        return (abspath(anim_dir_path), abspath(geo_dir_path), abspath(header_dir_path))
 
     def draw_insertable_binary_settings(self, layout: UILayout):
         col = layout.column()
@@ -1073,11 +1103,17 @@ class SM64_AnimProps(PropertyGroup):
         elif self.header_type == "Level":
             prop_split(col, self, "level_option", "Level")
             if self.level_option == "custom":
-                prop_split(col, self, "level_name", "Level Name")
+                prop_split(col, self, "custom_level_name", "Level Name")
 
         decompFolderMessage(col)
         write_box = makeWriteInfoBox(col).column()
-        writeBoxExportType(write_box, self.header_type, self.actor_name, self.level_name, self.level_option)
+        writeBoxExportType(
+            write_box,
+            self.header_type,
+            self.actor_name,
+            self.custom_level_name,
+            self.level_option,
+        )
 
     def draw_props(
         self,
