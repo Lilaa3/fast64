@@ -620,14 +620,11 @@ def export_animation_table_insertable(
 
 
 def create_and_get_paths(animation_props: "SM64_AnimProps", decomp: os.PathLike):
-    anim_dir_path, geo_dir_path, header_dir_path = animation_props.get_c_paths(decomp)
-    if anim_dir_path and not os.path.exists(anim_dir_path):
-        os.mkdir(anim_dir_path)
-    if geo_dir_path and not os.path.exists(geo_dir_path):
-        os.mkdir(geo_dir_path)
-    if geo_dir_path and not os.path.exists(header_dir_path):
-        os.mkdir(header_dir_path)
-    return anim_dir_path, geo_dir_path, header_dir_path
+    paths = animation_props.get_c_paths(decomp)
+    for path in paths:
+        if path and not os.path.exists(path):
+            os.mkdir(path)
+    return paths
 
 
 def export_animation_table_c(
