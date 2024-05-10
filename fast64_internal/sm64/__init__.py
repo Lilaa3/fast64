@@ -77,7 +77,7 @@ from .animation import (
     anim_panel_register,
     anim_panel_unregister,
     anim_register,
-    anim_uinregister,
+    anim_unregister,
 )
 
 from .tools import tools_panels_register, tools_panels_unregister, tools_operators_register, tools_operators_unregister
