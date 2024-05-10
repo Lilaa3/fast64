@@ -608,7 +608,7 @@ class SM64_AnimTableProps(PropertyGroup):
             actor_name,
         )
 
-        if is_dma and not duplicate_index is None:
+        if is_dma and duplicate_index is not None:
             multilineLabel(
                 info_col.box(),
                 "In DMA tables, headers for each action must be \nin one sequence or the data will be duplicated.\n"
@@ -741,7 +741,7 @@ class SM64_AnimImportProps(PropertyGroup):
     read_entire_table: BoolProperty(name="Read All Animations")
     check_null: BoolProperty(name="Check NULL Delimiter", default=True)
     table_size_prop: IntProperty(name="Table Size", min=0)
-    table_index: IntProperty(name="Table Index", min=0)
+    table_index_prop: IntProperty(name="Table Index", min=0)
     table_address: StringProperty(name="Address", default=intToHex(0x0600FC48))  # Toad animation table
     animation_address: StringProperty(name="Address", default=intToHex(0x0600B75C))  # Toad animation 0
     is_segmented_address_prop: BoolProperty(name="Is Segmented Address", default=True)
@@ -763,14 +763,16 @@ class SM64_AnimImportProps(PropertyGroup):
     use_custom_name: BoolProperty(name="Use Custom Name", default=True)
 
     @property
-    def mario_or_table_index(self):
-        if self.import_type != "Binary":
-            return
+    def dma_table_index(self):
         return (
             int(self.mario_animation, 0)
-            if self.binary_import_type == "DMA" and self.mario_animation != "Custom"
-            else self.table_index
+            if self.mario_animation != "Custom"
+            else self.table_index if self.read_entire_table else None
         )
+
+    @property
+    def table_index(self):
+        return self.table_index_prop if self.read_entire_table else None
 
     @property
     def address(self):
@@ -792,7 +794,7 @@ class SM64_AnimImportProps(PropertyGroup):
         )
 
     @property
-    def insertable_read_from_rom(self):
+    def read_from_rom(self):
         return not self.read_from_rom_prop if self.import_type == "Insertable Binary" else False
 
     @property
@@ -828,7 +830,7 @@ class SM64_AnimImportProps(PropertyGroup):
         if self.preset != "Custom":
             col.prop(self, "read_entire_table")
             if not self.read_entire_table:
-                prop_split(col, self, "table_index", "List Index")
+                prop_split(col, self, "table_index_prop", "List Index")
             return
 
         prop_split(col, self, "binary_import_type", "Binary Type")
@@ -839,7 +841,7 @@ class SM64_AnimImportProps(PropertyGroup):
             if not self.read_entire_table:
                 SM64_SearchMarioAnim.draw_props(col, self, "mario_animation", "Mario Animations")
                 if self.mario_animation == "Custom":
-                    prop_split(col, self, "table_index", "Entry")
+                    prop_split(col, self, "table_index_prop", "Entry")
         else:
             prop_split(col, self, "level", "Level")
             col.prop(self, "is_segmented_address_prop")
@@ -852,7 +854,7 @@ class SM64_AnimImportProps(PropertyGroup):
                 if not self.check_null:
                     prop_split(col, self, "table_size_prop", "Table Size")
             else:
-                prop_split(col, self, "table_index", "List Index")
+                prop_split(col, self, "table_index_prop", "List Index")
         elif self.binary_import_type == "Animation":
             prop_split(col, self, "animation_address", "Address")
 
@@ -878,7 +880,7 @@ class SM64_AnimImportProps(PropertyGroup):
         table_box.label(text="Table Imports")
         table_box.prop(self, "read_entire_table")
         if not self.read_entire_table:
-            prop_split(table_box, self, "table_index", "List Index")
+            prop_split(table_box, self, "table_index_prop", "List Index")
             table_box.prop(self, "check_null")
 
     def draw_props(self, layout: UILayout, import_rom: os.PathLike | None = None):
@@ -960,7 +962,7 @@ class SM64_AnimProps(PropertyGroup):
             importing.is_segmented_address_prop,
         )
         importing.level = scene.get("levelAnimImport", importing.level)
-        importing.table_index = scene.get("animListIndexImport", importing.table_index)
+        importing.table_index_prop = scene.get("animListIndexImport", importing.table_index_prop)
         if importing.get("isDMAImport", False):
             importing.binary_import_type = "DMA"
         elif importing.get("animIsAnimList", True):
@@ -1058,14 +1060,12 @@ class SM64_AnimProps(PropertyGroup):
             box.prop(self, "update_table")
             if self.update_table:
                 self.table.draw_non_exclusive_settings(box, False, "C", self.actor_name)
-
+        prop_split(col, self, "actor_name_prop", "Name")
         if self.header_type == "Custom":
             col.prop(self, "directory_path")
             if directory_ui_warnings(col, abspath(self.directory_path)):
                 customExportWarning(col)
             return
-
-        prop_split(col, self, "actor_name_prop", "Name")
         if self.header_type == "Actor":
             prop_split(col, self, "group_name", "Group Name")
         elif self.header_type == "Level":

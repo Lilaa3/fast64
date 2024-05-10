@@ -155,22 +155,18 @@ class SM64_AnimData:
 @dataclasses.dataclass
 class SM64_AnimHeader:
     reference: str | int = ""
-
     flags: int | str = 0
     trans_divisor: int = 0
     start_frame: int = 0
     loop_start: int = 0
     loop_end: int = 1
     bone_count: int = 0
-
     indice_reference: Optional[str | int] = None
     values_reference: Optional[str | int] = None
-
-    enum_reference: str = ""
-    file_name: str = ""
-
     data: Optional[SM64_AnimData] = None
 
+    enum_name: str = ""
+    file_name: str = ""
     # Imports
     end_address: int = 0
     header_variant: int = 0
@@ -399,6 +395,14 @@ class SM64_Anim:
 
     # Imports
     action: Action | None = None  # Used in the table class to prop function
+
+    @property
+    def enum_and_header_names(self) -> list[str, str]:
+        names = []
+        for header in self.headers:
+            assert isinstance(header.reference, str), "Reference is not a string."
+            names.append((header.enum_name, header.reference))
+        return names
 
     def to_binary_dma(self):
         assert self.data
@@ -746,7 +750,7 @@ class SM64_AnimTable:
         range_size = table_size if table_size else 300
         if table_index is not None:
             range_size = min(range_size, table_index + 1)
-        for i in range(range_size):
+        for i in range(0 if table_index is None else table_index, range_size):
             ptr = table_reader.read_ptr()
             if ptr is None and table_size is None:
                 if table_index is not None:
@@ -766,10 +770,10 @@ class SM64_AnimTable:
             if table_index is not None:
                 return header
         else:
+            if table_index is not None:
+                raise PluginError(f"Table index {table_index} not found in table.")
             if table_size is None:
-                raise PluginError(
-                    "Table address is most likely invalid, iterated through 300 elements and no NULL was found."
-                )
+                raise PluginError(f"Iterated through {range_size} elements and no NULL was found.")
         self.end_address = table_reader.address
         return self
 

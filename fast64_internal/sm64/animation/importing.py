@@ -532,26 +532,31 @@ def import_animations(context: Context):
         c_path = os.path.join(import_props.decomp_path, preset.decomp_path)
 
     rom_data, segment_data = None, None
-    if import_props.import_type == "Binary" or import_props.insertable_read_from_rom:
+    if import_props.import_type == "Binary" or import_props.read_from_rom:
         rom_path = abspath(import_props.rom if import_props.rom else sm64_props.import_rom)
         import_rom_checks(rom_path, sm64_props.extended_rom_check)
         with open(rom_path, "rb") as rom_file:
             rom_data = rom_file.read()
-            if import_props.insertable_read_from_rom or import_props.binary_import_type != "DMA":
+            if import_props.read_from_rom or binary_import_type != "DMA":
                 segment_data = parseLevelAtPointer(rom_file, level_pointers[level]).segmentData
     anim_bones = get_anim_pose_bones(armature_obj)
     assumed_bone_count = len(anim_bones) if import_props.assume_bone_count else None
+    table_index = None
+    if binary_import_type == "Table":
+        table_index = import_props.table_index
 
     if import_props.import_type == "Binary":
         if is_segmented_address:
             address = decodeSegmentedAddr(address.to_bytes(4, "big"), segment_data)
+        if binary_import_type == "DMA":
+            table_index = import_props.dma_table_index
         import_binary_animations(
-            RomReading(data=rom_data, start_address=address, rom_data=rom_data, segment_data=segment_data),
+            RomReading(rom_data, address, rom_data=rom_data, segment_data=segment_data),
             binary_import_type,
             animation_headers,
             animation_data,
             table,
-            None if import_props.read_entire_table else import_props.mario_or_table_index,
+            table_index,
             assumed_bone_count,
             table_size,
         )
@@ -564,7 +569,7 @@ def import_animations(context: Context):
                 animation_headers,
                 animation_data,
                 table,
-                None if import_props.read_entire_table else import_props.mario_or_table_index,
+                import_props.table_index if binary_import_type == "Table" else None,
                 assumed_bone_count,
             )
     elif import_props.import_type == "C":

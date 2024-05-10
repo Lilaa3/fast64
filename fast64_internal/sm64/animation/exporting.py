@@ -11,6 +11,8 @@ from ...utility import (
     encodeSegmentedAddr,
     decodeSegmentedAddr,
     get64bitAlignedAddr,
+    getExportDir,
+    getPathAndLevel,
     intToHex,
     writeIfNotFound,
     radians_to_s16,
@@ -198,7 +200,7 @@ def to_header_class(
     header = SM64_AnimHeader()
     header.reference = get_anim_name(actor_name, action, header_props)
     if generate_enums:
-        header.enum_reference = get_anim_enum(actor_name, action, header_props)
+        header.enum_name = get_anim_enum(actor_name, action, header_props)
 
     if header_props.set_custom_flags:
         if use_int_flags:
@@ -378,7 +380,7 @@ def to_table_class(
             ),
         )
         reference.reference = reference.header.reference
-        reference.enum_name = reference.header.enum_reference
+        reference.enum_name = reference.header.enum_name
         table.elements.append(reference)
 
     return table
@@ -387,7 +389,7 @@ def to_table_class(
 def get_animation_paths(animation_props: "SM64_AnimProps", create_directories: bool = True):
     custom_export = animation_props.header_type == "Custom"
 
-    export_path, level_name = getPathAndLevel(
+    path, level = getPathAndLevel(
         custom_export,
         animation_props.directory_path,
         animation_props.level_option,
@@ -395,13 +397,14 @@ def get_animation_paths(animation_props: "SM64_AnimProps", create_directories: b
     )
     dir_name = toAlnum(animation_props.actor_name)
     if animation_props.header_type == "DMA":
-        anim_dir_path, dir_path, geo_dir_path = os.path.join(export_path, animation_props.dma_folder), "", ""
+        anim_dir_path = os.path.join(path, animation_props.dma_folder)
+        dir_path, geo_dir_path = "", ""
     else:
         dir_path = getExportDir(
             custom_export,
-            export_path,
+            path,
             animation_props.header_type,
-            level_name,
+            level,
             "",
             dir_name,
         )[0]
@@ -420,16 +423,6 @@ def get_animation_paths(animation_props: "SM64_AnimProps", create_directories: b
         abspath(geo_dir_path),
         level_name,
     )
-
-
-def get_enum_and_header_names(action: Action, action_props: "SM64_ActionProps", actor_name: str):
-    return [
-        (
-            get_anim_enum(actor_name, action, header_props),
-            get_anim_name(actor_name, action, header_props),
-        )
-        for header_props in action_props.headers
-    ]
 
 
 def get_table_actions(table_props: "SM64_AnimTableProps", can_reference: bool) -> list[Action]:
@@ -804,10 +797,8 @@ def export_animation_insertable(animation: SM64_Anim, animation_props: "SM64_Ani
 def export_animation_c(
     animation: SM64_Anim,
     animation_props: "SM64_AnimProps",
-    action_props: "SM64_ActionProps",
     table_props: "SM64_AnimTableProps",
     decomp_path: os.PathLike,
-    action: Action,
     anim_file_name: str,
     actor_name: str,
 ):
@@ -832,7 +823,7 @@ def export_animation_c(
             )
             update_table_file(
                 os.path.join(anim_dir_path, "table.inc.c"),
-                get_enum_and_header_names(action, action_props, actor_name),
+                animation.enum_and_header_names,
                 table_name,
                 table_props.generate_enums,
                 os.path.join(anim_dir_path, "table_enum.h"),
@@ -883,10 +874,8 @@ def export_animation(context: Context):
         export_animation_c(
             animation,
             animation_props,
-            action_props,
             table_props,
             sm64_props.decomp_path,
-            action,
             anim_file_name,
             actor_name,
         )
