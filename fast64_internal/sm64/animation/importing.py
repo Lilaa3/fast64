@@ -266,7 +266,7 @@ class SM64_AnimBone:
                 e = fe
             prev = e
 
-            self.rotation.append(e.to_matrix())
+            self.rotation.append(e.to_quaternion())
 
 
 def animation_data_to_blender(
@@ -307,7 +307,7 @@ def animation_data_to_blender(
         }.get(rotation_mode, "rotation_euler")
         data_path = f'pose.bones["{pose_bone.name}"].{rotation_mode_name}'
         if rotation_mode == "QUATERNION":
-            rotations = [rotation.to_quaternion() for rotation in bone_data.rotation]
+            rotations = [rotation for rotation in bone_data.rotation]
         elif rotation_mode == "AXIS_ANGLE":
             rotations = [rotation.to_axis_angle() for rotation in bone_data.rotation]
         else:
