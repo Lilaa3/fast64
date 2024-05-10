@@ -76,10 +76,8 @@ from .sm64_f3d_writer import (
 from .animation import (
     anim_panel_register,
     anim_panel_unregister,
-    anim_props_register,
-    anim_props_unregister,
-    anim_operator_register,
-    anim_operator_unregister,
+    anim_register,
+    anim_uinregister,
 )
 
 from .tools import tools_panels_register, tools_panels_unregister, tools_operators_register, tools_operators_unregister
@@ -123,8 +121,7 @@ def sm64_panel_unregister():
 
 def sm64_register(register_panels: bool):
     tools_operators_register()
-    anim_props_register()
-    anim_operator_register()
+    anim_register()
     sm64_col_register()
     sm64_bone_register()
     sm64_cam_register()
@@ -143,8 +140,7 @@ def sm64_register(register_panels: bool):
 
 def sm64_unregister(unregister_panels: bool):
     tools_operators_unregister()
-    anim_props_unregister()
-    anim_operator_unregister()
+    anim_unregister()
     sm64_col_unregister()
     sm64_bone_unregister()
     sm64_cam_unregister()
