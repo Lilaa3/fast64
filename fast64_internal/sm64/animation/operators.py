@@ -159,13 +159,12 @@ class SM64_AnimVariantOperations(OperatorBase):
     def execute_operator(self, context):
         action = bpy.data.actions[self.action_name]
         action_props: SM64_ActionProps = action.fast64.sm64
-
         variants = action_props.header_variants
-
+        position = len(variants) - 1 if self.index == -1 else self.index
         if self.op_name == "MOVE_UP":
-            variants.move(self.index, self.index - 1)
+            variants.move(self.index, position - 1)
         elif self.op_name == "MOVE_DOWN":
-            variants.move(self.index, self.index + 1)
+            variants.move(self.index, position + 1)
         elif self.op_name == "ADD":
             variants.add()
             added_variant = variants[-1]
@@ -173,7 +172,7 @@ class SM64_AnimVariantOperations(OperatorBase):
 
             copyPropertyGroup(action_props.headers[self.index + 1], added_variant)
 
-            variants.move(len(variants) - 1, self.index + 1)
+            variants.move(len(variants) - 1, position)
             update_header_variant_numbers(action_props)
 
             added_variant.expand_tab = True

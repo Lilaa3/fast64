@@ -75,7 +75,7 @@ def draw_list_op(
     icon="",
 ):
     col = layout.column()
-    collection = collection if collection else []
+    collection = [] if collection is None else collection
     if not icon:
         icon = {"MOVE_UP": "TRIA_UP", "MOVE_DOWN": "TRIA_DOWN", "CLEAR": "TRASH"}.get(op_name, op_name)
     if op_name == "MOVE_UP":
@@ -85,7 +85,7 @@ def draw_list_op(
     elif op_name == "CLEAR":
         col.enabled = len(collection) > 0
     elif op_name == "REMOVE":
-        col.enabled = index <= len(collection)
+        col.enabled = index < len(collection)
     op = col.operator(op_cls.bl_idname, text=text, icon=icon)
     op.index, op.op_name = index, op_name
     return op
@@ -293,11 +293,11 @@ class SM64_ActionProps(PropertyGroup):
         col = layout.column()
 
         row = col.row()
-        remove_op = draw_list_op(row, SM64_AnimVariantOperations, "REMOVE", index)
+        remove_op = draw_list_op(row, SM64_AnimVariantOperations, "REMOVE", index, self.header_variants)
         remove_op.action_name = action.name
         add_op = draw_list_op(row, SM64_AnimVariantOperations, "ADD", index)
         add_op.action_name = action.name
-        up_op = draw_list_op(row, SM64_AnimVariantOperations, "MOVE_UP", index)
+        up_op = draw_list_op(row, SM64_AnimVariantOperations, "MOVE_UP", index, self.header_variants)
         up_op.action_name = action.name
         down_op = draw_list_op(
             row,
@@ -330,16 +330,15 @@ class SM64_ActionProps(PropertyGroup):
         generate_enums: bool = False,
     ):
         col = layout.column()
-        if draw_and_check_tab(col, self.header, "expand_tab_in_action", "Main Variant"):
-            self.header.draw_props(
-                col,
-                action,
-                is_in_table,
-                is_dma,
-                export_type,
-                actor_name,
-                generate_enums,
-            )
+        self.header.draw_props(
+            col,
+            action,
+            is_in_table,
+            is_dma,
+            export_type,
+            actor_name,
+            generate_enums,
+        )
 
         op_row = col.row()
         add_op = draw_list_op(op_row, SM64_AnimVariantOperations, "ADD")
@@ -403,7 +402,6 @@ class SM64_ActionProps(PropertyGroup):
                     box = name_split.box()
                     box.scale_y = 0.5
                     box.label(text=get_anim_file_name(action, self))
-
         if not is_dma:
             self.draw_references(col, export_type in {"Binary", "Insertable Binary"})
         if is_dma or not self.reference_tables:
@@ -418,24 +416,11 @@ class SM64_ActionProps(PropertyGroup):
 
         if specific_variant is not None:
             self.headers[specific_variant].draw_props(
-                col,
-                action,
-                is_in_table,
-                is_dma,
-                export_type,
-                actor_name,
-                generate_enums,
+                col, action, is_in_table, is_dma, export_type, actor_name, generate_enums
             )
-            return
-        self.draw_variants(
-            col,
-            action,
-            is_in_table,
-            is_dma,
-            export_type,
-            actor_name,
-            generate_enums,
-        )
+        else:
+            col.separator(factor=2)
+            self.draw_variants(col, action, is_in_table, is_dma, export_type, actor_name, generate_enums)
 
 
 class SM64_TableElementProps(PropertyGroup):
@@ -534,15 +519,16 @@ class SM64_TableElementProps(PropertyGroup):
 
 
 class SM64_AnimTableProps(PropertyGroup):
-    export_seperately: BoolProperty(name="Export All Seperately")
-    override_files_prop: BoolProperty(name="Override Table and Data Files", default=True)
+    element_tab: BoolProperty(name="Elements", default=True)
     elements: CollectionProperty(type=SM64_TableElementProps)
 
+    export_seperately: BoolProperty(name="Export All Seperately")
+    write_data_seperately: BoolProperty(name="Write Data Seperately")
+    override_files_prop: BoolProperty(name="Override Table and Data Files", default=True)
     generate_enums: BoolProperty(name="Generate Enums", default=True)
     override_table_name: BoolProperty(name="Override Table Name")
     custom_table_name: StringProperty(name="Table Name", default="mario_anims")
     # Binary
-    write_data_seperately: BoolProperty(name="Write Data Seperately")
     data_address: StringProperty(
         name="Data Address",
         default=intToHex(0x00A3F7E0),  # Toad animation table data
@@ -563,7 +549,6 @@ class SM64_AnimTableProps(PropertyGroup):
     behavior_address_prop: StringProperty(name="Behavior Address", default=intToHex(0x13002EF8))
     begining_animation: StringProperty(name="Begining Animation", default="0x00")
     insertable_file_name: StringProperty(name="Insertable File Name", default="toad.insertable")
-
     @property
     def behavior_address(self):
         return int(self.behavior_address_prop if self.behaviour == "Custom" else self.behaviour, 0)
@@ -596,8 +581,8 @@ class SM64_AnimTableProps(PropertyGroup):
         op_row.label(text=str(index))
 
         draw_list_op(op_row, SM64_TableOperations, "ADD", index)
-        draw_list_op(op_row, SM64_TableOperations, "REMOVE", index)
-        draw_list_op(op_row, SM64_TableOperations, "MOVE_UP", index)
+        draw_list_op(op_row, SM64_TableOperations, "REMOVE", index, self.elements)
+        draw_list_op(op_row, SM64_TableOperations, "MOVE_UP", index, self.elements)
         draw_list_op(op_row, SM64_TableOperations, "MOVE_DOWN", index, self.elements)
 
         table_element.draw_props(
@@ -691,9 +676,10 @@ class SM64_AnimTableProps(PropertyGroup):
                 "conventions (anim_xx.inc.c, anim_xx, anim_xx_values, etc).",
                 icon="INFO",
             )
-
         col.separator()
 
+        if not draw_and_check_tab(col, self, "element_tab"):
+            return
         op_row = col.row()
         draw_list_op(op_row, SM64_TableOperations, "ADD")
         draw_list_op(op_row, SM64_TableOperations, "CLEAR", collection=self.elements)

@@ -278,7 +278,6 @@ def animation_data_to_blender(
     anim_bones = get_anim_pose_bones(armature_obj)
 
     bone_anim_data: list[SM64_AnimBone] = []
-    # TODO: Duplicate keyframe filter
     pairs = anim_import.data.pairs
     for pair_num in range(3, len(pairs), 3):
         bone = SM64_AnimBone()
@@ -307,7 +306,7 @@ def animation_data_to_blender(
         }.get(rotation_mode, "rotation_euler")
         data_path = f'pose.bones["{pose_bone.name}"].{rotation_mode_name}'
         if rotation_mode == "QUATERNION":
-            rotations = [rotation for rotation in bone_data.rotation]
+            rotations = bone_data.rotation
         elif rotation_mode == "AXIS_ANGLE":
             rotations = [rotation.to_axis_angle() for rotation in bone_data.rotation]
         else:
