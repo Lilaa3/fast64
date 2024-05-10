@@ -1189,7 +1189,10 @@ def multilineLabel(layout: UILayout, text: str, icon: str = "NONE"):
         r = layout.row()
         r.label(text=line, icon=icon if i == 0 else "NONE")
         r.scale_y = 0.75
-
+def draw_and_check_tab(layout: UILayout, data, proprety: str, text: str | None = None) -> bool:
+    tab = data.get(proprety)
+    layout.prop(data, proprety, icon="TRIA_DOWN" if tab else "TRIA_RIGHT", text=text)
+    return tab
 
 def directory_path_checks(
     directory_path: str,

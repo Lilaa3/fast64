@@ -1,5 +1,7 @@
 from bpy.types import PropertyGroup
 from bpy.props import IntProperty, PointerProperty
+from bpy.utils import register_class, unregister_class
+
 from .settings import (
     settings_props_register,
     settings_props_unregister,
@@ -147,13 +149,14 @@ def sm64_register(register_panels: bool):
     sm64_anim_register()
     settings_props_register()
 
+    register_class(SM64_MaterialProperties)
     if register_panels:
         sm64_panel_register()
 
 
 def sm64_unregister(unregister_panels: bool):
     tools_operators_unregister()
-    sm64_col_unregister()
+    collision_unregister()
     sm64_bone_unregister()
     sm64_cam_unregister()
     sm64_obj_unregister()
@@ -166,5 +169,6 @@ def sm64_unregister(unregister_panels: bool):
     sm64_anim_unregister()
     settings_props_unregister()
 
+    unregister_class(SM64_MaterialProperties)
     if unregister_panels:
         sm64_panel_unregister()

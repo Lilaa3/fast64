@@ -3,7 +3,7 @@ from enum import Enum
 
 enumSM64CollisionFormat = [
     ("SM64", "SM64", "SM64´s collision format (enum)"),
-    ("HackerSM64", "HackerSM64 3.0", "HackerSM64´s collision format (32 bit bitfield struct)"),
+    ("HackerSM64", "New", "Suggested HackerSM64´s collision format (32 bit bitfield struct)"),
 ]
 
 enumObjectType = [

@@ -1,6 +1,6 @@
 import bpy
 from bpy.utils import register_class, unregister_class
-from bpy.types import PropertyGroup
+from bpy.types import PropertyGroup, UILayout
 from bpy.props import (
     BoolProperty,
     StringProperty,
@@ -17,6 +17,7 @@ from ..sm64_constants import MAX_U8, MIN_S16, MAX_S16, MIN_U8
 from .operators import SM64_SearchCollisionEnum, SM64_ExportCollision
 from .constants import (
     NewCollisionTypePreset,
+    enumSM64CollisionFormat,
     enumCollisionWarpsAndLevel,
     enumCollisionSpecial,
     enumQuicksandCollision,
@@ -129,7 +130,7 @@ class SM64_HackerSM64CollisionType(PropertyGroup):
         elif self.special in ["COL_TYPE_FORCE_AS_SPEED"]:
             return self.speed
 
-    def draw_enum_or_custom(self, layout: bpy.types.UILayout, propName: str, text: str):
+    def draw_enum_or_custom(self, layout: UILayout, propName: str, text: str):
         col = layout.column()
         if getattr(self, propName) == "CUSTOM":
             col = col.box().column()
@@ -147,7 +148,7 @@ class SM64_HackerSM64CollisionType(PropertyGroup):
         "COL_TYPE_HORIZONTAL_WIND",
     ]
 
-    def drawSpecial(self, layout: bpy.types.UILayout):
+    def drawSpecial(self, layout: UILayout):
         col = layout.column()
 
         self.draw_enum_or_custom(col, "special", "Special Physics")
@@ -161,7 +162,7 @@ class SM64_HackerSM64CollisionType(PropertyGroup):
         if self.special in ["COL_TYPE_HORIZONTAL_WIND", "COL_TYPE_FLOWING_WATER", "MOVING_QUICKSAND"]:
             prop_split(col, self, "angle", "Angle (Degrees)")
 
-    def drawWarpsAndLevel(self, layout: bpy.types.UILayout):
+    def drawWarpsAndLevel(self, layout: UILayout):
         col = layout.column()
         self.draw_enum_or_custom(col, "warps_and_level", "Level Properties")
         if self.warps_and_level == "INSTANT_WARP":
@@ -177,7 +178,7 @@ class SM64_HackerSM64CollisionType(PropertyGroup):
             except:
                 col.box().label(text="Invalid value.", icon="ERROR")
 
-    def draw_props(self, layout: bpy.types.UILayout):
+    def draw_props(self, layout: UILayout):
         col = layout.column()
 
         physics_box = col.box().column()
@@ -224,21 +225,22 @@ class SM64_VanillaCollisionType(bpy.types.PropertyGroup):
         elif self.options == "CUSTOM":
             return self.custom
 
-    def draw_props(self, layout: bpy.types.UILayout):
-        col = layout.column()
+    def draw_props(self, layout: UILayout):
+        split = layout.split()
 
-        prop_split(col, self, "options", "Options")
+        prop_split(split, self, "options", "Options")
 
         if self.options == "ALL":
-            col.operator(SM64_SearchCollisionEnum.bl_idname, icon="VIEWZOOM")
-            prop_split(col, self, "type", "Collision Type")
+            SM64_SearchCollisionEnum.draw_props(split, self, "type", "Collision Type")
         elif self.options == "SIMPLE":
-            prop_split(col, self, "simple_type", "Collision Type")
+            prop_split(split, self, "simple_type", "Collision Type")
         elif self.options == "CUSTOM":
-            prop_split(col, self, "custom", "Collision Type")
+            prop_split(split, self, "custom", "Collision Type")
 
 
 class SM64_MaterialCollisionProps(bpy.types.PropertyGroup):
+    material_menu_tab: BoolProperty(name="SM64 Collision Inspector", default=True)
+
     hasCollision: BoolProperty(name="Has Collision", default=True)
 
     vanilla: PointerProperty(type=SM64_VanillaCollisionType, name="Vanilla Collision Type")
@@ -247,23 +249,23 @@ class SM64_MaterialCollisionProps(bpy.types.PropertyGroup):
     set_force: BoolProperty(name="Set Parameter (Force)")
     force: StringProperty(name="Parameter")
 
-    def get_generated_force(self, sm64Props):
-        if sm64Props.collision_format == "SM64":
+    def get_generated_force(self, collision_format: str):
+        if collision_format == "SM64":
             return
-        elif sm64Props.collision_format == "HackerSM64":
+        elif collision_format == "HackerSM64":
             return self.hackersm64.get_generated_force()
 
-    def draw_props(self, layout: bpy.types.UILayout, sm64Props):
+    def draw_props(self, layout: UILayout, collision_format: str):
         layout.box().prop(self, "hasCollision")
         col = layout.column()
         col.enabled = self.hasCollision
 
-        if sm64Props.collision_format == "SM64":
+        if collision_format == "SM64":
             self.vanilla.draw_props(col)
-        elif sm64Props.collision_format == "HackerSM64":
+        elif collision_format == "HackerSM64":
             self.hackersm64.draw_props(col)
 
-        generated_force = self.get_generated_force(sm64Props)
+        generated_force = self.get_generated_force(collision_format)
 
         if generated_force is None:
             box = col.box().column()
@@ -273,7 +275,11 @@ class SM64_MaterialCollisionProps(bpy.types.PropertyGroup):
             prop_split(col, self, "force", "Parameter")
 
 
-class SM64_CollisionExportProps(bpy.types.PropertyGroup):
+class SM64_CollisionProps(bpy.types.PropertyGroup):
+    format: EnumProperty(
+        name="Collision Format",
+        items=enumSM64CollisionFormat
+    )
     start_address: StringProperty(name="Start Address", default=intToHex(0x11D8930))
     end_address: StringProperty(name="End Address", default=intToHex(0x11FFF00))
     set_addr_0x2A: BoolProperty(name="Overwrite 0x2A Behaviour Command")
@@ -281,16 +287,17 @@ class SM64_CollisionExportProps(bpy.types.PropertyGroup):
     col_include_children: BoolProperty(name="Include child objects", default=True)
     col_export_rooms: BoolProperty(name="Export Rooms", default=False)
 
-    def draw_props(self, layout: bpy.types.UILayout, sm64ExportProps):
+    def draw_props(self, layout: bpy.types.UILayout, export_type: str):
         col = layout.column()
-
+        prop_split(col, self, "format", "Format")
         col.operator(SM64_ExportCollision.bl_idname)
         col.prop(self, "col_include_children")
 
-        if sm64ExportProps.header_type in ["C", "glTF"]:
+        if export_type == "C":
             col.prop(self, "col_export_rooms")
-        elif sm64ExportProps.header_type == "Insertable Binary":
-            self.address_range.draw_props(col)
+        else:
+            prop_split(col, self, "start_address", "Start Address")
+            prop_split(col, self, "end_address", "End Address")
             col.prop(self, "set_addr_0x2A")
             if self.set_addr_0x2A:
                 prop_split(col, self, "addr_0x2A", "0x2A Behaviour Command Address")
@@ -300,7 +307,7 @@ properties = [
     SM64_HackerSM64CollisionType,
     SM64_VanillaCollisionType,
     SM64_MaterialCollisionProps,
-    SM64_CollisionExportProps,
+    SM64_CollisionProps,
 ]
 
 

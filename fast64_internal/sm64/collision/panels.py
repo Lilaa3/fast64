@@ -1,6 +1,7 @@
 import bpy
 from bpy.utils import register_class, unregister_class
 
+from ...utility import draw_and_check_tab
 from ...panels import SM64_Panel
 
 
@@ -17,21 +18,20 @@ class SM64_CollisionPanel(bpy.types.Panel):
         return context.scene.gameEditorMode == "SM64" and context.material is not None
 
     def draw(self, context):
-        col = self.layout.column()
-        col.box().label(text="Collision Inspector")
-        material = context.material
-        material.fast64.sm64.collision.draw_props(col, context.scene.fast64.sm64)
+        box = self.layout.box().column()
+        collision_props = context.material.fast64.sm64.collision
+        if draw_and_check_tab(box, collision_props, "material_menu_tab"):
+            collision_props.draw_props(box, context.scene.fast64.sm64.collision.format)
 
 
 class SM64_ExportCollisionPanel(SM64_Panel):
     bl_idname = "SM64_PT_export_collision"
-    bl_label = "Collision Exporter"
+    bl_label = "SM64 Collision"
     goal = "Object/Actor/Anim"
 
-    # called every frame
     def draw(self, context):
         sm64_props = context.scene.fast64.sm64
-        sm64_props.collision_export.draw_props(self.layout, sm64_props.export)
+        sm64_props.collision.draw_props(self.layout, sm64_props.export_type)
 
 
 panels = [SM64_CollisionPanel, SM64_ExportCollisionPanel]

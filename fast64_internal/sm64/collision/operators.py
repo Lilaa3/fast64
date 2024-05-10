@@ -1,45 +1,34 @@
 import math
 import os
-import bpy, mathutils
+
 from bpy.utils import register_class, unregister_class
-from bpy.props import (
-    EnumProperty,
-    FloatProperty,
-    StringProperty,
-    IntProperty,
-)
+from bpy.props import (EnumProperty)
+
 from ...utility import applyRotation, raisePluginError, PluginError
+from ...operators import SearchEnumOperatorBase, OperatorBase
+
 from .constants import enumCollisionType
 
 
-class SM64_SearchCollisionEnum(bpy.types.Operator):
-    bl_idname = "scene.search_collision_enums_operator"
+class SM64_SearchCollisionEnum(SearchEnumOperatorBase):
+    bl_idname = "material.search_collision_enums_operator"
     bl_label = "Search Collision Enum"
-    bl_description = "Search All Collision Enum"
-    bl_property = "collisionEnum"
-    bl_options = {"UNDO"}
+    bl_property = "collision_enum"
 
-    collisionEnum: EnumProperty(items=enumCollisionType)
+    collision_enum: EnumProperty(items=enumCollisionType)
 
-    def execute(self, context):
-        context.region.tag_redraw()
-        context.material.fast64.sm64.collision.vanilla.type = self.collisionEnum
-        self.report({"INFO"}, "Selected: " + self.collisionEnum)
-        return {"FINISHED"}
-
-    def invoke(self, context, event):
-        context.window_manager.invoke_search_popup(self)
-        return {"RUNNING_MODAL"}
+    def update_enum(self, context):
+        context.material.fast64.sm64.collision.vanilla.type = self.collision_enum
 
 
-class SM64_ExportCollision(bpy.types.Operator):
+class SM64_ExportCollision(OperatorBase):
     # set bl_ properties
     bl_idname = "object.sm64_export_collision"
     bl_label = "Export Collision"
     bl_description = "Export Collision"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
 
-    def execute(self, context):
+    def execute_operator(self, context):
         romfileOutput = None
         tempROM = None
         try:
