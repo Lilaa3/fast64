@@ -1057,7 +1057,7 @@ class SM64_AnimProps(PropertyGroup):
         directory_path_checks(header_dir_path)
         geo_dir_path: os.PathLike = abspath(os.path.join(header_dir_path, dir_name))
         anim_dir_path: os.PathLike = abspath(os.path.join(geo_dir_path, "anims"))
-        return (abspath(anim_dir_path), abspath(geo_dir_path), abspath(header_dir_path))
+        return (anim_dir_path, geo_dir_path, header_dir_path)
 
     def draw_insertable_binary_settings(self, layout: UILayout):
         col = layout.column()
