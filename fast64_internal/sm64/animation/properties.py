@@ -767,7 +767,9 @@ class SM64_AnimImportProps(PropertyGroup):
         return (
             int(self.mario_animation, 0)
             if self.mario_animation != "Custom"
-            else self.table_index if self.read_entire_table else None
+            else self.table_index
+            if self.read_entire_table
+            else None
         )
 
     @property

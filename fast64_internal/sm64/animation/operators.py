@@ -239,6 +239,7 @@ class SM64_SearchMarioAnim(SearchEnumOperatorBase):
     bl_idname = "scene.search_mario_anim_enum_operator"
     bl_property = "mario_animations"
     mario_animations: EnumProperty(items=marioAnimationNames)
+
     def update_enum(self, context: Context):
         get_animation_props(context).importing.mario_animation = self.mario_animations
 
