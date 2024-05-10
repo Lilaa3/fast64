@@ -4,6 +4,7 @@ import bpy
 from bpy.types import Object, Action, PoseBone, Context
 from bpy.path import abspath
 import mathutils
+from mathutils import Euler, Quaternion, Vector
 
 from ...utility import (
     PluginError,
@@ -11,8 +12,6 @@ from ...utility import (
     encodeSegmentedAddr,
     decodeSegmentedAddr,
     get64bitAlignedAddr,
-    getExportDir,
-    getPathAndLevel,
     intToHex,
     writeIfNotFound,
     radians_to_s16,
@@ -106,7 +105,7 @@ def get_rotation_data(action: Action, bone: PoseBone, max_frame: int):
     rotation = (rotation_pairs[0].values, rotation_pairs[1].values, rotation_pairs[2].values)
     if bone.rotation_mode == "QUATERNION":
         for w, x, y, z in zip(*get_entire_fcurve_data(action, bone, "rotation_quaternion", max_frame, 4)):
-            euler = mathutils.Quaternion((w, x, y, z)).to_euler()
+            euler = Quaternion((w, x, y, z)).to_euler()
             rotation[0].append(radians_to_s16(euler.x))
             rotation[1].append(radians_to_s16(euler.y))
             rotation[2].append(radians_to_s16(euler.z))
@@ -118,7 +117,7 @@ def get_rotation_data(action: Action, bone: PoseBone, max_frame: int):
             rotation[2].append(radians_to_s16(euler.z))
     else:
         for x, y, z in zip(*get_entire_fcurve_data(action, bone, "rotation_euler", max_frame, 3)):
-            euler = mathutils.Euler(x, y, z, action, bone.rotation_mode)
+            euler = Euler(x, y, z, action, bone.rotation_mode)
             rotation[0].append(radians_to_s16(euler.x))
             rotation[1].append(radians_to_s16(euler.y))
             rotation[2].append(radians_to_s16(euler.z))
@@ -162,13 +161,13 @@ def get_animation_pairs(
             rotation_pairs.append(rotation)
             pairs.extend(rotation)
 
-        scale: mathutils.Vector = armature_obj.matrix_world.to_scale() * blender_to_sm64_scale
+        scale: Vector = armature_obj.matrix_world.to_scale() * blender_to_sm64_scale
         for frame in range(max_frame):
             bpy.context.scene.frame_set(frame)
             for i, pose_bone in enumerate(anim_bones):
                 matrix = pose_bone.matrix_basis
                 if i == 0:  # Only first bone has translation.
-                    translation: mathutils.Vector = matrix.to_translation() * scale
+                    translation: Vector = matrix.to_translation() * scale
                     trans_x_pair.values.append(int(translation.x))
                     trans_y_pair.values.append(int(translation.y))
                     trans_z_pair.values.append(int(translation.z))
