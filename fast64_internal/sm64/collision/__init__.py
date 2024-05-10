@@ -1,11 +1,12 @@
+from .panels import collision_panels_register, collision_panels_unregister
 from .operators import operator_register, operator_unregister
-from .properties import propertiesRegister, propertiesUnregister
+from .properties import properties_register, properties_unregister, SM64_MaterialCollisionProps
 
-def sm64_collision_register():
+def collision_register():
     operator_register()
-    propertiesRegister()
+    properties_register()
 
 
-def sm64_collision_unregister():
+def collision_unregister():
     operator_unregister()
-    propertiesUnregister()
+    properties_unregister()

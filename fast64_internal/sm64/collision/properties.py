@@ -10,11 +10,11 @@ from bpy.props import (
     CollectionProperty,
     PointerProperty,
 )
-from ..common_properties import SM64_AddressRange
 
-from ..utility import degree_to_sm64_degree
+from ...utility import intToHex,  prop_split
+from ..sm64_constants import MAX_U8, MIN_S16, MAX_S16, MIN_U8
+
 from .operators import SM64_SearchCollisionEnum, SM64_ExportCollision
-
 from .constants import (
     NewCollisionTypePreset,
     enumCollisionWarpsAndLevel,
@@ -32,10 +32,6 @@ from .constants import (
     sTerrainSounds,
     enumCollisionForceBased,
 )
-
-from ..constants import MAX_U8, MIN_S16, MAX_S16, MIN_S8, MAX_S8, MIN_U8
-from ...utility import prop_split, PluginError
-
 
 def vanilla_to_hackersm64(self, context):
     area_object = context.object.parent
@@ -122,13 +118,10 @@ class SM64_HackerSM64CollisionType(PropertyGroup):
 
     def get_generated_force(self) -> int | None:
         if self.warps_and_level in ["COL_TYPE_WARP", "COL_TYPE_FORCE_INSTANT_WARP"]:
-            try:
-                return int(self.warp_id, 16)
-            except:
-                return None
+            return int(self.warp_id, 0)
 
         if self.special in ["COL_TYPE_HORIZONTAL_WIND", "COL_TYPE_FLOWING_WATER", "MOVING_QUICKSAND"]:
-            unsigned_result = degree_to_sm64_degree(self.angle, as_s16=False) >> 8
+            unsigned_result = (self.angle % 360) * (360 / 2**8)
             if self.special in ["COL_TYPE_FLOWING_WATER", "MOVING_QUICKSAND"]:
                 unsigned_result |= self.push_force << 8
             return int.from_bytes(int.to_bytes(unsigned_result, 2, "big"), "big", signed=True)
@@ -280,12 +273,12 @@ class SM64_MaterialCollisionProps(bpy.types.PropertyGroup):
 
 
 class SM64_CollisionExportProps(bpy.types.PropertyGroup):
-    address_range: PointerProperty(type=SM64_AddressRange, name="Address Range")
-
-    addr_0x2A: bpy.props.StringProperty(name="0x2A Behaviour Command Address", default="21A9CC")
-    set_addr_0x2A: bpy.props.BoolProperty(name="Overwrite 0x2A Behaviour Command")
-    col_include_children: bpy.props.BoolProperty(name="Include child objects", default=True)
-    col_export_rooms: bpy.props.BoolProperty(name="Export Rooms", default=False)
+    start_address: StringProperty(name="Start Address", default=intToHex(0x11D8930))
+    end_address: StringProperty(name="End Address", default=intToHex(0x11FFF00))
+    set_addr_0x2A: BoolProperty(name="Overwrite 0x2A Behaviour Command")
+    addr_0x2A: StringProperty(name="0x2A Behaviour Command Address", default=intToHex(0x21A9CC))
+    col_include_children: BoolProperty(name="Include child objects", default=True)
+    col_export_rooms: BoolProperty(name="Export Rooms", default=False)
 
     def draw_props(self, layout: bpy.types.UILayout, sm64ExportProps):
         col = layout.column()
@@ -310,11 +303,11 @@ properties = [
 ]
 
 
-def propertiesRegister():
+def properties_register():
     for cls in properties:
         register_class(cls)
 
 
-def propertiesUnregister():
+def properties_unregister():
     for cls in reversed(properties):
         unregister_class(cls)

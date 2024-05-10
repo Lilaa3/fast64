@@ -3,7 +3,7 @@
 import bpy, math
 from bpy.utils import register_class, unregister_class
 from .f3d.f3d_material import *
-from .sm64.sm64_collision import CollisionSettings
+from .sm64.collision.sm64_collision import CollisionSettings
 from .utility import *
 from bl_operators.presets import AddPresetBase
 

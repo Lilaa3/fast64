@@ -5,7 +5,7 @@ from ..panels import SM64_Panel
 from ..operators import ObjectDataExporter
 from .sm64_constants import cameraTriggerNames, levelIDNames, enumLevelNames
 from .sm64_objects import exportAreaCommon, backgroundSegments
-from .sm64_collision import exportCollisionCommon
+from .collision.sm64_collision import exportCollisionCommon
 from .sm64_f3d_writer import SM64Model, SM64GfxFormatter
 from .sm64_geolayout_writer import setRooms, convertObjectToGeolayout
 from .sm64_f3d_writer import modifyTexScrollFiles, modifyTexScrollHeadersGroup

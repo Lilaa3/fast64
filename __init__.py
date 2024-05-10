@@ -15,7 +15,7 @@ from .fast64_internal.repo_settings import (
 )
 
 from .fast64_internal.sm64.settings.properties import SM64_Properties
-from .fast64_internal.sm64 import sm64_register, sm64_unregister
+from .fast64_internal.sm64 import sm64_register, sm64_unregister, SM64_MaterialProperties
 from .fast64_internal.sm64.sm64_geolayout_bone import SM64_BoneProperties
 from .fast64_internal.sm64.sm64_objects import SM64_ObjectProperties
 
@@ -264,6 +264,13 @@ class Fast64_ObjectProperties(bpy.types.PropertyGroup):
     sm64: bpy.props.PointerProperty(type=SM64_ObjectProperties, name="SM64 Object Properties")
     oot: bpy.props.PointerProperty(type=OOT_ObjectProperties, name="OOT Object Properties")
 
+class Fast64_MaterialProperties(bpy.types.PropertyGroup):
+    """
+    Properties in material.fast64 (bpy.types.Material)
+    All new material properties should be children of this property group.
+    """
+
+    sm64: bpy.props.PointerProperty(type=SM64_MaterialProperties, name="SM64 Material Properties")
 
 class UpgradeF3DMaterialsDialog(bpy.types.Operator):
     bl_idname = "dialog.upgrade_f3d_materials"
@@ -353,6 +360,7 @@ classes = (
     Fast64_Properties,
     Fast64_BoneProperties,
     Fast64_ObjectProperties,
+    Fast64_MaterialProperties,
     F3D_GlobalSettingsPanel,
     Fast64_GlobalSettingsPanel,
     Fast64_GlobalToolsPanel,
@@ -450,6 +458,7 @@ def register():
     bpy.types.Scene.fast64 = bpy.props.PointerProperty(type=Fast64_Properties, name="Fast64 Properties")
     bpy.types.Bone.fast64 = bpy.props.PointerProperty(type=Fast64_BoneProperties, name="Fast64 Bone Properties")
     bpy.types.Object.fast64 = bpy.props.PointerProperty(type=Fast64_ObjectProperties, name="Fast64 Object Properties")
+    bpy.types.Material.fast64 = bpy.props.PointerProperty(type=Fast64_MaterialProperties, name="Fast64 Material Properties")
 
     bpy.app.handlers.load_post.append(after_load)
 
@@ -480,6 +489,7 @@ def unregister():
     del bpy.types.Scene.fast64
     del bpy.types.Bone.fast64
     del bpy.types.Object.fast64
+    del bpy.types.Material.fast64
 
     repo_settings_operators_unregister()
 

@@ -1,3 +1,5 @@
+from bpy.types import PropertyGroup
+from bpy.props import IntProperty, PointerProperty
 from .settings import (
     settings_props_register,
     settings_props_unregister,
@@ -12,11 +14,8 @@ from .tools import (
     tools_panels_unregister,
 )
 
-from .sm64_collision import (
-    sm64_col_panel_register,
-    sm64_col_panel_unregister,
-    sm64_col_register,
-    sm64_col_unregister,
+from .collision import (
+    collision_register, collision_unregister, collision_panels_register, collision_panels_unregister, SM64_MaterialCollisionProps
 )
 
 from .sm64_geolayout_bone import (
@@ -89,11 +88,16 @@ from .sm64_anim import (
     sm64_anim_unregister,
 )
 
+class SM64_MaterialProperties(PropertyGroup):
+    version: IntProperty(name="SM64_MaterialProperties Version", default=0)
+    cur_version = 1  # version after property migration
+
+    collision: PointerProperty(name="Collision", type=SM64_MaterialCollisionProps)
 
 def sm64_panel_register():
     settings_panels_register()
     tools_panels_register()
-    sm64_col_panel_register()
+    collision_panels_register()
     sm64_bone_panel_register()
     sm64_cam_panel_register()
     sm64_obj_panel_register()
@@ -109,7 +113,7 @@ def sm64_panel_register():
 def sm64_panel_unregister():
     settings_panels_unregister()
     tools_panels_unregister()
-    sm64_col_panel_unregister()
+    collision_panels_unregister()
     sm64_bone_panel_unregister()
     sm64_cam_panel_unregister()
     sm64_obj_panel_unregister()
@@ -124,7 +128,7 @@ def sm64_panel_unregister():
 
 def sm64_register(register_panels: bool):
     tools_operators_register()
-    sm64_col_register()
+    collision_register()
     sm64_bone_register()
     sm64_cam_register()
     sm64_obj_register()
