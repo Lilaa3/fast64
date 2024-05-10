@@ -15,7 +15,11 @@ from .tools import (
 )
 
 from .collision import (
-    collision_register, collision_unregister, collision_panels_register, collision_panels_unregister, SM64_MaterialCollisionProps
+    collision_register,
+    collision_unregister,
+    collision_panels_register,
+    collision_panels_unregister,
+    SM64_MaterialCollisionProps,
 )
 
 from .sm64_geolayout_bone import (
@@ -88,11 +92,13 @@ from .sm64_anim import (
     sm64_anim_unregister,
 )
 
+
 class SM64_MaterialProperties(PropertyGroup):
     version: IntProperty(name="SM64_MaterialProperties Version", default=0)
     cur_version = 1  # version after property migration
 
     collision: PointerProperty(name="Collision", type=SM64_MaterialCollisionProps)
+
 
 def sm64_panel_register():
     settings_panels_register()

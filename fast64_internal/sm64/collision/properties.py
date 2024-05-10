@@ -11,7 +11,7 @@ from bpy.props import (
     PointerProperty,
 )
 
-from ...utility import intToHex,  prop_split
+from ...utility import intToHex, prop_split
 from ..sm64_constants import MAX_U8, MIN_S16, MAX_S16, MIN_U8
 
 from .operators import SM64_SearchCollisionEnum, SM64_ExportCollision
@@ -32,6 +32,7 @@ from .constants import (
     sTerrainSounds,
     enumCollisionForceBased,
 )
+
 
 def vanilla_to_hackersm64(self, context):
     area_object = context.object.parent

@@ -3,6 +3,7 @@ from bpy.utils import register_class, unregister_class
 
 from ...panels import SM64_Panel
 
+
 class SM64_CollisionPanel(bpy.types.Panel):
     bl_label = "SM64 Collision"
     bl_idname = "MATERIAL_PT_SM64_Collision_Inspector"
@@ -18,7 +19,9 @@ class SM64_CollisionPanel(bpy.types.Panel):
     def draw(self, context):
         col = self.layout.column()
         col.box().label(text="Collision Inspector")
-        context.material.fast64.sm64.collision.draw_props(col, context.scene.fast64.sm64)
+        material = context.material
+        material.fast64.sm64.collision.draw_props(col, context.scene.fast64.sm64)
+
 
 class SM64_ExportCollisionPanel(SM64_Panel):
     bl_idname = "SM64_PT_export_collision"
@@ -32,6 +35,7 @@ class SM64_ExportCollisionPanel(SM64_Panel):
 
 
 panels = [SM64_CollisionPanel, SM64_ExportCollisionPanel]
+
 
 def collision_panels_register():
     for cls in panels:

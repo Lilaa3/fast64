@@ -13,15 +13,18 @@ from ...utility import (
     duplicateHierarchy,
     cleanupDuplicatedObjects,
     writeInsertableFile,
-    getExportDir
+    getExportDir,
 )
 from ..sm64_constants import insertableBinaryTypes
 from ..sm64_objects import SM64_Area, start_process_sm64_objects
 
 from .constants import CollisionTypeDefinition
+
+
 @dataclass
 class CollisionVertex:
-    position: tuple[int, int, int] 
+    position: tuple[int, int, int]
+
     def __post_init__(self):
         if len(self.position) != 3:
             raise PluginError("Vertex position should not be " + str(len(self.position) + " fields long."))
@@ -33,14 +36,15 @@ class CollisionVertex:
         return data
 
     def to_c(self):
-        return (f"\
+        return f"\
 COL_VERTEX({str(round(self.position[0]))}, {str(round(self.position[1]))}, {str(round(self.position[2]))}),\n"
-        )
+
 
 @dataclass
 class CollisionTriangle:
-    indices: tuple[int, int, int] 
+    indices: tuple[int, int, int]
     special_param: int | None
+
     def __post_init__(self):
         if len(self.indices) != 3:
             raise PluginError("Triangle indices should not be " + str(len(self.indices) + " fields long."))
@@ -193,7 +197,6 @@ def exportCollisionC(
     groupName,
     levelName,
 ):
-
     dirPath, texDir = getExportDir(customExport, dirPath, headerType, levelName, "", name)
 
     name = toAlnum(name)
@@ -294,7 +297,7 @@ def exportCollisionCommon(obj, transformMatrix, includeSpecials, includeChildren
     collision = Collision(toAlnum(name) + "_collision")
     for collisionType, faces in collisionDict.items():
         collision.triangles[collisionType] = []
-        for (faceVerts, specialParam, room) in faces:
+        for faceVerts, specialParam, room in faces:
             indices = []
             for roundedPosition in faceVerts:
                 index = collisionVertIndex(roundedPosition, collision.vertices)
@@ -370,6 +373,8 @@ def sm64_col_register():
 
 def sm64_col_unregister():
     del bpy.types.Object.room_num
+
+
 class CollisionSettings:
     def __init__(self):
         self.collision_type = "SURFACE_DEFAULT"

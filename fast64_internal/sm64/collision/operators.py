@@ -11,6 +11,7 @@ from bpy.props import (
 from ...utility import applyRotation, raisePluginError, PluginError
 from .constants import enumCollisionType
 
+
 class SM64_SearchCollisionEnum(bpy.types.Operator):
     bl_idname = "scene.search_collision_enums_operator"
     bl_label = "Search Collision Enum"
@@ -29,6 +30,7 @@ class SM64_SearchCollisionEnum(bpy.types.Operator):
     def invoke(self, context, event):
         context.window_manager.invoke_search_popup(self)
         return {"RUNNING_MODAL"}
+
 
 class SM64_ExportCollision(bpy.types.Operator):
     # set bl_ properties
@@ -157,9 +159,11 @@ class SM64_ExportCollision(bpy.types.Operator):
 
 operators = [SM64_SearchCollisionEnum, SM64_ExportCollision]
 
+
 def operator_register():
     for cls in operators:
         register_class(cls)
+
 
 def operator_unregister():
     for cls in reversed(operators):

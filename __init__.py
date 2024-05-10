@@ -264,6 +264,7 @@ class Fast64_ObjectProperties(bpy.types.PropertyGroup):
     sm64: bpy.props.PointerProperty(type=SM64_ObjectProperties, name="SM64 Object Properties")
     oot: bpy.props.PointerProperty(type=OOT_ObjectProperties, name="OOT Object Properties")
 
+
 class Fast64_MaterialProperties(bpy.types.PropertyGroup):
     """
     Properties in material.fast64 (bpy.types.Material)
@@ -271,6 +272,7 @@ class Fast64_MaterialProperties(bpy.types.PropertyGroup):
     """
 
     sm64: bpy.props.PointerProperty(type=SM64_MaterialProperties, name="SM64 Material Properties")
+
 
 class UpgradeF3DMaterialsDialog(bpy.types.Operator):
     bl_idname = "dialog.upgrade_f3d_materials"
@@ -458,7 +460,9 @@ def register():
     bpy.types.Scene.fast64 = bpy.props.PointerProperty(type=Fast64_Properties, name="Fast64 Properties")
     bpy.types.Bone.fast64 = bpy.props.PointerProperty(type=Fast64_BoneProperties, name="Fast64 Bone Properties")
     bpy.types.Object.fast64 = bpy.props.PointerProperty(type=Fast64_ObjectProperties, name="Fast64 Object Properties")
-    bpy.types.Material.fast64 = bpy.props.PointerProperty(type=Fast64_MaterialProperties, name="Fast64 Material Properties")
+    bpy.types.Material.fast64 = bpy.props.PointerProperty(
+        type=Fast64_MaterialProperties, name="Fast64 Material Properties"
+    )
 
     bpy.app.handlers.load_post.append(after_load)
 

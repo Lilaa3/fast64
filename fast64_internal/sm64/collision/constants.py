@@ -252,7 +252,14 @@ enumCollisionType = [
     ("SURFACE_TRAPDOOR", "Trapdoor", "Trapdoor"),
 ]
 
-enumCollisionForceBased = ["COL_TYPE_WARP", "COL_TYPE_FORCE_INSTANT_WARP", "COL_TYPE_FORCE_AS_SPEED", "COL_TYPE_HORIZONTAL_WIND", "COL_TYPE_FLOWING_WATER", "MOVING_QUICKSAND"]
+enumCollisionForceBased = [
+    "COL_TYPE_WARP",
+    "COL_TYPE_FORCE_INSTANT_WARP",
+    "COL_TYPE_FORCE_AS_SPEED",
+    "COL_TYPE_HORIZONTAL_WIND",
+    "COL_TYPE_FLOWING_WATER",
+    "MOVING_QUICKSAND",
+]
 
 enumCollisionWarpsAndLevel = [
     ("COL_TYPE_LEVEL_DEFAULT", "Default", "COL_TYPE_LEVEL_DEFAULT"),
@@ -454,14 +461,26 @@ newCollisionPresets = {
         slipperiness="SURFACE_CLASS_VERY_SLIPPERY", sound_type="SURFACE_CLASS_VERY_SLIPPERY", non_decal_shadow=True
     ),
     "SURFACE_SLOW": NewCollisionTypePreset(special="SLOW"),
-    "SURFACE_SUPER_SLIPPERY": NewCollisionTypePreset(slipperiness="SURFACE_CLASS_SUPER_SLIPPERY", sound_type="VERY_SLIPPERY"),
-    "SURFACE_VERY_SLIPPERY": NewCollisionTypePreset(slipperiness="SURFACE_CLASS_VERY_SLIPPERY", sound_type="VERY_SLIPPERY"),
+    "SURFACE_SUPER_SLIPPERY": NewCollisionTypePreset(
+        slipperiness="SURFACE_CLASS_SUPER_SLIPPERY", sound_type="VERY_SLIPPERY"
+    ),
+    "SURFACE_VERY_SLIPPERY": NewCollisionTypePreset(
+        slipperiness="SURFACE_CLASS_VERY_SLIPPERY", sound_type="VERY_SLIPPERY"
+    ),
     "SURFACE_SLIPPERY": NewCollisionTypePreset(slipperiness="SURFACE_CLASS_SLIPPERY", sound_type="SLIPPERY"),
     "SURFACE_NOT_SLIPPERY": NewCollisionTypePreset(slipperiness="SURFACE_CLASS_NOT_SLIPPERY", sound_type="HARD"),
-    "SURFACE_NOISE_VERY_SLIPPERY": NewCollisionTypePreset(slipperiness="SURFACE_CLASS_VERY_SLIPPERY", sound_type="VERY_SLIPPERY"),
-    "SURFACE_NOISE_VERY_SLIPPERY_73": NewCollisionTypePreset(slipperiness="SURFACE_CLASS_ERY_SLIPPERY", sound_type="VERY_SLIPPERY"),
-    "SURFACE_NOISE_VERY_SLIPPERY_74": NewCollisionTypePreset(slipperiness="SURFACE_CLASS_VERY_SLIPPERY", sound_type="VERY_SLIPPERY"),
-    "SURFACE_NOISE_SLIPPERY": NewCollisionTypePreset(slipperiness="SURFACE_CLASS_SLIPPERY", sound_type="NOISY_SLIPERRY"),
+    "SURFACE_NOISE_VERY_SLIPPERY": NewCollisionTypePreset(
+        slipperiness="SURFACE_CLASS_VERY_SLIPPERY", sound_type="VERY_SLIPPERY"
+    ),
+    "SURFACE_NOISE_VERY_SLIPPERY_73": NewCollisionTypePreset(
+        slipperiness="SURFACE_CLASS_ERY_SLIPPERY", sound_type="VERY_SLIPPERY"
+    ),
+    "SURFACE_NOISE_VERY_SLIPPERY_74": NewCollisionTypePreset(
+        slipperiness="SURFACE_CLASS_VERY_SLIPPERY", sound_type="VERY_SLIPPERY"
+    ),
+    "SURFACE_NOISE_SLIPPERY": NewCollisionTypePreset(
+        slipperiness="SURFACE_CLASS_SLIPPERY", sound_type="NOISY_SLIPERRY"
+    ),
     "SURFACE_NOISE_DEFAULT": NewCollisionTypePreset(sound_type="NOISY_DEFAULT"),
     "SURFACE_HARD_VERY_SLIPPERY": NewCollisionTypePreset(
         slipperiness="SURFACE_CLASS_VERY_SLIPPERY", sound_type="VERY_SLIPPERY", can_get_stuck=False
