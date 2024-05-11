@@ -16,7 +16,7 @@ from ..sm64_constants import MAX_U8, MIN_S16, MAX_S16, MIN_U8
 
 from .operators import SM64_SearchCollisionEnum, SM64_ExportCollision
 from .constants import (
-    NewCollisionTypePreset,
+    NewCollisionType,
     enumSM64CollisionFormat,
     enumCollisionWarpsAndLevel,
     enumCollisionSpecial,
@@ -52,13 +52,12 @@ def vanilla_to_hackersm64(self, context):
     hackersm64 = context.material.fast64.sm64.collision.hackersm64
 
     vanilla_enum = self.get_enum()
-    preset = newCollisionPresets.get(vanilla_enum, NewCollisionTypePreset)
+    preset = newCollisionPresets.get(vanilla_enum, NewCollisionType())
     hackersm64.decal_shadow = not preset.non_decal_shadow
     hackersm64.vanish = preset.vanish
     hackersm64.warps_and_level = preset.warps_and_level
     hackersm64.special = preset.special
     hackersm64.camera = preset.camera
-    hackersm64.instant_warp_num = preset.instant_warp_num
     hackersm64.quicksand_type = preset.quicksand_type
 
     hackersm64.sound = sTerrainSounds.get(terrain_enum, "TERRAIN_GRASS").get(preset.sound_type, "SOUND_TERRAIN_DEFAULT")

@@ -252,7 +252,7 @@ enumCollisionType = [
     ("SURFACE_TRAPDOOR", "Trapdoor", "Trapdoor"),
 ]
 
-enumCollisionForceBased = [
+enumCollisionForceBased = [ # TODO: Not an enum
     "COL_TYPE_WARP",
     "COL_TYPE_FORCE_INSTANT_WARP",
     "COL_TYPE_FORCE_AS_SPEED",
@@ -422,7 +422,7 @@ sTerrainSounds = {
 
 
 @dataclasses.dataclass
-class NewCollisionTypePreset:
+class NewCollisionType:
     non_decal_shadow: bool = False
     vanish: bool = False
     can_get_stuck: bool | None = None
@@ -432,7 +432,6 @@ class NewCollisionTypePreset:
     camera: str = "COL_TYPE_CAMERA_DEFAULT"
     particle: str | None = None
     sound_type: str = "DEFAULT"  # Vanilla Info
-    instant_warp_num: int = 0
     quicksand_type: str = "NORMAL"
 
 
@@ -442,84 +441,84 @@ vanillaSoundToParticle = {
 }
 
 newCollisionPresets = {
-    "SURFACE_BURNING": NewCollisionTypePreset(special="COL_TYPE_BURNING"),
-    "SURFACE_HANGABLE": NewCollisionTypePreset(special="COL_TYPE_HANGABLE"),
-    "SURFACE_DEATH_PLANE": NewCollisionTypePreset(special="COL_TYPE_DEATH_PLANE"),
-    "SURFACE_INTANGIBLE": NewCollisionTypePreset(special="COL_TYPE_INTANGIBLE"),
-    "SURFACE_MGR_MUSIC": NewCollisionTypePreset(warps_and_level="COL_TYPE_MUSIC"),
-    "SURFACE_QUICKSAND": NewCollisionTypePreset(special="QUICKSAND"),
-    "SURFACE_SHALLOW_QUICKSAND": NewCollisionTypePreset(special="QUICKSAND", quicksand_type="SHALLOW"),
-    "SURFACE_DEEP_QUICKSAND": NewCollisionTypePreset(special="QUICKSAND", quicksand_type="DEEP"),
-    "SURFACE_INSTANT_QUICKSAND": NewCollisionTypePreset(special="QUICKSAND", quicksand_type="INSTANT"),
-    "SURFACE_MOVING_QUICKSAND": NewCollisionTypePreset(special="MOVING_QUICKSAND"),
-    "SURFACE_DEEP_MOVING_QUICKSAND": NewCollisionTypePreset(special="MOVING_QUICKSAND", quicksand_type="DEEP"),
-    "SURFACE_SHALLOW_MOVING_QUICKSAND": NewCollisionTypePreset(special="MOVING_QUICKSAND", quicksand_type="SHALLOW"),
-    "SURFACE_INSTANT_MOVING_QUICKSAND": NewCollisionTypePreset(special="MOVING_QUICKSAND", quicksand_type="INSTANT"),
-    "SURFACE_WALL_MISC": NewCollisionTypePreset(camera="COL_TYPE_CAMERA_WALL"),
-    "SURFACE_HORIZONTAL_WIND": NewCollisionTypePreset(special="HORIZONTAL_WIND"),
-    "SURFACE_VERTICAL_WIND": NewCollisionTypePreset(special="VERTICAL_WIND"),
-    "SURFACE_TIMER_START": NewCollisionTypePreset(warps_and_level="TIMER_START"),
-    "SURFACE_TIMER_END": NewCollisionTypePreset(warps_and_level="TIMER_END"),
-    "SURFACE_ICE": NewCollisionTypePreset(
+    "SURFACE_BURNING": NewCollisionType(special="COL_TYPE_BURNING"),
+    "SURFACE_HANGABLE": NewCollisionType(special="COL_TYPE_HANGABLE"),
+    "SURFACE_DEATH_PLANE": NewCollisionType(special="COL_TYPE_DEATH_PLANE"),
+    "SURFACE_INTANGIBLE": NewCollisionType(special="COL_TYPE_INTANGIBLE"),
+    "SURFACE_MGR_MUSIC": NewCollisionType(warps_and_level="COL_TYPE_MUSIC"),
+    "SURFACE_QUICKSAND": NewCollisionType(special="QUICKSAND"),
+    "SURFACE_SHALLOW_QUICKSAND": NewCollisionType(special="QUICKSAND", quicksand_type="SHALLOW"),
+    "SURFACE_DEEP_QUICKSAND": NewCollisionType(special="QUICKSAND", quicksand_type="DEEP"),
+    "SURFACE_INSTANT_QUICKSAND": NewCollisionType(special="QUICKSAND", quicksand_type="INSTANT"),
+    "SURFACE_MOVING_QUICKSAND": NewCollisionType(special="MOVING_QUICKSAND"),
+    "SURFACE_DEEP_MOVING_QUICKSAND": NewCollisionType(special="MOVING_QUICKSAND", quicksand_type="DEEP"),
+    "SURFACE_SHALLOW_MOVING_QUICKSAND": NewCollisionType(special="MOVING_QUICKSAND", quicksand_type="SHALLOW"),
+    "SURFACE_INSTANT_MOVING_QUICKSAND": NewCollisionType(special="MOVING_QUICKSAND", quicksand_type="INSTANT"),
+    "SURFACE_WALL_MISC": NewCollisionType(camera="COL_TYPE_CAMERA_WALL"),
+    "SURFACE_HORIZONTAL_WIND": NewCollisionType(special="HORIZONTAL_WIND"),
+    "SURFACE_VERTICAL_WIND": NewCollisionType(special="VERTICAL_WIND"),
+    "SURFACE_TIMER_START": NewCollisionType(warps_and_level="TIMER_START"),
+    "SURFACE_TIMER_END": NewCollisionType(warps_and_level="TIMER_END"),
+    "SURFACE_ICE": NewCollisionType(
         slipperiness="SURFACE_CLASS_VERY_SLIPPERY", sound_type="SURFACE_CLASS_VERY_SLIPPERY", non_decal_shadow=True
     ),
-    "SURFACE_SLOW": NewCollisionTypePreset(special="SLOW"),
-    "SURFACE_SUPER_SLIPPERY": NewCollisionTypePreset(
+    "SURFACE_SLOW": NewCollisionType(special="SLOW"),
+    "SURFACE_SUPER_SLIPPERY": NewCollisionType(
         slipperiness="SURFACE_CLASS_SUPER_SLIPPERY", sound_type="VERY_SLIPPERY"
     ),
-    "SURFACE_VERY_SLIPPERY": NewCollisionTypePreset(
+    "SURFACE_VERY_SLIPPERY": NewCollisionType(
         slipperiness="SURFACE_CLASS_VERY_SLIPPERY", sound_type="VERY_SLIPPERY"
     ),
-    "SURFACE_SLIPPERY": NewCollisionTypePreset(slipperiness="SURFACE_CLASS_SLIPPERY", sound_type="SLIPPERY"),
-    "SURFACE_NOT_SLIPPERY": NewCollisionTypePreset(slipperiness="SURFACE_CLASS_NOT_SLIPPERY", sound_type="HARD"),
-    "SURFACE_NOISE_VERY_SLIPPERY": NewCollisionTypePreset(
+    "SURFACE_SLIPPERY": NewCollisionType(slipperiness="SURFACE_CLASS_SLIPPERY", sound_type="SLIPPERY"),
+    "SURFACE_NOT_SLIPPERY": NewCollisionType(slipperiness="SURFACE_CLASS_NOT_SLIPPERY", sound_type="HARD"),
+    "SURFACE_NOISE_VERY_SLIPPERY": NewCollisionType(
         slipperiness="SURFACE_CLASS_VERY_SLIPPERY", sound_type="VERY_SLIPPERY"
     ),
-    "SURFACE_NOISE_VERY_SLIPPERY_73": NewCollisionTypePreset(
+    "SURFACE_NOISE_VERY_SLIPPERY_73": NewCollisionType(
         slipperiness="SURFACE_CLASS_ERY_SLIPPERY", sound_type="VERY_SLIPPERY"
     ),
-    "SURFACE_NOISE_VERY_SLIPPERY_74": NewCollisionTypePreset(
+    "SURFACE_NOISE_VERY_SLIPPERY_74": NewCollisionType(
         slipperiness="SURFACE_CLASS_VERY_SLIPPERY", sound_type="VERY_SLIPPERY"
     ),
-    "SURFACE_NOISE_SLIPPERY": NewCollisionTypePreset(
+    "SURFACE_NOISE_SLIPPERY": NewCollisionType(
         slipperiness="SURFACE_CLASS_SLIPPERY", sound_type="NOISY_SLIPERRY"
     ),
-    "SURFACE_NOISE_DEFAULT": NewCollisionTypePreset(sound_type="NOISY_DEFAULT"),
-    "SURFACE_HARD_VERY_SLIPPERY": NewCollisionTypePreset(
+    "SURFACE_NOISE_DEFAULT": NewCollisionType(sound_type="NOISY_DEFAULT"),
+    "SURFACE_HARD_VERY_SLIPPERY": NewCollisionType(
         slipperiness="SURFACE_CLASS_VERY_SLIPPERY", sound_type="VERY_SLIPPERY", can_get_stuck=False
     ),
-    "SURFACE_HARD_SLIPPERY": NewCollisionTypePreset(
+    "SURFACE_HARD_SLIPPERY": NewCollisionType(
         slipperiness="SURFACE_CLASS_SLIPPERY", sound_type="SLIPPERY", can_get_stuck=False
     ),
-    "SURFACE_HARD_NOT_SLIPPERY": NewCollisionTypePreset(
+    "SURFACE_HARD_NOT_SLIPPERY": NewCollisionType(
         slipperiness="SURFACE_CLASS_NOT_SLIPPERY", sound_type="HARD", can_get_stuck=False
     ),
-    "SURFACE_HARD": NewCollisionTypePreset(sound_type="HARD", can_get_stuck=False),
-    "SURFACE_CAMERA_FREE_ROAM": NewCollisionTypePreset(camera="COL_TYPE_CAMERA_FREE_ROAM"),
-    "SURFACE_BOSS_FIGHT_CAMERA": NewCollisionTypePreset(camera="COL_TYPE_BOSS_FIGHT"),
-    "SURFACE_CLOSE_CAMERA": NewCollisionTypePreset(camera="COL_TYPE_CLOSE_CAMERA"),
-    "SURFACE_CAMERA_8_DIR": NewCollisionTypePreset(camera="COL_TYPE_CAMERA_8_DIR"),
-    "SURFACE_CAMERA_MIDDLE": NewCollisionTypePreset(camera="COL_TYPE_CAMERA_MIDDLE"),
-    "SURFACE_CAMERA_ROTATE_RIGHT": NewCollisionTypePreset(camera="COL_TYPE_CAMERA_ROTATE_RIGHT"),
-    "SURFACE_CAMERA_ROTATE_LEFT": NewCollisionTypePreset(camera="COL_TYPE_CAMERA_ROTATE_LEFT"),
-    "SURFACE_CAMERA_BOUNDARY": NewCollisionTypePreset(special="INTANGIBLE", camera="COL_TYPE_CAMERA_BOUNDARY"),
-    "SURFACE_NO_CAM_COLLISION": NewCollisionTypePreset(camera="COL_TYPE_NO_CAM_COLLISION"),
-    "SURFACE_NO_CAM_COL_VERY_SLIPPERY": NewCollisionTypePreset(
+    "SURFACE_HARD": NewCollisionType(sound_type="HARD", can_get_stuck=False),
+    "SURFACE_CAMERA_FREE_ROAM": NewCollisionType(camera="COL_TYPE_CAMERA_FREE_ROAM"),
+    "SURFACE_BOSS_FIGHT_CAMERA": NewCollisionType(camera="COL_TYPE_BOSS_FIGHT"),
+    "SURFACE_CLOSE_CAMERA": NewCollisionType(camera="COL_TYPE_CLOSE_CAMERA"),
+    "SURFACE_CAMERA_8_DIR": NewCollisionType(camera="COL_TYPE_CAMERA_8_DIR"),
+    "SURFACE_CAMERA_MIDDLE": NewCollisionType(camera="COL_TYPE_CAMERA_MIDDLE"),
+    "SURFACE_CAMERA_ROTATE_RIGHT": NewCollisionType(camera="COL_TYPE_CAMERA_ROTATE_RIGHT"),
+    "SURFACE_CAMERA_ROTATE_LEFT": NewCollisionType(camera="COL_TYPE_CAMERA_ROTATE_LEFT"),
+    "SURFACE_CAMERA_BOUNDARY": NewCollisionType(special="INTANGIBLE", camera="COL_TYPE_CAMERA_BOUNDARY"),
+    "SURFACE_NO_CAM_COLLISION": NewCollisionType(camera="COL_TYPE_NO_CAM_COLLISION"),
+    "SURFACE_NO_CAM_COL_VERY_SLIPPERY": NewCollisionType(
         sound_type="VERY_SLIPPERY", slipperiness="SURFACE_CLASS_VERY_SLIPPERY", camera="COL_TYPE_NO_CAM_COLLISION"
     ),
-    "SURFACE_NO_CAM_COL_SLIPPERY": NewCollisionTypePreset(
+    "SURFACE_NO_CAM_COL_SLIPPERY": NewCollisionType(
         slipperiness="SURFACE_CLASS_SLIPPERY", sound_type="SLIPPERY", camera="COL_TYPE_NO_CAM_COLLISION"
     ),
-    "SURFACE_SWITCH": NewCollisionTypePreset(
+    "SURFACE_SWITCH": NewCollisionType(
         slipperiness="SURFACE_CLASS_NOT_SLIPPERY", sound_type="HARD", camera="COL_TYPE_NO_CAM_COLLISION"
     ),
-    "SURFACE_VANISH_CAP_WALLS": NewCollisionTypePreset(vanish=True),
-    "SURFACE_WARP": NewCollisionTypePreset(warps_and_level="WARP"),
-    "SURFACE_LOOK_UP_WARP": NewCollisionTypePreset(warps_and_level="LOOK_UP_WARP"),
-    "SURFACE_INSTANT_WARP_1B": NewCollisionTypePreset(warps_and_level="INSTANT_WARP", instant_warp_num=0),
-    "SURFACE_INSTANT_WARP_1C": NewCollisionTypePreset(warps_and_level="INSTANT_WARP", instant_warp_num=1),
-    "SURFACE_INSTANT_WARP_1D": NewCollisionTypePreset(warps_and_level="INSTANT_WARP", instant_warp_num=2),
-    "SURFACE_INSTANT_WARP_1E": NewCollisionTypePreset(warps_and_level="INSTANT_WARP", instant_warp_num=3),
+    "SURFACE_VANISH_CAP_WALLS": NewCollisionType(vanish=True),
+    "SURFACE_WARP": NewCollisionType(warps_and_level="WARP"),
+    "SURFACE_LOOK_UP_WARP": NewCollisionType(warps_and_level="LOOK_UP_WARP"),
+    "SURFACE_INSTANT_WARP_1B": NewCollisionType(warps_and_level="INSTANT_WARP_0"),
+    "SURFACE_INSTANT_WARP_1C": NewCollisionType(warps_and_level="INSTANT_WARP_1"),
+    "SURFACE_INSTANT_WARP_1D": NewCollisionType(warps_and_level="INSTANT_WARP_2"),
+    "SURFACE_INSTANT_WARP_1E": NewCollisionType(warps_and_level="INSTANT_WARP_3"),
 }
 
 
