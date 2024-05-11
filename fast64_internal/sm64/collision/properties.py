@@ -53,11 +53,10 @@ def vanilla_to_hackersm64(self, context):
 
     vanilla_enum = self.get_enum()
     preset = newCollisionPresets.get(vanilla_enum, NewCollisionTypePreset)
-    hackersm64.non_decal_shadow = preset.non_decal_shadow
+    hackersm64.decal_shadow = not preset.non_decal_shadow
     hackersm64.vanish = preset.vanish
     hackersm64.warps_and_level = preset.warps_and_level
     hackersm64.special = preset.special
-    hackersm64.no_camera_collision = preset.no_camera_collision
     hackersm64.camera = preset.camera
     hackersm64.instant_warp_num = preset.instant_warp_num
     hackersm64.quicksand_type = preset.quicksand_type
@@ -81,7 +80,12 @@ def vanilla_to_hackersm64(self, context):
 
 
 class SM64_HackerSM64CollisionType(PropertyGroup):
-    non_decal_shadow: BoolProperty(name="Don’t Render Shadow as Decal")
+    decal_shadow: BoolProperty(
+        name="Render Shadow as Decal",
+        default=True,
+        description="When enabled, floor shadows are rendered with a decal rendermode "
+        "which won´t work on transperant materials",
+    )
     vanish: BoolProperty(name="Vanish Cap Surface")
     can_get_stuck: BoolProperty(name="Can Get Stuck")
 
@@ -99,8 +103,6 @@ class SM64_HackerSM64CollisionType(PropertyGroup):
 
     slipperiness: EnumProperty(name="Slipperiness", items=enumCollisionSlipperiness, default="SURFACE_CLASS_DEFAULT")
     slipperiness_custom: StringProperty(name="Value", default="SURFACE_CLASS_DEFAULT")
-
-    no_camera_collision: BoolProperty(name="No Camera Collision", default=False)
 
     camera: EnumProperty(name="Camera Mode", items=enumCollisionCamera, default="COL_TYPE_CAMERA_DEFAULT")
     camera_custom: StringProperty(name="Value", default="COL_TYPE_CAMERA_DEFAULT")
@@ -133,8 +135,10 @@ class SM64_HackerSM64CollisionType(PropertyGroup):
     def draw_enum_or_custom(self, layout: UILayout, prop_name: str, text: str):
         col = layout.column()
         if getattr(self, prop_name) == "CUSTOM":
-            split = col.split()
-            prop_split(split, self, prop_name, text)
+            split = col.split(factor=0.275)
+            split.label(text=text)
+            split = split.split(factor=0.3)
+            split.prop(self, prop_name, text="")
             split.prop(self, f"{prop_name}_custom", text="")
         else:
             prop_split(col, self, prop_name, text)
@@ -178,27 +182,26 @@ class SM64_HackerSM64CollisionType(PropertyGroup):
             except:
                 col.box().label(text="Invalid value.", icon="ERROR")
 
-    def draw_props(self, layout: UILayout):
+    def draw_props(self, layout: UILayout, ):
         col = layout.column()
 
-        physics_box = col.box().column()
-        self.draw_enum_or_custom(physics_box, "slipperiness", "Slipperiness")
-        physics_box.prop(self, "can_get_stuck")
+        self.draw_enum_or_custom(col, "particle", "Particles")
+        self.draw_enum_or_custom(col, "sound", "Sound")
+        self.draw_enum_or_custom(col, "camera", "Camera Mode")
+        col.prop(self, "decal_shadow")
+        col.separator()
 
+        self.draw_enum_or_custom(col, "slipperiness", "Slipperiness")
         self.drawSpecial(col)
         self.drawWarpsAndLevel(col)
         if self.warps_and_level in enumCollisionForceBased and self.special in enumCollisionForceBased:
-            multilineLabel(col, "Both level and special properties are using force.\nOnly level´s automatic parameter will be used.", "ERROR")
+            multilineLabel(
+                col,
+                "Both level and special properties are using force.\nOnly level´s automatic parameter will be used.",
+                "ERROR",
+            )
+        col.prop(self, "can_get_stuck")
         col.prop(self, "vanish")
-
-        footstep_box = col.box().column()
-        self.draw_enum_or_custom(footstep_box, "particle", "Footstep Particle")
-        self.draw_enum_or_custom(footstep_box, "sound", "Footstep Sound")
-        footstep_box.prop(self, "non_decal_shadow")
-
-        camera_box = col.box().column()
-        self.draw_enum_or_custom(camera_box, "camera", "Camera Mode")
-        camera_box.prop(self, "no_camera_collision")
 
 
 class SM64_VanillaCollisionType(bpy.types.PropertyGroup):
@@ -224,8 +227,7 @@ class SM64_VanillaCollisionType(bpy.types.PropertyGroup):
     def draw_props(self, layout: UILayout):
         split = layout.split()
 
-        prop_split(split, self, "options", "Options")
-
+        split.prop(self, "options", text="")
         if self.options == "ALL":
             SM64_SearchCollisionEnum.draw_props(split, self, "type", None)
         elif self.options == "SIMPLE":
@@ -272,10 +274,7 @@ class SM64_MaterialCollisionProps(bpy.types.PropertyGroup):
 
 
 class SM64_CollisionProps(bpy.types.PropertyGroup):
-    format: EnumProperty(
-        name="Collision Format",
-        items=enumSM64CollisionFormat
-    )
+    format: EnumProperty(name="Collision Format", items=enumSM64CollisionFormat)
     start_address: StringProperty(name="Start Address", default=intToHex(0x11D8930))
     end_address: StringProperty(name="End Address", default=intToHex(0x11FFF00))
     set_addr_0x2A: BoolProperty(name="Overwrite 0x2A Behaviour Command")

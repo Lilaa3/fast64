@@ -71,7 +71,7 @@ Sets bank 4 range to ({hex(defaultExtendSegment4[0])}, {hex(defaultExtendSegment
     compression_format: EnumProperty(items=enum_compression_formats, name="Compression", default="mio0")
     force_extended_ram: BoolProperty(name="Force Extended Ram", default=True)
     matstack_fix: BoolProperty(name="Matstack Fix", description="Exports account for matstack fix requirements")
-    
+
     collision: PointerProperty(type=SM64_CollisionProps, name="Collision")
 
     def is_binary_export(self):

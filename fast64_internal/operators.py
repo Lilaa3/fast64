@@ -81,6 +81,7 @@ class ObjectDataExporter(WarningOperator):
     def cleanup_temp_object_data(self):
         cleanupTempMeshes()
 
+
 class OperatorBase(Operator):
     """Base class for operators, keeps track of context mode and sets it back after running
     execute_operator() and catches exceptions for raisePluginError()"""

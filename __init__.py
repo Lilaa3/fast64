@@ -460,7 +460,9 @@ def register():
     bpy.types.Scene.fast64 = bpy.props.PointerProperty(type=Fast64_Properties, name="Fast64 Properties")
     bpy.types.Bone.fast64 = bpy.props.PointerProperty(type=Fast64_BoneProperties, name="Fast64 Bone Properties")
     bpy.types.Object.fast64 = bpy.props.PointerProperty(type=Fast64_ObjectProperties, name="Fast64 Object Properties")
-    bpy.types.Material.fast64 = bpy.props.PointerProperty(type=Fast64_MaterialProperties, name="Fast64 Material Properties")
+    bpy.types.Material.fast64 = bpy.props.PointerProperty(
+        type=Fast64_MaterialProperties, name="Fast64 Material Properties"
+    )
 
     bpy.app.handlers.load_post.append(after_load)
 

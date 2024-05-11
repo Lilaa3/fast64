@@ -2,7 +2,7 @@ import math
 import os
 
 from bpy.utils import register_class, unregister_class
-from bpy.props import (EnumProperty)
+from bpy.props import EnumProperty
 
 from ...utility import applyRotation, raisePluginError, PluginError
 from ...operators import SearchEnumOperatorBase, OperatorBase

@@ -265,7 +265,10 @@ enumCollisionWarpsAndLevel = [
     ("COL_TYPE_LEVEL_DEFAULT", "Default", "COL_TYPE_LEVEL_DEFAULT"),
     ("CUSTOM", "Custom", "Custom"),
     ("", "Non-Force Based", ""),  # Non-Force based collumn
-    ("INSTANT_WARP", "Instant Warps", "COL_TYPE_INSTANT_WARP_(N)"),
+    ("INSTANT_WARP_0", "Instant Warp 0", "COL_TYPE_INSTANT_WARP_0, warps to WARP_NODE_1B"),
+    ("INSTANT_WARP_1", "Instant Warp 1", "COL_TYPE_INSTANT_WARP_1, warps to WARP_NODE_1C"),
+    ("INSTANT_WARP_2", "Instant Warp 2", "COL_TYPE_INSTANT_WARP_2, warps to WARP_NODE_1D"),
+    ("INSTANT_WARP_3", "Instant Warp 3", "COL_TYPE_INSTANT_WARP_3, warps to WARP_NODE_1E"),
     ("COL_TYPE_LOOK_UP_WARP", "Look Up Warp", "COL_TYPE_LOOK_UP_WARP, warps to WARP_NODE_LOOK_UP (0xF2)"),
     ("COL_TYPE_TIMER_START", "Timer Start", "COL_TYPE_TIMER_START"),
     ("COL_TYPE_TIMER_END", "Timer End", "COL_TYPE_TIMER_END"),
@@ -316,6 +319,7 @@ enumCollisionCamera = [
     ("COL_TYPE_CAMERA_DEFAULT", "Default", "COL_TYPE_CAMERA_DEFAULT"),
     ("CUSTOM", "Custom", "Custom"),
     ("", "", ""),
+    ("COL_TYPE_NO_CAM_COLLISION", "No Collision", "COL_TYPE_NO_CAM_COLLISION"),
     ("COL_TYPE_CAMERA_WALL", "Wall", "COL_TYPE_CAMERA_WALL"),
     ("COL_TYPE_CLOSE_CAMERA", "Close", "COL_TYPE_CLOSE_CAMERA"),
     ("COL_TYPE_CAMERA_FREE_ROAM", "Free Roam", "COL_TYPE_CAMERA_FREE_ROAM"),
@@ -425,7 +429,6 @@ class NewCollisionTypePreset:
     warps_and_level: str = "COL_TYPE_LEVEL_DEFAULT"
     special: str = "COL_TYPE_SPECIAL_DEFAULT"
     slipperiness: str | None = None
-    no_camera_collision: bool = False
     camera: str = "COL_TYPE_CAMERA_DEFAULT"
     particle: str | None = None
     sound_type: str = "DEFAULT"  # Vanilla Info
@@ -500,15 +503,15 @@ newCollisionPresets = {
     "SURFACE_CAMERA_ROTATE_RIGHT": NewCollisionTypePreset(camera="COL_TYPE_CAMERA_ROTATE_RIGHT"),
     "SURFACE_CAMERA_ROTATE_LEFT": NewCollisionTypePreset(camera="COL_TYPE_CAMERA_ROTATE_LEFT"),
     "SURFACE_CAMERA_BOUNDARY": NewCollisionTypePreset(special="INTANGIBLE", camera="COL_TYPE_CAMERA_BOUNDARY"),
-    "SURFACE_NO_CAM_COLLISION": NewCollisionTypePreset(no_camera_collision=True),
+    "SURFACE_NO_CAM_COLLISION": NewCollisionTypePreset(camera="COL_TYPE_NO_CAM_COLLISION"),
     "SURFACE_NO_CAM_COL_VERY_SLIPPERY": NewCollisionTypePreset(
-        sound_type="VERY_SLIPPERY", slipperiness="SURFACE_CLASS_VERY_SLIPPERY", no_camera_collision=True
+        sound_type="VERY_SLIPPERY", slipperiness="SURFACE_CLASS_VERY_SLIPPERY", camera="COL_TYPE_NO_CAM_COLLISION"
     ),
     "SURFACE_NO_CAM_COL_SLIPPERY": NewCollisionTypePreset(
-        slipperiness="SURFACE_CLASS_SLIPPERY", sound_type="SLIPPERY", no_camera_collision=True
+        slipperiness="SURFACE_CLASS_SLIPPERY", sound_type="SLIPPERY", camera="COL_TYPE_NO_CAM_COLLISION"
     ),
     "SURFACE_SWITCH": NewCollisionTypePreset(
-        slipperiness="SURFACE_CLASS_NOT_SLIPPERY", sound_type="HARD", no_camera_collision=True
+        slipperiness="SURFACE_CLASS_NOT_SLIPPERY", sound_type="HARD", camera="COL_TYPE_NO_CAM_COLLISION"
     ),
     "SURFACE_VANISH_CAP_WALLS": NewCollisionTypePreset(vanish=True),
     "SURFACE_WARP": NewCollisionTypePreset(warps_and_level="WARP"),
