@@ -11,7 +11,7 @@ from bpy.props import (
     PointerProperty,
 )
 
-from ...utility import intToHex, prop_split
+from ...utility import intToHex, prop_split, multilineLabel
 from ..sm64_constants import MAX_U8, MIN_S16, MAX_S16, MIN_U8
 
 from .operators import SM64_SearchCollisionEnum, SM64_ExportCollision
@@ -174,7 +174,7 @@ class SM64_HackerSM64CollisionType(PropertyGroup):
             if not self.warp_id:
                 col.box().label(text="Empty field.", icon="ERROR")
             try:
-                int(self.warp_id, 16)
+                int(self.warp_id, 0)
             except:
                 col.box().label(text="Invalid value.", icon="ERROR")
 
@@ -185,15 +185,11 @@ class SM64_HackerSM64CollisionType(PropertyGroup):
         self.draw_enum_or_custom(physics_box, "slipperiness", "Slipperiness")
         physics_box.prop(self, "can_get_stuck")
 
-        special_box = col.box().column()
-        self.drawSpecial(special_box)
-        self.drawWarpsAndLevel(special_box)
-        special_box.prop(self, "vanish")
-
+        self.drawSpecial(col)
+        self.drawWarpsAndLevel(col)
         if self.warps_and_level in enumCollisionForceBased and self.special in enumCollisionForceBased:
-            warning_box = col.box().column()
-            warning_box.label(text="Both level and special properties are using force.", icon="ERROR")
-            warning_box.label(text="Only level´s automatic parameter will be used.")
+            multilineLabel(col, "Both level and special properties are using force.\nOnly level´s automatic parameter will be used.", "ERROR")
+        col.prop(self, "vanish")
 
         footstep_box = col.box().column()
         self.draw_enum_or_custom(footstep_box, "particle", "Footstep Particle")
