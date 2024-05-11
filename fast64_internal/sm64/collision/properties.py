@@ -141,7 +141,9 @@ class SM64_HackerSM64CollisionType(PropertyGroup):
             split.prop(self, prop_name, text="")
             split.prop(self, f"{prop_name}_custom", text="")
         else:
-            prop_split(col, self, prop_name, text)
+            split = col.split(factor=0.275)
+            split.label(text=text)
+            split.prop(self, prop_name, text="")
 
     specialTypesWithForceProps = [
         "QUICKSAND",
