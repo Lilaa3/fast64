@@ -16,7 +16,7 @@ from ..sm64_constants import MAX_U8, MIN_S16, MAX_S16, MIN_U8
 
 from .operators import SM64_SearchCollisionEnum, SM64_ExportCollision
 from .constants import (
-    NewCollisionType,
+    CollisionPreset,
     enumSM64CollisionFormat,
     enumCollisionWarpsAndLevel,
     enumCollisionSpecial,
@@ -52,7 +52,7 @@ def vanilla_to_hackersm64(self, context):
     hackersm64 = context.material.fast64.sm64.collision.hackersm64
 
     vanilla_enum = self.get_enum()
-    preset = newCollisionPresets.get(vanilla_enum, NewCollisionType())
+    preset = newCollisionPresets.get(vanilla_enum, CollisionPreset())
     hackersm64.decal_shadow = not preset.non_decal_shadow
     hackersm64.vanish = preset.vanish
     hackersm64.warps_and_level = preset.warps_and_level
@@ -70,12 +70,9 @@ def vanilla_to_hackersm64(self, context):
     else:
         hackersm64.can_get_stuck = False
 
-    if preset.slipperiness is not None:
-        hackersm64.slipperiness = preset.slipperiness
-    elif terrain_enum == "TERRAIN_SLIDE":
+    hackersm64.slipperiness = preset.slipperiness
+    if terrain_enum == "TERRAIN_SLIDE":
         hackersm64.slipperiness = "SURFACE_CLASS_VERY_SLIPPERY"
-    else:
-        hackersm64.slipperiness = "SURFACE_CLASS_DEFAULT"
 
 
 class SM64_HackerSM64CollisionType(PropertyGroup):
@@ -183,7 +180,10 @@ class SM64_HackerSM64CollisionType(PropertyGroup):
             except:
                 col.box().label(text="Invalid value.", icon="ERROR")
 
-    def draw_props(self, layout: UILayout, ):
+    def draw_props(
+        self,
+        layout: UILayout,
+    ):
         col = layout.column()
 
         self.draw_enum_or_custom(col, "particle", "Particles")
@@ -245,8 +245,8 @@ class SM64_MaterialCollisionProps(bpy.types.PropertyGroup):
     vanilla: PointerProperty(type=SM64_VanillaCollisionType, name="Vanilla Collision Type")
     hackersm64: PointerProperty(type=SM64_HackerSM64CollisionType, name="New Collision Type")
 
-    set_force: BoolProperty(name="Set Parameter (Force)")
-    force: StringProperty(name="Parameter")
+    set_force: BoolProperty(name="Set Parameter", description="Set Parameter (Force)")
+    force: StringProperty(name="Parameter", default=intToHex(0, 2))
 
     def get_generated_force(self, collision_format: str):
         if collision_format == "SM64":
@@ -265,13 +265,11 @@ class SM64_MaterialCollisionProps(bpy.types.PropertyGroup):
             self.hackersm64.draw_props(col)
 
         generated_force = self.get_generated_force(collision_format)
-
         if generated_force is None:
-            box = col.box().column()
-            box.prop(self, "set_force")
-            col = box.column()
-            col.enabled = self.set_force
-            prop_split(col, self, "force", "Parameter")
+            force_split = col.split(factor=0.4)
+            force_split.prop(self, "set_force")
+            if self.set_force:
+                force_split.prop(self, "force", text="")
 
 
 class SM64_CollisionProps(bpy.types.PropertyGroup):
