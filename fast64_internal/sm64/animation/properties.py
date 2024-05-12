@@ -1105,21 +1105,19 @@ class SM64_AnimProps(PropertyGroup):
             self.draw_c_settings(col)
         col.prop(self, "quick_read")
 
-        box = col.box()
-        if draw_and_check_tab(box, self, "table_tab", icon="ANIM"):
+        if draw_and_check_tab(col, self, "table_tab", icon="ANIM"):
             self.table.draw_props(
-                box,
+                col,
                 is_dma,
                 not self.update_table and not is_dma,
                 export_type,
                 self.actor_name,
             )
-        box = col.box()
-        if draw_and_check_tab(box, self, "action_tab", icon="ACTION"):
-            box.prop(self, "selected_action")
+        if draw_and_check_tab(col, self, "action_tab", icon="ACTION"):
+            col.prop(self, "selected_action")
             if self.selected_action:
                 self.selected_action.fast64.sm64.draw_props(
-                    layout=box,
+                    layout=col,
                     action=self.selected_action,
                     export_type=export_type,
                     actor_name=self.actor_name,
@@ -1127,12 +1125,10 @@ class SM64_AnimProps(PropertyGroup):
                     is_dma=is_dma,
                 )
         if show_importing:
-            box = col.box()
-            if draw_and_check_tab(box, self, "importing_tab", icon="IMPORT"):
-                self.importing.draw_props(box, import_rom)
-        box = col.box()
-        if draw_and_check_tab(box, self, "tools_tab", icon="MOD_BUILD"):
-            CleanObjectAnim.draw_props(box)
+            if draw_and_check_tab(col, self, "importing_tab", icon="IMPORT"):
+                self.importing.draw_props(col, import_rom)
+        if draw_and_check_tab(col, self, "tools_tab", icon="TOOL_SETTINGS"):
+            CleanObjectAnim.draw_props(col)
 
 
 properties = (
