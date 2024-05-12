@@ -265,7 +265,7 @@ class SearchAnimatedBehavior(SearchEnumOperatorBase):
     bl_idname = "scene.search_animated_behavior_enum_operator"
     bl_property = "behaviour"
     icon = "OBJECT_DATA"
-    
+
     behaviour: EnumProperty(items=enumAnimatedBehaviours)
 
     def update_enum(self, context: Context):
