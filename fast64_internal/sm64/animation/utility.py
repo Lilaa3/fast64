@@ -24,7 +24,7 @@ def animation_operator_checks(context: Context, requires_animation_data=True):
         raise PluginError("Armature has no animation data.")
 
 
-def get_animation_props(context: Context) -> "SM64_AnimProps":
+def get_animation_props(context: Context) -> "AnimProps":
     scene = context.scene
     sm64_props: "SM64_Properties" = scene.fast64.sm64
     if context.space_data.type != "VIEW_3D" and context.object and context.object.type == "ARMATURE":
@@ -70,14 +70,14 @@ def get_anim_pose_bones(armature_obj: Armature):
     return anim_bones
 
 
-def get_frame_range(action: Action, header_props: "SM64_AnimHeaderProps") -> tuple[int, int, int]:
+def get_frame_range(action: Action, header_props: "HeaderProps") -> tuple[int, int, int]:
     if header_props.manual_frame_range:
         return (header_props.start_frame, header_props.loop_start, header_props.loop_end)
     loop_start, loop_end = getFrameInterval(action)
     return (0, loop_start, loop_end + 1)
 
 
-def get_anim_name(actor_name: str, action: Action, header_props: "SM64_AnimHeaderProps") -> str:
+def get_anim_name(actor_name: str, action: Action, header_props: "HeaderProps") -> str:
     if header_props.override_name:
         return header_props.custom_name
     if header_props.header_variant == 0:
@@ -92,7 +92,7 @@ def get_anim_name(actor_name: str, action: Action, header_props: "SM64_AnimHeade
     return toAlnum(name)
 
 
-def get_anim_enum(actor_name: str, action: Action, header_props: "SM64_AnimHeaderProps") -> str:
+def get_anim_enum(actor_name: str, action: Action, header_props: "HeaderProps") -> str:
     if header_props.override_enum:
         return header_props.custom_enum
     anim_name = get_anim_name(actor_name, action, header_props)
@@ -102,7 +102,7 @@ def get_anim_enum(actor_name: str, action: Action, header_props: "SM64_AnimHeade
     return enum_name
 
 
-def get_int_flags(header_props: "SM64_AnimHeaderProps"):
+def get_int_flags(header_props: "HeaderProps"):
     flags: int = 0
     for i, flag in enumerate(FLAG_PROPS):
         flags |= 1 << i if getattr(header_props, flag) else 0
@@ -135,9 +135,9 @@ def get_max_frame(action: Action, action_props: "SM64_ActionProps") -> int:
 
 
 def get_element_header(
-    element_props: "SM64_AnimTableElementProps",
+    element_props: "TableElementProps",
     use_reference: bool,
-) -> "SM64_AnimHeaderProps":
+) -> "HeaderProps":
     if use_reference and element_props.reference:
         return None
     action = get_element_action(element_props, use_reference)
@@ -148,13 +148,13 @@ def get_element_header(
     return action.fast64.sm64.headers[element_props.variant]
 
 
-def get_element_action(element_props: "SM64_AnimTableElementProps", use_reference: bool) -> Action:
+def get_element_action(element_props: "TableElementProps", use_reference: bool) -> Action:
     if use_reference and element_props.reference:
         return None
     return element_props.action_prop
 
 
-def get_anim_table_name(table_props: "SM64_AnimTableProps", actor_name: str) -> str:
+def get_anim_table_name(table_props: "TableProps", actor_name: str) -> str:
     if table_props.override_table_name:
         return table_props.custom_table_name
     return f"{actor_name}_anims"

@@ -27,8 +27,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..settings.properties import SM64_Properties
     from .properties import (
-        SM64_AnimProps,
-        SM64_AnimImportProps,
+        AnimProps,
+        ImportProps,
         SM64_ActionProps,
     )
 
@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 def emulate_no_loop(scene: Scene):
     if scene.gameEditorMode != "SM64":
         return
-    animation_props: SM64_AnimProps = scene.fast64.sm64.animation
+    animation_props: AnimProps = scene.fast64.sm64.animation
     played_action: Action = animation_props.played_action
 
     if (
@@ -79,9 +79,9 @@ class PreviewAnim(OperatorBase):
         scene = context.scene
         scene_anim_props = scene.fast64.sm64.animation
         if context.space_data.type != "VIEW_3D" and context.space_data.context == "OBJECT":
-            animation_props: SM64_AnimProps = context.object.fast64.sm64.animation
+            animation_props: AnimProps = context.object.fast64.sm64.animation
         else:
-            animation_props: SM64_AnimProps = scene_anim_props
+            animation_props: AnimProps = scene_anim_props
 
         if self.played_action:
             played_action = get_action(self.played_action)

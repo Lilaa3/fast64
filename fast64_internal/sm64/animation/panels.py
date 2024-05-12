@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..settings.properties import SM64_Properties
-    from .properties import SM64_AnimProps
+    from .properties import AnimProps
 
 
 class SM64_AnimPanel(SM64_Panel):
@@ -19,7 +19,7 @@ class SM64_AnimPanel(SM64_Panel):
     def draw(self, context: Context):
         col = self.layout.column()
         sm64_props: SM64_Properties = context.scene.fast64.sm64
-        animation_props: SM64_AnimProps = sm64_props.animation
+        animation_props: AnimProps = sm64_props.animation
         animation_props.draw_props(
             col,
             sm64_props.export_type,
@@ -49,7 +49,7 @@ class SM64_ObjAnimPanel(Panel):
     def draw(self, context: Context):
         box = self.layout.box().column()
         sm64_props: SM64_Properties = context.scene.fast64.sm64
-        animation_props: SM64_AnimProps = context.object.fast64.sm64.animation
+        animation_props: AnimProps = context.object.fast64.sm64.animation
         if draw_and_check_tab(box, animation_props, "object_menu_tab", icon="ANIM"):
             animation_props.draw_props(
                 box,

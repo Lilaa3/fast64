@@ -37,17 +37,17 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .properties import (
-        SM64_AnimImportProps,
-        SM64_AnimProps,
-        SM64_AnimHeaderProps,
-        SM64_AnimTableProps,
+        ImportProps,
+        AnimProps,
+        HeaderProps,
+        TableProps,
         SM64_ActionProps,
     )
     from ..settings.properties import SM64_Properties
 
 
 def from_header_class(
-    header_props: "SM64_AnimHeaderProps",
+    header_props: "HeaderProps",
     header: SM64_AnimHeader,
     action: Action,
     actor_name: str = "mario",
@@ -159,7 +159,7 @@ def from_anim_class(
     update_header_variant_numbers(action_props)
 
 
-def from_table_element_class(element_props: "SM64_AnimTableElementProps", element: SM64_AnimTableElement):
+def from_table_element_class(element_props: "TableElementProps", element: SM64_AnimTableElement):
     if element.header:
         element_props.set_variant(element.header.action, element.header.header_variant)
     else:
@@ -174,7 +174,7 @@ def from_table_element_class(element_props: "SM64_AnimTableElementProps", elemen
         element_props.enum_name = element.enum_name
 
 
-def from_anim_table_class(table_props: "SM64_AnimTableProps", table: SM64_AnimTable, clear_table: bool = False):
+def from_anim_table_class(table_props: "TableProps", table: SM64_AnimTable, clear_table: bool = False):
     if clear_table:
         table_props.elements.clear()
     for element in table.elements:
@@ -513,9 +513,9 @@ def import_animations(context: Context):
 
     scene = context.scene
     sm64_props: SM64_Properties = scene.fast64.sm64
-    animation_props: SM64_AnimProps = get_animation_props(context)
-    import_props: SM64_AnimImportProps = animation_props.importing
-    table_props: SM64_AnimTableProps = animation_props.table
+    animation_props: AnimProps = get_animation_props(context)
+    import_props: ImportProps = animation_props.importing
+    table_props: TableProps = animation_props.table
     armature_obj: Object = context.selected_objects[0]
 
     animation_data: dict[tuple[str, str], SM64_Anim] = {}
@@ -602,8 +602,8 @@ def import_all_mario_animations(context: Context):
     scene = context.scene
     sm64_props: SM64_Properties = scene.fast64.sm64
 
-    animation_props: SM64_AnimProps = get_animation_props(context)
-    import_props: SM64_AnimImportProps = animation_props.importing
+    animation_props: AnimProps = get_animation_props(context)
+    import_props: ImportProps = animation_props.importing
 
     animations: dict[str, SM64_Anim] = {}
     table: SM64_AnimTable = SM64_AnimTable()

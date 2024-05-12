@@ -91,7 +91,7 @@ def draw_list_op(
     return op
 
 
-class SM64_AnimHeaderProps(PropertyGroup):
+class HeaderProps(PropertyGroup):
     expand_tab_in_action: BoolProperty(name="Header Properties", default=True)
     header_variant: IntProperty(name="Header Variant Number", min=0)
 
@@ -252,9 +252,9 @@ class SM64_AnimHeaderProps(PropertyGroup):
 
 
 class SM64_ActionProps(PropertyGroup):
-    header: PointerProperty(type=SM64_AnimHeaderProps)
+    header: PointerProperty(type=HeaderProps)
     variants_tab: BoolProperty(name="Header Variants")
-    header_variants: CollectionProperty(type=SM64_AnimHeaderProps)
+    header_variants: CollectionProperty(type=HeaderProps)
     override_file_name: BoolProperty(name="Override File Name")
     custom_file_name: StringProperty(name="File Name", default="anim_00.inc.c")
     override_max_frame: BoolProperty(name="Override Max Frame")
@@ -269,14 +269,14 @@ class SM64_ActionProps(PropertyGroup):
     end_address: StringProperty(name="End Address", default=intToHex(18874112))
 
     @property
-    def headers(self) -> list[SM64_AnimHeaderProps]:
+    def headers(self) -> list[HeaderProps]:
         return [self.header] + list(self.header_variants)
 
     def draw_variant(
         self,
         layout: UILayout,
         action: Action,
-        header: SM64_AnimHeaderProps,
+        header: HeaderProps,
         index: int,
         is_in_table: bool = False,
         is_dma: bool = False,
@@ -417,7 +417,7 @@ class SM64_ActionProps(PropertyGroup):
             self.draw_variants(col, action, is_in_table, is_dma, export_type, actor_name, generate_enums)
 
 
-class SM64_TableElementProps(PropertyGroup):
+class TableElementProps(PropertyGroup):
     expand_tab: BoolProperty()
     action_prop: PointerProperty(name="Action", type=Action)
     use_main_variant: BoolProperty(name="Use Main Variant", default=True)
@@ -506,8 +506,8 @@ class SM64_TableElementProps(PropertyGroup):
             )
 
 
-class SM64_AnimTableProps(PropertyGroup):
-    elements: CollectionProperty(type=SM64_TableElementProps)
+class TableProps(PropertyGroup):
+    elements: CollectionProperty(type=TableElementProps)
 
     export_seperately: BoolProperty(name="Export All Seperately")
     write_data_seperately: BoolProperty(name="Write Data Seperately")
@@ -549,7 +549,7 @@ class SM64_AnimTableProps(PropertyGroup):
         self,
         layout: UILayout,
         index: int,
-        table_element: SM64_TableElementProps,
+        table_element: TableElementProps,
         is_dma: bool = False,
         can_reference: bool = True,
         duplicate_index: int | None = 0,
@@ -675,7 +675,7 @@ class SM64_AnimTableProps(PropertyGroup):
         elements_col.scale_y = 0.8
         actions = []
 
-        element_props: SM64_TableElementProps
+        element_props: TableElementProps
         for table_index, element_props in enumerate(self.elements):
             action = get_element_action(element_props, can_reference)
             if action in actions and actions[-1] != action:
@@ -696,7 +696,7 @@ class SM64_AnimTableProps(PropertyGroup):
             actions.append(action)
 
 
-class SM64_AnimImportProps(PropertyGroup):
+class ImportProps(PropertyGroup):
     clear_table: BoolProperty(name="Clear Table On Import", default=True)
     import_type: EnumProperty(items=enumAnimImportTypes, name="Type", default="C")
     preset: bpy.props.EnumProperty(items=enumAnimationTables, name="Preset", default="Mario")
@@ -882,17 +882,17 @@ class SM64_AnimImportProps(PropertyGroup):
         ImportAnim.draw_props(col)
 
 
-class SM64_AnimProps(PropertyGroup):
-    version: bpy.props.IntProperty(name="SM64_AnimProps Version", default=0)
+class AnimProps(PropertyGroup):
+    version: bpy.props.IntProperty(name="AnimProps Version", default=0)
     cur_version = 1  # version after property migration
     played_header: IntProperty(min=0)
     played_action: PointerProperty(name="Action", type=Action)
     object_menu_tab: BoolProperty(name="SM64 Animation Inspector")
 
     table_tab: BoolProperty(name="Table", default=True)
-    table: PointerProperty(type=SM64_AnimTableProps)
+    table: PointerProperty(type=TableProps)
     importing_tab: BoolProperty(name="Importing")
-    importing: PointerProperty(type=SM64_AnimImportProps)
+    importing: PointerProperty(type=ImportProps)
     action_tab: BoolProperty(name="Action", default=False)
     selected_action: PointerProperty(name="Action", type=Action)
 
@@ -929,7 +929,7 @@ class SM64_AnimProps(PropertyGroup):
     insertable_directory_path: StringProperty(name="Directory Path", subtype="FILE_PATH")  # Insertable
 
     def update_version_0(self, scene: Scene):
-        importing: SM64_AnimImportProps = self.importing
+        importing: ImportProps = self.importing
 
         upgrade_hex_prop(importing, scene, "animation_address", "animStartImport")
         importing.is_segmented_address_prop = scene.get(
@@ -974,7 +974,7 @@ class SM64_AnimProps(PropertyGroup):
             self.insertable_directory_path = os.path.split(insertable_directory_path)[0]
 
         self.update_table = scene.get("setAnimListIndex", self.update_table)
-        table: SM64_AnimTableProps = self.table
+        table: TableProps = self.table
         # upgrade_hex_prop(table, scene, "", "addr_0x27")
         table.overwrite_begining_animation = scene.get(
             "overwrite_0x28",
@@ -990,7 +990,7 @@ class SM64_AnimProps(PropertyGroup):
     @staticmethod
     def upgrade_changed_props():
         for scene in bpy.data.scenes:
-            anim_props: SM64_AnimProps = scene.fast64.sm64.animation
+            anim_props: AnimProps = scene.fast64.sm64.animation
             if anim_props.version == 0:
                 anim_props.update_version_0(scene)
 
@@ -1132,12 +1132,12 @@ class SM64_AnimProps(PropertyGroup):
 
 
 properties = (
-    SM64_AnimHeaderProps,
-    SM64_TableElementProps,
+    HeaderProps,
+    TableElementProps,
     SM64_ActionProps,
-    SM64_AnimTableProps,
-    SM64_AnimImportProps,
-    SM64_AnimProps,
+    TableProps,
+    ImportProps,
+    AnimProps,
 )
 
 
