@@ -74,7 +74,8 @@ Sets bank 4 range to ({hex(defaultExtendSegment4[0])}, {hex(defaultExtendSegment
 
     animation: PointerProperty(type=SM64_AnimProps)
 
-    def is_binary_export(self):
+    @property
+    def binary_export(self):
         return self.export_type in ["Binary", "Insertable Binary"]
 
     def get_legacy_export_type(self, scene: Scene):
@@ -140,12 +141,12 @@ Sets bank 4 range to ({hex(defaultExtendSegment4[0])}, {hex(defaultExtendSegment
             export_rom_ui_warnings(col, self.export_rom)
             col.prop(self, "output_rom")
             col.prop(self, "extend_bank_4")
-        elif not self.is_binary_export():
+        elif not self.binary_export:
             prop_split(col, self, "decomp_path", "Decomp Path")
             directory_ui_warnings(col, abspath(self.decomp_path))
         col.separator()
 
-        if not self.is_binary_export():
+        if not self.binary_export:
             col.prop(self, "disable_scroll")
             if show_repo_settings:
                 prop_split(col, self, "compression_format", "Compression Format")
