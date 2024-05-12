@@ -27,9 +27,8 @@ def animation_operator_checks(context: Context, requires_animation_data=True):
 def get_animation_props(context: Context) -> "SM64_AnimProps":
     scene = context.scene
     sm64_props: "SM64_Properties" = scene.fast64.sm64
-    if context.space_data.type != "VIEW_3D" or sm64_props.animation.use_selected_object:
-        if context.object and context.object.type == "ARMATURE":
-            return context.object.fast64.sm64.animation
+    if context.space_data.type != "VIEW_3D" and context.object and context.object.type == "ARMATURE":
+        return context.object.fast64.sm64.animation
     return sm64_props.animation
 
 

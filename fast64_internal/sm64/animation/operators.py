@@ -63,11 +63,12 @@ def emulate_no_loop(scene: Scene):
             scene.frame_set(loop_start)
 
 
-class SM64_PreviewAnimOperator(OperatorBase):
+class PreviewAnim(OperatorBase):
     bl_idname = "scene.sm64_preview_animation"
     bl_label = "Preview Animation"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
     context_mode = "OBJECT"
+    icon = "PLAY"
 
     played_header: IntProperty(name="Header", min=0, default=0)
     played_action: StringProperty(name="Action")
@@ -104,7 +105,7 @@ class SM64_PreviewAnimOperator(OperatorBase):
         return {"FINISHED"}
 
 
-class SM64_TableOperations(OperatorBase):
+class TableOps(OperatorBase):
     bl_idname = "scene.sm64_table_operations"
     bl_label = "Table Operations"
     bl_description = "Move, remove, clear or add table elements"
@@ -146,7 +147,7 @@ class SM64_TableOperations(OperatorBase):
         return {"FINISHED"}
 
 
-class SM64_AnimVariantOperations(OperatorBase):
+class VariantOps(OperatorBase):
     bl_idname = "scene.sm64_header_variant_operations"
     bl_label = "Header Variant Operations"
     bl_description = "Move, remove, clear or add variants"
@@ -188,101 +189,111 @@ class SM64_AnimVariantOperations(OperatorBase):
         update_header_variant_numbers(action_props)
 
 
-class SM64_ExportAnimTable(OperatorBase):
+class ExportAnimTable(OperatorBase):
     bl_idname = "scene.sm64_export_anim_table"
     bl_label = "Export"
     bl_description = "Exports the animation table found in the call context, scene or object"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
     context_mode = "OBJECT"
+    icon = "EXPORT"
 
     def execute_operator(self, context: Context):
         export_animation_table(context)
         self.report({"INFO"}, "Exported animation table successfully!")
 
 
-class SM64_ExportAnim(OperatorBase):
+class ExportAnim(OperatorBase):
     bl_idname = "scene.sm64_export_anim"
     bl_label = "Export"
     bl_description = "Exports the select action found in the call context, scene or object"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
     context_mode = "OBJECT"
+    icon = "EXPORT"
 
     def execute_operator(self, context: Context):
         export_animation(context)
         self.report({"INFO"}, "Exported animation successfully!")
 
 
-class SM64_ImportAllMarioAnims(OperatorBase):
+class ImportAllMarioAnims(OperatorBase):
     bl_idname = "scene.sm64_import_mario_anims"
     bl_label = "Import All Mario Animations"
     bl_description = "Imports all of Mario's animations into the call context's animation propreties, scene or object"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
     context_mode = "OBJECT"
+    icon = "IMPORT"
 
     def execute_operator(self, context):
         import_all_mario_animations(context)
 
 
-class SM64_ImportAnim(OperatorBase):
+class ImportAnim(OperatorBase):
     bl_idname = "scene.sm64_import_anim"
     bl_label = "Import Animation(s)"
     bl_description = "Imports animations into the call context's animation propreties, scene or object"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
     context_mode = "OBJECT"
+    icon = "IMPORT"
 
     def execute_operator(self, context):
         import_animations(context)
 
 
-class SM64_SearchMarioAnim(SearchEnumOperatorBase):
+class SearchMarioAnim(SearchEnumOperatorBase):
     bl_idname = "scene.search_mario_anim_enum_operator"
     bl_property = "mario_animations"
+    icon = "PRESET"
+
     mario_animations: EnumProperty(items=marioAnimationNames)
 
     def update_enum(self, context: Context):
         get_animation_props(context).importing.mario_animation = self.mario_animations
 
 
-class SM64_SearchTableAnim(SearchEnumOperatorBase):
+class SearchTableAnim(SearchEnumOperatorBase):
     bl_idname = "scene.search_anim_table_enum_operator"
     bl_property = "preset"
+    icon = "PRESET"
+
     preset: EnumProperty(items=enumAnimationTables)
 
     def update_enum(self, context: Context):
         get_animation_props(context).importing.preset = self.preset
 
 
-class SM64_SearchAnimatedBehavior(SearchEnumOperatorBase):
+class SearchAnimatedBehavior(SearchEnumOperatorBase):
     bl_idname = "scene.search_animated_behavior_enum_operator"
     bl_property = "behaviour"
+    icon = "OBJECT_DATA"
+    
     behaviour: EnumProperty(items=enumAnimatedBehaviours)
 
     def update_enum(self, context: Context):
         get_animation_props(context).table.behaviour = self.behaviour
 
 
-class CleanObjectAnimations(OperatorBase):
+class CleanObjectAnim(OperatorBase):
     bl_description = "Clean object animations"
     bl_idname = "object.clean_object_animations"
     bl_label = "Clean Object Animations"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
+    icon = "KEYFRAME"
 
     def execute_operator(self, context: Context):
         pass
 
 
 operators = (
-    SM64_ExportAnimTable,
-    SM64_ExportAnim,
-    SM64_PreviewAnimOperator,
-    SM64_TableOperations,
-    SM64_AnimVariantOperations,
-    SM64_ImportAnim,
-    SM64_ImportAllMarioAnims,
-    SM64_SearchMarioAnim,
-    SM64_SearchAnimatedBehavior,
-    SM64_SearchTableAnim,
-    CleanObjectAnimations,
+    ExportAnimTable,
+    ExportAnim,
+    PreviewAnim,
+    TableOps,
+    VariantOps,
+    ImportAnim,
+    SearchMarioAnim,
+    SearchAnimatedBehavior,
+    SearchTableAnim,
+    CleanObjectAnim,
 )
 
 

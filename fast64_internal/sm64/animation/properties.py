@@ -33,17 +33,16 @@ from ..sm64_utility import import_rom_checks, upgrade_hex_prop
 from ..sm64_constants import MAX_U16, MIN_S16, MAX_S16, level_enums, enumLevelNames
 
 from .operators import (
-    SM64_SearchMarioAnim,
-    SM64_SearchAnimatedBehavior,
-    CleanObjectAnimations,
-    SM64_SearchTableAnim,
-    SM64_ImportAllMarioAnims,
-    SM64_ImportAnim,
-    SM64_ExportAnim,
-    SM64_ExportAnimTable,
-    SM64_TableOperations,
-    SM64_AnimVariantOperations,
-    SM64_PreviewAnimOperator,
+    ExportAnimTable,
+    ExportAnim,
+    PreviewAnim,
+    TableOps,
+    VariantOps,
+    ImportAnim,
+    SearchMarioAnim,
+    SearchAnimatedBehavior,
+    SearchTableAnim,
+    CleanObjectAnim,
 )
 
 
@@ -237,17 +236,11 @@ class SM64_AnimHeaderProps(PropertyGroup):
         col = layout.column()
         binary = export_type in {"Binary", "Insertable Binary"}
         split = col.split()
-        preview_op = split.operator(SM64_PreviewAnimOperator.bl_idname, icon="PLAY")
+        preview_op = PreviewAnim.draw_props(split)
         preview_op.played_header = self.header_variant
         preview_op.played_action = action.name
         if not is_in_table:
-            add_op = draw_list_op(
-                split,
-                SM64_TableOperations,
-                "ADD",
-                text="Add To Table",
-                icon="LINKED",
-            )
+            add_op = draw_list_op(split, TableOps, "ADD", text="Add To Table", icon="LINKED")
             add_op.action_name, add_op.header_variant = action.name, self.header_variant
             if export_type == "Binary":
                 prop_split(col, self, "table_index", "Table Index")
@@ -294,15 +287,15 @@ class SM64_ActionProps(PropertyGroup):
         col = layout.column()
 
         row = col.row()
-        remove_op = draw_list_op(row, SM64_AnimVariantOperations, "REMOVE", index, self.header_variants)
+        remove_op = draw_list_op(row, VariantOps, "REMOVE", index, self.header_variants)
         remove_op.action_name = action.name
-        add_op = draw_list_op(row, SM64_AnimVariantOperations, "ADD", index)
+        add_op = draw_list_op(row, VariantOps, "ADD", index)
         add_op.action_name = action.name
-        up_op = draw_list_op(row, SM64_AnimVariantOperations, "MOVE_UP", index, self.header_variants)
+        up_op = draw_list_op(row, VariantOps, "MOVE_UP", index, self.header_variants)
         up_op.action_name = action.name
         down_op = draw_list_op(
             row,
-            SM64_AnimVariantOperations,
+            VariantOps,
             "MOVE_DOWN",
             index,
             collection=self.header_variants,
@@ -342,9 +335,9 @@ class SM64_ActionProps(PropertyGroup):
         )
 
         op_row = col.row()
-        add_op = draw_list_op(op_row, SM64_AnimVariantOperations, "ADD")
+        add_op = draw_list_op(op_row, VariantOps, "ADD")
         add_op.action_name = action.name
-        clear_op = draw_list_op(op_row, SM64_AnimVariantOperations, "CLEAR", collection=self.header_variants)
+        clear_op = draw_list_op(op_row, VariantOps, "CLEAR", collection=self.header_variants)
         clear_op.action_name = action.name
 
         for i, variant in enumerate(self.header_variants):
@@ -388,8 +381,8 @@ class SM64_ActionProps(PropertyGroup):
 
         if not is_in_table:
             split = col.split()
-            split.operator(SM64_ExportAnim.bl_idname, icon="EXPORT")
-            add_all_op = draw_list_op(split, SM64_TableOperations, "ADD_ALL", text="Add All To Table", icon="LINKED")
+            ExportAnim.draw_props(split)
+            add_all_op = draw_list_op(split, TableOps, "ADD_ALL", text="Add All To Table", icon="LINKED")
             add_all_op.action_name = action.name
             if export_type == "Binary" and not is_dma:
                 prop_split(col, self, "start_address", "Start Address")
@@ -484,15 +477,9 @@ class SM64_TableElementProps(PropertyGroup):
             split = split.split()
             split.prop(self, "variant")
             split = split.split()
-            remove_op = draw_list_op(
-                split,
-                SM64_AnimVariantOperations,
-                "REMOVE",
-                self.variant - 1,
-                action_props.header_variants,
-            )
+            remove_op = draw_list_op(split, VariantOps, "REMOVE", self.variant - 1, action_props.header_variants)
             remove_op.action_name = self.action_prop.name
-            add_op = draw_list_op(split, SM64_AnimVariantOperations, "ADD", self.variant - 1)
+            add_op = draw_list_op(split, VariantOps, "ADD", self.variant - 1)
             add_op.action_name = self.action_prop.name
 
             if not 0 <= self.variant < len(action_props.headers):
@@ -520,7 +507,6 @@ class SM64_TableElementProps(PropertyGroup):
 
 
 class SM64_AnimTableProps(PropertyGroup):
-    element_tab: BoolProperty(name="Elements", default=True)
     elements: CollectionProperty(type=SM64_TableElementProps)
 
     export_seperately: BoolProperty(name="Export All Seperately")
@@ -582,10 +568,10 @@ class SM64_AnimTableProps(PropertyGroup):
         op_row.alignment = "RIGHT"
         op_row.label(text=str(index))
 
-        draw_list_op(op_row, SM64_TableOperations, "ADD", index)
-        draw_list_op(op_row, SM64_TableOperations, "REMOVE", index, self.elements)
-        draw_list_op(op_row, SM64_TableOperations, "MOVE_UP", index, self.elements)
-        draw_list_op(op_row, SM64_TableOperations, "MOVE_DOWN", index, self.elements)
+        draw_list_op(op_row, TableOps, "ADD", index)
+        draw_list_op(op_row, TableOps, "REMOVE", index, self.elements)
+        draw_list_op(op_row, TableOps, "MOVE_UP", index, self.elements)
+        draw_list_op(op_row, TableOps, "MOVE_DOWN", index, self.elements)
 
         table_element.draw_props(
             info_col,
@@ -636,7 +622,7 @@ class SM64_AnimTableProps(PropertyGroup):
                     "Does not raise an error if there is no ANIMATE command",
                     "INFO",
                 )
-                SM64_SearchAnimatedBehavior.draw_props(box, self, "behaviour", "Behaviour")
+                SearchAnimatedBehavior.draw_props(box, self, "behaviour", "Behaviour")
                 if self.behaviour == "Custom":
                     prop_split(box, self, "behavior_address_prop", "Behavior Address")
                 prop_split(box, self, "begining_animation", "Beginning Animation")
@@ -668,7 +654,7 @@ class SM64_AnimTableProps(PropertyGroup):
             prop_split(col, self, "insertable_file_name", "File Name")
 
         export_col = col.column()
-        export_col.operator(SM64_ExportAnimTable.bl_idname, icon="EXPORT")
+        ExportAnimTable.draw_props(export_col)
         export_col.enabled = True if self.elements else False
 
         if is_dma and export_type == "C":
@@ -680,11 +666,9 @@ class SM64_AnimTableProps(PropertyGroup):
             )
         col.separator()
 
-        if not draw_and_check_tab(col, self, "element_tab", icon="NLA"):
-            return
         op_row = col.row()
-        draw_list_op(op_row, SM64_TableOperations, "ADD")
-        draw_list_op(op_row, SM64_TableOperations, "CLEAR", collection=self.elements)
+        draw_list_op(op_row, TableOps, "ADD")
+        draw_list_op(op_row, TableOps, "CLEAR", collection=self.elements)
 
         can_reference = not is_dma
         elements_col = col.column()
@@ -832,7 +816,7 @@ class SM64_AnimImportProps(PropertyGroup):
 
             col.prop(self, "read_entire_table")
             if not self.read_entire_table:
-                SM64_SearchMarioAnim.draw_props(col, self, "mario_animation", "Mario Animations")
+                SearchMarioAnim.draw_props(col, self, "mario_animation", "Mario Animations")
                 if self.mario_animation == "Custom":
                     prop_split(col, self, "table_index_prop", "Entry")
         else:
@@ -883,7 +867,7 @@ class SM64_AnimImportProps(PropertyGroup):
         col.separator()
 
         if self.import_type in {"C", "Binary"}:
-            SM64_SearchTableAnim.draw_props(col, self, "preset", "Table Preset")
+            SearchTableAnim.draw_props(col, self, "preset", "Table Preset")
         if self.import_type == "C":
             self.draw_c(col)
         else:
@@ -895,9 +879,7 @@ class SM64_AnimImportProps(PropertyGroup):
         col.prop(self, "clear_table")
         col.separator()
 
-        col.operator(SM64_ImportAnim.bl_idname, icon="IMPORT")
-        # if self.import_type in {"C", "Binary"}:
-        # layout.operator(SM64_ImportAllMarioAnims.bl_idname, icon="IMPORT")
+        ImportAnim.draw_props(col)
 
 
 class SM64_AnimProps(PropertyGroup):
@@ -906,7 +888,6 @@ class SM64_AnimProps(PropertyGroup):
     played_header: IntProperty(min=0)
     played_action: PointerProperty(name="Action", type=Action)
     object_menu_tab: BoolProperty(name="SM64 Animation Inspector")
-    use_selected_object: BoolProperty(name="Use Selected Object's Individual Properties", default=True)
 
     table_tab: BoolProperty(name="Table", default=True)
     table: PointerProperty(type=SM64_AnimTableProps)
@@ -1151,7 +1132,7 @@ class SM64_AnimProps(PropertyGroup):
                 self.importing.draw_props(box, import_rom)
         box = col.box()
         if draw_and_check_tab(box, self, "tools_tab", icon="MOD_BUILD"):
-            op = box.operator(CleanObjectAnimations.bl_idname)
+            CleanObjectAnim.draw_props(box)
 
 
 properties = (

@@ -20,22 +20,6 @@ class SM64_AnimPanel(SM64_Panel):
         col = self.layout.column()
         sm64_props: SM64_Properties = context.scene.fast64.sm64
         animation_props: SM64_AnimProps = sm64_props.animation
-        if context.object and context.object.type == "ARMATURE":
-            selected_armature_obj = context.object
-        else:
-            selected_armature_obj = None
-        if selected_armature_obj:
-            split = col.box().split()
-            split.prop(animation_props, "use_selected_object")
-            split.label(text=selected_armature_obj.name)
-            if animation_props.use_selected_object:
-                selected_armature_obj.fast64.sm64.animation.draw_props(
-                    col,
-                    sm64_props.export_type,
-                    sm64_props.show_importing_menus,
-                    sm64_props.import_rom,
-                )
-                return
         animation_props.draw_props(
             col,
             sm64_props.export_type,
