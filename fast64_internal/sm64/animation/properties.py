@@ -844,9 +844,11 @@ class ImportProps(PropertyGroup):
         self.draw_path(col)
         col.separator()
 
-        col.label(text="Type will be read from the data type of the files", icon="INFO")
-        col.label(text="Table Imports")
-        self.draw_table_settings(col)
+        col.label(text="Animation type will be read from the files", icon="INFO")
+        
+        table_box = col.box().column()
+        table_box.label(text="Table Imports")
+        self.draw_table_settings(table_box)
         col.separator()
 
         col.prop(self, "read_from_rom_prop")
