@@ -684,7 +684,7 @@ class AnimationTable:
 
     def read_binary(
         self,
-        table_reader: RomReader,
+        reader: RomReader,
         animation_headers: dict[str, AnimationHeader],
         animation_data: dict[tuple[str, str], Animation],
         table_index: int | None = None,
@@ -692,12 +692,12 @@ class AnimationTable:
         table_size: int | None = None,
     ) -> AnimationHeader | None:
         self.elements.clear()
-        self.reference = table_reader.start_address
+        self.reference = reader.start_address
         range_size = table_size if table_size else 300
         if table_index is not None:
             range_size = min(range_size, table_index + 1)
         for i in range(0 if table_index is None else table_index, range_size):
-            ptr = table_reader.read_ptr()
+            ptr = reader.read_ptr()
             if ptr is None and table_size is None:
                 if table_index is not None:
                     raise PluginError("Table index not in table.")
@@ -705,10 +705,10 @@ class AnimationTable:
             if table_index is not None and i != table_index:
                 continue
 
-            header_reader = table_reader.branch(ptr)
+            header_reader = reader.branch(ptr)
             if header_reader:
                 header = AnimationHeader.read_binary(
-                    table_reader.branch(ptr), animation_headers, animation_data, False, assumed_bone_count, i
+                    reader.branch(ptr), animation_headers, animation_data, False, assumed_bone_count, i
                 )
             else:
                 header = None
@@ -720,27 +720,27 @@ class AnimationTable:
                 raise PluginError(f"Table index {table_index} not found in table.")
             if table_size is None:
                 raise PluginError(f"Iterated through {range_size} elements and no NULL was found.")
-        self.end_address = table_reader.address
+        self.end_address = reader.address
         return self
 
     def read_dma_binary(
         self,
-        table_reader: RomReader,
+        reader: RomReader,
         animation_headers: dict[str, AnimationHeader],
         animation_data: dict[tuple[str, str], Animation],
         table_index: int | None = None,
         assumed_bone_count: int | None = None,
     ):
         dma_table = DMATable()
-        dma_table.read_binary(table_reader)
-        self.reference = table_reader.start_address
+        dma_table.read_binary(reader)
+        self.reference = reader.start_address
         if table_index is not None:
             assert table_index >= 0 and table_index < len(
                 dma_table.entries
             ), f"Index {table_index} outside of defined table ({len(dma_table.entries)} entries)."
             entrie = dma_table.entries[table_index]
             return AnimationHeader.read_binary(
-                table_reader.branch(entrie.address),
+                reader.branch(entrie.address),
                 animation_headers,
                 animation_data,
                 True,
@@ -750,14 +750,14 @@ class AnimationTable:
 
         for i, entrie in enumerate(dma_table.entries):
             header = AnimationHeader.read_binary(
-                table_reader.branch(entrie.address),
+                reader.branch(entrie.address),
                 animation_headers,
                 animation_data,
                 True,
                 assumed_bone_count,
                 i,
             )
-            self.elements.append(AnimationTableElement(table_reader.start_address, None, header))
+            self.elements.append(AnimationTableElement(reader.start_address, None, header))
         self.end_address = dma_table.end_address
         return self
 

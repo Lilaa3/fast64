@@ -466,7 +466,7 @@ def import_binary_animations(
 
 
 def import_insertable_binary_animations(
-    insertable_data_reader: RomReader,
+    reader: RomReader,
     animation_headers: dict[str, AnimationHeader],
     animation_data: dict[tuple[str, str], Animation],
     table: AnimationTable,
@@ -474,21 +474,21 @@ def import_insertable_binary_animations(
     assumed_bone_count: int | None = None,
     table_size: int | None = None,
 ):
-    data_type_num = insertable_data_reader.read_value(4, signed=False)
+    data_type_num = reader.read_value(4, signed=False)
     if data_type_num not in insertableBinaryTypes.values():
         raise PluginError(f"Unknown data type: {intToHex(data_type_num)}")
-    data_size = insertable_data_reader.read_value(4, signed=False)
-    start_address = insertable_data_reader.read_value(4, signed=False)
+    data_size = reader.read_value(4, signed=False)
+    start_address = reader.read_value(4, signed=False)
 
-    pointer_count = insertable_data_reader.read_value(4, signed=False)
+    pointer_count = reader.read_value(4, signed=False)
     pointer_offsets = []
     for _ in range(pointer_count):
-        pointer_offsets.append(insertable_data_reader.read_value(4, signed=False))
+        pointer_offsets.append(reader.read_value(4, signed=False))
 
-    actual_start = insertable_data_reader.address + start_address
-    data_reader = insertable_data_reader.branch(
+    actual_start = reader.address + start_address
+    data_reader = reader.branch(
         0,
-        insertable_data_reader.data[actual_start : actual_start + data_size],
+        reader.data[actual_start : actual_start + data_size],
     )
     data_reader.insertable_ptrs = pointer_offsets
 

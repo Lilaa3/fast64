@@ -154,16 +154,16 @@ class DMATable:
 
         return data
 
-    def read_binary(self, dma_table_reader: RomReader):
-        self.address = dma_table_reader.start_address
+    def read_binary(self, reader: RomReader):
+        self.address = reader.start_address
 
-        num_entries = dma_table_reader.read_value(4, signed=False)  # numEntries
-        self.address_place_holder = dma_table_reader.read_value(4, signed=False)  # addrPlaceholder
+        num_entries = reader.read_value(4, signed=False)  # numEntries
+        self.address_place_holder = reader.read_value(4, signed=False)  # addrPlaceholder
 
         self.table_size = 0
         for _ in range(num_entries):
-            offset = dma_table_reader.read_value(4, signed=False)
-            size = dma_table_reader.read_value(4, signed=False)
+            offset = reader.read_value(4, signed=False)
+            size = reader.read_value(4, signed=False)
             address = self.address + offset
             self.entries.append(DMATableElement(offset, size, address, address + size))
             end_of_entry = offset + size
