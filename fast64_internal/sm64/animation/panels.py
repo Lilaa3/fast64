@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from .properties import AnimProps
 
 
-class SM64_AnimPanel(SM64_Panel):
+class SceneAnimationPanel(SM64_Panel):
     bl_idname = "SM64_PT_anim_panel"
     bl_label = "SM64 Animations"
     goal = "Export Object/Actor/Anim"
@@ -28,9 +28,9 @@ class SM64_AnimPanel(SM64_Panel):
         )
 
 
-class SM64_ObjAnimPanel(Panel):
+class ObjectAnimationPanel(Panel):
     bl_label = "Object Animation Inspector"
-    bl_idname = "OBJECT_PT_SM64_Anim_Inspector"
+    bl_idname = "OBJECT_PT_SM64_anim_panel"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "bone"
@@ -60,8 +60,8 @@ class SM64_ObjAnimPanel(Panel):
 
 
 panels = (
-    SM64_AnimPanel,
-    SM64_ObjAnimPanel,
+    SceneAnimationPanel,
+    ObjectAnimationPanel,
 )
 
 
