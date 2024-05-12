@@ -549,6 +549,7 @@ class SM64_AnimTableProps(PropertyGroup):
     behavior_address_prop: StringProperty(name="Behavior Address", default=intToHex(0x13002EF8))
     begining_animation: StringProperty(name="Begining Animation", default="0x00")
     insertable_file_name: StringProperty(name="Insertable File Name", default="toad.insertable")
+
     @property
     def behavior_address(self):
         return int(self.behavior_address_prop if self.behaviour == "Custom" else self.behaviour, 0)
@@ -913,6 +914,8 @@ class SM64_AnimProps(PropertyGroup):
     action_tab: BoolProperty(name="Action", default=True)
     selected_action: PointerProperty(name="Action", type=Action)
 
+    tools_tab: BoolProperty(name="Tools")
+
     update_table: BoolProperty(
         name="Update Table On Action Export",
         description="Update table outside of table exports",
@@ -933,7 +936,6 @@ class SM64_AnimProps(PropertyGroup):
     header_type: EnumProperty(items=enumAnimExportTypes, name="Header Export", default="Actor")
     custom_level_name: StringProperty(name="Level", default="bob")
     level_option: EnumProperty(items=enumLevelNames, name="Level", default="bob")
-
     # Binary
     binary_level: EnumProperty(items=level_enums, name="Level", default="IC")
     is_binary_dma: BoolProperty(name="Is DMA", default=True)
@@ -1133,7 +1135,6 @@ class SM64_AnimProps(PropertyGroup):
                     generate_enums=self.table.generate_enums,
                     is_dma=is_dma,
                 )
-
         box = col.box()
         if draw_and_check_tab(box, self, "table_tab"):
             self.table.draw_props(
@@ -1143,11 +1144,13 @@ class SM64_AnimProps(PropertyGroup):
                 export_type,
                 self.actor_name,
             )
-
         if show_importing:
             box = col.box()
             if draw_and_check_tab(box, self, "importing_tab"):
                 self.importing.draw_props(box, import_rom)
+        box = col.box()
+        if draw_and_check_tab(box, self, "tools_tab"):
+            op = box.operator("object.clean_object_animations")
 
 
 properties = (

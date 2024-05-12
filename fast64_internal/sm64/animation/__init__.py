@@ -11,10 +11,12 @@ from .panels import (
     anim_panel_unregister,
 )
 
+
 def anim_register():
     anim_operator_register()
     anim_props_register()
-    
+
+
 def anim_unregister():
     anim_operator_unregister()
     anim_props_unregister()
