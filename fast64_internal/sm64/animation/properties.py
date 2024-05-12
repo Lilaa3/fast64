@@ -29,7 +29,7 @@ from ...utility import (
     writeBoxExportType,
     intToHex,
 )
-from ..sm64_utility import import_rom_checks, upgrade_hex_prop
+from ..sm64_utility import import_rom_checks, upgrade_hex_prop, import_rom_ui_warnings
 from ..sm64_constants import MAX_U16, MIN_S16, MAX_S16, level_enums, enumLevelNames
 
 from .operators import (
@@ -776,11 +776,10 @@ class ImportProps(PropertyGroup):
 
     @property
     def table_size(self):
-        return None if self.check_null else self.table_size
+        return None if self.check_null else self.table_size_prop
 
     def draw_path(self, layout: UILayout):
-        prop_split(layout, self, "path", "Path")
-        layout.label(text="Folders and individual files are supported as the path", icon="INFO")
+        prop_split(layout, self, "path", "Directory or File Path")
         path_ui_warnings(layout, abspath(self.path))
 
     def draw_c(self, layout: UILayout):
@@ -793,17 +792,25 @@ class ImportProps(PropertyGroup):
         col.prop(self, "remove_name_footer")
         col.prop(self, "use_custom_name")
 
-    def draw_binary(self, layout: UILayout, import_rom: os.PathLike | None = None):
+    def draw_import_rom(self, layout: UILayout, import_rom: os.PathLike | None = None):
         col = layout.column()
-        col.prop(self, "rom")
         col.label(text="Uses scene import ROM by default", icon="INFO")
-        try:
-            if self.rom or import_rom is None:
-                import_rom_checks(abspath(self.rom))
-        except Exception as exc:
-            multilineLabel(col.box(), str(exc), "ERROR")
-            col = col.column()
-            col.enabled = False
+        prop_split(col, self, "rom", "Import ROM")
+        return import_rom_ui_warnings(col, self.rom if import_rom is None else import_rom)
+
+    def draw_table_settings(self, layout: UILayout):
+        col = layout.column()
+        split = col.split()
+        split.prop(self, "read_entire_table")
+        split.prop(self, "check_null")
+        if not self.read_entire_table:
+            split.prop(self, "table_index_prop", text="Index")
+        elif not self.check_null:
+            split.prop(self, "table_size_prop", text="Size")
+    def draw_binary(self, layout: UILayout, import_rom: os.PathLike | None = None):
+        self.draw_import_rom(layout, import_rom)
+        col = layout.column()
+
         if self.preset != "Custom":
             col.prop(self, "read_entire_table")
             if not self.read_entire_table:
@@ -819,55 +826,41 @@ class ImportProps(PropertyGroup):
                 SearchMarioAnim.draw_props(col, self, "mario_animation", "Mario Animations")
                 if self.mario_animation == "Custom":
                     prop_split(col, self, "table_index_prop", "Entry")
-        else:
-            prop_split(col, self, "level", "Level")
-            col.prop(self, "is_segmented_address_prop")
+            return
 
+        prop_split(col, self, "level", "Level")
+        split = col.split()
+        split.prop(self, "is_segmented_address_prop")
         if self.binary_import_type == "Table":
-            prop_split(col, self, "table_address", "Address")
-            col.prop(self, "read_entire_table")
-            col.prop(self, "check_null")
-            if self.read_entire_table:
-                if not self.check_null:
-                    prop_split(col, self, "table_size_prop", "Table Size")
-            else:
-                prop_split(col, self, "table_index_prop", "List Index")
+            split.prop(self, "table_address", text="")
+            self.draw_table_settings(col)
         elif self.binary_import_type == "Animation":
-            prop_split(col, self, "animation_address", "Address")
+            split.prop(self, "animation_address", text="")
 
     def draw_insertable_binary(self, layout: UILayout, import_rom: os.PathLike | None = None):
         col = layout.column()
-        col.label(text="Type will be read from the data type of the files", icon="INFO")
-        col.separator()
-        from_rom_box = col.box().column()
-        from_rom_box.prop(self, "read_from_rom_prop")
-        if self.read_from_rom_prop:
-            col.label(text="Uses scene import ROM by default", icon="INFO")
-            try:
-                if self.rom or import_rom is None:
-                    import_rom_checks(abspath(self.rom))
-            except Exception as exc:
-                multilineLabel(from_rom_box.box(), str(exc), "ERROR")
-                from_rom_box = from_rom_box.column()
-                from_rom_box.enabled = False
-
-            prop_split(from_rom_box, self, "level", "Level")
         self.draw_path(col)
-        table_box = col.box().column()
-        table_box.label(text="Table Imports")
-        table_box.prop(self, "read_entire_table")
-        if not self.read_entire_table:
-            prop_split(table_box, self, "table_index_prop", "List Index")
-            table_box.prop(self, "check_null")
+        col.separator()
+
+        col.label(text="Type will be read from the data type of the files", icon="INFO")
+        col.label(text="Table Imports")
+        self.draw_table_settings(col)
+        col.separator()
+
+        col.prop(self, "read_from_rom_prop")
+        if self.read_from_rom_prop:
+            self.draw_import_rom(col, import_rom)
+            prop_split(col, self, "level", "Level")
 
     def draw_props(self, layout: UILayout, import_rom: os.PathLike | None = None):
         col = layout.column()
 
         prop_split(col, self, "import_type", "Type")
-        col.separator()
 
         if self.import_type in {"C", "Binary"}:
             SearchTableAnim.draw_props(col, self, "preset", "Table Preset")
+            col.separator()
+
         if self.import_type == "C":
             self.draw_c(col)
         else:
@@ -875,7 +868,8 @@ class ImportProps(PropertyGroup):
                 self.draw_binary(col, import_rom)
             elif self.import_type == "Insertable Binary":
                 self.draw_insertable_binary(col, import_rom)
-            col.prop(self, "assume_bone_count")
+        col.separator()
+        col.prop(self, "assume_bone_count")
         col.prop(self, "clear_table")
         col.separator()
 
