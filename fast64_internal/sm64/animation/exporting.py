@@ -33,9 +33,9 @@ from ..sm64_rom_tweaks import ExtendBank0x04
 
 from .classes import (
     Animation,
-    AnimHeader,
-    AnimData,
-    AnimPair,
+    AnimationHeader,
+    AnimationData,
+    AnimationPair,
     AnimationTable,
     AnimationTableElement,
 )
@@ -84,9 +84,9 @@ def get_entire_fcurve_data(action: Action, bone: PoseBone, path: str, max_frame:
 
 def get_trans_data(action: Action, bone: PoseBone, max_frame: int, blender_to_sm64_scale: float) -> tuple:
     translation_pairs = (
-        AnimPair(),
-        AnimPair(),
-        AnimPair(),
+        AnimationPair(),
+        AnimationPair(),
+        AnimationPair(),
     )
     for x, y, z in zip(*get_entire_fcurve_data(action, bone, "location", max_frame, 3)):
         translation_pairs[0].values.append(int(x * blender_to_sm64_scale))
@@ -97,9 +97,9 @@ def get_trans_data(action: Action, bone: PoseBone, max_frame: int, blender_to_sm
 
 def get_rotation_data(action: Action, bone: PoseBone, max_frame: int):
     rotation_pairs = (
-        AnimPair(),
-        AnimPair(),
-        AnimPair(),
+        AnimationPair(),
+        AnimationPair(),
+        AnimationPair(),
     )
     rotation = (rotation_pairs[0].values, rotation_pairs[1].values, rotation_pairs[2].values)
     if bone.rotation_mode == "QUATERNION":
@@ -144,18 +144,18 @@ def get_animation_pairs(
         armature_obj.animation_data.action = action
 
         pairs = [
-            AnimPair(),
-            AnimPair(),
-            AnimPair(),
+            AnimationPair(),
+            AnimationPair(),
+            AnimationPair(),
         ]
         trans_x_pair, trans_y_pair, trans_z_pair = pairs
 
-        rotation_pairs: list[tuple[AnimPair]] = []
+        rotation_pairs: list[tuple[AnimationPair]] = []
         for _ in anim_bones:
             rotation = (
-                AnimPair(),
-                AnimPair(),
-                AnimPair(),
+                AnimationPair(),
+                AnimationPair(),
+                AnimationPair(),
             )
             rotation_pairs.append(rotation)
             pairs.extend(rotation)
@@ -185,7 +185,7 @@ def get_animation_pairs(
 def to_header_class(
     header_props: "HeaderProps",
     bone_count: int,
-    data: AnimData,
+    data: AnimationData,
     action: Action,
     use_int_flags: bool = False,
     values_reference: int | str | None = None,
@@ -195,7 +195,7 @@ def to_header_class(
     generate_enums: bool = False,
     file_name: str | None = "anim_00.inc.c",
 ):
-    header = AnimHeader()
+    header = AnimationHeader()
     header.reference = get_anim_name(actor_name, action, header_props)
     if generate_enums:
         header.enum_name = get_anim_enum(actor_name, action, header_props)
@@ -226,7 +226,7 @@ def to_data_class(
     quick_read: bool,
     file_name: str = "anim_00.inc.c",
 ):
-    data = AnimData()
+    data = AnimationData()
     pairs = get_animation_pairs(
         blender_to_sm64_scale,
         get_max_frame(action, action.fast64.sm64),
@@ -313,8 +313,8 @@ def to_table_class(
 
     bone_count = len(get_anim_pose_bones(armature_obj))
 
-    existing_data: dict[Action, AnimData] = {}
-    existing_headers: dict[HeaderProps, AnimHeader] = {}
+    existing_data: dict[Action, AnimationData] = {}
+    existing_headers: dict[HeaderProps, AnimationHeader] = {}
 
     element_props: TableElementProps
     for i, element_props in enumerate(table_props.elements):
@@ -710,11 +710,11 @@ def export_animation_binary(
             None,
             bone_count if animation_props.assume_bone_count else None,
         )
-        empty_data = AnimData()
+        empty_data = AnimationData()
         for header in animation.headers:
             while header.table_index >= len(table.elements):
                 table.elements.append(table.elements[-1])
-            table.elements[header.table_index] = AnimationTableElement(header=AnimHeader(data=empty_data))
+            table.elements[header.table_index] = AnimationTableElement(header=AnimationHeader(data=empty_data))
         print("Converting to binary data")
         data = table.to_binary_dma()
         print("Writing to ROM")

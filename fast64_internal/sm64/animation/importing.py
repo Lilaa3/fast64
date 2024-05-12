@@ -27,8 +27,8 @@ from .utility import (
 from .classes import (
     Animation,
     CArrayDeclaration,
-    AnimHeader,
-    AnimPair,
+    AnimationHeader,
+    AnimationPair,
     AnimationTable,
     AnimationTableElement,
 )
@@ -49,7 +49,7 @@ if TYPE_CHECKING:
 
 def from_header_class(
     header_props: "HeaderProps",
-    header: AnimHeader,
+    header: AnimationHeader,
     action: Action,
     actor_name: str = "mario",
     use_custom_name: bool = True,
@@ -231,7 +231,7 @@ class AnimationBone:
         self.translation: list[Vector] = []
         self.rotation: list[Quaternion] = []
 
-    def read_pairs(self, pairs: list[AnimPair]):
+    def read_pairs(self, pairs: list[AnimationPair]):
         array: list[int] = []
 
         max_frame = max(len(pair.values) for pair in pairs)
@@ -239,13 +239,13 @@ class AnimationBone:
             array.append([x.get_frame(frame) for x in pairs])
         return array
 
-    def read_translation(self, pairs: list[AnimPair], scale: float):
+    def read_translation(self, pairs: list[AnimationPair], scale: float):
         translation_frames = self.read_pairs(pairs)
 
         for translation_frame in translation_frames:
             self.translation.append([x / scale for x in translation_frame])
 
-    def read_rotation(self, pairs: list[AnimPair]):
+    def read_rotation(self, pairs: list[AnimationPair]):
         rotation_frames: list[Vector] = self.read_pairs(pairs)
 
         prev = Euler([0, 0, 0])
@@ -384,7 +384,7 @@ def comment_remover(text: str):
 
 def import_c_animations(
     path: os.PathLike,
-    animation_headers: dict[str, AnimHeader],
+    animation_headers: dict[str, AnimationHeader],
     animation_data: dict[tuple[str, str], Animation],
     table: AnimationTable,
 ):
@@ -429,7 +429,7 @@ def import_c_animations(
         )
         return
     for header_decl in header_decls:
-        AnimHeader().read_c(
+        AnimationHeader().read_c(
             header_decl,
             value_decls,
             indices_decls,
@@ -441,7 +441,7 @@ def import_c_animations(
 def import_binary_animations(
     data_reader: RomReader,
     import_type: str,
-    animation_headers: dict[str, AnimHeader],
+    animation_headers: dict[str, AnimationHeader],
     animation_data: dict[tuple[str, str], Animation],
     table: AnimationTable,
     table_index: int | None = None,
@@ -453,7 +453,7 @@ def import_binary_animations(
     elif import_type == "DMA":
         table.read_dma_binary(data_reader, animation_headers, animation_data, table_index, assumed_bone_count)
     elif import_type == "Animation":
-        AnimHeader.read_binary(
+        AnimationHeader.read_binary(
             data_reader,
             animation_headers,
             animation_data,
@@ -467,7 +467,7 @@ def import_binary_animations(
 
 def import_insertable_binary_animations(
     insertable_data_reader: RomReader,
-    animation_headers: dict[str, AnimHeader],
+    animation_headers: dict[str, AnimationHeader],
     animation_data: dict[tuple[str, str], Animation],
     table: AnimationTable,
     table_index: int | None = None,
@@ -494,7 +494,7 @@ def import_insertable_binary_animations(
 
     data_type = next(key for key, value in insertableBinaryTypes.items() if value == data_type_num)
     if data_type == "Animation":
-        AnimHeader.read_binary(
+        AnimationHeader.read_binary(
             data_reader,
             animation_headers,
             animation_data,
@@ -520,7 +520,7 @@ def import_animations(context: Context):
     armature_obj: Object = context.selected_objects[0]
 
     animation_data: dict[tuple[str, str], Animation] = {}
-    animation_headers: dict[str, AnimHeader] = {}
+    animation_headers: dict[str, AnimationHeader] = {}
     table = AnimationTable()
 
     if import_props.preset == "Custom":

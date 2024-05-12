@@ -49,7 +49,7 @@ class ShortArray:
 
 
 @dataclasses.dataclass
-class AnimPair:
+class AnimationPair:
     values: list[int] = dataclasses.field(default_factory=list)
 
     # Importing
@@ -85,8 +85,8 @@ class AnimPair:
 
 
 @dataclasses.dataclass
-class AnimData:
-    pairs: list[AnimPair] = dataclasses.field(default_factory=list)
+class AnimationData:
+    pairs: list[AnimationPair] = dataclasses.field(default_factory=list)
     indice_reference: str | int = ""
     values_reference: str | int = ""
     indices_file_name: str | int = ""
@@ -129,7 +129,7 @@ class AnimData:
         self.indice_reference = indices_reader.start_address
         self.values_reference = values_reader.start_address
         for _ in range((bone_count + 1) * 3):
-            pair = AnimPair()
+            pair = AnimationPair()
             pair.read_binary(indices_reader, values_reader)
             self.pairs.append(pair)
         self.indice_end_address = indices_reader.address
@@ -143,7 +143,7 @@ class AnimData:
         self.indice_reference = indice_decl.name
         self.values_reference = value_decl.name
         for i in range(0, len(indice_decl.values), 2):
-            pair = AnimPair()
+            pair = AnimationPair()
             max_frame = int(indice_decl.values[i], 0)
             offset = int(indice_decl.values[i + 1], 0)
             for j in range(max_frame):
@@ -153,7 +153,7 @@ class AnimData:
 
 
 @dataclasses.dataclass
-class AnimHeader:
+class AnimationHeader:
     reference: str | int = ""
     flags: int | str = 0
     trans_divisor: int = 0
@@ -163,7 +163,7 @@ class AnimHeader:
     bone_count: int = 0
     indice_reference: Optional[str | int] = None
     values_reference: Optional[str | int] = None
-    data: Optional[AnimData] = None
+    data: Optional[AnimationData] = None
 
     enum_name: str = ""
     file_name: str = ""
@@ -264,7 +264,7 @@ class AnimHeader:
     @staticmethod
     def read_binary(
         header_reader: RomReader,
-        animation_headers: dict[str, "AnimHeader"],
+        animation_headers: dict[str, "AnimationHeader"],
         animation_data: dict[tuple[str, str], "Animation"],
         is_dma: bool = False,
         assumed_bone_count: int | None = None,
@@ -273,7 +273,7 @@ class AnimHeader:
         if str(header_reader.start_address) in animation_headers:
             return animation_headers[str(header_reader.start_address)]
 
-        header = AnimHeader()
+        header = AnimationHeader()
         animation_headers[str(header_reader.start_address)] = header
         header.reference = header_reader.start_address
         header.flags = header_reader.read_value(2, signed=False)  # /*0x00*/ s16 flags;
@@ -303,7 +303,7 @@ class AnimHeader:
             indices_reader = header_reader.branch(header.indice_reference)
             values_reader = header_reader.branch(header.values_reference)
             if indices_reader and values_reader:
-                animation.data = AnimData().read_binary(
+                animation.data = AnimationData().read_binary(
                     indices_reader,
                     values_reader,
                     header.bone_count,
@@ -321,7 +321,7 @@ class AnimHeader:
         header_decl: CArrayDeclaration,
         value_decls,
         indices_decls,
-        animation_headers: dict[str, "AnimHeader"],
+        animation_headers: dict[str, "AnimationHeader"],
         animation_data: dict[tuple[str, str], "Animation"],
     ):
         if header_decl.name in animation_headers:
@@ -329,7 +329,7 @@ class AnimHeader:
         if len(header_decl.values) != 9:
             raise ValueError(f"Header declarion has {len(header_decl.values)} values instead of 9.\n {header_decl}")
 
-        header = AnimHeader()
+        header = AnimationHeader()
         animation_headers[header_decl.name] = header
         header.reference = header_decl.name
 
@@ -377,7 +377,7 @@ class AnimHeader:
             )
             animation = Animation()
             if indices_decl and value_decl:
-                animation.data = AnimData().read_c(indices_decl, value_decl)
+                animation.data = AnimationData().read_c(indices_decl, value_decl)
             animation_data[data_key] = animation
         animation = animation_data[data_key]
         header.data = animation.data
@@ -389,8 +389,8 @@ class AnimHeader:
 
 @dataclasses.dataclass
 class Animation:
-    data: AnimData = None
-    headers: list[AnimHeader] = dataclasses.field(default_factory=list)
+    data: AnimationData = None
+    headers: list[AnimationHeader] = dataclasses.field(default_factory=list)
     file_name: str | None = ""
 
     # Imports
@@ -462,7 +462,7 @@ class Animation:
 class AnimationTableElement:
     reference: str | int = ""
     enum_name: str | None = None
-    header: AnimHeader | None = None
+    header: AnimationHeader | None = None
 
     @property
     def data(self):
@@ -488,7 +488,7 @@ class AnimationTable:
             names.append((element.enum_name, element.reference))
         return names
 
-    def get_sets(self) -> tuple[list[AnimHeader], list[AnimData]]:
+    def get_sets(self) -> tuple[list[AnimationHeader], list[AnimationData]]:
         # Remove duplicates of data and headers, keep order by using a list
         data_set = []
         headers_set = []
@@ -505,7 +505,7 @@ class AnimationTable:
         for header in headers_set:
             if header in headers_added:
                 continue
-            ordered_headers: list[AnimHeader] = []
+            ordered_headers: list[AnimationHeader] = []
             for other_header in headers_set:
                 if other_header.data == header.data:
                     ordered_headers.append(other_header)
@@ -685,12 +685,12 @@ class AnimationTable:
     def read_binary(
         self,
         table_reader: RomReader,
-        animation_headers: dict[str, AnimHeader],
+        animation_headers: dict[str, AnimationHeader],
         animation_data: dict[tuple[str, str], Animation],
         table_index: int | None = None,
         assumed_bone_count: int | None = 0,
         table_size: int | None = None,
-    ) -> AnimHeader | None:
+    ) -> AnimationHeader | None:
         self.elements.clear()
         self.reference = table_reader.start_address
         range_size = table_size if table_size else 300
@@ -707,7 +707,7 @@ class AnimationTable:
 
             header_reader = table_reader.branch(ptr)
             if header_reader:
-                header = AnimHeader.read_binary(
+                header = AnimationHeader.read_binary(
                     table_reader.branch(ptr), animation_headers, animation_data, False, assumed_bone_count, i
                 )
             else:
@@ -726,7 +726,7 @@ class AnimationTable:
     def read_dma_binary(
         self,
         table_reader: RomReader,
-        animation_headers: dict[str, AnimHeader],
+        animation_headers: dict[str, AnimationHeader],
         animation_data: dict[tuple[str, str], Animation],
         table_index: int | None = None,
         assumed_bone_count: int | None = None,
@@ -739,7 +739,7 @@ class AnimationTable:
                 dma_table.entries
             ), f"Index {table_index} outside of defined table ({len(dma_table.entries)} entries)."
             entrie = dma_table.entries[table_index]
-            return AnimHeader.read_binary(
+            return AnimationHeader.read_binary(
                 table_reader.branch(entrie.address),
                 animation_headers,
                 animation_data,
@@ -749,7 +749,7 @@ class AnimationTable:
             )
 
         for i, entrie in enumerate(dma_table.entries):
-            header = AnimHeader.read_binary(
+            header = AnimationHeader.read_binary(
                 table_reader.branch(entrie.address),
                 animation_headers,
                 animation_data,
@@ -764,7 +764,7 @@ class AnimationTable:
     def read_c(
         self,
         table_decl: CArrayDeclaration,
-        animation_headers: dict[str, AnimHeader],
+        animation_headers: dict[str, AnimationHeader],
         animation_data: dict[tuple[str, str], Animation],
         header_decls: list[CArrayDeclaration],
         values_decls: list[CArrayDeclaration],
@@ -786,7 +786,7 @@ class AnimationTable:
                     None,
                 )
                 if header_decl:
-                    animation_headers[header_name] = AnimHeader.read_c(
+                    animation_headers[header_name] = AnimationHeader.read_c(
                         header_decl, values_decls, indices_decls, animation_headers, animation_data
                     )
             self.elements.append(
@@ -797,7 +797,7 @@ class AnimationTable:
         return self
 
 
-def create_tables(anims_data: list[AnimData], values_name: str = None):
+def create_tables(anims_data: list[AnimationData], values_name: str = None):
     """Can generate multiple indices table with only one value table, which improves compression"""
     """This feature is used in table exports"""
 
