@@ -823,11 +823,12 @@ class ImportProps(PropertyGroup):
         if self.binary_import_type == "DMA":
             prop_split(col, self, "dma_table_address", "DMA Table Address")
 
-            col.prop(self, "read_entire_table")
+            split = col.split(factor=0.4)
+            split.prop(self, "read_entire_table")
             if not self.read_entire_table:
-                SearchMarioAnim.draw_props(col, self, "mario_animation", "Mario Animations")
+                SearchMarioAnim.draw_props(split, self, "mario_animation", "")
                 if self.mario_animation == "Custom":
-                    prop_split(col, self, "table_index_prop", "Entry")
+                    prop_split(col, self, "table_index_prop", "Index")
             return
         split = col.split()
         split.prop(self, "is_segmented_address_prop")
