@@ -397,17 +397,17 @@ def update_includes(
     level_name: str,
     group_name: str,
     dir_name: str,
-    dir_path: str,
+    directory: os.PathLike,
     header_type: str,
     update_table: bool,
 ):
     if header_type == "Actor":
-        data_path = os.path.join(dir_path, f"{group_name}.c")
-        header_path = os.path.join(dir_path, f"{group_name}.h")
+        data_path = os.path.join(directory, f"{group_name}.c")
+        header_path = os.path.join(directory, f"{group_name}.h")
         include_start = f'#include "{dir_name}/'
     elif header_type == "Level":
-        data_path = os.path.join(dir_path, "leveldata.c")
-        header_path = os.path.join(dir_path, "header.h")
+        data_path = os.path.join(directory, "leveldata.c")
+        header_path = os.path.join(directory, "header.h")
         include_start = f'#include "{dir_name}/{level_name}/anims/'
     print(f"Updating includes at {data_path} and {header_path}.")
     writeIfNotFound(data_path, f'{include_start}/anims/data.inc.c"\n', "")
@@ -417,27 +417,27 @@ def update_includes(
 
 
 def write_anim_header(
-    anim_header_path: str,
+    anim_header: os.PathLike,
     table_name: str,
     generate_enums: bool,
 ):
     print("Writing animation header")
-    with open(anim_header_path, "w", encoding="utf-8") as file:
+    with open(anim_header, "w", encoding="utf-8") as file:
         if generate_enums:
             file.write('#include "anims/table_enum.h"\n')
         file.write(f"extern const struct Animation *const {table_name}[];\n")
 
 
 def update_enum_file(
-    enum_path: str,
+    enum_list: os.PathLike,
     enum_list_name: str,
     enum_names: list[str],
     override_files: bool,
 ):
-    if override_files or not os.path.exists(enum_path):
+    if override_files or not os.path.exists(enum_list):
         text = ""
     else:
-        with open(enum_path, "r") as file:
+        with open(enum_list, "r") as file:
             text = file.read()
 
     end_enum = f"{enum_list_name.upper()}_END"
@@ -458,26 +458,26 @@ def update_enum_file(
                 enum_list_end = text.find("}", enum_list_index)
             text = text[:enum_list_end] + f"{enum_name},\n\t" + text[enum_list_end:]
 
-    with open(enum_path, "w", newline="\n") as file:
+    with open(enum_list, "w", newline="\n") as file:
         file.write(text)
 
 
 def update_table_file(
-    table_path: str,
+    table: os.PathLike,
     enum_and_header_names: list[tuple[str, str]],
     table_name: str,
     generate_enums: bool,
-    enum_path: str,
+    enum_list: os.PathLike,
     enum_list_name: str,
 ):
-    if not os.path.exists(table_path):
+    if not os.path.exists(table):
         text = ""
     else:
-        with open(table_path, "r") as file:
+        with open(table, "r") as file:
             text = file.read()
 
     if generate_enums:
-        update_enum_file(enum_path, enum_list_name, [tup[0] for tup in enum_and_header_names], False)
+        update_enum_file(enum_list, enum_list_name, [tup[0] for tup in enum_and_header_names], False)
 
     # Table
     table_index = text.find(table_name)
@@ -498,7 +498,7 @@ def update_table_file(
 
         text = text[:table_end] + f"{header_reference},\n\t" + text[table_end:]
 
-    with open(table_path, "w", newline="\n") as file:
+    with open(table, "w", newline="\n") as file:
         file.write(text)
 
 
@@ -634,48 +634,48 @@ def export_animation_table_c(
     header_type = animation_props.header_type
     if header_type != "Custom":
         applyBasicTweaks(decomp)
-    anim_dir_path, geo_dir_path, header_dir_path = create_and_get_paths(animation_props, decomp)
+    anim_directory, geo_directory, header_directory = create_and_get_paths(animation_props, decomp)
 
     print("Creating all C data")
     if table_props.export_seperately or animation_props.is_c_dma:
         files_data = table.data_and_headers_to_c(animation_props.is_c_dma)
         print("Saving all generated data files")
         for file_name, file_data in files_data.items():
-            with open(os.path.join(anim_dir_path, file_name), "w", encoding="utf-8") as file:
+            with open(os.path.join(anim_directory, file_name), "w", encoding="utf-8") as file:
                 file.write(file_data)
             print(file_name)
         print("All files exported")
         if not animation_props.is_c_dma:
             update_data_file(
-                os.path.join(anim_dir_path, "data.inc.c"),
+                os.path.join(anim_directory, "data.inc.c"),
                 files_data.keys(),
                 table_props.override_files,
             )
     else:
         result = table.data_and_headers_to_c_combined()
         print("Saving generated data file")
-        with open(os.path.join(anim_dir_path, "data.inc.c"), "w", encoding="utf-8") as file:
+        with open(os.path.join(anim_directory, "data.inc.c"), "w", encoding="utf-8") as file:
             file.write(result)
         print("File exported")
     if animation_props.is_c_dma:
         return
 
-    header_path = os.path.join(geo_dir_path, "anim_header.h")
+    header_path = os.path.join(geo_directory, "anim_header.h")
     write_anim_header(header_path, table.reference, table_props.generate_enums)
     if table_props.override_files:
-        with open(os.path.join(anim_dir_path, "table.inc.c"), "w", encoding="utf-8") as file:
+        with open(os.path.join(anim_directory, "table.inc.c"), "w", encoding="utf-8") as file:
             file.write(table.table_to_c())
         if table_props.generate_enums:
-            table_enum_path = os.path.join(anim_dir_path, "table_enum.h")
+            table_enum_path = os.path.join(anim_directory, "table_enum.h")
             with open(table_enum_path, "w", encoding="utf-8") as file:
                 file.write(table.enum_list_to_c())
     else:
         update_table_file(
-            os.path.join(anim_dir_path, "table.inc.c"),
+            os.path.join(anim_directory, "table.inc.c"),
             table.enum_and_header_names,
             table.reference,
             table_props.generate_enums,
-            os.path.join(anim_dir_path, "table_enum.h"),
+            os.path.join(anim_directory, "table_enum.h"),
             table.enum_list_reference,
         )
 
@@ -684,7 +684,7 @@ def export_animation_table_c(
             animation_props.level_name,
             animation_props.group_name,
             toAlnum(animation_props.actor_name),
-            header_dir_path,
+            header_directory,
             header_type,
             True,
         )
@@ -771,8 +771,8 @@ def export_animation_c(
     if header_type != "Custom":
         applyBasicTweaks(decomp)
 
-    anim_dir_path, geo_dir_path, header_dir_path = create_and_get_paths(animation_props, decomp)
-    anim_path = os.path.join(anim_dir_path, anim_file_name)
+    anim_directory, geo_directory, header_directory = create_and_get_paths(animation_props, decomp)
+    anim_path = os.path.join(anim_directory, anim_file_name)
     with open(anim_path, "w", encoding="utf-8") as file:
         file.write(animation.to_c(animation_props.is_c_dma))
     if animation_props.is_c_dma:
@@ -782,25 +782,25 @@ def export_animation_c(
 
     if animation_props.update_table:
         write_anim_header(
-            os.path.join(geo_dir_path, "anim_header.h"),
+            os.path.join(geo_directory, "anim_header.h"),
             table_name,
             table_props.generate_enums,
         )
         update_table_file(
-            os.path.join(anim_dir_path, "table.inc.c"),
+            os.path.join(anim_directory, "table.inc.c"),
             animation.enum_and_header_names,
             table_name,
             table_props.generate_enums,
-            os.path.join(anim_dir_path, "table_enum.h"),
+            os.path.join(anim_directory, "table_enum.h"),
             enum_list_name,
         )
-    update_data_file(os.path.join(anim_dir_path, "data.inc.c"), [anim_file_name])
+    update_data_file(os.path.join(anim_directory, "data.inc.c"), [anim_file_name])
     if header_type != "Custom":
         update_includes(
             animation_props.level_name,
             animation_props.group_name,
             toAlnum(actor_name),
-            header_dir_path,
+            header_directory,
             header_type,
             animation_props.update_table,
         )

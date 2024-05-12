@@ -352,7 +352,7 @@ def animation_import_to_blender(
 def find_decls(
     c_data: str,
     search_text: str,
-    file_path: os.PathLike,
+    file: os.PathLike,
     decl_list: list[CArrayDeclaration],
 ):
     start_index = c_data.find(search_text)
@@ -364,7 +364,7 @@ def find_decls(
         values = [value.strip() for value in c_data[decl_index + 1 : end_index].split(",")]
         if values[-1] == "":
             values = values[:-1]
-        decl_list.append(CArrayDeclaration(name, file_path, values))
+        decl_list.append(CArrayDeclaration(name, file, values))
         start_index = c_data.find(search_text, end_index)
 
 

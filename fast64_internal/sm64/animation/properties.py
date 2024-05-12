@@ -1008,11 +1008,11 @@ class AnimProps(PropertyGroup):
         custom_export = self.header_type == "Custom"
         base_path = self.directory_path if custom_export else decomp
         if self.is_c_dma:  # DMA or Custom with DMA structure
-            anim_dir_path: os.PathLike = abspath(os.path.join(base_path, self.dma_folder))
-            directory_path_checks(anim_dir_path)
-            return (anim_dir_path, None, None)
+            anim_directory: os.PathLike = abspath(os.path.join(base_path, self.dma_folder))
+            directory_path_checks(anim_directory)
+            return (anim_directory, None, None)
         dir_name = toAlnum(self.actor_name)
-        header_dir_path: os.PathLike = abspath(
+        header_directory: os.PathLike = abspath(
             getExportDir(
                 custom_export,
                 base_path,
@@ -1022,10 +1022,10 @@ class AnimProps(PropertyGroup):
                 dir_name,
             )[0]
         )
-        directory_path_checks(header_dir_path)
-        geo_dir_path: os.PathLike = abspath(os.path.join(header_dir_path, dir_name))
-        anim_dir_path: os.PathLike = abspath(os.path.join(geo_dir_path, "anims"))
-        return (anim_dir_path, geo_dir_path, header_dir_path)
+        directory_path_checks(header_directory)
+        geo_directory: os.PathLike = abspath(os.path.join(header_directory, dir_name))
+        anim_directory: os.PathLike = abspath(os.path.join(geo_dir_path, "anims"))
+        return (anim_directory, geo_directory, header_directory)
 
     def draw_insertable_binary_settings(self, layout: UILayout):
         col = layout.column()
