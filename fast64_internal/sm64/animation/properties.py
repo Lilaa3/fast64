@@ -35,6 +35,7 @@ from ..sm64_constants import MAX_U16, MIN_S16, MAX_S16, level_enums, enumLevelNa
 from .operators import (
     SM64_SearchMarioAnim,
     SM64_SearchAnimatedBehavior,
+    CleanObjectAnimations,
     SM64_SearchTableAnim,
     SM64_ImportAllMarioAnims,
     SM64_ImportAnim,
@@ -1124,7 +1125,7 @@ class SM64_AnimProps(PropertyGroup):
         col.prop(self, "quick_read")
 
         box = col.box()
-        if draw_and_check_tab(box, self, "action_tab", "Action"):
+        if draw_and_check_tab(box, self, "action_tab", icon="ACTION"):
             box.prop(self, "selected_action")
             if self.selected_action:
                 self.selected_action.fast64.sm64.draw_props(
@@ -1136,7 +1137,7 @@ class SM64_AnimProps(PropertyGroup):
                     is_dma=is_dma,
                 )
         box = col.box()
-        if draw_and_check_tab(box, self, "table_tab"):
+        if draw_and_check_tab(box, self, "table_tab", icon="ANIM"):
             self.table.draw_props(
                 box,
                 is_dma,
@@ -1146,11 +1147,11 @@ class SM64_AnimProps(PropertyGroup):
             )
         if show_importing:
             box = col.box()
-            if draw_and_check_tab(box, self, "importing_tab"):
+            if draw_and_check_tab(box, self, "importing_tab", icon="IMPORT"):
                 self.importing.draw_props(box, import_rom)
         box = col.box()
-        if draw_and_check_tab(box, self, "tools_tab"):
-            op = box.operator("object.clean_object_animations")
+        if draw_and_check_tab(box, self, "tools_tab", icon="MOD_BUILD"):
+            op = box.operator(CleanObjectAnimations.bl_idname)
 
 
 properties = (

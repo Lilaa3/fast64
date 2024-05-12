@@ -66,7 +66,7 @@ class SM64_ObjAnimPanel(Panel):
         box = self.layout.box().column()
         sm64_props: SM64_Properties = context.scene.fast64.sm64
         animation_props: SM64_AnimProps = context.object.fast64.sm64.animation
-        if draw_and_check_tab(box, animation_props, "object_menu_tab"):
+        if draw_and_check_tab(box, animation_props, "object_menu_tab", icon="ANIM"):
             animation_props.draw_props(
                 box,
                 sm64_props.export_type,

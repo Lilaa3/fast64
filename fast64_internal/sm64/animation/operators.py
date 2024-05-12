@@ -261,6 +261,16 @@ class SM64_SearchAnimatedBehavior(SearchEnumOperatorBase):
         get_animation_props(context).table.behaviour = self.behaviour
 
 
+class CleanObjectAnimations(OperatorBase):
+    bl_description = "Clean object animations"
+    bl_idname = "object.clean_object_animations"
+    bl_label = "Clean Object Animations"
+    bl_options = {"REGISTER", "UNDO", "PRESET"}
+
+    def execute_operator(self, context: Context):
+        pass
+
+
 operators = (
     SM64_ExportAnimTable,
     SM64_ExportAnim,
@@ -272,6 +282,7 @@ operators = (
     SM64_SearchMarioAnim,
     SM64_SearchAnimatedBehavior,
     SM64_SearchTableAnim,
+    CleanObjectAnimations,
 )
 
 

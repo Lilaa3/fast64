@@ -1203,9 +1203,15 @@ def multilineLabel(layout: UILayout, text: str, icon: str = "NONE"):
         r.scale_y = 0.75
 
 
-def draw_and_check_tab(layout: UILayout, data, proprety: str, text: str | None = None) -> bool:
+def draw_and_check_tab(
+    layout: UILayout, data, proprety: str, text: Optional[str] = None, icon: Optional[str] = None
+) -> bool:
+    row = layout.row()
     tab = data.get(proprety)
-    layout.prop(data, proprety, icon="TRIA_DOWN" if tab else "TRIA_RIGHT", text=text)
+    tria_icon = "TRIA_DOWN" if tab else "TRIA_RIGHT"
+    if icon is not None:
+        row.prop(data, proprety, icon=tria_icon, text="", icon_only=True)
+    row.prop(data, proprety, icon=tria_icon if icon is None else icon, text=text)
     return tab
 
 

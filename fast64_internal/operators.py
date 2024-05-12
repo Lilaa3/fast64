@@ -104,16 +104,6 @@ class AddWaterBox(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class CleanObjectAnimations(OperatorBase):
-    bl_description = "Clean object animations"
-    bl_idname = "object.clean_object_animations"
-    bl_label = "Clean Object Animations"
-    bl_options = {"REGISTER", "UNDO", "PRESET"}
-
-    def execute_operator(self, context: Context):
-        pass
-
-
 class WarningOperator(bpy.types.Operator):
     """Extension of Operator that allows collecting and displaying warnings"""
 
