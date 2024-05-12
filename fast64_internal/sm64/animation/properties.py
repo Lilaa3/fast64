@@ -680,7 +680,7 @@ class SM64_AnimTableProps(PropertyGroup):
             )
         col.separator()
 
-        if not draw_and_check_tab(col, self, "element_tab"):
+        if not draw_and_check_tab(col, self, "element_tab", icon="NLA"):
             return
         op_row = col.row()
         draw_list_op(op_row, SM64_TableOperations, "ADD")
@@ -906,13 +906,13 @@ class SM64_AnimProps(PropertyGroup):
     played_header: IntProperty(min=0)
     played_action: PointerProperty(name="Action", type=Action)
     object_menu_tab: BoolProperty(name="SM64 Animation Inspector")
-    use_selected_object: BoolProperty(name="Use Selected Object", default=True)
+    use_selected_object: BoolProperty(name="Use Selected Object's Individual Properties", default=True)
 
-    table_tab: BoolProperty(name="Table")
+    table_tab: BoolProperty(name="Table", default=True)
     table: PointerProperty(type=SM64_AnimTableProps)
     importing_tab: BoolProperty(name="Importing")
     importing: PointerProperty(type=SM64_AnimImportProps)
-    action_tab: BoolProperty(name="Action", default=True)
+    action_tab: BoolProperty(name="Action", default=False)
     selected_action: PointerProperty(name="Action", type=Action)
 
     tools_tab: BoolProperty(name="Tools")
@@ -934,7 +934,7 @@ class SM64_AnimProps(PropertyGroup):
     actor_name_prop: StringProperty(name="Name", default="mario")  # TODO: Does this need to be passed to a @property?
     # TODO: Ideally, this pr will be merged after combined exports, so this should be updated to use the group enum there
     group_name: StringProperty(name="Group Name", default="group0")
-    header_type: EnumProperty(items=enumAnimExportTypes, name="Header Export", default="Actor")
+    header_type: EnumProperty(items=enumAnimExportTypes, name="Export Type", default="Actor")
     custom_level_name: StringProperty(name="Level", default="bob")
     level_option: EnumProperty(items=enumLevelNames, name="Level", default="bob")
     # Binary
@@ -1068,9 +1068,9 @@ class SM64_AnimProps(PropertyGroup):
     def draw_c_settings(self, layout: UILayout):
         col = layout.column()
 
-        prop_split(col, self, "header_type", "Export Type")
+        prop_split(col, self, "header_type", "Header Type")
         if self.header_type == "DMA":
-            col.prop(self, "dma_folder")
+            prop_split(col, self, "dma_folder", "Folder", icon="FILE_FOLDER")
             decompFolderMessage(col)
             return
 
@@ -1125,6 +1125,15 @@ class SM64_AnimProps(PropertyGroup):
         col.prop(self, "quick_read")
 
         box = col.box()
+        if draw_and_check_tab(box, self, "table_tab", icon="ANIM"):
+            self.table.draw_props(
+                box,
+                is_dma,
+                not self.update_table and not is_dma,
+                export_type,
+                self.actor_name,
+            )
+        box = col.box()
         if draw_and_check_tab(box, self, "action_tab", icon="ACTION"):
             box.prop(self, "selected_action")
             if self.selected_action:
@@ -1136,15 +1145,6 @@ class SM64_AnimProps(PropertyGroup):
                     generate_enums=self.table.generate_enums,
                     is_dma=is_dma,
                 )
-        box = col.box()
-        if draw_and_check_tab(box, self, "table_tab", icon="ANIM"):
-            self.table.draw_props(
-                box,
-                is_dma,
-                not self.update_table and not is_dma,
-                export_type,
-                self.actor_name,
-            )
         if show_importing:
             box = col.box()
             if draw_and_check_tab(box, self, "importing_tab", icon="IMPORT"):
