@@ -846,7 +846,7 @@ class ImportProps(PropertyGroup):
         col.separator()
 
         col.label(text="Animation type will be read from the files", icon="INFO")
-        
+
         table_box = col.box().column()
         table_box.label(text="Table Imports")
         self.draw_table_settings(table_box)

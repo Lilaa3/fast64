@@ -171,3 +171,31 @@ class DMATable:
                 self.table_size = end_of_entry
         self.end_address = self.address + self.table_size
         return self
+
+
+@dataclasses.dataclass
+class ShortArray:
+    name: str = ""
+    signed: bool = False
+    data: list[int] = dataclasses.field(default_factory=list)
+
+    def to_binary(self):
+        data = bytearray(0)
+        for short in self.data:
+            data += short.to_bytes(2, "big", signed=True)
+        return data
+
+    def to_c(self):
+        data = StringIO()
+        data.write(f"static const {'s' if self.signed else 'u'}16 {self.name}[] = {{\n\t")
+
+        wrap = 9 if self.signed else 6
+        i = 0 if self.signed else -12 + 6
+        for short in self.data:
+            data.write(f"{format(short if short >= 0 else 65536 + short, '#06x')}, ")
+            i += 1
+            if i == wrap:
+                data.write("\n\t")
+                i = 0
+        data.write("\n};\n")
+        return data.getvalue()
