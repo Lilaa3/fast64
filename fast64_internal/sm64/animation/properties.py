@@ -807,9 +807,11 @@ class ImportProps(PropertyGroup):
             split.prop(self, "table_index_prop", text="Index")
         elif not self.check_null:
             split.prop(self, "table_size_prop", text="Size")
+
     def draw_binary(self, layout: UILayout, import_rom: os.PathLike | None = None):
-        self.draw_import_rom(layout, import_rom)
         col = layout.column()
+        self.draw_import_rom(col, import_rom)
+        col.separator()
 
         if self.preset != "Custom":
             col.prop(self, "read_entire_table")
@@ -817,7 +819,7 @@ class ImportProps(PropertyGroup):
                 prop_split(col, self, "table_index_prop", "List Index")
             return
 
-        prop_split(col, self, "binary_import_type", "Binary Type")
+        prop_split(col, self, "binary_import_type", "Animation Type")
         if self.binary_import_type == "DMA":
             prop_split(col, self, "dma_table_address", "DMA Table Address")
 
@@ -827,15 +829,15 @@ class ImportProps(PropertyGroup):
                 if self.mario_animation == "Custom":
                     prop_split(col, self, "table_index_prop", "Entry")
             return
-
-        prop_split(col, self, "level", "Level")
         split = col.split()
         split.prop(self, "is_segmented_address_prop")
+
         if self.binary_import_type == "Table":
             split.prop(self, "table_address", text="")
             self.draw_table_settings(col)
         elif self.binary_import_type == "Animation":
             split.prop(self, "animation_address", text="")
+        prop_split(col, self, "level", "Level")
 
     def draw_insertable_binary(self, layout: UILayout, import_rom: os.PathLike | None = None):
         col = layout.column()
@@ -863,16 +865,15 @@ class ImportProps(PropertyGroup):
 
         if self.import_type == "C":
             self.draw_c(col)
-        else:
+        elif self.import_type in {"Binary", "Insertable Binary"}:
             if self.import_type == "Binary":
                 self.draw_binary(col, import_rom)
             elif self.import_type == "Insertable Binary":
                 self.draw_insertable_binary(col, import_rom)
-        col.separator()
-        col.prop(self, "assume_bone_count")
-        col.prop(self, "clear_table")
+            col.prop(self, "assume_bone_count")
         col.separator()
 
+        col.prop(self, "clear_table")
         ImportAnim.draw_props(col)
 
 
