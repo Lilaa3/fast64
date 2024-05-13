@@ -197,6 +197,7 @@ def stashActionInArmature(armatureObj: bpy.types.Object, action: bpy.types.Actio
     print(f'Stashing "{action.name}" in the object "{armatureObj.name}".')
 
     track = armatureObj.animation_data.nla_tracks.new()
+    track.name = action.name
     track.strips.new(action.name, int(action.frame_range[0]), action)
 
 

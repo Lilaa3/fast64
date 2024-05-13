@@ -1,8 +1,9 @@
 import os
+
 from bpy.types import UILayout
 from bpy.path import abspath
 
-from ..utility import PluginError, filepath_checks, multilineLabel
+from ..utility import PluginError, filepath_checks, multilineLabel, intToHex
 
 
 def starSelectWarning(operator, fileStatus):
@@ -69,3 +70,9 @@ def check_expanded(rom: os.PathLike):
         raise PluginError(
             f"ROM at {rom} is too small.\nYou may be using an unexpanded ROM.\nYou can expand a ROM by opening it in SM64 Editor or ROM Manager."
         )
+
+
+def upgrade_hex_prop(prop_location, old_prop_location, prop_name: str, hex_prop_name: str):
+    value = old_prop_location.get(hex_prop_name, None)
+    if value is not None:
+        prop_location.set(prop_name, intToHex(int(value, 16)))

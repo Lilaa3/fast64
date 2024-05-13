@@ -82,11 +82,11 @@ from .sm64_f3d_writer import (
     sm64_dl_writer_unregister,
 )
 
-from .sm64_anim import (
-    sm64_anim_panel_register,
-    sm64_anim_panel_unregister,
-    sm64_anim_register,
-    sm64_anim_unregister,
+from .animation import (
+    anim_panel_register,
+    anim_panel_unregister,
+    anim_register,
+    anim_unregister,
 )
 
 
@@ -103,7 +103,7 @@ def sm64_panel_register():
     sm64_spline_panel_register()
     sm64_dl_writer_panel_register()
     sm64_dl_parser_panel_register()
-    sm64_anim_panel_register()
+    anim_panel_register()
 
 
 def sm64_panel_unregister():
@@ -119,11 +119,12 @@ def sm64_panel_unregister():
     sm64_spline_panel_unregister()
     sm64_dl_writer_panel_unregister()
     sm64_dl_parser_panel_unregister()
-    sm64_anim_panel_unregister()
+    anim_panel_unregister()
 
 
 def sm64_register(register_panels: bool):
     tools_operators_register()
+    anim_register()
     sm64_col_register()
     sm64_bone_register()
     sm64_cam_register()
@@ -134,7 +135,6 @@ def sm64_register(register_panels: bool):
     sm64_spline_register()
     sm64_dl_writer_register()
     sm64_dl_parser_register()
-    sm64_anim_register()
     settings_props_register()
 
     if register_panels:
@@ -143,6 +143,7 @@ def sm64_register(register_panels: bool):
 
 def sm64_unregister(unregister_panels: bool):
     tools_operators_unregister()
+    anim_unregister()
     sm64_col_unregister()
     sm64_bone_unregister()
     sm64_cam_unregister()
@@ -153,7 +154,6 @@ def sm64_unregister(unregister_panels: bool):
     sm64_spline_unregister()
     sm64_dl_writer_unregister()
     sm64_dl_parser_unregister()
-    sm64_anim_unregister()
     settings_props_unregister()
 
     if unregister_panels:

@@ -18,6 +18,7 @@ from .fast64_internal.sm64.settings.properties import SM64_Properties
 from .fast64_internal.sm64 import sm64_register, sm64_unregister
 from .fast64_internal.sm64.sm64_geolayout_bone import SM64_BoneProperties
 from .fast64_internal.sm64.sm64_objects import SM64_ObjectProperties
+from .fast64_internal.sm64.animation.properties import SM64_ActionProps
 
 from .fast64_internal.oot import OOT_Properties, oot_register, oot_unregister
 from .fast64_internal.oot.props_panel_main import OOT_ObjectProperties
@@ -246,6 +247,14 @@ class Fast64_Properties(bpy.types.PropertyGroup):
     renderSettings: bpy.props.PointerProperty(type=Fast64RenderSettings_Properties, name="Fast64 Render Settings")
 
 
+class Fast64_ActionProperties(bpy.types.PropertyGroup):
+    """
+    Properties in action.fast64.
+    """
+
+    sm64: bpy.props.PointerProperty(type=SM64_ActionProps, name="SM64 Properties")
+
+
 class Fast64_BoneProperties(bpy.types.PropertyGroup):
     """
     Properties in bone.fast64 (bpy.types.Bone)
@@ -351,6 +360,7 @@ classes = (
     Fast64Settings_Properties,
     Fast64RenderSettings_Properties,
     Fast64_Properties,
+    Fast64_ActionProperties,
     Fast64_BoneProperties,
     Fast64_ObjectProperties,
     F3D_GlobalSettingsPanel,
@@ -448,6 +458,7 @@ def register():
     )
 
     bpy.types.Scene.fast64 = bpy.props.PointerProperty(type=Fast64_Properties, name="Fast64 Properties")
+    bpy.types.Action.fast64 = bpy.props.PointerProperty(type=Fast64_ActionProperties, name="Fast64 Action Properties")
     bpy.types.Bone.fast64 = bpy.props.PointerProperty(type=Fast64_BoneProperties, name="Fast64 Bone Properties")
     bpy.types.Object.fast64 = bpy.props.PointerProperty(type=Fast64_ObjectProperties, name="Fast64 Object Properties")
 

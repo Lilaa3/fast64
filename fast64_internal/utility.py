@@ -2,7 +2,7 @@ import bpy, random, string, os, math, traceback, re, os, mathutils, ast, operato
 from math import pi, ceil, degrees, radians, copysign
 from mathutils import *
 from .utility_anim import *
-from typing import Callable, Iterable, Any, Tuple, Union
+from typing import Callable, Iterable, Any, Tuple, Union, Optional
 from bpy.types import UILayout
 
 CollectionProperty = Any  # collection prop as defined by using bpy.props.CollectionProperty
@@ -40,7 +40,12 @@ enumExportHeaderType = [
 ]
 
 # bpy.context.mode returns the keys here, while the values are required by bpy.ops.object.mode_set
-BLENDER_MODE_TO_MODE_SET = {"PAINT_VERTEX": "VERTEX_PAINT", "EDIT_MESH": "EDIT"}
+BLENDER_MODE_TO_MODE_SET = {
+    "PAINT_VERTEX": "VERTEX_PAINT",
+    "EDIT_MESH": "EDIT",
+    "EDIT_ARMATURE": "EDIT",
+    "POSE": "POSE",
+}
 get_mode_set_from_context_mode = lambda mode: BLENDER_MODE_TO_MODE_SET.get(mode, "OBJECT")
 
 
@@ -581,7 +586,7 @@ def cast_integer(value: int, bits: int, signed: bool):
 
 
 to_s16 = lambda x: cast_integer(round(x), 16, True)
-radians_to_s16 = lambda d: to_s16(d * 0x10000 / (2 * math.pi))
+radians_to_s16 = lambda d: round(d * 10430.37835047)  # 0x10000 / (2 * math.pi)
 
 
 def int_from_s16(value: int) -> int:
@@ -671,11 +676,17 @@ def makeWriteInfoBox(layout):
 
 
 def writeBoxExportType(writeBox, headerType, name, levelName, levelOption):
+    if not name:
+        writeBox.label(text="Empty actor name", icon="ERROR")
+        return
     if headerType == "Actor":
         writeBox.label(text="actors/" + toAlnum(name))
     elif headerType == "Level":
         if levelOption != "custom":
             levelName = levelOption
+        if not name:
+            writeBox.label(text="Empty level name", icon="ERROR")
+            return
         writeBox.label(text="levels/" + toAlnum(levelName) + "/" + toAlnum(name))
 
 
@@ -1191,6 +1202,18 @@ def multilineLabel(layout: UILayout, text: str, icon: str = "NONE"):
         r.scale_y = 0.75
 
 
+def draw_and_check_tab(
+    layout: UILayout, data, proprety: str, text: Optional[str] = None, icon: Optional[str] = None
+) -> bool:
+    row = layout.row()
+    tab = data.get(proprety)
+    tria_icon = "TRIA_DOWN" if tab else "TRIA_RIGHT"
+    if icon is not None:
+        row.prop(data, proprety, icon=tria_icon, text="", icon_only=True)
+    row.prop(data, proprety, icon=tria_icon if icon is None else icon, text=text)
+    return tab
+
+
 def directory_path_checks(
     directory_path: str,
     empty_error: str = "Empty path.",
@@ -1243,6 +1266,27 @@ def filepath_ui_warnings(
 ) -> bool:
     try:
         filepath_checks(filepath, empty_error, doesnt_exist_error, not_a_file_error)
+        return True
+    except Exception as e:
+        multilineLabel(layout.box(), str(e), "ERROR")
+        return False
+
+
+def path_checks(filepath: str, empty_error: str = "Empty path.", doesnt_exist_error: str = "Path does not exist."):
+    if filepath == "":
+        raise PluginError(empty_error)
+    elif not os.path.exists(filepath):
+        raise PluginError(doesnt_exist_error)
+
+
+def path_ui_warnings(
+    layout: bpy.types.UILayout,
+    filepath: str,
+    empty_error: str = "Empty path.",
+    doesnt_exist_error: str = "Path does not exist.",
+) -> bool:
+    try:
+        path_checks(filepath, empty_error, doesnt_exist_error)
         return True
     except Exception as e:
         multilineLabel(layout.box(), str(e), "ERROR")
@@ -1332,15 +1376,15 @@ def bytesToInt(value):
 
 
 def bytesToHex(value, byteSize=4):
-    return format(bytesToInt(value), "#0" + str(byteSize * 2 + 2) + "x")
+    return format(bytesToInt(value), f"#0{(byteSize * 2 + 2)}x")
 
 
 def bytesToHexClean(value, byteSize=4):
-    return format(bytesToInt(value), "0" + str(byteSize * 2) + "x")
+    return format(bytesToInt(value), f"#0{(byteSize * 2)}x")
 
 
 def intToHex(value, byteSize=4):
-    return format(value, "#0" + str(byteSize * 2 + 2) + "x")
+    return format(value, f"#0{(byteSize * 2 + 2)}x")
 
 
 def intToBytes(value, byteSize):
@@ -1573,6 +1617,10 @@ def byteMask(data, offset, amount):
 
 def bitMask(data, offset, amount):
     return (~(-1 << amount) << offset & data) >> offset
+
+
+def is_bit_active(x: int, index: int):
+    return ((x >> index) & 1) == 1
 
 
 def read16bitRGBA(data):

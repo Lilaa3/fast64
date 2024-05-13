@@ -1,4 +1,8 @@
 # RAM address used in evaluating switch for hatless Mario
+import dataclasses
+from typing import Any
+
+
 marioHatSwitch = 0x80277740
 marioLowPolySwitch = 0x80277150
 
@@ -26,6 +30,26 @@ marioVanishOffsets = {
     "regular": 0xB0C,
     "metal": 0x9EC,
 }
+
+NULL = 0x00000000
+
+MIN_U8 = 0
+MAX_U8 = (2**8) - 1
+
+MIN_S8 = -(2**7)
+MAX_S8 = (2**7) - 1
+
+MIN_S16 = -(2**15)
+MAX_S16 = (2**15) - 1
+
+MIN_U16 = 0
+MAX_U16 = 2**16 - 1
+
+MIN_S32 = -(2**31)
+MAX_S32 = 2**31 - 1
+
+MIN_U32 = 0
+MAX_U32 = 2**32 - 1
 
 commonGeolayoutPointers = {
     "Dorrie": [2039136, "HMC"],
@@ -334,7 +358,14 @@ level_pointers = {
     "TTM": 0x2AC2EC,
 }
 
-insertableBinaryTypes = {"Display List": 0, "Geolayout": 1, "Animation": 2, "Collision": 3}
+insertableBinaryTypes = {
+    "Display List": 0,
+    "Geolayout": 1,
+    "Animation": 2,
+    "Collision": 3,
+    "Animation Table": 4,
+    "Animation DMA Table": 5,
+}
 enumBehaviourPresets = [
     ("Custom", "Custom", "Custom"),
     ("1300407c", "1 Up", "1 Up"),
@@ -1832,216 +1863,781 @@ groupsSeg6 = [
     ("Custom", "Custom", "Custom"),
 ]
 
-
-marioAnimations = [
-    #   ( Adress, "Animation name" ),
-    (5162640, "0 - Slow ledge climb up"),
-    (5165520, "1 - Fall over backwards"),
-    (5165544, "2 - Backward air kb"),
-    (5172396, "3 - Dying on back"),
-    (5177044, "4 - Backflip"),
-    (5179584, "5 - Climbing up pole"),
-    (5185656, "6 - Grab pole short"),
-    (5186824, "7 - Grab pole swing part 1"),
-    (5186848, "8 - Grab pole swing part 2"),
-    (5191920, "9 - Handstand idle"),
-    (5194740, "10 - Handstand jump"),
-    (5194764, "11 - Start handstand"),
-    (5188592, "12 - Return from handstand"),
-    (5196388, "13 - Idle on pole"),
-    (5197436, "14 - A pose"),
-    (5197792, "15 - Skid on ground"),
-    (5197816, "16 - Stop skid"),
-    (5199596, "17 - Crouch from fast longjump"),
-    (5201048, "18 - Crouch from a slow longjump"),
-    (5202644, "19 - Fast longjump"),
-    (5204600, "20 - Slow longjump"),
-    (5205980, "21 - Airborne on stomach"),
-    (5207188, "22 - Walk with light object"),
-    (5211916, "23 - Run with light object"),
-    (5215136, "24 - Slow walk with light object"),
-    (5219864, "25 - Shivering and warming hands"),
-    (5225496, "26 - Shivering return to idle "),
-    (5226920, "27 - Shivering"),
-    (5230056, "28 - Climb down on ledge"),
-    (5231112, "29 - Credits - Waving"),
-    (5232768, "30 - Credits - Look up"),
-    (5234576, "31 - Credits - Return from look up"),
-    (5235700, "32 - Credits - Raising hand"),
-    (5243100, "33 - Credits - Lowering hand"),
-    (5245988, "34 - Credits - Taking off cap"),
-    (5248016, "35 - Credits - Start walking and look up"),
-    (5256508, "36 - Credits - Look back then run"),
-    (5266160, "37 - Final Bowser - Raise hand and spin"),
-    (5274456, "38 - Final Bowser - Wing cap take off"),
-    (5282084, "39 - Credits - Peach sign"),
-    (5291340, "40 - Stand up from lava boost"),
-    (5292628, "41 - Fire/Lava burn"),
-    (5293488, "42 - Wing cap flying"),
-    (5295016, "43 - Hang on owl"),
-    (5296876, "44 - Land on stomach"),
-    (5296900, "45 - Air forward kb"),
-    (5302796, "46 - Dying on stomach"),
-    (5306100, "47 - Suffocating"),
-    (5313796, "48 - Coughing"),
-    (5319500, "49 - Throw catch key"),
-    (5330436, "50 - Dying fall over"),
-    (5338604, "51 - Idle on ledge"),
-    (5341720, "52 - Fast ledge grab"),
-    (5343296, "53 - Hang on ceiling"),
-    (5347276, "54 - Put cap on"),
-    (5351252, "55 - Take cap off then on"),
-    (5358356, "56 - Quickly put cap on"),
-    (5359476, "57 - Head stuck in ground"),
-    (5372172, "58 - Ground pound landing"),
-    (5372824, "59 - Triple jump ground-pound"),
-    (5374304, "60 - Start ground-pound"),
-    (5374328, "61 - Ground-pound"),
-    (5375380, "62 - Bottom stuck in ground"),
-    (5387148, "63 - Idle with light object"),
-    (5390520, "64 - Jump land with light object"),
-    (5391892, "65 - Jump with light object"),
-    (5392704, "66 - Fall land with light object"),
-    (5393936, "67 - Fall with light object"),
-    (5394296, "68 - Fall from sliding with light object"),
-    (5395224, "69 - Sliding on bottom with light object"),
-    (5395248, "70 - Stand up from sliding with light object"),
-    (5396716, "71 - Riding shell"),
-    (5397832, "72 - Walking"),
-    (5403208, "73 - Forward flip"),
-    (5404784, "74 - Jump riding shell"),
-    (5405676, "75 - Land from double jump"),
-    (5407340, "76 - Double jump fall"),
-    (5408288, "77 - Single jump"),
-    (5408312, "78 - Land from single jump"),
-    (5411044, "79 - Air kick"),
-    (5412900, "80 - Double jump rise"),
-    (5413596, "81 - Start forward spinning"),
-    (5414876, "82 - Throw light object"),
-    (5416032, "83 - Fall from slide kick"),
-    (5418280, "84 - Bend kness riding shell"),
-    (5419872, "85 - Legs stuck in ground"),
-    (5431416, "86 - General fall"),
-    (5431440, "87 - General land"),
-    (5433276, "88 - Being grabbed"),
-    (5434636, "89 - Grab heavy object"),
-    (5437964, "90 - Slow land from dive"),
-    (5441520, "91 - Fly from cannon"),
-    (5442516, "92 - Moving right while hanging"),
-    (5444052, "93 - Moving left while hanging"),
-    (5445472, "94 - Missing cap"),
-    (5457860, "95 - Pull door walk in"),
-    (5463196, "96 - Push door walk in"),
-    (5467492, "97 - Unlock door"),
-    (5480428, "98 - Start reach pocket"),
-    (5481448, "99 - Reach pocket"),
-    (5483352, "100 - Stop reach pocket"),
-    (5484876, "101 - Ground throw"),
-    (5486852, "102 - Ground kick"),
-    (5489076, "103 - First punch"),
-    (5489740, "104 - Second punch"),
-    (5490356, "105 - First punch fast"),
-    (5491396, "106 - Second punch fast"),
-    (5492732, "107 - Pick up light object"),
-    (5493948, "108 - Pushing"),
-    (5495508, "109 - Start riding shell"),
-    (5497072, "110 - Place light object"),
-    (5498484, "111 - Forward spinning"),
-    (5498508, "112 - Backward spinning"),
-    (5498884, "113 - Breakdance"),
-    (5501240, "114 - Running"),
-    (5501264, "115 - Running (unused)"),
-    (5505884, "116 - Soft back kb"),
-    (5508004, "117 - Soft front kb"),
-    (5510172, "118 - Dying in quicksand"),
-    (5515096, "119 - Idle in quicksand"),
-    (5517836, "120 - Move in quicksand"),
-    (5528568, "121 - Electrocution"),
-    (5532480, "122 - Shocked"),
-    (5533160, "123 - Backward kb"),
-    (5535796, "124 - Forward kb"),
-    (5538372, "125 - Idle heavy object"),
-    (5539764, "126 - Stand against wall"),
-    (5544580, "127 - Side step left"),
-    (5548480, "128 - Side step right"),
-    (5553004, "129 - Start sleep idle"),
-    (5557588, "130 - Start sleep scratch"),
-    (5563636, "131 - Start sleep yawn"),
-    (5568648, "132 - Start sleep sitting"),
-    (5573680, "133 - Sleep idle"),
-    (5574280, "134 - Sleep start laying"),
-    (5577460, "135 - Sleep laying"),
-    (5579300, "136 - Dive"),
-    (5579324, "137 - Slide dive"),
-    (5580860, "138 - Ground bonk"),
-    (5584116, "139 - Stop slide light object"),
-    (5587364, "140 - Slide kick"),
-    (5588288, "141 - Crouch from slide kick"),
-    (5589652, "142 - Slide motionless"),
-    (5589676, "143 - Stop slide"),
-    (5591572, "144 - Fall from slide"),
-    (5592860, "145 - Slide"),
-    (5593404, "146 - Tiptoe"),
-    (5599280, "147 - Twirl land"),
-    (5600160, "148 - Twirl"),
-    (5600516, "149 - Start twirl"),
-    (5601072, "150 - Stop crouching"),
-    (5602028, "151 - Start crouching"),
-    (5602720, "152 - Crouching"),
-    (5605756, "153 - Crawling"),
-    (5613048, "154 - Stop crawling"),
-    (5613968, "155 - Start crawling"),
-    (5614876, "156 - Summon star"),
-    (5620036, "157 - Return star approach door"),
-    (5622256, "158 - Backwards water kb"),
-    (5626540, "159 - Swim with object part 1"),
-    (5627592, "160 - Swim with object part 2"),
-    (5628260, "161 - Flutter kick with object"),
-    (5629456, "162 - Action end with object in water"),
-    (5631180, "163 - Stop holding object in water"),
-    (5634048, "164 - Holding object in water"),
-    (5635976, "165 - Drowning part 1"),
-    (5641400, "166 - Drowning part 2"),
-    (5646324, "167 - Dying in water"),
-    (5649660, "168 - Forward kb in water"),
-    (5653848, "169 - Falling from water"),
-    (5655852, "170 - Swimming part 1"),
-    (5657100, "171 - Swimming part 2"),
-    (5658128, "172 - Flutter kick"),
-    (5660112, "173 - Action end in water"),
-    (5662248, "174 - Pick up object in water"),
-    (5663480, "175 - Grab object in water part 2"),
-    (5665916, "176 - Grab object in water part 1"),
-    (5666632, "177 - Throw object in water"),
-    (5669328, "178 - Idle in water"),
-    (5671428, "179 - Star dance in water"),
-    (5678200, "180 - Return from in water star dance"),
-    (5680324, "181 - Grab bowser"),
-    (5680348, "182 - Swing bowser"),
-    (5682008, "183 - Release bowser"),
-    (5685264, "184 - Holding bowser"),
-    (5686316, "185 - Heavy throw"),
-    (5688660, "186 - Walk panting"),
-    (5689924, "187 - Walk with heavy object"),
-    (5694332, "188 - Turning part 1"),
-    (5694356, "189 - Turning part 2"),
-    (5696160, "190 - Side flip land"),
-    (5697196, "191 - Side flip"),
-    (5699408, "192 - Triple jump land"),
-    (5702136, "193 - Triple jump"),
-    (5704880, "194 - First person"),
-    (5710580, "195 - Idle head left"),
-    (5712800, "196 - Idle head right"),
-    (5715020, "197 - Idle head center"),
-    (5717240, "198 - Handstand left"),
-    (5719184, "199 - Handstand right"),
-    (5722304, "200 - Wake up from sleeping"),
-    (5724228, "201 - Wake up from laying"),
-    (5726444, "202 - Start tiptoeing"),
-    (5728720, "203 - Slide jump"),
-    (5728744, "204 - Start wallkick"),
-    (5730404, "205 - Star dance"),
-    (5735864, "206 - Return from star dance"),
-    (5737600, "207 - Forwards spinning flip"),
-    (5740584, "208 - Triple jump fly"),
+BEHAVIOR_EXITS = [
+    "RETURN",
+    "GOTO",
+    "END_LOOP",
+    "END_REPEAT",
+    "END_REPEAT_CONTINUE",
+    "BREAK",
+    "BREAK_UNUSED",
+    "DEACTIVATE",
 ]
+BEHAVIOR_COMMANDS = [
+    # Name, Size
+    ("BEGIN", 1),  # bhv_cmd_begin
+    ("DELAY", 1),  # bhv_cmd_delay
+    ("CALL", 1),  # bhv_cmd_call
+    ("RETURN", 1),  # bhv_cmd_return
+    ("GOTO", 1),  # bhv_cmd_goto
+    ("BEGIN_REPEAT", 1),  # bhv_cmd_begin_repeat
+    ("END_REPEAT", 1),  # bhv_cmd_end_repeat
+    ("END_REPEAT_CONTINUE", 1),  # bhv_cmd_end_repeat_continue
+    ("BEGIN_LOOP", 1),  # bhv_cmd_begin_loop
+    ("END_LOOP", 1),  # bhv_cmd_end_loop
+    ("BREAK", 1),  # bhv_cmd_break
+    ("BREAK_UNUSED", 1),  # bhv_cmd_break_unused
+    ("CALL_NATIVE", 2),  # bhv_cmd_call_native
+    ("ADD_FLOAT", 1),  # bhv_cmd_add_float
+    ("SET_FLOAT", 1),  # bhv_cmd_set_float
+    ("ADD_INT", 1),  # bhv_cmd_add_int
+    ("SET_INT", 1),  # bhv_cmd_set_int
+    ("OR_INT", 1),  # bhv_cmd_or_int
+    ("BIT_CLEAR", 1),  # bhv_cmd_bit_clear
+    ("SET_INT_RAND_RSHIFT", 2),  # bhv_cmd_set_int_rand_rshift
+    ("SET_RANDOM_FLOAT", 2),  # bhv_cmd_set_random_float
+    ("SET_RANDOM_INT", 2),  # bhv_cmd_set_random_int
+    ("ADD_RANDOM_FLOAT", 2),  # bhv_cmd_add_random_float
+    ("ADD_INT_RAND_RSHIFT", 2),  # bhv_cmd_add_int_rand_rshift
+    ("NOP_1", 1),  # bhv_cmd_nop_1
+    ("NOP_2", 1),  # bhv_cmd_nop_2
+    ("NOP_3", 1),  # bhv_cmd_nop_3
+    ("SET_MODEL", 1),  # bhv_cmd_set_model
+    ("SPAWN_CHILD", 3),  # bhv_cmd_spawn_child
+    ("DEACTIVATE", 1),  # bhv_cmd_deactivate
+    ("DROP_TO_FLOOR", 1),  # bhv_cmd_drop_to_floor
+    ("SUM_FLOAT", 1),  # bhv_cmd_sum_float
+    ("SUM_INT", 1),  # bhv_cmd_sum_int
+    ("BILLBOARD", 1),  # bhv_cmd_billboard
+    ("HIDE", 1),  # bhv_cmd_hide
+    ("SET_HITBOX", 2),  # bhv_cmd_set_hitbox
+    ("NOP_4", 1),  # bhv_cmd_nop_4
+    ("DELAY_VAR", 1),  # bhv_cmd_delay_var
+    ("BEGIN_REPEAT_UNUSED", 1),  # bhv_cmd_begin_repeat_unused
+    ("LOAD_ANIMATIONS", 2),  # bhv_cmd_load_animations
+    ("ANIMATE", 1),  # bhv_cmd_animate
+    ("SPAWN_CHILD_WITH_PARAM", 3),  # bhv_cmd_spawn_child_with_param
+    ("LOAD_COLLISION_DATA", 2),  # bhv_cmd_load_collision_data
+    ("SET_HITBOX_WITH_OFFSET", 3),  # bhv_cmd_set_hitbox_with_offset
+    ("SPAWN_OBJ", 3),  # bhv_cmd_spawn_obj
+    ("SET_HOME", 1),  # bhv_cmd_set_home
+    ("SET_HURTBOX", 2),  # bhv_cmd_set_hurtbox
+    ("SET_INTERACT_TYPE", 2),  # bhv_cmd_set_interact_type
+    ("SET_OBJ_PHYSICS", 5),  # bhv_cmd_set_obj_physics
+    ("SET_INTERACT_SUBTYPE", 2),  # bhv_cmd_set_interact_subtype
+    ("SCALE", 1),  # bhv_cmd_scale
+    ("PARENT_BIT_CLEAR", 2),  # bhv_cmd_parent_bit_clear
+    ("ANIMATE_TEXTURE", 1),  # bhv_cmd_animate_texture
+    ("DISABLE_RENDERING", 1),  # bhv_cmd_disable_rendering
+    ("SET_INT_UNUSED", 2),  # bhv_cmd_set_int_unused
+    ("SPAWN_WATER_DROPLET", 2),  # bhv_cmd_spawn_water_droplet
+]
+
+
+@dataclasses.dataclass
+class ActorPresetInfo:
+    decomp_path: str
+    level: str
+    geolayouts: dict[str, int] = dataclasses.field(default_factory=dict)
+    collision: int | dict[str, int] = dataclasses.field(default_factory=dict)
+    animation_table: int | None = None
+    animated_behaviours: dict[str, int] = dataclasses.field(default_factory=dict)
+    table_size: int | None = None
+    displaylists: dict[str, int] = dataclasses.field(default_factory=dict)
+    dma_animation: bool = False
+
+    @staticmethod
+    def get_member_dict(name: str, member: Any | dict[str, Any]) -> dict[str, Any]:
+        if isinstance(member, dict):
+            return member
+        elif member:
+            return {name: member}
+        return {}
+
+
+ACTOR_PRESET_INFO = {
+    "Amp": ActorPresetInfo(
+        "actors/amp",
+        "HH",
+        geolayouts=0x0F000028,
+        animation_table=0x08004034,
+        animated_behaviours={"Circling Amp": 0x13003388, "Homing Amp": 0x13003354},
+    ),
+    "Bird": ActorPresetInfo(
+        "actors/bird",
+        "CG",
+        geolayouts=0x0C000000,
+        animation_table=0x050009E8,
+        animated_behaviours={
+            "Bird": 0x13005354,
+            "End Birds 1": 0x1300565C,
+            "End Birds 2": 0x13005680,
+        },
+    ),
+    "Blargg": ActorPresetInfo(
+        "actors/blargg",
+        "LLL",
+        geolayouts=0x0C000240,
+        animation_table=0x0500616C,
+    ),
+    "Blue Coin Switch": ActorPresetInfo(
+        "actors/blue_coin_switch",
+        "HH",
+        collision=0x08000E98,
+        geolayouts=0x0F000000,
+    ),
+    "Blue Fish": ActorPresetInfo(
+        "actors/blue_fish",
+        "HH",
+        geolayouts=0x16000BEC,
+        animation_table=0x0301C2B0,
+        animated_behaviours=0x13001B2C,
+    ),
+    "Bobomb": ActorPresetInfo(
+        "actors/bobomb",
+        "HH",
+        geolayouts={"Bobomb": 0x0F0007B8, "Bobomb Buddy": 0x0F0008F4},
+        animation_table=0x0802396C,
+        animated_behaviours={
+            "Bobomb": 0x13003174,
+            "Bobomb Buddy": 0x130031DC,
+            "Bobomb Buddy (Opens Cannon)": 13003228,
+        },
+    ),
+    "Bomb": ActorPresetInfo("actors/bomb", "BFB", geolayouts=0x0D000BBC),
+    "Boo": ActorPresetInfo("actors/boo", "HH", geolayouts=0x0C000224),
+    "Boo Castle": ActorPresetInfo("actors/boo_castle", "IC", geolayouts=0x0D0005B0),
+    "Bookend": ActorPresetInfo("actors/book", "HH", geolayouts=0x0C0000C0),
+    "Bookend Part": ActorPresetInfo(
+        "actors/bookend",
+        "HH",
+        animation_table=0x05002540,
+        animated_behaviours=0x1300506C,
+    ),
+    "Bowling Ball": ActorPresetInfo(
+        "actors/bowling_ball",
+        "HH",
+        geolayouts={"Bowling Ball": 0x0F000640, "Bowling Ball Track": 0x0F00066C},
+    ),
+    "Bowser": ActorPresetInfo(
+        "actors/bowser",
+        "BFB",
+        geolayouts={"Bowser": 0x0D000AC4, "Bowser (No Shadow)": 0x0D000B40},
+        animation_table=0x060577E0,
+        table_size=27,
+        animated_behaviours=0x13001850,
+    ),
+    "Bowser Flame": ActorPresetInfo("actors/bowser_flame", "BFB", geolayouts=0x0D000000),
+    "Bowser Key": ActorPresetInfo(
+        "actors/bowser_key",
+        "BFB",
+        animation_table=0x030172D0,
+        table_size=2,
+        geolayouts={"Bowser Key": 0x16000A84, "Bowser Key (Cutscene)": 0x16000AB0},
+        animated_behaviours={
+            "Bowser Key (Unlock Door)": 0x13001BB4,
+            "Bowser Key (Course Exit)": 0x13001BD4,
+        },
+    ),
+    "Breakable Box": ActorPresetInfo(
+        "actors/breakable_box",
+        "HH",
+        collision=0x08012D70,
+        geolayouts={"Breakable Box": 0x0F0005D0, "Breakable Box (Small)": 0x0F000610},
+    ),
+    "Bub": ActorPresetInfo(
+        "actors/bub",
+        "THI",
+        animation_table=0x06012354,
+        animated_behaviours=0x1300220C,
+    ),
+    "Bubba": ActorPresetInfo("actors/bubba", "THI", geolayouts=0x0C000000),
+    "Bubble": ActorPresetInfo("actors/bubble", "HH", geolayouts={"Bubble": 0x17000000, "Bubble Marble": 0x1700001C}),
+    "Bullet Bill": ActorPresetInfo("actors/bullet_bill", "WDW", geolayouts=0x0C000264),
+    "Bully": ActorPresetInfo(
+        "actors/bully",
+        "LLL",
+        animation_table=0x0500470C,
+        animated_behaviours={
+            "Bully (Big)": 0x13003660,
+            "Bully (Big With Minions)": 0x13003694,
+            "Bully (Small)": 0x1300362C,
+        },
+    ),
+    "Burn Smoke": ActorPresetInfo("actors/burn_smoke", "HH", geolayouts=0x17000084),
+    "Butterfly": ActorPresetInfo(
+        "actors/butterfly",
+        "HH",
+        animation_table=0x030056B0,
+        table_size=2,
+        animated_behaviours={"Butterfly": 0x130033BC, "Triplet Butterfly": 0x13005598},
+    ),
+    "Cannon Barrel": ActorPresetInfo("actors/cannon_barrel", "HH", geolayouts=0x0F0001C0),
+    "Cannon Base": ActorPresetInfo("actors/cannon_base", "HH", geolayouts=0x0F0001A8),
+    "Cannon Lid": ActorPresetInfo("actors/cannon_lid", "HH", collision=0x08004950),
+    "Capswitch": ActorPresetInfo(
+        "actors/capswitch",
+        "VC",
+        collision={"Cap Switch (Base)": 0x050033D0, "Cap Switch (Top)": 0x05003448},
+        geolayouts=0x0C000048,
+    ),
+    "Chain Ball": ActorPresetInfo("actors/chain_ball", "BOB", geolayouts=0x0D0005D0),
+    "Chain Chomp": ActorPresetInfo(
+        "actors/chain_chomp",
+        "BOB",
+        geolayouts=0x0D0005EC,
+        animation_table=0x06025178,
+        animated_behaviours=0x1300478C,
+    ),
+    "Haunted Chair": ActorPresetInfo(
+        "actors/chair",
+        "HH",
+        geolayouts=0x0C0000D8,
+        animation_table=0x05005784,
+        animated_behaviours=0x13004FD4,
+    ),
+    "Checkerboard Platform": ActorPresetInfo(
+        "actors/checkerboard_platform", "HH", collision=0x0800D710, geolayouts=0x0F0004E4
+    ),
+    "Chilly Chief": ActorPresetInfo(
+        "actors/chilly_chief",
+        "SML",
+        geolayouts={"Chilly Chief (Small)": 0x06003754, "Chilly Chief (Big)": 0x06003874},
+        animation_table=0x06003994,
+        animated_behaviours={"Chilly Chief (Small)": 0x130036C8, "Chilly Chief (Big)": 0x13003700},
+    ),
+    "Chuckya": ActorPresetInfo(
+        "actors/chuckya",
+        "HH",
+        geolayouts=0x0F0001D8,
+        animation_table=0x0800C070,
+        animated_behaviours=0x13000528,
+    ),
+    "Clam Shell": ActorPresetInfo(
+        "actors/clam",
+        "JRB",
+        geolayouts=0x0C000000,
+        animation_table=0x05001744,
+        animated_behaviours=0x13005440,
+    ),
+    "Coin": ActorPresetInfo(
+        "actors/coin",
+        "HH",
+        geolayouts={
+            "Yellow Coin": 0x1600013C,
+            "Yellow Coin (No Shadow)": 0x160001A0,
+            "Blue Coin": 0x16000200,
+            "Blue Coin (No Shadow)": 0x16000264,
+            "Red Coin": 0x160002C4,
+            "Red Coin (No Shadow)": 0x16000328,
+        },
+    ),
+    "Cyan Fish": ActorPresetInfo(
+        "actors/cyan_fish",
+        "WDW",
+        geolayouts=0x0D000324,
+        animation_table=0x0600E264,
+    ),
+    "Dirt": ActorPresetInfo(
+        "actors/dirt",
+        "HH",
+        geolayouts={"Dirt": 0x16000ED4, "Cartoon Start (Unused)": 0x16000F24},
+    ),
+    "Door": ActorPresetInfo(
+        "actors/door",
+        "HH",
+        geolayouts={
+            "Castle Door": 0x160003A8,
+            "Cabin Door": 0x1600043C,
+            "Wooden Door": 0x160004D0,
+            "Wooden Door 2": 0x16000564,
+            "Metal Door": 0x16000618,
+            "Hazy Maze Door": 0x1600068C,
+            "Haunted Door": 0x16000720,
+            "Castle Door (0 Star)": 0x160007B4,
+            "Castle Door (1 Star)": 0x16000868,
+            "Castle Door (3 Star)": 0x1600091C,
+            "Key Door": 0x160009D0,
+        },
+        animation_table=0x030156C0,
+        animated_behaviours=0x13000B0C,
+    ),
+    "Dorrie": ActorPresetInfo(
+        "actors/dorrie",
+        "HH",
+        geolayouts=0x0D000230,
+        animation_table=0x0600F638,
+        table_size=3,
+        animated_behaviours=0x13004F90,
+    ),
+    "Exclamation Box": ActorPresetInfo(
+        "actors/exclamation_box", "HH", geolayouts=0x0F000694, animation_table=0x0500F6BC
+    ),
+    "Exclamation Box Outline": ActorPresetInfo(
+        "actors/exclamation_box_outline", "HH", collision=0x08025F78, geolayouts=0x0F000A5A
+    ),
+    "Explosion": ActorPresetInfo("actors/explosion", "HH", geolayouts=0x16000040),
+    "Eyerok": ActorPresetInfo(
+        "actors/eyerok",
+        "SSL",
+        geolayouts={
+            "Eyerok": 0x0C0002AC,
+            "Eyerok Left Hand": 0x0C0005A8,
+            "Eyerok Right Hand": 0x0C0005E4,
+        },
+        animation_table=0x050116E4,
+        animated_behaviours=0x130052B4,
+    ),
+    "Flame": ActorPresetInfo(
+        "actors/flame",
+        "HH",
+        geolayouts={"Red Flame (With Shadow)": 0x16000B10, "Red Flame": 0x16000B2C, "Blue Flame": 0x16000B8C},
+    ),
+    "Fly Guy": ActorPresetInfo(
+        "actors/flyguy",
+        "SSL",
+        geolayouts=0x0F000518,
+        animation_table=0x08011A64,
+        animated_behaviours=0x130046DC,
+    ),
+    "Fwoosh": ActorPresetInfo("actors/fwoosh", "HMC", geolayouts=0x0C00036C),
+    "Goomba": ActorPresetInfo(
+        "actors/goomba",
+        "HH",
+        geolayouts=0x0F0006E4,
+        animation_table=0x0801DA4C,
+        animated_behaviours=0x1300472C,
+    ),
+    "Haunted Cage": ActorPresetInfo("actors/haunted_cage", "HH", geolayouts=0x0C000274),
+    "Heart": ActorPresetInfo("actors/heart", "HH", geolayouts=0x0F0004FC),
+    "Heave-Ho": ActorPresetInfo(
+        "actors/heave_ho",
+        "WDW",
+        geolayouts=0x0C00028C,
+        animation_table=0x0501534C,
+        animated_behaviours=0x13001548,
+    ),
+    "Hoot": ActorPresetInfo(
+        "actors/hoot",
+        "WDW",
+        geolayouts=0x0C000018,
+        animation_table=0x05005768,
+        animated_behaviours=0x130033EC,
+    ),
+    "Bowser Impact Ring": ActorPresetInfo("actors/impact_ring", "BFB", geolayouts=0x0D000090),
+    "Bowser Impact Smoke": ActorPresetInfo("actors/impact_smoke", "BFB", geolayouts=0x0D000BFC),
+    # While it may seem like king bobomb has a NULL delimiter,
+    # it is just padding present between every actor
+    "King Bobomb": ActorPresetInfo(
+        "actors/bobomb",
+        "BOB",
+        geolayouts=0x0C000000,
+        animation_table=0x0500FE30,
+        table_size=12,
+        animated_behaviours=0x130001F4,
+    ),
+    "Klepto": ActorPresetInfo(
+        "actors/klepto",
+        "SSL",
+        geolayouts=0x0C000000,
+        animation_table=0x05008CFC,
+        animated_behaviours=0x13005310,
+    ),
+    "Koopa": ActorPresetInfo(
+        "actors/koopa",
+        "BOB",
+        geolayouts={"Koopa (Without Shell)": 0x0D0000D0, "Koopa (With Shell)": 0x0D000214},
+        animation_table=0x06011364,
+        animated_behaviours=0x13004580,
+    ),
+    "Koopa Flag": ActorPresetInfo(
+        "actors/koopa_flag",
+        "BOB",
+        geolayouts=0x0D000000,
+        animation_table=0x06001028,
+        animated_behaviours=0x130045F8,
+    ),
+    "Koopa Shell": ActorPresetInfo(
+        "actors/koopa_shell",
+        "BOB",
+        geolayouts={
+            "Koopa Shell": 0x0F000AB0,
+            "(Unused) Koopa Shell 1": 0x0F000ADC,
+            "(Unused) Koopa Shell 2": 0x0F000B08,
+        },
+    ),
+    "Lakitu": ActorPresetInfo(
+        "actors/lakitu_cameraman",
+        "IC",
+        geolayouts=0x0D000000,
+        animation_table=0x060058F8,
+        animated_behaviours={"Lakitu (Beginning)": 0x13005610, "Lakitu (Cameraman)": 0x13004954},
+    ),
+    "Lakitu Enemy": ActorPresetInfo(
+        "actors/lakitu_enemy",
+        "THI",
+        geolayouts=0x0C0001BC,
+        animation_table=0x050144D4,
+        animated_behaviours=0x13004918,
+    ),
+    "Leaves": ActorPresetInfo("actors/leaves", "HH", geolayouts=0x16000C8C),
+    "Mad Piano": ActorPresetInfo(
+        "actors/mad_piano",
+        "HH",
+        animation_table=0x05009B14,
+        animated_behaviours=0x13005024,
+    ),
+    "Manta Ray": ActorPresetInfo(
+        "actors/manta",
+        "JRB",
+        geolayouts=0x05008D14,
+        animation_table=0x05008EB4,
+        animated_behaviours=0x13004370,
+    ),
+    "Mario": ActorPresetInfo(
+        "actors/mario",
+        "HH",
+        geolayouts=0x17002DD4,
+        animation_table=0x4EC000,
+        dma_animation=True,
+    ),
+    "Metal Box": ActorPresetInfo(
+        "actors/metal_box",
+        "HH",
+        collision=0x08024C28,
+        geolayouts=0x0F000A30,
+    ),
+    "Mips": ActorPresetInfo(
+        "actors/mips",
+        "IC",
+        geolayouts=0x0D000448,
+        animation_table=0x06015724,
+        animated_behaviours=0x130044FC,
+    ),
+    "Mist": ActorPresetInfo(
+        "actors/mist",
+        "HH",
+        geolayouts={"Mist": 0x16000000, "White Puff": 0x16000020},
+    ),
+    "Moneybag": ActorPresetInfo(
+        "actors/moneybag",
+        "CCM",
+        geolayouts=0x0D0000F0,
+        animation_table=0x06005E5C,
+        animated_behaviours=0x130039A0,
+    ),
+    "Monty Mole": ActorPresetInfo(
+        "actors/monty_mole",
+        "HMC",
+        geolayouts=0x0C000000,
+        animation_table=0x05007248,
+        animated_behaviours=0x13004A00,
+    ),
+    "Montey Mole Hole": ActorPresetInfo("actors/monty_mole_hole", "HMC", displaylists=0x05000840),
+    "Mr. I Eyeball": ActorPresetInfo("actors/mr_i_eyeball", "HH", geolayouts=0x0D000000),
+    "Mr. I Iris": ActorPresetInfo("actors/mr_i_iris", "HH", geolayouts=0x0D00001C),
+    "Mushroom 1up": ActorPresetInfo("actors/mushroom_1up", "HH", geolayouts=0x16000E84),
+    "Number": ActorPresetInfo("actors/number", "HH", geolayouts=0x16000E14),
+    "Peach": ActorPresetInfo(
+        "actors/peach",
+        "CG",
+        geolayouts=0x0C000410,
+        animation_table=0x0501C50C,
+        animated_behaviours={"Peach (Beginning)": 0x13005638, "Peach (End)": 0x13000EAC},
+    ),
+    "Pebble": ActorPresetInfo("actors/pebble", "HH", displaylists=0x0301CB00),
+    "Penguin": ActorPresetInfo(
+        "actors/penguin",
+        "CCM",
+        collision=0x05008B88,
+        geolayouts=0x0C000104,
+        animation_table=0x05008B74,
+        table_size=5,
+        animated_behaviours={
+            "Penguin (Tuxies Mother)": 0x13002088,
+            "Penguin (Small)": 0x130020E8,
+            "Penguin (SML)": 0x13002E58,
+            "Racing Penguin": 0x13005380,
+        },
+    ),
+    "Piranha Plant": ActorPresetInfo(
+        "actors/piranha_plant",
+        "BOB",
+        geolayouts=0x0D000358,
+        animation_table=0x0601C31C,
+        animated_behaviours={"Fire Piranha Plant": 0x13005120, "Piranha Plant": 0x13001FBC},
+    ),
+    "Pokey": ActorPresetInfo(
+        "actors/pokey",
+        "SSL",
+        geolayouts={"Pokey Head": 0x0C000610, "Pokey Body Part": 0x0C000644},
+    ),
+    "Poundable Pole": ActorPresetInfo(
+        "actors/poundable_pole",
+        "BOB",
+        collision=0x06002490,
+        geolayouts=0x0D0000B8,
+    ),
+    "Power Meter": ActorPresetInfo("actors/power_meter", "HH"),  # Should this be here?
+    "Purple Switch": ActorPresetInfo(
+        "actors/purple_switch",
+        "HH",
+        collision=0x0800C7A8,
+        geolayouts=0x0F0004CC,
+    ),
+    "Sand": ActorPresetInfo("actors/sand", "HH", displaylists=0x0302BCD0),
+    "Scuttlebug": ActorPresetInfo(
+        "actors/scuttlebug",
+        "HH",
+        geolayouts=0x0D000394,
+        animation_table=0x06015064,
+        animated_behaviours=0x13002B5C,
+    ),
+    "Seaweed": ActorPresetInfo(
+        "actors/seaweed",
+        "WDW",
+        geolayouts=0x0D000284,
+        animation_table=0x0600B8CC,
+        table_size=1,
+        animated_behaviours=0x13003134,
+    ),
+    "Skeeter": ActorPresetInfo(
+        "actors/skeeter",
+        "WDW",
+        geolayouts=0x0D000000,
+        animation_table=0x06007DE0,
+        table_size=4,
+        animated_behaviours=0x13005468,
+    ),
+    "Small Key": ActorPresetInfo("actors/small_key", "HH", geolayouts=0x0C000188),
+    "Smoke": ActorPresetInfo("actors/smoke", "HMC", geolayouts=0x05007AF8),
+    "Mr. Blizzard": ActorPresetInfo(
+        "actors/snowman",
+        "CCM",
+        geolayouts=0x0C00021C,
+        animation_table=0x0500D118,
+        animated_behaviours={"Mr. Blizzard": 0x13004DBC},
+    ),
+    "Snufit": ActorPresetInfo(
+        "actors/snufit",
+        "HH",
+        geolayouts=0x0D0001A0,
+    ),
+    "Sparkle": ActorPresetInfo("actors/sparkle", "HH", geolayouts=0x170001BC),
+    "Sparkle Animation": ActorPresetInfo(
+        "actors/sparkle_animation",
+        "HH",
+        geolayouts=0x17000284,
+    ),
+    "Spindrift": ActorPresetInfo(
+        "actors/spindrift",
+        "CCM",
+        geolayouts=0x0C000000,
+        animation_table=0x05002D68,
+        animated_behaviours=0x130012B4,
+    ),
+    "Spiny": ActorPresetInfo(
+        "actors/spiny",
+        "THI",
+        geolayouts=0x0C000328,
+        animation_table=0x05016EAC,
+        animated_behaviours={"Spiny": 0x130049C8},
+    ),
+    "Spiny Egg": ActorPresetInfo(
+        "actors/spiny_egg",
+        "THI",
+        geolayouts=0x0C000290,
+        animation_table=0x050157E4,
+    ),
+    "Springboard": ActorPresetInfo(
+        "actors/springboard",
+        "VC",
+        geolayouts={
+            "Springboard Top": 0x0C000000,
+            "Springboard Middle": 0x0C000018,
+            "Springboard Bottom": 0x0C000030,
+        },
+    ),
+    "Star": ActorPresetInfo("actors/star", "HH", geolayouts=0x16000EA0),
+    "Small Water Splash": ActorPresetInfo(
+        "actors/stomp_smoke",
+        "HH",
+        geolayouts={"Small Water Splash": 0x1700009C, "(Unused) Small Water Splash": 0x170000E0},
+    ),
+    "Sushi Shark": ActorPresetInfo(
+        "actors/sushi",
+        "JRB",
+        geolayouts=0x0C000068,
+        animation_table=0x0500AE54,
+        animated_behaviours=0x13002338,
+        table_size=1,
+    ),
+    "Swoop": ActorPresetInfo(
+        "actors/swoop",
+        "HH",
+        geolayouts=0x0D0000DC,
+        animation_table=0x060070D0,
+        animated_behaviours=0x13004698,
+        table_size=2,
+    ),
+    "Test Plataform": ActorPresetInfo("actors/test_plataform", "HH", collision=0x080262F8),
+    "Thwomp": ActorPresetInfo(
+        "actors/thwomp",
+        "WDW",
+        geolayouts=0x0C000248,
+        collision=0x0500B7D0,
+    ),
+    "Toad": ActorPresetInfo(
+        "actors/toad",
+        "IC",
+        geolayouts=0x0D000114,
+        animation_table=0x0600FC48,
+        table_size=8,
+        animated_behaviours={"End Toad": 0x13000E88, "Toad Message": 0x13002EF8},
+    ),
+    "Tweester": ActorPresetInfo(
+        "actors/tornado",
+        "SSL",
+        geolayouts=0x05014630,
+    ),
+    "Transparent Star": ActorPresetInfo(
+        "actors/transperant_star",
+        "HH",
+        geolayouts=0x16000F6C,
+    ),
+    "Treasure Chest": ActorPresetInfo(
+        "actors/treasure_chest",
+        "WDW",
+        geolayouts={"Treasure Chest Base": 0x0D000450, "Treasure Chest Lid": 0x0D000468},
+    ),
+    "Tree": ActorPresetInfo(
+        "actors/tree",
+        "HH",
+        geolayouts={
+            "Bubbly Tree": 0x16000FE8,
+            "Pine Tree": 0x16001000,
+            "Pine Tree 2": 0x16001030,
+            "Snow Tree": 0x16001018,
+            "Palm Tree": 0x16001048,
+        },
+    ),
+    "Ukiki": ActorPresetInfo(
+        "actors/ukiki",
+        "HMC",
+        geolayouts=0x0C000110,
+        animation_table=0x05015784,
+        animated_behaviours={"Ukiki": 0x13001CB0},
+    ),
+    "Unagi": ActorPresetInfo(
+        "actors/unagi",
+        "JRB",
+        geolayouts=0x0C00010C,
+        animation_table=0x05015784,
+        animated_behaviours=0x13004F40,
+        table_size=7,
+    ),
+    "Walking Smoke": ActorPresetInfo(
+        "actors/walk_smoke",
+        "HH",
+        geolayouts=0x17000038,
+    ),
+    "Warp Collision": ActorPresetInfo(
+        "actors/warp_collision",
+        "HH",
+        collision={"Door": 0x0301CE78, "LLL Hexagonal Mesh": 0x0301CECC},
+    ),
+    "Warp Pipe": ActorPresetInfo(
+        "actors/warp_pipe",
+        "HH",
+        geolayouts=0x16000388,
+    ),
+    "Water Bubble": ActorPresetInfo(
+        "actors/water_bubble",
+        "BOB",
+        geolayouts={"Water Bubble": 0x0C000308, "Water Bubble's Shadow": 0x0C000328},
+    ),
+    "Water Mine": ActorPresetInfo(
+        "actors/water_mine",
+        "JRB",
+        geolayouts=0x0D0002F4,
+    ),
+    "Water Ring": ActorPresetInfo(
+        "actors/water_ring",
+        "WDW",
+        geolayouts=0x0D000414,
+        animation_table=0x06013F7C,
+        animated_behaviours={
+            "Water Ring (Jet Stream)": 0x13003750,
+            "Water Ring (Manta Ray)": 13003798,
+        },
+    ),
+    "Water Splash": ActorPresetInfo(
+        "actors/water_splash",
+        "WDW",
+        geolayouts=0x0D0002F4,
+    ),
+    "Water Wave": ActorPresetInfo(
+        "actors/water_wave",
+        "HH",
+        geolayouts={"Idle Water Wave": 0x17000124, "Water Wave Trail": 0x17000168},
+    ),
+    "Whirlpool": ActorPresetInfo("actors/whirlpool", "JRB", displaylists=0x05013CB8),
+    "White Particle": ActorPresetInfo("actors/white_particle", "HH", geolayouts=0x16000F98),
+    "White Particle Small": ActorPresetInfo(
+        "actors/white_particle_small",
+        "JRB",
+        displaylists={
+            "White Particle Small": 0x04032A18,
+            "(Unused) White Particle Small 1": 0x04032A30,
+        },
+    ),
+    "Whomp": ActorPresetInfo(
+        "actors/whomp",
+        "BOB",
+        geolayouts=0x0D000480,
+        collision=0x06020A0C,
+        animation_table=0x06020A04,
+        table_size=2,
+        animated_behaviours=0x13002BCC,
+    ),
+    "Wiggler Body": ActorPresetInfo(
+        "actors/wiggler_body",
+        "THI",
+        geolayouts=0x0500C778,
+        animation_table=0x0500C874,
+        table_size=1,
+        animated_behaviours=0x130048E0,
+    ),
+    "Wiggler Head": ActorPresetInfo(
+        "actors/wiggler_head",
+        "THI",
+        geolayouts=0x0C000030,
+        animation_table=0x0500EC8C,
+        table_size=1,
+        animated_behaviours=0x13004898,
+    ),
+    "Wooden Signpost": ActorPresetInfo(
+        "actors/wooden_signpost",
+        "HH",
+        collision=0x0302DD80,
+        geolayouts=0x16000FB4,
+    ),
+    "Yellow Sphere (Bowser)": ActorPresetInfo("actors/yellow_sphere", "BFB", geolayouts=0x0D0000B0),
+    "Yellow Sphere": ActorPresetInfo("actors/yellow_sphere_small", "WDW", geolayouts=0x0C000000),
+    "Yoshi": ActorPresetInfo(
+        "actors/yoshi",
+        "CG",
+        geolayouts=0x0C000468,
+        animation_table=0x050241E8,
+        animated_behaviours=0x13004538,
+    ),
+    "Yoshi Egg": ActorPresetInfo("actors/yoshi_egg", "WDW", geolayouts=0x0C0001E4),
+    "Castle Flag": ActorPresetInfo(
+        "levels/castle_grounds/areas/1/11",
+        "HH",
+        geolayouts=0x0E000660,
+        animation_table=0x0700C95C,
+        table_size=1,
+        animated_behaviours=0x13003C58,
+    ),
+}
