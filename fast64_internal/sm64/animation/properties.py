@@ -408,13 +408,13 @@ class TableElementProps(PropertyGroup):
             prop_split(row, self, "header_address", "Header Address")
             return
         if generate_enums:
-            enum_row = row.row()
-            text_row = enum_row.row()
+            text_row = row.row()
             text_row.alignment = "LEFT"
             text_row.label(text="Enum")
-            name_row = enum_row.row()
-            name_row.alignment = "EXPAND"
-            name_row.prop(self, "enum_name", text="")
+        prop_row = row.row()
+        prop_row.alignment = "EXPAND"
+        if generate_enums:
+            prop_row.prop(self, "enum_name", text="")
         row.prop(self, "header_name", text="")
 
     def draw_props(
