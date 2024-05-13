@@ -427,7 +427,7 @@ class TableElementProps(PropertyGroup):
 
     def draw_props(
         self,
-        row: UILayout, # left side of the row for table ops
+        row: UILayout,  # left side of the row for table ops
         prop_layout: UILayout,
         is_dma: bool = False,
         can_reference: bool = True,
