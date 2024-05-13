@@ -251,6 +251,8 @@ class HeaderProps(PropertyGroup):
                 prop_split(col, self, "table_index", "Table Index")
             if not binary:
                 self.draw_names(col, action, actor_name, generate_enums)
+        col.separator()
+
         prop_split(col, self, "trans_divisor", "Translation Divisor")
         self.draw_frame_range(col)
         self.draw_flag_props(col.box(), is_dma or binary)
@@ -291,6 +293,7 @@ class SM64_ActionProps(PropertyGroup):
         args = (action, in_table, is_dma, export_type, actor_name, generate_enums)
         if draw_and_check_tab(col, self.header, "expand_tab_in_action", "Main Header", "NLA"):
             self.header.draw_props(col, *args)
+        col.separator()
 
         op_row = col.row()
         op_row.label(
@@ -304,6 +307,9 @@ class SM64_ActionProps(PropertyGroup):
         if self.header_variants:
             box = col.box().column()
         for i, header in enumerate(self.header_variants):
+            if i != 0:
+                box.separator()
+
             row = box.row()
             remove_op = draw_list_op(row, VariantOps, "REMOVE", i, self.header_variants)
             remove_op.action_name = action.name
@@ -315,7 +321,6 @@ class SM64_ActionProps(PropertyGroup):
             down_op.action_name = action.name
             if draw_and_check_tab(row, header, "expand_tab_in_action", f"Variant {i + 1}"):
                 header.draw_props(box, *args)
-                box.separator(factor=2)
 
     def draw_references(self, layout: UILayout, is_binary: bool = False):
         col = layout.column()
@@ -358,6 +363,8 @@ class SM64_ActionProps(PropertyGroup):
             ExportAnim.draw_props(split)
             add_all_op = draw_list_op(split, TableOps, "ADD_ALL", text="Add All To Table", icon="LINKED")
             add_all_op.action_name = action.name
+            col.separator()
+
             if export_type == "Binary" and not is_dma:
                 prop_split(col, self, "start_address", "Start Address")
                 prop_split(col, self, "end_address", "End Address")
@@ -381,6 +388,7 @@ class SM64_ActionProps(PropertyGroup):
             )
         else:
             col.separator()
+
             self.draw_variants(col, action, in_table, is_dma, export_type, actor_name, generate_enums)
 
 
@@ -627,7 +635,6 @@ class TableProps(PropertyGroup):
         export_col = col.column()
         ExportAnimTable.draw_props(export_col)
         export_col.enabled = True if self.elements else False
-
         if is_dma and export_type == "C":
             multilineLabel(
                 col,
@@ -635,6 +642,7 @@ class TableProps(PropertyGroup):
                 "conventions (anim_xx.inc.c, anim_xx, anim_xx_values, etc).",
                 icon="INFO",
             )
+        export_col.separator()
 
         op_row = col.row()
         op_row.label(text="Headers" + (f" ({len(self.elements)})" if self.elements else ""), icon="NLA")
@@ -644,7 +652,10 @@ class TableProps(PropertyGroup):
             box = col.box().column()
         actions = []
         element_props: TableElementProps
-        for table_index, element_props in enumerate(self.elements):
+        for i, element_props in enumerate(self.elements):
+            if i != 0:
+                box.separator()
+
             action = get_element_action(element_props, can_reference)
             if action in actions and actions[-1] != action:
                 duplicate_index = actions.index(action)
@@ -652,7 +663,7 @@ class TableProps(PropertyGroup):
                 duplicate_index = None
             self.draw_element(
                 box,
-                table_index,
+                i,
                 element_props,
                 is_dma,
                 can_reference,
@@ -660,7 +671,6 @@ class TableProps(PropertyGroup):
                 export_type,
                 actor_name,
             )
-            box.separator(factor=2)
             actions.append(action)
 
 
@@ -803,13 +813,14 @@ class ImportProps(PropertyGroup):
             return
         split = col.split()
         split.prop(self, "is_segmented_address_prop")
+        prop_split(col, self, "level", "Level")
 
         if self.binary_import_type == "Table":
             split.prop(self, "table_address", text="")
+            string_int_warning(col, self.table_address)
             self.draw_table_settings(col)
         elif self.binary_import_type == "Animation":
             split.prop(self, "animation_address", text="")
-        prop_split(col, self, "level", "Level")
 
     def draw_insertable_binary(self, layout: UILayout, import_rom: os.PathLike | None = None):
         col = layout.column()
@@ -1017,43 +1028,43 @@ class AnimProps(PropertyGroup):
 
     def draw_c_settings(self, layout: UILayout):
         col = layout.column()
-        if not self.is_c_dma:
-            box = col.box().column()
-            box.prop(self, "update_table")
-            if self.update_table:
-                self.table.draw_non_exclusive_settings(box, False, "C", self.actor_name)
-
         prop_split(col, self, "header_type", "Header Type")
         if self.header_type == "DMA":
             prop_split(col, self, "dma_folder", "Folder", icon="FILE_FOLDER")
             decompFolderMessage(col)
             return
 
-        if self.header_type == "Custom":
-            col.prop(self, "use_dma_structure")
-
         prop_split(col, self, "actor_name_prop", "Name")
         if self.header_type == "Custom":
+            col.prop(self, "use_dma_structure")
             col.prop(self, "directory_path")
+            col.separator()
+
             if directory_ui_warnings(col, abspath(self.directory_path)):
                 customExportWarning(col)
-            return
-        if self.header_type == "Actor":
-            prop_split(col, self, "group_name", "Group Name")
-        elif self.header_type == "Level":
-            prop_split(col, self, "level_option", "Level")
-            if self.level_option == "custom":
-                prop_split(col, self, "custom_level_name", "Level Name")
+        else:
+            if self.header_type == "Actor":
+                prop_split(col, self, "group_name", "Group Name")
+            elif self.header_type == "Level":
+                prop_split(col, self, "level_option", "Level")
+                if self.level_option == "custom":
+                    prop_split(col, self, "custom_level_name", "Level Name")
+            col.separator()
 
-        decompFolderMessage(col)
-        write_box = makeWriteInfoBox(col).column()
-        writeBoxExportType(
-            write_box,
-            self.header_type,
-            self.actor_name,
-            self.custom_level_name,
-            self.level_option,
-        )
+            decompFolderMessage(col)
+            write_box = makeWriteInfoBox(col).column()
+            writeBoxExportType(
+                write_box,
+                self.header_type,
+                self.actor_name,
+                self.custom_level_name,
+                self.level_option,
+            )
+        if not self.is_c_dma:
+            box = col.box().column()
+            box.prop(self, "update_table")
+            if self.update_table:
+                self.table.draw_non_exclusive_settings(box, False, "C", self.actor_name)
 
     def draw_export_settings(self, layout: UILayout, export_type: str):
         col = layout.column()
@@ -1069,6 +1080,7 @@ class AnimProps(PropertyGroup):
         elif export_type == "C":
             self.draw_c_settings(col)
         col.prop(self, "quick_read")
+        col.separator(factor=2)
 
         if draw_and_check_tab(col, self, "table_tab", icon="ANIM"):
             self.table.draw_props(
