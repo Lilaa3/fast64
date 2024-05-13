@@ -329,16 +329,8 @@ class SM64_ActionProps(PropertyGroup):
         generate_enums: bool = False,
     ):
         col = layout.column()
-        col.label(text="Main Header", icon="NLA")
-        self.header.draw_props(
-            col,
-            action,
-            is_in_table,
-            is_dma,
-            export_type,
-            actor_name,
-            generate_enums,
-        )
+        if draw_and_check_tab(col, self.header, "expand_tab_in_action", "Main Header", "NLA"):
+            self.header.draw_props(col, action, is_in_table, is_dma, export_type, actor_name, generate_enums)
 
         op_row = col.row()
         op_row.label(
