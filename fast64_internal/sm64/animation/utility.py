@@ -71,14 +71,14 @@ def get_anim_pose_bones(armature_obj: Armature):
 
 
 def get_frame_range(action: Action, header_props: "HeaderProps") -> tuple[int, int, int]:
-    if header_props.manual_frame_range:
+    if header_props.manual_loop:
         return (header_props.start_frame, header_props.loop_start, header_props.loop_end)
     loop_start, loop_end = getFrameInterval(action)
     return (0, loop_start, loop_end + 1)
 
 
 def get_anim_name(actor_name: str, action: Action, header_props: "HeaderProps") -> str:
-    if header_props.override_name:
+    if header_props.set_custom_name:
         return header_props.custom_name
     if header_props.header_variant == 0:
         if actor_name:
@@ -93,7 +93,7 @@ def get_anim_name(actor_name: str, action: Action, header_props: "HeaderProps") 
 
 
 def get_anim_enum(actor_name: str, action: Action, header_props: "HeaderProps") -> str:
-    if header_props.override_enum:
+    if header_props.set_custom_enum:
         return header_props.custom_enum
     anim_name = get_anim_name(actor_name, action, header_props)
     enum_name = anim_name.upper()
@@ -115,7 +115,7 @@ def update_header_variant_numbers(action_props: "SM64_ActionProps"):
 
 
 def get_anim_file_name(action: Action, action_props: "SM64_ActionProps") -> str:
-    name = action_props.custom_file_name if action_props.override_file_name else f"anim_{action.name}.inc.c"
+    name = action_props.custom_file_name if action_props.use_custom_file_name else f"anim_{action.name}.inc.c"
     # Replace any invalid characters with an underscore
     # TODO: Could this be an issue anywhere else in fast64?
     name = re.sub(r'[/\\?%*:|"<>]', " ", name)
@@ -123,7 +123,7 @@ def get_anim_file_name(action: Action, action_props: "SM64_ActionProps") -> str:
 
 
 def get_max_frame(action: Action, action_props: "SM64_ActionProps") -> int:
-    if action_props.override_max_frame:
+    if action_props.use_custom_max_frame:
         return action_props.custom_max_frame
 
     loop_ends: list[int] = [getFrameInterval(action)[1]]
@@ -155,6 +155,6 @@ def get_element_action(element_props: "TableElementProps", use_reference: bool) 
 
 
 def get_anim_table_name(table_props: "TableProps", actor_name: str) -> str:
-    if table_props.override_table_name:
+    if table_props.use_custom_table_name:
         return table_props.custom_table_name
     return f"{actor_name}_anims"

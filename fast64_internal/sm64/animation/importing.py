@@ -1,3 +1,4 @@
+import dataclasses
 import math
 import os
 import re
@@ -34,7 +35,7 @@ from .classes import (
 )
 from .constants import FLAG_PROPS, ACTOR_PRESET_INFO
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from .properties import (
@@ -60,13 +61,13 @@ def from_header_class(
         and use_custom_name
     ):
         header_props.custom_name = header.reference
-        header_props.override_name = True
+        header_props.set_custom_name = True
 
     correct_frame_range = header.start_frame, header.loop_start, header.loop_end
     header_props.start_frame, header_props.loop_start, header_props.loop_end = correct_frame_range
     auto_frame_range = get_frame_range(action, header_props)
     if correct_frame_range != auto_frame_range:
-        header_props.manual_frame_range = True
+        header_props.manual_loop = True
 
     header_props.trans_divisor = header.trans_divisor
 
@@ -131,12 +132,15 @@ def from_anim_class(
     action_props.values_table = values_reference
 
     if animation.data:
-        action_props.custom_file_name = animation.data.indices_file_name
+        file_name = animation.data.indices_file_name
         action_props.custom_max_frame = max([1] + [len(x.values) for x in animation.data.pairs])
     else:
-        action_props.custom_file_name = main_header.file_name
+        file_name = main_header.file_name
         action_props.reference_tables = True
-
+    if file_name:
+        action_props.custom_file_name = file_name
+        if use_custom_name and get_anim_file_name(action, action_props) != action_props.custom_file_name:
+            action_props.use_custom_file_name = True
     if is_from_binary:
         start_addresses = [x.reference for x in animation.headers]
         end_addresses = [x.end_address for x in animation.headers]
@@ -147,9 +151,6 @@ def from_anim_class(
             end_addresses.append(animation.data.value_end_address)
         action_props.start_address = intToHex(min(start_addresses))
         action_props.end_address = intToHex(max(end_addresses))
-
-    if action_props.custom_file_name and get_anim_file_name(action, action_props) != action_props.custom_file_name:
-        action_props.override_file_name = True
 
     for i in range(len(animation.headers) - 1):
         action_props.header_variants.add()
@@ -226,32 +227,90 @@ def naive_flip_diff(a1: float, a2: float) -> float:
     return a2
 
 
+def can_interpolate(time_frames, threshold=0.01):
+    if len(time_frames) < 3:
+        return True
+    time1, frame1 = time_frames[0]  # start
+    time2, frame2 = time_frames[-1]  # end
+    inbetween_frames = time_frames[1:-1]
+    time_difference = time2 - time1
+    for time, frame in inbetween_frames:
+        time_step = time - time1
+        interpolated_frame = frame1 + ((frame2 - frame1) * time_step / time_difference)
+        if value_distance(frame, interpolated_frame) > threshold:
+            return False
+    return True
+
+
+@dataclasses.dataclass
+class FrameStore:
+    frames: list[tuple[int, Vector]] = dataclasses.field(default_factory=list)
+
+    @property
+    def sorted_frames(self):
+        return sorted(self.frames, key=lambda x: x[0])
+
+    def add_frame(self, timestamp: int, frame: Vector):
+        self.frames.append((timestamp, frame))
+
+    def clean(self):
+        sorted_frames = self.sorted_frames
+        cleaned = FrameStore()
+        i = 0
+        while i < len(sorted_frames):
+            success = None
+            for j, last_time_frame in enumerate(sorted_frames, i):
+                if j == i:
+                    cleaned.add_frame(*sorted_frames[i])
+                frames = sorted_frames[i : j + 1]
+                if can_interpolate(frames):
+                    success = j, last_time_frame
+            if success:
+                i = success[0]  # j
+                cleaned.add_frame(*success[1])
+            i += 1
+
+        # Update frames with cleaned frames
+        self.frames = cleaned.frames
+
+
+@dataclasses.dataclass
+class RotationFrameStore(FrameStore):
+    def add_rotation_frame(self, timestamp: int, rotation: Quaternion):
+        self.add_frame(timestamp, Vector(rotation))
+
+    @property
+    def quaternion(self):
+        return [(i, Quaternion(x)) for i, x in self.sorted_frames]
+
+    def get_euler(self, order: str):
+        return [(i, x.to_euler(order)) for i, x in self.quaternion]
+
+    @property
+    def axis_angle(self):
+        return [(i, x.to_axis_angle()) for i, x in self.quaternion]
+
+
 class AnimationBone:
     def __init__(self):
-        self.translation: list[Vector] = []
-        self.rotation: list[Quaternion] = []
+        self.translation = FrameStore()
+        self.rotation = RotationFrameStore()
 
     def read_pairs(self, pairs: list[AnimationPair]):
         array: list[int] = []
-
         max_frame = max(len(pair.values) for pair in pairs)
-        for frame in range(max_frame):
-            array.append([x.get_frame(frame) for x in pairs])
+        array = [[x.get_frame(frame) for x in pairs] for frame in range(max_frame)]
         return array
 
     def read_translation(self, pairs: list[AnimationPair], scale: float):
-        translation_frames = self.read_pairs(pairs)
-
-        for translation_frame in translation_frames:
-            self.translation.append([x / scale for x in translation_frame])
+        for frame, translation in enumerate(self.read_pairs(pairs)):
+            self.translation.add_frame(frame, Vector(translation) / scale)
 
     def read_rotation(self, pairs: list[AnimationPair]):
         rotation_frames: list[Vector] = self.read_pairs(pairs)
-
         prev = Euler([0, 0, 0])
-
-        for rotation_frame in rotation_frames:
-            e = Euler([sm64_to_radian(x) for x in rotation_frame])
+        for frame, rotation in enumerate(rotation_frames):
+            e = Euler([sm64_to_radian(x) for x in rotation])
             e[0] = naive_flip_diff(prev[0], e[0])
             e[1] = naive_flip_diff(prev[1], e[1])
             e[2] = naive_flip_diff(prev[2], e[2])
@@ -265,9 +324,12 @@ class AnimationBone:
             dfe = value_distance(prev, fe)
             if dfe < de:
                 e = fe
+            self.rotation.add_rotation_frame(frame, e.to_quaternion())
             prev = e
 
-            self.rotation.append(e.to_quaternion())
+    def clean(self):
+        self.translation.clean()
+        self.rotation.clean()
 
 
 def animation_data_to_blender(
@@ -286,6 +348,7 @@ def animation_data_to_blender(
             bone.read_translation(pairs[0:3], blender_to_sm64_scale)
         bone.read_rotation(pairs[pair_num : pair_num + 3])
         bone_anim_data.append(bone)
+        bone.clean()
 
     is_root = True
     for pose_bone, bone_data in zip(anim_bones, bone_anim_data):
@@ -296,7 +359,7 @@ def animation_data_to_blender(
                     index=property_index,
                     action_group=pose_bone.name,
                 )
-                for frame, translation in enumerate(bone_data.translation):
+                for frame, translation in bone_data.translation.sorted_frames:
                     f_curve.keyframe_points.insert(frame, translation[property_index])
             is_root = False
 
@@ -306,19 +369,22 @@ def animation_data_to_blender(
             "AXIS_ANGLE": "rotation_axis_angle",
         }.get(rotation_mode, "rotation_euler")
         data_path = f'pose.bones["{pose_bone.name}"].{rotation_mode_name}'
+
+        size = 4
         if rotation_mode == "QUATERNION":
-            rotations = bone_data.rotation
+            rotations = bone_data.rotation.quaternion
         elif rotation_mode == "AXIS_ANGLE":
-            rotations = [rotation.to_axis_angle() for rotation in bone_data.rotation]
+            rotations = bone_data.rotation.axis_angle
         else:
-            rotations = [rotation.to_euler(rotation_mode) for rotation in bone_data.rotation]
-        for property_index in range(len(rotations[0])):
+            rotations = bone_data.rotation.get_euler("XYZ")
+            size = 3
+        for property_index in range(size):
             f_curve = action.fcurves.new(
                 data_path=data_path,
                 index=property_index,
                 action_group=pose_bone.name,
             )
-            for frame, rotation in enumerate(rotations):
+            for frame, rotation in rotations:
                 f_curve.keyframe_points.insert(frame, rotation[property_index])
 
 
@@ -364,7 +430,7 @@ def find_decls(
         values = [value.strip() for value in c_data[decl_index + 1 : end_index].split(",")]
         if values[-1] == "":
             values = values[:-1]
-        decl_list.append(CArrayDeclaration(name, file, values))
+        decl_list.append(CArrayDeclaration(name, file, os.path.basename(file), values))
         start_index = c_data.find(search_text, end_index)
 
 
@@ -389,23 +455,14 @@ def import_c_animations(
     table: AnimationTable,
 ):
     path_checks(path)
-
-    header_decls, value_decls, indices_decls, table_decls = [], [], [], []
-
     if os.path.isfile(path):
         file_paths = [path]
     else:
         file_paths = sorted(
-            [
-                os.path.join(
-                    root,
-                    filename,
-                )
-                for root, _, files in os.walk(path)
-                for filename in files
-            ]
+            [os.path.join(root, filename) for root, _, files in os.walk(path) for filename in files],
         )
 
+    header_decls, value_decls, indices_decls, table_decls = [], [], [], []
     for file_path in file_paths:
         print("Reading from: " + file_path)
         with open(file_path, "r", encoding="utf-8", errors="ignore") as file:

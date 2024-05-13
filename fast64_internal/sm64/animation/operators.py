@@ -177,8 +177,8 @@ class VariantOps(OperatorBase):
             update_header_variant_numbers(action_props)
 
             added_variant.expand_tab = True
-            added_variant.override_name = False
-            added_variant.override_enum = False
+            added_variant.set_custom_name = False
+            added_variant.set_custom_enum = False
             added_variant.custom_name = get_anim_name(
                 context.scene.fast64.sm64.animation.actor_name, action, added_variant
             )
@@ -242,7 +242,6 @@ class ImportAnim(OperatorBase):
 class SearchMarioAnim(SearchEnumOperatorBase):
     bl_idname = "scene.search_mario_anim_enum_operator"
     bl_property = "mario_animations"
-    icon = "PRESET"
 
     mario_animations: EnumProperty(items=marioAnimationNames)
 
@@ -253,7 +252,6 @@ class SearchMarioAnim(SearchEnumOperatorBase):
 class SearchTableAnim(SearchEnumOperatorBase):
     bl_idname = "scene.search_anim_table_enum_operator"
     bl_property = "preset"
-    icon = "PRESET"
 
     preset: EnumProperty(items=enumAnimationTables)
 
@@ -264,7 +262,6 @@ class SearchTableAnim(SearchEnumOperatorBase):
 class SearchAnimatedBehavior(SearchEnumOperatorBase):
     bl_idname = "scene.search_animated_behavior_enum_operator"
     bl_property = "behaviour"
-    icon = "OBJECT_DATA"
 
     behaviour: EnumProperty(items=enumAnimatedBehaviours)
 

@@ -17,6 +17,7 @@ from .constants import HEADER_SIZE, C_FLAGS
 class CArrayDeclaration:
     name: str = ""
     path: os.PathLike = ""
+    file_name: str = ""
     values: list[str] = dataclasses.field(default_factory=str)
 
 
@@ -112,8 +113,8 @@ class AnimationData:
         return self
 
     def read_c(self, indice_decl: CArrayDeclaration, value_decl: CArrayDeclaration):
-        self.indice_reference = indice_decl.name
-        self.values_reference = value_decl.name
+        self.indices_file_name, self.values_file_name = indice_decl.file_name, value_decl.file_name
+        self.indice_reference, self.values_reference = indice_decl.name, value_decl.name
         for i in range(0, len(indice_decl.values), 2):
             pair = AnimationPair()
             max_frame = int(indice_decl.values[i], 0)
@@ -304,6 +305,7 @@ class AnimationHeader:
         header = AnimationHeader()
         animation_headers[header_decl.name] = header
         header.reference = header_decl.name
+        header.file_name = header_decl.file_name
 
         # Place the values into a dictionary, handles designated initialization
         var_defs = [

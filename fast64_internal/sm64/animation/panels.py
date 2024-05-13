@@ -47,16 +47,17 @@ class ObjectAnimationPanel(Panel):
         return scene_goal == "All" or scene_goal == "Export Object/Actor/Anim"
 
     def draw(self, context: Context):
-        box = self.layout.box().column()
+        col = self.layout.column()
         sm64_props: SM64_Properties = context.scene.fast64.sm64
         animation_props: AnimProps = context.object.fast64.sm64.animation
-        if draw_and_check_tab(box, animation_props, "object_menu_tab", icon="ANIM"):
+        if draw_and_check_tab(col, animation_props, "object_menu_tab", icon="ANIM"):
             animation_props.draw_props(
-                box,
+                col,
                 sm64_props.export_type,
                 sm64_props.show_importing_menus,
                 sm64_props.import_rom,
             )
+        col.separator()
 
 
 panels = (
