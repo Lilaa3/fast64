@@ -813,14 +813,15 @@ class ImportProps(PropertyGroup):
             return
         split = col.split()
         split.prop(self, "is_segmented_address_prop")
-        prop_split(col, self, "level", "Level")
-
         if self.binary_import_type == "Table":
             split.prop(self, "table_address", text="")
             string_int_warning(col, self.table_address)
-            self.draw_table_settings(col)
         elif self.binary_import_type == "Animation":
             split.prop(self, "animation_address", text="")
+            string_int_warning(col, self.animation_address)
+        prop_split(col, self, "level", "Level")
+        if self.binary_import_type == "Table": # Draw settings after level
+            self.draw_table_settings(col)
 
     def draw_insertable_binary(self, layout: UILayout, import_rom: os.PathLike | None = None):
         col = layout.column()
