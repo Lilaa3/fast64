@@ -232,7 +232,7 @@ class HeaderProps(PropertyGroup):
         self,
         layout: UILayout,
         action: Action,
-        is_in_table: bool = False,
+        in_table: bool = False,
         is_dma: bool = False,
         export_type: str = "C",
         actor_name: str = "mario",
@@ -244,7 +244,7 @@ class HeaderProps(PropertyGroup):
         preview_op = PreviewAnim.draw_props(split)
         preview_op.played_header = self.header_variant
         preview_op.played_action = action.name
-        if not is_in_table:
+        if not in_table:
             add_op = draw_list_op(split, TableOps, "ADD", text="Add To Table", icon="LINKED")
             add_op.action_name, add_op.header_variant = action.name, self.header_variant
             if export_type == "Binary":
@@ -277,60 +277,20 @@ class SM64_ActionProps(PropertyGroup):
     def headers(self) -> list[HeaderProps]:
         return [self.header] + list(self.header_variants)
 
-    def draw_variant(
-        self,
-        layout: UILayout,
-        action: Action,
-        header: HeaderProps,
-        index: int,
-        is_in_table: bool = False,
-        is_dma: bool = False,
-        export_type: str = "C",
-        actor_name: str = "mario",
-        generate_enums: bool = False,
-    ):
-        col = layout.column()
-
-        row = col.row()
-        remove_op = draw_list_op(row, VariantOps, "REMOVE", index, self.header_variants)
-        remove_op.action_name = action.name
-        add_op = draw_list_op(row, VariantOps, "ADD", index)
-        add_op.action_name = action.name
-        up_op = draw_list_op(row, VariantOps, "MOVE_UP", index, self.header_variants)
-        up_op.action_name = action.name
-        down_op = draw_list_op(
-            row,
-            VariantOps,
-            "MOVE_DOWN",
-            index,
-            collection=self.header_variants,
-        )
-        down_op.action_name = action.name
-
-        if draw_and_check_tab(row, header, "expand_tab_in_action", f"Variant {index + 1}"):
-            header.draw_props(
-                col,
-                action,
-                is_in_table,
-                is_dma,
-                export_type,
-                actor_name,
-                generate_enums,
-            )
-
     def draw_variants(
         self,
         layout: UILayout,
         action: Action,
-        is_in_table: bool = False,
+        in_table: bool = False,
         is_dma: bool = False,
         export_type: str = "C",
         actor_name: str = "mario",
         generate_enums: bool = False,
     ):
         col = layout.column()
+        args = (action, in_table, is_dma, export_type, actor_name, generate_enums)
         if draw_and_check_tab(col, self.header, "expand_tab_in_action", "Main Header", "NLA"):
-            self.header.draw_props(col, action, is_in_table, is_dma, export_type, actor_name, generate_enums)
+            self.header.draw_props(col, *args)
 
         op_row = col.row()
         op_row.label(
@@ -343,18 +303,18 @@ class SM64_ActionProps(PropertyGroup):
         clear_op.action_name = action.name
         if self.header_variants:
             box = col.box().column()
-        for i, variant in enumerate(self.header_variants):
-            self.draw_variant(
-                box,
-                action,
-                variant,
-                i,
-                is_in_table,
-                is_dma,
-                export_type,
-                actor_name,
-                generate_enums,
-            )
+        for i, header in enumerate(self.header_variants):
+            row = box.row()
+            remove_op = draw_list_op(row, VariantOps, "REMOVE", i, self.header_variants)
+            remove_op.action_name = action.name
+            add_op = draw_list_op(row, VariantOps, "ADD", i)
+            add_op.action_name = action.name
+            up_op = draw_list_op(row, VariantOps, "MOVE_UP", i, self.header_variants)
+            up_op.action_name = action.name
+            down_op = draw_list_op(row, VariantOps, "MOVE_DOWN", i, collection=self.header_variants)
+            down_op.action_name = action.name
+            if draw_and_check_tab(row, header, "expand_tab_in_action", f"Variant {i + 1}"):
+                header.draw_props(box, *args)
 
     def draw_references(self, layout: UILayout, is_binary: bool = False):
         col = layout.column()
@@ -383,7 +343,7 @@ class SM64_ActionProps(PropertyGroup):
         layout: UILayout,
         action: Action,
         specific_variant: int | None = None,
-        is_in_table: bool = False,
+        in_table: bool = False,
         draw_file_name: bool = True,
         export_type: str = "C",
         actor_name: str = "mario",
@@ -392,7 +352,7 @@ class SM64_ActionProps(PropertyGroup):
     ):
         col = layout.column()
 
-        if not is_in_table:
+        if not in_table:
             split = col.split()
             ExportAnim.draw_props(split)
             add_all_op = draw_list_op(split, TableOps, "ADD_ALL", text="Add All To Table", icon="LINKED")
@@ -416,11 +376,11 @@ class SM64_ActionProps(PropertyGroup):
 
         if specific_variant is not None:
             self.headers[specific_variant].draw_props(
-                col, action, is_in_table, is_dma, export_type, actor_name, generate_enums
+                col, action, in_table, is_dma, export_type, actor_name, generate_enums
             )
         else:
             col.separator()
-            self.draw_variants(col, action, is_in_table, is_dma, export_type, actor_name, generate_enums)
+            self.draw_variants(col, action, in_table, is_dma, export_type, actor_name, generate_enums)
 
 
 class TableElementProps(PropertyGroup):
@@ -508,7 +468,7 @@ class TableElementProps(PropertyGroup):
                 action=self.action_prop,
                 export_type=export_type,
                 specific_variant=variant,
-                is_in_table=True,
+                in_table=True,
                 draw_file_name=export_type == "C" and not is_dma and export_seperately,
                 actor_name=actor_name,
                 generate_enums=generate_enums,
