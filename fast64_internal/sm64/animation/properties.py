@@ -29,7 +29,7 @@ from ...utility import (
     writeBoxExportType,
     intToHex,
 )
-from ..sm64_utility import upgrade_hex_prop, import_rom_ui_warnings
+from ..sm64_utility import upgrade_hex_prop, import_rom_ui_warnings, string_int_warning
 from ..sm64_constants import MAX_U16, MIN_S16, MAX_S16, level_enums, enumLevelNames
 
 from .operators import (
