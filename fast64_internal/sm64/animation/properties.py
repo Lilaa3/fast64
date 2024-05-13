@@ -315,6 +315,7 @@ class SM64_ActionProps(PropertyGroup):
             down_op.action_name = action.name
             if draw_and_check_tab(row, header, "expand_tab_in_action", f"Variant {i + 1}"):
                 header.draw_props(box, *args)
+                box.separator(factor=2)
 
     def draw_references(self, layout: UILayout, is_binary: bool = False):
         col = layout.column()
@@ -418,7 +419,7 @@ class TableElementProps(PropertyGroup):
 
     def draw_props(
         self,
-        row: UILayout,
+        row: UILayout, # left side of the row for table ops
         prop_layout: UILayout,
         is_dma: bool = False,
         can_reference: bool = True,
@@ -427,44 +428,47 @@ class TableElementProps(PropertyGroup):
         generate_enums: bool = False,
         actor_name: str = "mario",
     ):
-        split = row.split()
+        col = prop_layout.column()
+        reference_row = row.row()
+        reference_row.alignment = "LEFT"
         if can_reference:
-            split.prop(self, "reference")
+            reference_row.prop(self, "reference")
             if self.reference:
-                self.draw_reference(prop_layout, export_type, generate_enums)
+                self.draw_reference(col, export_type, generate_enums)
                 return
-        split.prop(self, "action_prop", text="")
+        action_row = row.row()
+        action_row.alignment = "EXPAND"
+        action_row.prop(self, "action_prop", text="")
 
         if not self.action_prop:
-            prop_layout.box().label(text="Header´s action does not exist. Use references for NULLs", icon="ERROR")
+            col.box().label(text="Header´s action does not exist. Use references for NULLs", icon="ERROR")
             return
         action_props: SM64_ActionProps = self.action_prop.fast64.sm64
 
-        split = prop_layout if self.use_main_variant else prop_layout.split(factor=0.35)
-        split.prop(self, "use_main_variant")
+        variant_row = col.row()
+        variant_row.alignment = "LEFT"
+        variant_row.prop(self, "use_main_variant")
         variant = 0
         if not self.use_main_variant:
-            split = split.split()
-            split.prop(self, "variant")
-            split = split.split()
-            remove_op = draw_list_op(split, VariantOps, "REMOVE", self.variant - 1, action_props.header_variants)
+            variant_row.prop(self, "variant")
+            remove_op = draw_list_op(variant_row, VariantOps, "REMOVE", self.variant - 1, action_props.header_variants)
             remove_op.action_name = self.action_prop.name
-            add_op = draw_list_op(split, VariantOps, "ADD", self.variant - 1)
+            add_op = draw_list_op(variant_row, VariantOps, "ADD", self.variant - 1)
             add_op.action_name = self.action_prop.name
 
             if not 0 <= self.variant < len(action_props.headers):
-                prop_layout.box().label(text="Header variant does not exist.", icon="ERROR")
+                col.box().label(text="Header variant does not exist.", icon="ERROR")
                 return
             variant = self.variant
         header_props = get_element_header(self, can_reference)
         if draw_and_check_tab(
-            prop_layout,
+            col,
             self,
             "expand_tab",
             f"{get_anim_name(actor_name, self.action_prop, header_props)} Properties",
         ):
             action_props.draw_props(
-                layout=prop_layout,
+                layout=col,
                 action=self.action_prop,
                 export_type=export_type,
                 specific_variant=variant,
@@ -656,6 +660,7 @@ class TableProps(PropertyGroup):
                 export_type,
                 actor_name,
             )
+            box.separator(factor=2)
             actions.append(action)
 
 

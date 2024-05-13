@@ -167,7 +167,6 @@ def from_table_element_class(element_props: "TableElementProps", element: Animat
     else:
         element_props.reference = True
     if isinstance(element.reference, int):
-        element_props.header_name = intToHex(element.reference)
         element_props.header_address = intToHex(element.reference)
     else:
         element_props.header_name = element.reference
