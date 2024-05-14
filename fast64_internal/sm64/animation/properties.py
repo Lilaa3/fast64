@@ -716,7 +716,7 @@ class ImportProps(PropertyGroup):
     use_custom_name: BoolProperty(name="Use Custom Name", default=True)
 
     @property
-    def dma_table_index(self):
+    def mario_table_index(self):
         return (
             None
             if self.read_entire_table
@@ -791,22 +791,23 @@ class ImportProps(PropertyGroup):
         col.separator()
 
         if self.preset != "Custom":
-            col.prop(self, "read_entire_table")
+            split = col.split()
+            split.prop(self, "read_entire_table")
             if not self.read_entire_table:
-                prop_split(col, self, "table_index_prop", "List Index")
+                if self.preset == "Mario":
+                    SearchMarioAnim.draw_props(split, self, "mario_animation", "")
+                if self.preset != "Mario" or self.mario_animation == "Custom":
+                    split.prop(self, "table_index_prop", text="Index")
             return
-
         prop_split(col, self, "binary_import_type", "Animation Type")
         if self.binary_import_type == "DMA":
             prop_split(col, self, "dma_table_address", "DMA Table Address")
-
-            split = col.split(factor=0.4)
+            split = col.split()
             split.prop(self, "read_entire_table")
             if not self.read_entire_table:
-                SearchMarioAnim.draw_props(split, self, "mario_animation", "")
-                if self.mario_animation == "Custom":
-                    prop_split(col, self, "table_index_prop", "Index")
+                split.prop(self, "table_index_prop", text="Index")
             return
+
         split = col.split()
         split.prop(self, "is_segmented_address_prop")
         if self.binary_import_type == "Table":

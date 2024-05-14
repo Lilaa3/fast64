@@ -580,43 +580,45 @@ def import_animations(context: Context):
     table = AnimationTable()
 
     import_type = import_props.import_type
-    is_insertable = import_type == "Insertable Binary"
-
-    if not is_insertable and import_props.preset == "Custom":
-        is_segmented_address = import_props.is_segmented_address
+    if import_type == "Insertable Binary" or import_props.preset == "Custom":
         level = import_props.level
-        address = import_props.address
         table_size = import_props.table_size
-        binary_import_type = import_props.binary_import_type
         c_path = abspath(import_props.path)
-    else:
+        if import_type == "C":
+            c_path = abspath(import_props.path)
+        elif import_type == "Binary":
+            is_segmented_address = import_props.is_segmented_address
+            address = import_props.address
+            binary_import_type = import_props.binary_import_type
+            table_index = import_props.table_index
+    else:  # Preset
         preset = ACTOR_PRESET_INFO[import_props.preset]
-        level = preset.level
-        address = preset.animation.address
-        table_size = preset.animation.size
-        binary_import_type = "DMA" if preset.animation.dma else "Table"
-        is_segmented_address = False if preset.animation.dma else True
-        c_path = os.path.join(import_props.decomp_path, preset.decomp_path)
+        if import_type == "C":
+            c_path = os.path.join(import_props.decomp_path, preset.decomp_path)
+        else:
+            level = preset.level
+            address = preset.animation.address
+            table_size = preset.animation.size
+            binary_import_type = "DMA" if preset.animation.dma else "Table"
+            is_segmented_address = False if preset.animation.dma else True
+            if import_props.preset == "Mario":
+                table_index = import_props.mario_table_index
+            else:
+                table_index = import_props.table_index
     
     if import_type in {"Binary", "Insertable Binary"}:
-        rom_data, segment_data = None, None
-        if not is_insertable or import_props.read_from_rom:
+        if import_type != "Insertable Binary" or import_props.read_from_rom:
             rom_path = abspath(import_props.rom if import_props.rom else sm64_props.import_rom)
             import_rom_checks(rom_path)
             with open(rom_path, "rb") as rom_file:
-                rom_data = rom_file.read()
-                if is_insertable or binary_import_type != "DMA":
+                if import_type == "Insertable Binary" or binary_import_type != "DMA":
                     segment_data = parseLevelAtPointer(rom_file, level_pointers[level]).segmentData
-
-        anim_bones = get_anim_pose_bones(armature_obj)
-        assumed_bone_count = len(anim_bones) if import_props.assume_bone_count else None
-        if import_type == "Insertable Binary" or binary_import_type == "Table":
-            table_index = import_props.table_index
-        elif binary_import_type == "DMA":
-            table_index = import_props.dma_table_index
+                else:
+                    segment_data = None
+                rom_data = rom_file.read()
         else:
-            table_index = None
-
+            rom_data, segment_data = None, None
+        bone_count = len(get_anim_pose_bones(armature_obj)) if import_props.assume_bone_count else None
     if import_type == "Binary":
         if is_segmented_address:
             address = decodeSegmentedAddr(address.to_bytes(4, "big"), segment_data)
@@ -627,7 +629,7 @@ def import_animations(context: Context):
             animation_data,
             table,
             table_index,
-            assumed_bone_count,
+            bone_count,
             table_size,
         )
     elif import_type == "Insertable Binary":
@@ -639,8 +641,9 @@ def import_animations(context: Context):
                 animation_headers,
                 animation_data,
                 table,
-                import_props.table_index if binary_import_type == "Table" else None,
-                assumed_bone_count,
+                import_props.table_index,
+                bone_count,
+                table_size,
             )
     elif import_type == "C":
         path_checks(c_path)
