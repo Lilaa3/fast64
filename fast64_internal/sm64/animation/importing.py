@@ -594,7 +594,8 @@ def import_animations(context: Context):
     else:  # Preset
         preset = ACTOR_PRESET_INFO[import_props.preset]
         if import_type == "C":
-            c_path = os.path.join(import_props.decomp_path, preset.decomp_path)
+            directory = preset.animation.directory if preset.animation.directory else preset.decomp_path
+            c_path = os.path.join(import_props.decomp_path, directory)
         else:
             level = preset.level
             address = preset.animation.address

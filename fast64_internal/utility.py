@@ -1206,10 +1206,10 @@ def draw_and_check_tab(
     layout: UILayout, data, proprety: str, text: Optional[str] = None, icon: Optional[str] = None
 ) -> bool:
     row = layout.row()
-    tab = data.get(proprety)
+    tab = getattr(data, proprety)
     tria_icon = "TRIA_DOWN" if tab else "TRIA_RIGHT"
     if icon is not None:
-        row.prop(data, proprety, icon=tria_icon, text="", icon_only=True)
+        row.prop(data, proprety, icon=tria_icon, text="")
     row.prop(data, proprety, icon=tria_icon if icon is None else icon, text=text)
     layout.separator()
     return tab

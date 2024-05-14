@@ -289,4 +289,5 @@ def anim_operator_unregister():
     for cls in reversed(operators):
         unregister_class(cls)
 
-    bpy.app.handlers.frame_change_pre.remove(emulate_no_loop)
+    if emulate_no_loop in bpy.app.handlers.frame_change_pre:
+        bpy.app.handlers.frame_change_pre.remove(emulate_no_loop)

@@ -1940,6 +1940,7 @@ class AnimInfo:
     behaviours: dict[str, int] = dataclasses.field(default_factory=dict)
     size: int | None = None
     dma: bool = False
+    directory: str | None = None
 
 
 @dataclasses.dataclass
@@ -2351,7 +2352,7 @@ ACTOR_PRESET_INFO = {
         "actors/mario",
         "HH",
         models=ModelInfo((0x01, "MODEL_MARIO"), 0x17002DD4),
-        animation=AnimInfo(0x4EC000, dma=True),
+        animation=AnimInfo(0x4EC000, dma=True, directory="assets/anims"),
     ),
     # "Metal Box": ActorPresetInfo(
     #    "actors/metal_box",
