@@ -995,7 +995,7 @@ class AnimProps(PropertyGroup):
         )
         directory_path_checks(header_directory)
         geo_directory: os.PathLike = abspath(os.path.join(header_directory, dir_name))
-        anim_directory: os.PathLike = abspath(os.path.join(geo_dir_path, "anims"))
+        anim_directory: os.PathLike = abspath(os.path.join(geo_directory, "anims"))
         return (anim_directory, geo_directory, header_directory)
 
     def draw_insertable_binary_settings(self, layout: UILayout):

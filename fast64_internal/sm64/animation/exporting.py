@@ -1,10 +1,11 @@
+import math
 import os
 
 import bpy
 from bpy.types import Object, Action, PoseBone, Context
 from bpy.path import abspath
 import mathutils
-from mathutils import Euler, Quaternion, Vector
+from mathutils import Euler, Quaternion, Vector, Matrix
 
 from ...utility import (
     PluginError,
@@ -124,7 +125,7 @@ def get_rotation_data(action: Action, bone: PoseBone, max_frame: int):
 
 
 def get_animation_pairs(
-    blender_to_sm64_scale: float, max_frame: int, action: Action, armature_obj: Object, quick_read: bool = True
+    sm64_scale: float, max_frame: int, action: Action, armature_obj: Object, quick_read: bool = True
 ) -> tuple[list[int], list[int]]:
     print(f"Reading animation pair values from action {action.name}.")
     anim_bones = get_anim_pose_bones(armature_obj)
@@ -134,7 +135,7 @@ def get_animation_pairs(
     pairs = []
     if quick_read:
         root_bone = anim_bones[0]
-        pairs.extend(get_trans_data(action, root_bone, max_frame, blender_to_sm64_scale))
+        pairs.extend(get_trans_data(action, root_bone, max_frame, sm64_scale))
 
         for i, pose_bone in enumerate(anim_bones):
             pairs.extend(get_rotation_data(action, pose_bone, max_frame))
@@ -148,8 +149,6 @@ def get_animation_pairs(
             AnimationPair(),
             AnimationPair(),
         ]
-        trans_x_pair, trans_y_pair, trans_z_pair = pairs
-
         rotation_pairs: list[tuple[AnimationPair]] = []
         for _ in anim_bones:
             rotation = (
@@ -160,19 +159,25 @@ def get_animation_pairs(
             rotation_pairs.append(rotation)
             pairs.extend(rotation)
 
-        scale: Vector = armature_obj.matrix_world.to_scale() * blender_to_sm64_scale
+        scale: Vector = armature_obj.matrix_world.to_scale() * sm64_scale
         for frame in range(max_frame):
             bpy.context.scene.frame_set(frame)
             for i, pose_bone in enumerate(anim_bones):
-                matrix = pose_bone.matrix_basis
+                matrix = (
+                    armature_obj.convert_space(
+                        pose_bone=pose_bone,
+                        matrix=pose_bone.matrix,
+                        from_space="WORLD",
+                        to_space="LOCAL",
+                    )
+                )
                 if i == 0:  # Only first bone has translation.
                     translation: Vector = matrix.to_translation() * scale
-                    trans_x_pair.values.append(int(translation.x))
-                    trans_y_pair.values.append(int(translation.y))
-                    trans_z_pair.values.append(int(translation.z))
-
-                for angle, pair in zip(matrix.to_euler(), rotation_pairs[i]):
-                    pair.values.append(radians_to_s16(angle))
+                    for j, pair in enumerate(pairs[:3]):
+                        pair.values.append(int(translation[j]))
+                rot = matrix.to_euler()
+                for j, pair in enumerate(rotation_pairs[i]):
+                    pair.values.append(radians_to_s16(rot[j]))
 
         armature_obj.animation_data.action = pre_export_action
         bpy.context.scene.frame_current = pre_export_frame

@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class SceneAnimationPanel(SM64_Panel):
     bl_idname = "SM64_PT_anim_panel"
     bl_label = "SM64 Animations"
-    goal = "Export Object/Actor/Anim"
+    goal = "Object/Actor/Anim"
 
     def draw(self, context: Context):
         col = self.layout.column()
@@ -44,7 +44,7 @@ class ObjectAnimationPanel(Panel):
         if scene.gameEditorMode != "SM64":
             return False
         scene_goal = scene.fast64.sm64.goal
-        return scene_goal == "All" or scene_goal == "Export Object/Actor/Anim"
+        return scene_goal == "All" or scene_goal == "Object/Actor/Anim"
 
     def draw(self, context: Context):
         col = self.layout.column()

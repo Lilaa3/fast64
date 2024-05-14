@@ -226,7 +226,7 @@ def naive_flip_diff(a1: float, a2: float) -> float:
     return a2
 
 
-def can_interpolate(time_frames, threshold=0.01):
+def can_interpolate(time_frames, threshold=0.001):
     if len(time_frames) < 3:
         return True
     time1, frame1 = time_frames[0]  # start

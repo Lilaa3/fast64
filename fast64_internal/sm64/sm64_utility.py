@@ -97,4 +97,4 @@ def check_expanded(rom: os.PathLike):
 def upgrade_hex_prop(prop_location, old_prop_location, prop_name: str, hex_prop_name: str):
     value = old_prop_location.get(hex_prop_name, None)
     if value is not None:
-        prop_location.set(prop_name, intToHex(int(value, 16)))
+        setattr(prop_location, prop_name, intToHex(int(value, 16)))
