@@ -605,7 +605,7 @@ def import_animations(context: Context):
                 table_index = import_props.mario_table_index
             else:
                 table_index = import_props.table_index
-    
+
     if import_type in {"Binary", "Insertable Binary"}:
         if import_type != "Insertable Binary" or import_props.read_from_rom:
             rom_path = abspath(import_props.rom if import_props.rom else sm64_props.import_rom)

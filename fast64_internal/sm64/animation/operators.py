@@ -25,10 +25,7 @@ from .constants import marioAnimationNames, enumAnimationTables, enumAnimatedBeh
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .properties import (
-        AnimProps,
-        SM64_ActionProps
-    )
+    from .properties import AnimProps, SM64_ActionProps
 
 
 def emulate_no_loop(scene: Scene):
@@ -37,9 +34,8 @@ def emulate_no_loop(scene: Scene):
     animation_props: AnimProps = scene.fast64.sm64.animation
     played_action: Action = animation_props.played_action
 
-    if (
-        not bpy.context.screen.is_animation_playing or
-        animation_props.played_header >= len(played_action.fast64.sm64.headers)
+    if not bpy.context.screen.is_animation_playing or animation_props.played_header >= len(
+        played_action.fast64.sm64.headers
     ):
         animation_props.played_action = None
         return
@@ -74,21 +70,15 @@ class PreviewAnim(OperatorBase):
 
     def execute_operator(self, context: Context):
         animation_operator_checks(context)
-
+        played_action = get_action(self.played_action)
         scene = context.scene
         scene_anim_props = scene.fast64.sm64.animation
-        if context.space_data.type != "VIEW_3D" and context.space_data.context == "OBJECT":
-            animation_props: AnimProps = context.object.fast64.sm64.animation
-        else:
-            animation_props: AnimProps = scene_anim_props
 
-        if self.played_action:
-            played_action = get_action(self.played_action)
-        else:
-            played_action = animation_props.selected_action
         context.selected_objects[0].animation_data.action = played_action
         action_props: SM64_ActionProps = played_action.fast64.sm64
-        assert self.played_header < len(action_props.headers), "Invalid header index"
+
+        if self.played_header >= len(action_props.headers):
+            raise ValueError("Invalid Header Index")
         header_props = action_props.headers[self.played_header]
         start_frame = get_frame_range(played_action, header_props)[0]
         scene.frame_set(start_frame)
@@ -100,9 +90,6 @@ class PreviewAnim(OperatorBase):
 
         scene_anim_props.played_header = self.played_header
         scene_anim_props.played_action = played_action
-
-        return {"FINISHED"}
-
 
 class TableOps(OperatorBase):
     bl_idname = "scene.sm64_table_operations"
@@ -142,8 +129,6 @@ class TableOps(OperatorBase):
             table_elements.remove(self.index)
         if self.op_name == "CLEAR":
             table_elements.clear()
-
-        return {"FINISHED"}
 
 
 class VariantOps(OperatorBase):
