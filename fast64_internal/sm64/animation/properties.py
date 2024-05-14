@@ -702,7 +702,7 @@ class ImportProps(PropertyGroup):
     dma_table_address: StringProperty(name="DMA Table Address", default="0x4EC000")
     mario_animation: EnumProperty(name="Selected Preset Mario Animation", items=marioAnimationNames)
 
-    read_from_rom_prop: BoolProperty(
+    read_from_rom: BoolProperty(
         name="Read From Import ROM",
         description="When enabled, the importer will read from the import ROM given a non defined address",
     )
@@ -747,10 +747,6 @@ class ImportProps(PropertyGroup):
             if self.import_type == "Binary" and self.binary_import_type in {"Table", "Animation"}
             else False
         )
-
-    @property
-    def read_from_rom(self):
-        return not self.read_from_rom_prop if self.import_type == "Insertable Binary" else False
 
     @property
     def table_size(self):
@@ -820,7 +816,7 @@ class ImportProps(PropertyGroup):
             split.prop(self, "animation_address", text="")
             string_int_warning(col, self.animation_address)
         prop_split(col, self, "level", "Level")
-        if self.binary_import_type == "Table": # Draw settings after level
+        if self.binary_import_type == "Table":  # Draw settings after level
             self.draw_table_settings(col)
 
     def draw_insertable_binary(self, layout: UILayout, import_rom: os.PathLike | None = None):
@@ -835,8 +831,8 @@ class ImportProps(PropertyGroup):
         self.draw_table_settings(table_box)
         col.separator()
 
-        col.prop(self, "read_from_rom_prop")
-        if self.read_from_rom_prop:
+        col.prop(self, "read_from_rom")
+        if self.read_from_rom:
             self.draw_import_rom(col, import_rom)
             prop_split(col, self, "level", "Level")
 
@@ -846,7 +842,7 @@ class ImportProps(PropertyGroup):
         prop_split(col, self, "import_type", "Type")
 
         if self.import_type in {"C", "Binary"}:
-            SearchTableAnim.draw_props(col, self, "preset", "Table Preset")
+            SearchTableAnim.draw_props(col, self, "preset", "Preset")
             col.separator()
 
         if self.import_type == "C":
@@ -957,16 +953,13 @@ class AnimProps(PropertyGroup):
         self.update_table = scene.get("setAnimListIndex", self.update_table)
         table: TableProps = self.table
         # upgrade_hex_prop(table, scene, "", "addr_0x27")
-        table.overwrite_begining_animation = scene.get(
-            "overwrite_0x28",
-            table.overwrite_begining_animation,
-        )
+        table.update_behavior = scene.get("overwrite_0x28", table.update_behavior)
         upgrade_hex_prop(table, scene, "animate_command_address", "addr_0x28")
         table.begining_animation = scene.get("animListIndexExport", table.begining_animation)
         self.binary_level = scene.get("levelAnimExport", self.binary_level)
 
         self.version = 1
-        print("Upgraded global SM64 settings to version 1")
+        print("Upgraded global SM64 animation settings to version 1")
 
     @staticmethod
     def upgrade_changed_props():

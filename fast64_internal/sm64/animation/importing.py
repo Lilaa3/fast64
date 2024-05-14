@@ -579,7 +579,10 @@ def import_animations(context: Context):
     animation_headers: dict[str, AnimationHeader] = {}
     table = AnimationTable()
 
-    if import_props.preset == "Custom":
+    import_type = import_props.import_type
+    is_insertable = import_type == "Insertable Binary"
+
+    if not is_insertable and import_props.preset == "Custom":
         is_segmented_address = import_props.is_segmented_address
         level = import_props.level
         address = import_props.address
@@ -588,32 +591,35 @@ def import_animations(context: Context):
         c_path = abspath(import_props.path)
     else:
         preset = ACTOR_PRESET_INFO[import_props.preset]
-        is_segmented_address = True
         level = preset.level
-        address = preset.animation_table
-        table_size = preset.table_size
-        binary_import_type = "DMA" if preset.dma_animation else "Table"
+        address = preset.animation.address
+        table_size = preset.animation.size
+        binary_import_type = "DMA" if preset.animation.dma else "Table"
+        is_segmented_address = False if preset.animation.dma else True
         c_path = os.path.join(import_props.decomp_path, preset.decomp_path)
+    
+    if import_type in {"Binary", "Insertable Binary"}:
+        rom_data, segment_data = None, None
+        if not is_insertable or import_props.read_from_rom:
+            rom_path = abspath(import_props.rom if import_props.rom else sm64_props.import_rom)
+            import_rom_checks(rom_path)
+            with open(rom_path, "rb") as rom_file:
+                rom_data = rom_file.read()
+                if is_insertable or binary_import_type != "DMA":
+                    segment_data = parseLevelAtPointer(rom_file, level_pointers[level]).segmentData
 
-    rom_data, segment_data = None, None
-    if import_props.import_type == "Binary" or import_props.read_from_rom:
-        rom_path = abspath(import_props.rom if import_props.rom else sm64_props.import_rom)
-        import_rom_checks(rom_path)
-        with open(rom_path, "rb") as rom_file:
-            rom_data = rom_file.read()
-            if import_props.read_from_rom or binary_import_type != "DMA":
-                segment_data = parseLevelAtPointer(rom_file, level_pointers[level]).segmentData
-    anim_bones = get_anim_pose_bones(armature_obj)
-    assumed_bone_count = len(anim_bones) if import_props.assume_bone_count else None
-    table_index = None
-    if binary_import_type == "Table":
-        table_index = import_props.table_index
+        anim_bones = get_anim_pose_bones(armature_obj)
+        assumed_bone_count = len(anim_bones) if import_props.assume_bone_count else None
+        if import_type == "Insertable Binary" or binary_import_type == "Table":
+            table_index = import_props.table_index
+        elif binary_import_type == "DMA":
+            table_index = import_props.dma_table_index
+        else:
+            table_index = None
 
-    if import_props.import_type == "Binary":
+    if import_type == "Binary":
         if is_segmented_address:
             address = decodeSegmentedAddr(address.to_bytes(4, "big"), segment_data)
-        if binary_import_type == "DMA":
-            table_index = import_props.dma_table_index
         import_binary_animations(
             RomReader(rom_data, address, rom_data=rom_data, segment_data=segment_data),
             binary_import_type,
@@ -624,7 +630,7 @@ def import_animations(context: Context):
             assumed_bone_count,
             table_size,
         )
-    elif import_props.import_type == "Insertable Binary":
+    elif import_type == "Insertable Binary":
         path = abspath(import_props.path)
         filepath_checks(path)
         with open(path, "rb") as insertable_file:
@@ -636,7 +642,7 @@ def import_animations(context: Context):
                 import_props.table_index if binary_import_type == "Table" else None,
                 assumed_bone_count,
             )
-    elif import_props.import_type == "C":
+    elif import_type == "C":
         path_checks(c_path)
         import_c_animations(c_path, animation_headers, animation_data, table)
 

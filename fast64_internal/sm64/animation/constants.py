@@ -50,29 +50,31 @@ enumAnimBinaryImportTypes = [
 
 
 enumAnimatedBehaviours = [("Custom", "Custom Behavior", "Custom")]
-enumAnimationTables = [("Custom", "Custom Table", "Custom")]
+enumAnimationTables = [("Custom", "Custom", "Custom")]
 for actor_name, preset_info in ACTOR_PRESET_INFO.items():
-    behaviours = ActorPresetInfo.get_member_dict(actor_name, preset_info.animated_behaviours)
+    if preset_info.animation is None:
+        continue
+    behaviours = ActorPresetInfo.get_member_dict(actor_name, preset_info.animation.behaviours)
     enumAnimatedBehaviours.extend(
         [
             (
                 intToHex(address),
                 name,
-                f"{name} ({intToHex(address)})",
+                intToHex(address),
             )
             for name, address in behaviours.items()
-        ],
+        ]
     )
-    tables = ActorPresetInfo.get_member_dict(actor_name, preset_info.animation_table)
+    tables = ActorPresetInfo.get_member_dict(actor_name, preset_info.animation.address)
     enumAnimationTables.extend(
         [
             (
                 name,
                 name,
-                f"{name} ({intToHex(address)}), {preset_info.level}",
+                f"{intToHex(address)}, {preset_info.level}",
             )
             for name, address in tables.items()
-        ],
+        ]
     )
 
 marioAnimationNames = [
