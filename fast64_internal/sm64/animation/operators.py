@@ -25,11 +25,9 @@ from .constants import marioAnimationNames, enumAnimationTables, enumAnimatedBeh
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..settings.properties import SM64_Properties
     from .properties import (
         AnimProps,
-        ImportProps,
-        SM64_ActionProps,
+        SM64_ActionProps
     )
 
 
@@ -40,11 +38,12 @@ def emulate_no_loop(scene: Scene):
     played_action: Action = animation_props.played_action
 
     if (
-        not played_action
-        or animation_props.played_header >= len(played_action.fast64.sm64.headers)
-        or not bpy.context.screen.is_animation_playing
+        not bpy.context.screen.is_animation_playing or
+        animation_props.played_header >= len(played_action.fast64.sm64.headers)
     ):
         animation_props.played_action = None
+        return
+    elif not played_action:
         return
     frame = scene.frame_current
 
