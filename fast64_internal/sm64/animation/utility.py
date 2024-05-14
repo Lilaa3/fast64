@@ -143,8 +143,6 @@ def get_element_header(
     action = get_element_action(element_props, use_reference)
     if not action:
         return None
-    if element_props.use_main_variant:
-        return action.fast64.sm64.header
     return action.fast64.sm64.headers[element_props.variant]
 
 

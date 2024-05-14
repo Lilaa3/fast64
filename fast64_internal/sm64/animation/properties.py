@@ -73,6 +73,7 @@ def draw_list_op(
     collection: Optional[Iterable] = None,
     text="",
     icon="",
+    keep_first = False,
 ):
     col = layout.column()
     collection = [] if collection is None else collection
@@ -85,7 +86,7 @@ def draw_list_op(
     elif op_name == "CLEAR":
         col.enabled = len(collection) > 0
     elif op_name == "REMOVE":
-        col.enabled = index < len(collection)
+        col.enabled = index > 0 or not keep_first
     op = col.operator(op_cls.bl_idname, text=text, icon=icon)
     op.index, op.op_name = index, op_name
     return op
@@ -311,7 +312,7 @@ class SM64_ActionProps(PropertyGroup):
                 box.separator()
 
             row = box.row()
-            remove_op = draw_list_op(row, VariantOps, "REMOVE", i, self.header_variants)
+            remove_op = draw_list_op(row, VariantOps, "REMOVE", i)
             remove_op.action_name = action.name
             add_op = draw_list_op(row, VariantOps, "ADD", i)
             add_op.action_name = action.name
@@ -395,8 +396,7 @@ class SM64_ActionProps(PropertyGroup):
 class TableElementProps(PropertyGroup):
     expand_tab: BoolProperty()
     action_prop: PointerProperty(name="Action", type=Action)
-    use_main_variant: BoolProperty(name="Use Main Variant", default=True)
-    variant: IntProperty(name="Variant", min=1, default=1)
+    variant: IntProperty(name="Variant", min=0)
     reference: BoolProperty(name="Reference")
     header_name: StringProperty(name="Header Reference", default="toad_seg6_anim_0600B66C")
     header_address: StringProperty(name="Header Reference", default=intToHex(0x0600B75C))  # Toad animation 0
@@ -404,11 +404,7 @@ class TableElementProps(PropertyGroup):
 
     def set_variant(self, action: Action, variant: int):
         self.action_prop = action
-        if variant == 0:
-            self.use_main_variant = True
-        else:
-            self.use_main_variant = False
-            self.variant = variant
+        self.variant = variant
 
     def draw_reference(self, layout: UILayout, export_type: str = "C", generate_enums: bool = False):
         row = layout.row()
@@ -455,19 +451,15 @@ class TableElementProps(PropertyGroup):
 
         variant_row = col.row()
         variant_row.alignment = "LEFT"
-        variant_row.prop(self, "use_main_variant")
-        variant = 0
-        if not self.use_main_variant:
-            variant_row.prop(self, "variant")
-            remove_op = draw_list_op(variant_row, VariantOps, "REMOVE", self.variant - 1, action_props.header_variants)
-            remove_op.action_name = self.action_prop.name
-            add_op = draw_list_op(variant_row, VariantOps, "ADD", self.variant - 1)
-            add_op.action_name = self.action_prop.name
+        variant_row.prop(self, "variant")
+        remove_op = draw_list_op(variant_row, VariantOps, "REMOVE", self.variant, keep_first=True)
+        remove_op.action_name = self.action_prop.name
+        add_op = draw_list_op(variant_row, VariantOps, "ADD", self.variant)
+        add_op.action_name = self.action_prop.name
+        if not 0 <= self.variant < len(action_props.headers):
+            col.box().label(text="Header variant does not exist.", icon="ERROR")
+            return
 
-            if not 0 <= self.variant < len(action_props.headers):
-                col.box().label(text="Header variant does not exist.", icon="ERROR")
-                return
-            variant = self.variant
         header_props = get_element_header(self, can_reference)
         if draw_and_check_tab(
             col,
@@ -479,7 +471,7 @@ class TableElementProps(PropertyGroup):
                 layout=col,
                 action=self.action_prop,
                 export_type=export_type,
-                specific_variant=variant,
+                specific_variant=self.variant,
                 in_table=True,
                 draw_file_name=export_type == "C" and not is_dma and export_seperately,
                 actor_name=actor_name,
@@ -549,7 +541,7 @@ class TableProps(PropertyGroup):
         op_row.label(text=str(index))
 
         draw_list_op(op_row, TableOps, "ADD", index)
-        draw_list_op(op_row, TableOps, "REMOVE", index, self.elements)
+        draw_list_op(op_row, TableOps, "REMOVE", index)
         draw_list_op(op_row, TableOps, "MOVE_UP", index, self.elements)
         draw_list_op(op_row, TableOps, "MOVE_DOWN", index, self.elements)
 
