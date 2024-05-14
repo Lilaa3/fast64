@@ -91,6 +91,7 @@ class PreviewAnim(OperatorBase):
         scene_anim_props.played_header = self.played_header
         scene_anim_props.played_action = played_action
 
+
 class TableOps(OperatorBase):
     bl_idname = "scene.sm64_table_operations"
     bl_label = "Table Operations"

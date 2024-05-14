@@ -73,7 +73,7 @@ def draw_list_op(
     collection: Optional[Iterable] = None,
     text="",
     icon="",
-    keep_first = False,
+    keep_first=False,
 ):
     col = layout.column()
     collection = [] if collection is None else collection
