@@ -459,6 +459,8 @@ class TableElementProps(PropertyGroup):
         if not 0 <= self.variant < len(action_props.headers):
             col.box().label(text="Header variant does not exist.", icon="ERROR")
             return
+        elif self.variant != 0:
+            variant_row.label(text=f"Variant")
 
         header_props = get_element_header(self, can_reference)
         if draw_and_check_tab(
