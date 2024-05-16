@@ -443,7 +443,6 @@ def convertAnimationData(anim, armatureObj, *, frame_start, frame_count):
     armatureFrameData = [
         [ValueFrameData(i, 0, []), ValueFrameData(i, 1, []), ValueFrameData(i, 2, [])] for i in range(len(animBones))
     ]
-    scale = mathutils.Matrix.Scale(bpy.context.scene.blenderToSM64Scale, 4)
     currentFrame = bpy.context.scene.frame_current
     for frame in range(frame_start, frame_start + frame_count):
         bpy.context.scene.frame_set(frame)
@@ -458,10 +457,9 @@ def convertAnimationData(anim, armatureObj, *, frame_start, frame_count):
                     from_space="POSE",
                     to_space="LOCAL",
                 )
-                @ scale
             )
             if boneIndex == 0:
-                translation = matrix.to_translation()
+                translation = matrix.to_translation() * bpy.context.scene.blenderToSM64Scale
                 saveTranslationFrame(translationData, translation)
             rotationValue = matrix.to_quaternion()
             saveQuaternionFrame(armatureFrameData[boneIndex], rotationValue)
