@@ -443,32 +443,27 @@ def convertAnimationData(anim, armatureObj, *, frame_start, frame_count):
     armatureFrameData = [
         [ValueFrameData(i, 0, []), ValueFrameData(i, 1, []), ValueFrameData(i, 2, [])] for i in range(len(animBones))
     ]
-
+    scale = mathutils.Matrix.Scale(bpy.context.scene.blenderToSM64Scale, 4)
     currentFrame = bpy.context.scene.frame_current
     for frame in range(frame_start, frame_start + frame_count):
         bpy.context.scene.frame_set(frame)
-        rootPoseBone = armatureObj.pose.bones[animBones[0]]
 
-        translation = (
-            mathutils.Matrix.Scale(bpy.context.scene.blenderToSM64Scale, 4) @ rootPoseBone.matrix_basis
-        ).decompose()[0]
-        saveTranslationFrame(translationData, translation)
 
         for boneIndex in range(len(animBones)):
             boneName = animBones[boneIndex]
-            currentBone = armatureObj.data.bones[boneName]
             currentPoseBone = armatureObj.pose.bones[boneName]
-
-            rotationValue = (currentBone.matrix.to_4x4().inverted() @ currentPoseBone.matrix).to_quaternion()
-            if currentBone.parent is not None:
-                rotationValue = (
-                    currentBone.matrix.to_4x4().inverted()
-                    @ currentPoseBone.parent.matrix.inverted()
-                    @ currentPoseBone.matrix
-                ).to_quaternion()
-
-                # rest pose local, compared to current pose local
-
+            matrix = (
+                armatureObj.convert_space(
+                    pose_bone=currentPoseBone,
+                    matrix=currentPoseBone.matrix,
+                    from_space="WORLD",
+                    to_space="LOCAL",
+                ) @ scale
+            )
+            if boneIndex == 0:
+                translation = matrix.to_translation()
+                saveTranslationFrame(translationData, translation)
+            rotationValue = matrix.to_quaternion()
             saveQuaternionFrame(armatureFrameData[boneIndex], rotationValue)
 
     bpy.context.scene.frame_set(currentFrame)
