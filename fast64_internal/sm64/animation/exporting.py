@@ -159,7 +159,7 @@ def get_animation_pairs(
             rotation_pairs.append(rotation)
             pairs.extend(rotation)
 
-        scale: Vector = armature_obj.matrix_world.to_scale() * sm64_scale
+        scale = Vector(sm64_scale, sm64_scale, sm64_scale)
         for frame in range(max_frame):
             bpy.context.scene.frame_set(frame)
             for i, pose_bone in enumerate(anim_bones):
