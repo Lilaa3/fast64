@@ -448,7 +448,6 @@ def convertAnimationData(anim, armatureObj, *, frame_start, frame_count):
     for frame in range(frame_start, frame_start + frame_count):
         bpy.context.scene.frame_set(frame)
 
-
         for boneIndex in range(len(animBones)):
             boneName = animBones[boneIndex]
             currentPoseBone = armatureObj.pose.bones[boneName]
@@ -458,7 +457,8 @@ def convertAnimationData(anim, armatureObj, *, frame_start, frame_count):
                     matrix=currentPoseBone.matrix,
                     from_space="WORLD",
                     to_space="LOCAL",
-                ) @ scale
+                )
+                @ scale
             )
             if boneIndex == 0:
                 translation = matrix.to_translation()
