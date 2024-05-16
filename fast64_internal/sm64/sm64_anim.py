@@ -455,7 +455,7 @@ def convertAnimationData(anim, armatureObj, *, frame_start, frame_count):
                 armatureObj.convert_space(
                     pose_bone=currentPoseBone,
                     matrix=currentPoseBone.matrix,
-                    from_space="WORLD",
+                    from_space="POSE",
                     to_space="LOCAL",
                 )
                 @ scale
