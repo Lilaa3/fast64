@@ -5,6 +5,7 @@ from bpy.props import (
     EnumProperty,
     StringProperty,
     IntProperty,
+    FloatProperty
 )
 
 from ...operators import OperatorBase, SearchEnumOperatorBase
@@ -261,6 +262,8 @@ class CleanObjectAnim(OperatorBase):
     bl_options = {"REGISTER", "UNDO", "PRESET"}
     icon = "KEYFRAME"
 
+    threshold: FloatProperty(name="Threshold", min=0.0, max=1.0, default=0.01)
+    
     def execute_operator(self, context: Context):
         pass
 

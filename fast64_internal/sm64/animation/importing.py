@@ -219,23 +219,20 @@ def flip_euler(euler: Euler) -> Euler:
 
 def naive_flip_diff(a1: float, a2: float) -> float:
     while abs(a1 - a2) > math.pi:
-        if a1 < a2:
-            a2 -= 2 * math.pi
-        else:
-            a2 += 2 * math.pi
+        a2 += (-2 if a1 < a2 else 2) * math.pi
     return a2
 
 
 def can_interpolate(time_frames, threshold=0.001):
     if len(time_frames) < 3:
         return True
-    time1, frame1 = time_frames[0]  # start
-    time2, frame2 = time_frames[-1]  # end
+    time_start, frame_start = time_frames[0]
+    time_end, frame_end = time_frames[-1]
     inbetween_frames = time_frames[1:-1]
-    time_difference = time2 - time1
+    time_difference = time_end - time_start
     for time, frame in inbetween_frames:
-        time_step = time - time1
-        interpolated_frame = frame1 + ((frame2 - frame1) * time_step / time_difference)
+        time_step = time - time_start
+        interpolated_frame = frame_start + ((frame_end - frame_start) * time_step / time_difference)
         if value_distance(frame, interpolated_frame) > threshold:
             return False
     return True
@@ -309,20 +306,12 @@ class AnimationBone:
         rotation_frames: list[Vector] = self.read_pairs(pairs)
         prev = Euler([0, 0, 0])
         for frame, rotation in enumerate(rotation_frames):
-            e = Euler([sm64_to_radian(x) for x in rotation])
-            e[0] = naive_flip_diff(prev[0], e[0])
-            e[1] = naive_flip_diff(prev[1], e[1])
-            e[2] = naive_flip_diff(prev[2], e[2])
-
-            fe = flip_euler(e)
-            fe[0] = naive_flip_diff(prev[0], fe[0])
-            fe[1] = naive_flip_diff(prev[1], fe[1])
-            fe[2] = naive_flip_diff(prev[2], fe[2])
-
-            de = value_distance(prev, e)
-            dfe = value_distance(prev, fe)
+            euler = Euler([naive_flip_diff(prev[0], sm64_to_radian(x)) for i, x in enumerate(rotation)])
+            flipped_euler = [naive_flip_diff(prev[i], x) for i, x in enumerate(flip_euler(e))]
+            de = value_distance(prev, euler)
+            dfe = value_distance(prev, flipped_euler)
             if dfe < de:
-                e = fe
+                e = flipped_euler
             self.rotation.add_rotation_frame(frame, e.to_quaternion())
             prev = e
 
