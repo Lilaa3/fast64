@@ -52,7 +52,7 @@ class AnimationPair:
         values_reader = values_reader.branch(values_reader.start_address + self.offset)
         self.address = values_reader.address
         for _ in range(max_frame):
-            self.values.append(values_reader.read_value(2, signed=True))
+            self.values.append(values_reader.read_value(2, True))
         self.end_address = values_reader.address
         return self
 
@@ -134,6 +134,7 @@ class AnimationHeader:
     loop_start: int = 0
     loop_end: int = 1
     bone_count: int = 0
+    length: int = 0
     indice_reference: Optional[str | int] = None
     values_reference: Optional[str | int] = None
     data: Optional[AnimationData] = None
@@ -249,12 +250,12 @@ class AnimationHeader:
         header = AnimationHeader()
         animation_headers[str(header_reader.start_address)] = header
         header.reference = header_reader.start_address
-        header.flags = header_reader.read_value(2)  # /*0x00*/ s16 flags;
-        header.trans_divisor = header_reader.read_value(2)  # /*0x02*/ s16 animYTransDivisor;
-        header.start_frame = header_reader.read_value(2)  # /*0x04*/ s16 startFrame;
-        header.loop_start = header_reader.read_value(2)  # /*0x06*/ s16 loopStart;
-        header.loop_end = header_reader.read_value(2)  # /*0x08*/ s16 loopEnd;
-        bone_count = header_reader.read_value(2)  # /*0x0A*/ s16 unusedBoneCount; (Unused in engine)
+        header.flags = header_reader.read_value(2, True)  # /*0x00*/ s16 flags;
+        header.trans_divisor = header_reader.read_value(2, True)  # /*0x02*/ s16 animYTransDivisor;
+        header.start_frame = header_reader.read_value(2, True)  # /*0x04*/ s16 startFrame;
+        header.loop_start = header_reader.read_value(2, True)  # /*0x06*/ s16 loopStart;
+        header.loop_end = header_reader.read_value(2, True)  # /*0x08*/ s16 loopEnd;
+        bone_count = header_reader.read_value(2, True)  # /*0x0A*/ s16 unusedBoneCount; (Unused in engine)
         header.bone_count = bone_count if assumed_bone_count is None else assumed_bone_count
         # /*0x0C*/ const s16 *values;
         # /*0x10*/ const u16 *index;

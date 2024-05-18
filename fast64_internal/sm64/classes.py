@@ -39,19 +39,16 @@ class RomReader:
         return branch
 
     def read_ptr(self):
-        ptr_address = self.address
-        self.address += 4
-        in_bytes = self.data[ptr_address : ptr_address + 4]
-        ptr = int.from_bytes(in_bytes, "big", signed=False)
-        if ptr_address not in self.insertable_ptrs and self.segment_data:
+        address = self.address
+        ptr = self.read_value(4)
+        if address not in self.insertable_ptrs and self.segment_data:
             return decodeSegmentedAddr(ptr.to_bytes(4, "big"), self.segment_data)
         return ptr
 
-    def read_value(self, size, offset: int = None, signed=True):
-        if offset:
-            self.address = self.start_address + offset
-        in_bytes = self.data[self.address : self.address + size]
-        self.address += size
+    def read_value(self, size, signed=False, address: int|None = None):
+        address = self.address if address is None else address
+        in_bytes = self.data[address : address + size]
+        self.address += size if address is None else 0
         return int.from_bytes(in_bytes, "big", signed=signed)
 
 
@@ -143,13 +140,13 @@ class DMATable:
     def read_binary(self, reader: RomReader):
         self.address = reader.start_address
 
-        num_entries = reader.read_value(4, signed=False)  # numEntries
-        self.address_place_holder = reader.read_value(4, signed=False)  # addrPlaceholder
+        num_entries = reader.read_value(4)  # numEntries
+        self.address_place_holder = reader.read_value(4)  # addrPlaceholder
 
         self.table_size = 0
         for _ in range(num_entries):
-            offset = reader.read_value(4, signed=False)
-            size = reader.read_value(4, signed=False)
+            offset = reader.read_value(4)
+            size = reader.read_value(4)
             address = self.address + offset
             self.entries.append(DMATableElement(offset, size, address, address + size))
             end_of_entry = offset + size
