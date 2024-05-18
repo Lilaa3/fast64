@@ -9,6 +9,7 @@ from bpy.props import (
     StringProperty,
     EnumProperty,
     IntProperty,
+    FloatProperty,
     CollectionProperty,
     PointerProperty,
 )
@@ -668,7 +669,21 @@ class TableProps(PropertyGroup):
             actions.append(action)
 
 
+class CleanAnimProps(PropertyGroup):
+    threshold: FloatProperty(name="Threshold", min=0.0, max=0.1, default=0.01, description="When zero, only identical keyframes will be removed",)
+    to_quaternion: BoolProperty(name="Force Quaternions", default=True)
+    def draw_props(self, layout: UILayout, tools_context: bool = True):
+        col = layout.column()
+        prop_split(col, self, "threshold", "Threshold", slider=True)
+        if tools_context:
+            col.prop(self, "to_quaternion")
+            CleanObjectAnim.draw_props(col)
+
+
 class ImportProps(PropertyGroup):
+    clean_up: BoolProperty(name="Clean Up Keyframes", default=True)
+    clean_up_props: PointerProperty(type=CleanAnimProps)
+
     clear_table: BoolProperty(name="Clear Table On Import", default=True)
     import_type: EnumProperty(items=enumAnimImportTypes, name="Type", default="C")
     preset: bpy.props.EnumProperty(items=enumAnimationTables, name="Preset", default="Mario")
@@ -851,6 +866,9 @@ class ImportProps(PropertyGroup):
         col.separator()
 
         col.prop(self, "clear_table")
+        col.prop(self, "clean_up")
+        if self.clean_up:
+            self.clean_up_props.draw_props(col, False)
         ImportAnim.draw_props(col)
 
 
@@ -869,6 +887,7 @@ class AnimProps(PropertyGroup):
     selected_action: PointerProperty(name="Action", type=Action)
 
     tools_tab: BoolProperty(name="Tools")
+    clean_up: PointerProperty(type=CleanAnimProps)
 
     update_table: BoolProperty(
         name="Update Table On Action Export",
@@ -1105,7 +1124,7 @@ class AnimProps(PropertyGroup):
             if draw_and_check_tab(col, self, "importing_tab", icon="IMPORT"):
                 self.importing.draw_props(col, import_rom)
         if draw_and_check_tab(col, self, "tools_tab", icon="TOOL_SETTINGS"):
-            CleanObjectAnim.draw_props(col)
+            self.clean_up.draw_props(col)
 
 
 properties = (
@@ -1113,6 +1132,7 @@ properties = (
     TableElementProps,
     SM64_ActionProps,
     TableProps,
+    CleanAnimProps,
     ImportProps,
     AnimProps,
 )

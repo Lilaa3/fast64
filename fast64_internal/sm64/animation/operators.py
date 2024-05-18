@@ -1,12 +1,7 @@
 import bpy
 from bpy.utils import register_class, unregister_class
 from bpy.types import Context, Object, Scene, Action
-from bpy.props import (
-    EnumProperty,
-    StringProperty,
-    IntProperty,
-    FloatProperty
-)
+from bpy.props import EnumProperty, StringProperty, IntProperty, FloatProperty
 
 from ...operators import OperatorBase, SearchEnumOperatorBase
 from ...utility import copyPropertyGroup
@@ -263,7 +258,7 @@ class CleanObjectAnim(OperatorBase):
     icon = "KEYFRAME"
 
     threshold: FloatProperty(name="Threshold", min=0.0, max=1.0, default=0.01)
-    
+
     def execute_operator(self, context: Context):
         pass
 

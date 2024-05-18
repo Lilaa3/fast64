@@ -163,13 +163,11 @@ def get_animation_pairs(
         for frame in range(max_frame):
             bpy.context.scene.frame_set(frame)
             for i, pose_bone in enumerate(anim_bones):
-                matrix = (
-                    armature_obj.convert_space(
-                        pose_bone=pose_bone,
-                        matrix=pose_bone.matrix,
-                        from_space="WORLD",
-                        to_space="LOCAL",
-                    )
+                matrix = armature_obj.convert_space(
+                    pose_bone=pose_bone,
+                    matrix=pose_bone.matrix,
+                    from_space="WORLD",
+                    to_space="LOCAL",
                 )
                 if i == 0:  # Only first bone has translation.
                     translation: Vector = matrix.to_translation() * scale

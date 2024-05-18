@@ -249,7 +249,9 @@ class FrameStore:
     def add_frame(self, timestamp: int, frame: Vector):
         self.frames.append((timestamp, frame))
 
-    def clean(self):
+    def clean(self, threshold=0.01):
+        if threshold == 0.0:
+            return
         sorted_frames = self.sorted_frames
         cleaned = FrameStore()
         i = 0
@@ -259,7 +261,7 @@ class FrameStore:
                 if j == i:
                     cleaned.add_frame(*sorted_frames[i])
                 frames = sorted_frames[i : j + 1]
-                if can_interpolate(frames):
+                if can_interpolate(frames, threshold):
                     success = j, last_time_frame
             if success:
                 i = success[0]  # j
@@ -315,9 +317,9 @@ class AnimationBone:
             self.rotation.add_rotation_frame(frame, e.to_quaternion())
             prev = e
 
-    def clean(self):
-        self.translation.clean()
-        self.rotation.clean()
+    def clean(self, threshold = 0.001):
+        self.translation.clean(threshold)
+        self.rotation.clean(threshold)
 
 
 def animation_data_to_blender(
@@ -325,6 +327,7 @@ def animation_data_to_blender(
     blender_to_sm64_scale: float,
     anim_import: Animation,
     action: Action,
+    threshold = 0.01,
 ):
     anim_bones = get_anim_pose_bones(armature_obj)
 
@@ -336,7 +339,7 @@ def animation_data_to_blender(
             bone.read_translation(pairs[0:3], blender_to_sm64_scale)
         bone.read_rotation(pairs[pair_num : pair_num + 3])
         bone_anim_data.append(bone)
-        bone.clean()
+        bone.clean(threshold)
 
     is_root = True
     for pose_bone, bone_data in zip(anim_bones, bone_anim_data):
@@ -519,16 +522,16 @@ def import_insertable_binary_animations(
     assumed_bone_count: int | None = None,
     table_size: int | None = None,
 ):
-    data_type_num = reader.read_value(4, signed=False)
+    data_type_num = reader.read_value(4)
     if data_type_num not in insertableBinaryTypes.values():
         raise PluginError(f"Unknown data type: {intToHex(data_type_num)}")
-    data_size = reader.read_value(4, signed=False)
-    start_address = reader.read_value(4, signed=False)
+    data_size = reader.read_value(4)
+    start_address = reader.read_value(4)
 
-    pointer_count = reader.read_value(4, signed=False)
+    pointer_count = reader.read_value(4)
     pointer_offsets = []
     for _ in range(pointer_count):
-        pointer_offsets.append(reader.read_value(4, signed=False))
+        pointer_offsets.append(reader.read_value(4))
 
     actual_start = reader.address + start_address
     data_reader = reader.branch(
