@@ -606,15 +606,16 @@ def import_animations(context: Context):
             with open(rom_path, "rb") as rom_file:
                 if import_type == "Insertable Binary" or binary_import_type != "DMA":
                     segment_data = parseLevelAtPointer(rom_file, level_pointers[level]).segmentData
+                    if is_segmented_address:
+                        address = decodeSegmentedAddr(address.to_bytes(4, "big"), segment_data)
                 else:
                     segment_data = None
                 rom_data = rom_file.read()
         else:
             rom_data, segment_data = None, None
         bone_count = len(get_anim_pose_bones(armature_obj)) if import_props.assume_bone_count else None
+
     if import_type == "Binary":
-        if is_segmented_address:
-            address = decodeSegmentedAddr(address.to_bytes(4, "big"), segment_data)
         import_binary_animations(
             RomReader(rom_data, address, rom_data=rom_data, segment_data=segment_data),
             binary_import_type,

@@ -2,7 +2,7 @@ import math
 import re
 
 import bpy
-from bpy.types import Context, Object, Armature, Action
+from bpy.types import Context, Object, Action, PoseBone
 
 from ...utility_anim import getFrameInterval
 from ...utility import findStartBones, PluginError, toAlnum
@@ -47,10 +47,10 @@ def sm64_to_radian(signed_sm64_angle: int) -> float:
     return math.radians(degree % 360.0)
 
 
-def get_anim_pose_bones(armature_obj: Armature):
+def get_anim_pose_bones(armature_obj: Object) -> list[PoseBone]:
     bones_to_process: list[str] = findStartBones(armature_obj)
     current_bone = armature_obj.data.bones[bones_to_process[0]]
-    anim_bones: list[bpy.types.Bone] = []
+    anim_bones = []
 
     # Get animation bones in order
     while len(bones_to_process) > 0:
