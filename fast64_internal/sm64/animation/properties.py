@@ -683,9 +683,19 @@ class CleanAnimProps(PropertyGroup):
     def draw_props(self, layout: UILayout, tools_context: bool = True):
         col = layout.column()
         prop_split(col, self, "threshold", "Threshold", slider=True)
-        col.prop(self, "continuity_filter")
         if tools_context:
             col.prop(self, "to_quaternion")
+        to_quaternion = self.to_quaternion and tools_context
+
+        # When forcing quaternions, the continuity filter is always on
+        filter_row = col.row()
+        filter_row.enabled = not to_quaternion
+        filter_row.prop(
+            self,
+            "continuity_filter",
+            invert_checkbox=(not self.continuity_filter and to_quaternion),
+        )
+        if tools_context:
             CleanObjectAnim.draw_props(col)
 
 

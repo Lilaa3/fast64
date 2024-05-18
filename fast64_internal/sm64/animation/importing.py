@@ -291,6 +291,7 @@ class AnimationBone:
     def __init__(self):
         self.translation = FrameStore()
         self.rotation = RotationFrameStore()
+        self.scale = FrameStore()
 
     def read_pairs(self, pairs: list[AnimationPair]):
         array: list[int] = []
