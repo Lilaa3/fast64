@@ -637,13 +637,11 @@ class AnimationTable:
 
     def enum_list_to_c(self):
         text_data = StringIO()
-
         text_data.write(f"enum {self.enum_list_reference} {{\n")
-        for anim_header in self.elements:
-            text_data.write(f"\t{anim_header.enum_name},\n")
-        text_data.write(f"\t{self.enum_list_reference.upper()}_END,\n")
+        for header in self.elements:
+            text_data.write(f"\t{header.enum_name},\n")
+        text_data.write(f"\t{self.enum_list_reference.upper()}_END\n")
         text_data.write("};\n")
-
         return text_data.getvalue()
 
     def table_to_c(self):
@@ -652,7 +650,7 @@ class AnimationTable:
         text_data.write(f"const struct Animation *const {self.reference}[] = {{\n")
         for element in self.elements:
             text_data.write(f"\t&{element.reference},\n")
-        text_data.write("\tNULL,\n")
+        text_data.write("\tNULL\n")
         text_data.write("};\n")
 
         return text_data.getvalue()

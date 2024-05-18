@@ -78,9 +78,8 @@ class BinaryExporter:
         return self
 
     def write_to_range(self, start_address: int, end_address: int, data: bytes):
-        assert (
-            start_address + len(data) <= end_address
-        ), f"Data does not fit in the bounds ({intToHex(start_address)}, {intToHex(end_address)})"
+        if (start_address + len(data) > end_address):
+            raise IndexError(f"Data does not fit in the bounds ({intToHex(start_address)}, {intToHex(end_address)})")
         self.write(data, start_address)
 
     def seek(self, offset: int, whence: int = 0):
@@ -178,6 +177,7 @@ class ShortArray:
 
     def to_c(self):
         data = StringIO()
+        data.write(f"// {len(self.data)}\n")
         data.write(f"static const {'s' if self.signed else 'u'}16 {self.name}[] = {{\n\t")
 
         wrap = 9 if self.signed else 6

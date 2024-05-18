@@ -69,8 +69,8 @@ if TYPE_CHECKING:
     from ..settings.properties import SM64_Properties
 
 
-def get_entire_fcurve_data(action: Action, bone: PoseBone, path: str, max_frame: int, max_index: int = 0) -> list:
-    data_path = f'pose.bones["{bpy.utils.escape_identifier(bone.name)}"].{path}'
+def get_entire_fcurve_data(action: Action, bone: PoseBone, prop: str, max_frame: int, max_index: int = 0) -> list:
+    data_path = bone.path_from_id(prop)
     values = [None] * max_index
     for fcurve in action.fcurves:
         if fcurve.data_path != data_path:
@@ -79,7 +79,7 @@ def get_entire_fcurve_data(action: Action, bone: PoseBone, path: str, max_frame:
 
     for i, value in enumerate(values):
         if not value:
-            values[i] = [getattr(bone, path)[i]] * max_frame
+            values[i] = [getattr(bone, prop)[i]] * max_frame
     return values
 
 
@@ -111,7 +111,7 @@ def get_rotation_data(action: Action, bone: PoseBone, max_frame: int):
             rotation[2].append(radians_to_s16(euler.z))
     elif bone.rotation_mode == "AXIS_ANGLE":
         for x, y, z, w in zip(*get_entire_fcurve_data(action, bone, "rotation_axis_angle", max_frame, 4)):
-            euler = mathutils.AxisAngle((x, y, z), w).to_euler()
+            euler = Quaternion((x, y, z), w).to_euler()
             rotation[0].append(radians_to_s16(euler.x))
             rotation[1].append(radians_to_s16(euler.y))
             rotation[2].append(radians_to_s16(euler.z))
@@ -407,11 +407,11 @@ def update_includes(
     if header_type == "Actor":
         data_path = os.path.join(directory, f"{group_name}.c")
         header_path = os.path.join(directory, f"{group_name}.h")
-        include_start = f'#include "{dir_name}/'
+        include_start = f'#include "{dir_name}'
     elif header_type == "Level":
         data_path = os.path.join(directory, "leveldata.c")
         header_path = os.path.join(directory, "header.h")
-        include_start = f'#include "{dir_name}/{level_name}/anims/'
+        include_start = f'#include "{dir_name}/{level_name}/anims'
     print(f"Updating includes at {data_path} and {header_path}.")
     writeIfNotFound(data_path, f'{include_start}/anims/data.inc.c"\n', "")
     if update_table:

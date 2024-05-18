@@ -488,7 +488,7 @@ class TableProps(PropertyGroup):
 
     export_seperately: BoolProperty(name="Export All Seperately")
     write_data_seperately: BoolProperty(name="Write Data Seperately")
-    override_files_prop: BoolProperty(name="Table and Data Files", default=True)
+    override_files_prop: BoolProperty(name="Override Table and Data Files", default=True)
     generate_enums: BoolProperty(name="Generate Enums", default=True)
     use_custom_table_name: BoolProperty(name="Custom Table Name")
     custom_table_name: StringProperty(name="Table Name", default="mario_anims")
@@ -520,7 +520,7 @@ class TableProps(PropertyGroup):
 
     @property
     def override_files(self):
-        return self.export_seperately and self.override_files_prop
+        return not self.export_seperately or self.override_files_prop
 
     def draw_element(
         self,
@@ -683,13 +683,13 @@ class CleanAnimProps(PropertyGroup):
     def draw_props(self, layout: UILayout, tools_context: bool = True):
         col = layout.column()
         prop_split(col, self, "threshold", "Threshold", slider=True)
+        row = col.row()
         if tools_context:
-            col.prop(self, "to_quaternion")
+            row.prop(self, "to_quaternion")
         to_quaternion = self.to_quaternion and tools_context
-
-        # When forcing quaternions, the continuity filter is always on
-        filter_row = col.row()
+        filter_row = row.row()
         filter_row.enabled = not to_quaternion
+        # When forcing quaternions, the continuity filter is always on
         filter_row.prop(
             self,
             "continuity_filter",

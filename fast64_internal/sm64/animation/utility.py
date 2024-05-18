@@ -1,7 +1,9 @@
+import dataclasses
 import math
 import re
 
 import bpy
+from mathutils import Euler, Quaternion, Vector
 from bpy.types import Context, Object, Action, PoseBone
 
 from ...utility_anim import getFrameInterval
@@ -11,17 +13,17 @@ from ..sm64_geolayout_bone import animatableBoneTypes
 from .constants import FLAG_PROPS
 
 
-def animation_operator_checks(context: Context, requires_animation_data=True):
-    if len(context.selected_objects) > 1:
-        raise PluginError("Multiple objects selected at once, make sure to select only one armature.")
+def animation_operator_checks(context: Context, requires_animation=True, multiple_objects=False):
     if len(context.selected_objects) == 0:
         raise PluginError("No armature selected.")
+    if not multiple_objects and len(context.selected_objects) > 1:
+        raise PluginError("Multiple objects selected at once, make sure to select only one armature.")
 
-    armature_obj: Object = context.selected_objects[0]
-    if armature_obj.type != "ARMATURE":
-        raise PluginError("Selected object is not an armature.")
-    if requires_animation_data and armature_obj.animation_data is None:
-        raise PluginError("Armature has no animation data.")
+    for obj in context.selected_objects:
+        if obj.type != "ARMATURE":
+            raise PluginError(f'Selected object "{obj.name}" is not an armature.')
+        if requires_animation and obj.animation_data is None:
+            raise PluginError(f'Armature "{obj.name}" has no animation data.')
 
 
 def get_animation_props(context: Context) -> "AnimProps":
@@ -156,3 +158,176 @@ def get_anim_table_name(table_props: "TableProps", actor_name: str) -> str:
     if table_props.use_custom_table_name:
         return table_props.custom_table_name
     return f"{actor_name}_anims"
+
+
+def value_distance(e1: Euler, e2: Euler) -> float:
+    result = 0
+    for x1, x2 in zip(e1, e2):
+        result += abs(x1 - x2)
+    return result
+
+
+def flip_euler(euler: Euler) -> Euler:
+    ret = euler.copy()
+
+    ret[0] += math.pi
+    ret[2] += math.pi
+    ret[1] = -ret[1] + math.pi
+    return ret
+
+
+def naive_flip_diff(a1: float, a2: float) -> float:
+    while abs(a1 - a2) > math.pi:
+        a2 += (-2 if a1 < a2 else 2) * math.pi
+    return a2
+
+
+def can_interpolate(time_frames: list[tuple[int, Vector]], threshold: float):
+    if len(time_frames) < 3:
+        return True
+    time_start, frame_start = time_frames[0]
+    time_end, frame_end = time_frames[-1]
+    inbetween_frames = time_frames[1:-1]
+    time_difference = time_end - time_start
+    for time, frame in inbetween_frames:
+        time_step = time - time_start
+        interpolated_frame = frame_start + ((frame_end - frame_start) * time_step / time_difference)
+        if value_distance(frame, interpolated_frame) > threshold:
+            return False
+    return True
+
+
+@dataclasses.dataclass
+class FrameStore:
+    frames: dict[int, Vector] = dataclasses.field(default_factory=dict)
+
+    @property
+    def sorted_frames(self):
+        return sorted(self.frames.items(), key=lambda x: x[0])
+
+    def add(self, timestamp: int, frame: Vector):
+        self.frames[timestamp] = frame
+
+    def clean(self, threshold: float | None):
+        if threshold is None:
+            return
+        sorted_frames = self.sorted_frames
+        cleaned = FrameStore()
+        i = 0
+        while i < len(sorted_frames):
+            success = None
+            for j, last_time_frame in enumerate(sorted_frames, i):
+                if j == i:
+                    cleaned.add(*sorted_frames[i])
+                frames = sorted_frames[i : j + 1]
+                if can_interpolate(frames, threshold):
+                    success = j, last_time_frame
+            if success:
+                i = success[0]  # j
+                cleaned.add(*success[1])
+            i += 1
+        self.frames = cleaned.frames  # Update frames with cleaned frames
+
+
+@dataclasses.dataclass
+class RotationFrameStore(FrameStore):
+    def add_rotation_frame(self, timestamp: int, rotation: Quaternion):
+        self.add(timestamp, Vector(rotation))
+
+    @property
+    def quaternion(self):
+        return [(i, Quaternion(x)) for i, x in self.sorted_frames]
+
+    def get_euler(self, order: str):
+        return [(i, x.to_euler(order)) for i, x in self.quaternion]
+
+    @property
+    def axis_angle(self):
+        return [(i, x.to_axis_angle()) for i, x in self.quaternion]
+
+
+@dataclasses.dataclass
+class AnimationBone:
+    translation: FrameStore = dataclasses.field(default_factory=FrameStore)
+    rotation: RotationFrameStore = dataclasses.field(default_factory=RotationFrameStore)
+    scale: FrameStore = dataclasses.field(default_factory=FrameStore)
+
+    def read_pairs(self, pairs: list["AnimationPair"]):
+        array: list[int] = []
+        max_frame = max(len(pair.values) for pair in pairs)
+        array = [[x.get_frame(frame) for x in pairs] for frame in range(max_frame)]
+        return array
+
+    def read_translation(self, pairs: list["AnimationPair"], scale: float):
+        for frame, translation in enumerate(self.read_pairs(pairs)):
+            self.translation.add(frame, Vector(translation) / scale)
+
+    def continuity_filter(self, frames: list[Euler]):
+        prev = Euler([0, 0, 0])
+        for frame, euler in enumerate(frames):
+            euler = Euler([naive_flip_diff(prev[i], x) for i, x in enumerate(euler)])
+            flipped_euler = Euler([naive_flip_diff(prev[i], x) for i, x in enumerate(flip_euler(euler))])
+            distance = value_distance(prev, euler)
+            distance_flipped = value_distance(prev, flipped_euler)
+            if distance_flipped < distance:
+                euler = flipped_euler
+            frames[frame] = prev = euler
+        return frames
+
+    def read_rotation(self, pairs: list["AnimationPair"], continuity_filter: bool):
+        frames: list[Euler] = [Euler([sm64_to_radian(x) for x in rot]) for rot in self.read_pairs(pairs)]
+        if continuity_filter:
+            frames = self.continuity_filter(frames)
+        for frame, rot in enumerate(frames):
+            self.rotation.add_rotation_frame(frame, rot.to_quaternion())
+
+    def clean(self, threshold: float | None):
+        self.translation.clean(threshold)
+        self.rotation.clean(threshold)
+
+    def populate_action(self, action: Action, pose_bone: PoseBone):
+        for property_index in range(3):
+            f_curve = action.fcurves.new(
+                data_path=pose_bone.path_from_id("location"),
+                index=property_index,
+                action_group=pose_bone.name,
+            )
+            for frame, translation in self.translation.sorted_frames:
+                f_curve.keyframe_points.insert(frame, translation[property_index])
+
+        rotation_mode = pose_bone.rotation_mode
+        rotation_mode_name = {
+            "QUATERNION": "rotation_quaternion",
+            "AXIS_ANGLE": "rotation_axis_angle",
+        }.get(rotation_mode, "rotation_euler")
+        data_path = pose_bone.path_from_id(rotation_mode_name)
+
+        size = 4
+        if rotation_mode == "QUATERNION":
+            rotations = self.rotation.quaternion
+        elif rotation_mode == "AXIS_ANGLE":
+            rotations = self.rotation.axis_angle
+        else:
+            rotations = self.rotation.get_euler(rotation_mode)
+            size = 3
+        for property_index in range(size):
+            f_curve = action.fcurves.new(
+                data_path=data_path,
+                index=property_index,
+                action_group=pose_bone.name,
+            )
+            for frame, rotation in rotations:
+                if rotation_mode == "AXIS_ANGLE":
+                    rotation = [rotation[1]] + list(rotation[0]) 
+                f_curve.keyframe_points.insert(frame, rotation[property_index])
+
+
+def populate_action(action: Action, bones: list[PoseBone], anim_data: list[AnimationBone]):
+    for pose_bone, bone_data in zip(bones, anim_data):
+        bone_data.populate_action(action, pose_bone)
+
+
+def clean_object_animations(context: Context):
+    animation_operator_checks(context, True, True)
+    
+    raise NotImplementedError("Not implemented")

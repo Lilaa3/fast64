@@ -1,12 +1,9 @@
-import dataclasses
-import math
 import os
 import re
 
 import bpy
 from bpy.path import abspath
 from bpy.types import Object, Action, Context
-from mathutils import Euler, Vector, Quaternion
 
 from ...utility import PluginError, decodeSegmentedAddr, filepath_checks, is_bit_active, path_checks, intToHex
 from ...utility_anim import stashActionInArmature
@@ -22,20 +19,20 @@ from .utility import (
     get_anim_pose_bones,
     get_animation_props,
     get_frame_range,
-    sm64_to_radian,
     update_header_variant_numbers,
+    AnimationBone,
+    populate_action,
 )
 from .classes import (
     Animation,
     CArrayDeclaration,
     AnimationHeader,
-    AnimationPair,
     AnimationTable,
     AnimationTableElement,
 )
 from .constants import FLAG_PROPS, ACTOR_PRESET_INFO
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .properties import (
@@ -201,188 +198,28 @@ def from_anim_table_class(table_props: "TableProps", table: AnimationTable, clea
             table_props.data_end_address = intToHex(max(end_addresses))
 
 
-def value_distance(e1: Euler, e2: Euler) -> float:
-    result = 0
-    for x1, x2 in zip(e1, e2):
-        result += abs(x1 - x2)
-    return result
-
-
-def flip_euler(euler: Euler) -> Euler:
-    ret = euler.copy()
-
-    ret[0] += math.pi
-    ret[2] += math.pi
-    ret[1] = -ret[1] + math.pi
-    return ret
-
-
-def naive_flip_diff(a1: float, a2: float) -> float:
-    while abs(a1 - a2) > math.pi:
-        a2 += (-2 if a1 < a2 else 2) * math.pi
-    return a2
-
-
-def can_interpolate(time_frames: list[tuple[int, Vector]], threshold: float):
-    if len(time_frames) < 3:
-        return True
-    time_start, frame_start = time_frames[0]
-    time_end, frame_end = time_frames[-1]
-    inbetween_frames = time_frames[1:-1]
-    time_difference = time_end - time_start
-    for time, frame in inbetween_frames:
-        time_step = time - time_start
-        interpolated_frame = frame_start + ((frame_end - frame_start) * time_step / time_difference)
-        if value_distance(frame, interpolated_frame) > threshold:
-            return False
-    return True
-
-
-@dataclasses.dataclass
-class FrameStore:
-    frames: dict[int, Vector] = dataclasses.field(default_factory=dict)
-
-    @property
-    def sorted_frames(self):
-        return sorted(self.frames.items(), key=lambda x: x[0])
-
-    def add(self, timestamp: int, frame: Vector):
-        self.frames[timestamp] = frame
-
-    def clean(self, threshold: float | None):
-        if threshold is None:
-            return
-        sorted_frames = self.sorted_frames
-        cleaned = FrameStore()
-        i = 0
-        while i < len(sorted_frames):
-            success = None
-            for j, last_time_frame in enumerate(sorted_frames, i):
-                if j == i:
-                    cleaned.add(*sorted_frames[i])
-                frames = sorted_frames[i : j + 1]
-                if can_interpolate(frames, threshold):
-                    success = j, last_time_frame
-            if success:
-                i = success[0]  # j
-                cleaned.add(*success[1])
-            i += 1
-        self.frames = cleaned.frames  # Update frames with cleaned frames
-
-
-@dataclasses.dataclass
-class RotationFrameStore(FrameStore):
-    def add_rotation_frame(self, timestamp: int, rotation: Quaternion):
-        self.add(timestamp, Vector(rotation))
-
-    @property
-    def quaternion(self):
-        return [(i, Quaternion(x)) for i, x in self.sorted_frames]
-
-    def get_euler(self, order: str):
-        return [(i, x.to_euler(order)) for i, x in self.quaternion]
-
-    @property
-    def axis_angle(self):
-        return [(i, x.to_axis_angle()) for i, x in self.quaternion]
-
-
-class AnimationBone:
-    def __init__(self):
-        self.translation = FrameStore()
-        self.rotation = RotationFrameStore()
-        self.scale = FrameStore()
-
-    def read_pairs(self, pairs: list[AnimationPair]):
-        array: list[int] = []
-        max_frame = max(len(pair.values) for pair in pairs)
-        array = [[x.get_frame(frame) for x in pairs] for frame in range(max_frame)]
-        return array
-
-    def read_translation(self, pairs: list[AnimationPair], scale: float):
-        for frame, translation in enumerate(self.read_pairs(pairs)):
-            self.translation.add(frame, Vector(translation) / scale)
-
-    def continuity_filter(self, frames: list[Euler]):
-        prev = Euler([0, 0, 0])
-        for frame, euler in enumerate(frames):
-            euler = Euler([naive_flip_diff(prev[i], x) for i, x in enumerate(euler)])
-            flipped_euler = Euler([naive_flip_diff(prev[i], x) for i, x in enumerate(flip_euler(euler))])
-            distance = value_distance(prev, euler)
-            distance_flipped = value_distance(prev, flipped_euler)
-            if distance_flipped < distance:
-                euler = flipped_euler
-            frames[frame] = prev = euler
-        return frames
-
-    def read_rotation(self, pairs: list[AnimationPair], continuity_filter: bool):
-        frames: list[Euler] = [Euler([sm64_to_radian(x) for x in rot]) for rot in self.read_pairs(pairs)]
-        if continuity_filter:
-            frames = self.continuity_filter(frames)
-        for frame, rot in enumerate(frames):
-            self.rotation.add_rotation_frame(frame, rot.to_quaternion())
-
-    def clean(self, threshold: float | None):
-        self.translation.clean(threshold)
-        self.rotation.clean(threshold)
-
-
 def animation_data_to_blender(
     armature_obj: Object,
     blender_to_sm64_scale: float,
     anim_import: Animation,
     action: Action,
-    threshold: float | None,
+    clean: bool,
+    threshold: float,
     continuity_filter: bool,
 ):
     anim_bones = get_anim_pose_bones(armature_obj)
 
-    bone_anim_data: list[AnimationBone] = []
+    anim_data: list[AnimationBone] = []
     pairs = anim_import.data.pairs
     for pair_num in range(3, len(pairs), 3):
         bone = AnimationBone()
         if pair_num == 3:
             bone.read_translation(pairs[0:3], blender_to_sm64_scale)
         bone.read_rotation(pairs[pair_num : pair_num + 3], continuity_filter)
-        bone_anim_data.append(bone)
-        bone.clean(threshold)
-
-    is_root = True
-    for pose_bone, bone_data in zip(anim_bones, bone_anim_data):
-        if is_root:
-            for property_index in range(3):
-                f_curve = action.fcurves.new(
-                    data_path=f'pose.bones["{pose_bone.name}"].location',
-                    index=property_index,
-                    action_group=pose_bone.name,
-                )
-                for frame, translation in bone_data.translation.sorted_frames:
-                    f_curve.keyframe_points.insert(frame, translation[property_index])
-            is_root = False
-
-        rotation_mode = pose_bone.rotation_mode
-        rotation_mode_name = {
-            "QUATERNION": "rotation_quaternion",
-            "AXIS_ANGLE": "rotation_axis_angle",
-        }.get(rotation_mode, "rotation_euler")
-        data_path = f'pose.bones["{pose_bone.name}"].{rotation_mode_name}'
-
-        size = 4
-        if rotation_mode == "QUATERNION":
-            rotations = bone_data.rotation.quaternion
-        elif rotation_mode == "AXIS_ANGLE":
-            rotations = bone_data.rotation.axis_angle
-        else:
-            rotations = bone_data.rotation.get_euler("XYZ")
-            size = 3
-        for property_index in range(size):
-            f_curve = action.fcurves.new(
-                data_path=data_path,
-                index=property_index,
-                action_group=pose_bone.name,
-            )
-            for frame, rotation in rotations:
-                f_curve.keyframe_points.insert(frame, rotation[property_index])
+        anim_data.append(bone)
+        if clean:
+            bone.clean(threshold)
+    populate_action(action, anim_bones, anim_data)
 
 
 def animation_import_to_blender(
@@ -392,7 +229,8 @@ def animation_import_to_blender(
     actor_name: str,
     remove_name_footer,
     use_custom_name,
-    threshold: float | None,
+    clean: bool,
+    threshold: float,
     continuity_filter: bool,
 ):
     action = bpy.data.actions.new("")
@@ -402,7 +240,13 @@ def animation_import_to_blender(
 
     if anim_import.data:
         animation_data_to_blender(
-            armature_obj, blender_to_sm64_scale, anim_import, action, threshold, continuity_filter
+            armature_obj,
+            blender_to_sm64_scale,
+            anim_import,
+            action,
+            clean,
+            threshold,
+            continuity_filter,
         )
 
     from_anim_class(action.fast64.sm64, action, anim_import, actor_name, remove_name_footer, use_custom_name)
@@ -666,7 +510,8 @@ def import_animations(context: Context):
             animation_props.actor_name,
             import_props.remove_name_footer,
             import_props.use_custom_name,
-            import_props.clean_up_props.threshold if import_props.clean_up else None,
+            import_props.clean_up,
+            import_props.clean_up_props.threshold,
             import_props.clean_up_props.continuity_filter,
         )
     from_anim_table_class(table_props, table, import_props.clear_table)
