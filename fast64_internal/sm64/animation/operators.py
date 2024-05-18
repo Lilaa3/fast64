@@ -29,13 +29,12 @@ def emulate_no_loop(scene: Scene):
         return
     animation_props: AnimProps = scene.fast64.sm64.animation
     played_action: Action = animation_props.played_action
-
-    if not bpy.context.screen.is_animation_playing or animation_props.played_header >= len(
+    if not played_action:
+        return
+    elif not bpy.context.screen.is_animation_playing or animation_props.played_header >= len(
         played_action.fast64.sm64.headers
     ):
         animation_props.played_action = None
-        return
-    elif not played_action:
         return
     frame = scene.frame_current
 

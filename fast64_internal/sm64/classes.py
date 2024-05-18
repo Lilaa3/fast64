@@ -1,11 +1,12 @@
 import dataclasses
-from io import StringIO
+from io import BufferedReader, StringIO
 import os
 import shutil
 from typing import BinaryIO
 
 from ..utility import PluginError, intToHex, tempName, decodeSegmentedAddr
 from .sm64_utility import export_rom_checks
+
 
 @dataclasses.dataclass
 class RomReader:
@@ -14,24 +15,24 @@ class RomReader:
     Accounts for insertable binary data.
     """
 
-    data: bytes = 0
+    data: bytes | BufferedReader = None
     start_address: int = 0
-    insertable_ptrs: list[int]|None = dataclasses.field(default_factory=list)
-    rom_data: bytes|None = None
+    insertable_ptrs: list[int] | None = dataclasses.field(default_factory=list)
+    rom_data: bytes | BufferedReader = None
     segment_data: dict[int, tuple[int, int]] = dataclasses.field(default_factory=dict)
     address: int = dataclasses.field(init=False)
-    
+
     def __post_init__(self):
         self.address = self.start_address
 
-    def branch(self, start_address: int | None = None, data: bytes | None = None):
-        if start_address is not None and start_address > len(self.data):
-            if self.rom_data and self.insertable_ptrs and not self.rom_data is self.data:
-                return self.branch(start_address, self.rom_data)
+    def branch(self, start_address=0, data: bytes | BufferedReader | None = None):
+        if self.read_value(1, specific_address=start_address) is None:
+            if self.insertable_ptrs and self.rom_data:
+                return RomReader(self.rom_data, start_address, segment_data=self.segment_data)
             return None
         branch = RomReader(
             data if data else self.data,
-            start_address if start_address is not None else self.address,
+            start_address,
             self.insertable_ptrs,
             self.rom_data,
             self.segment_data,
@@ -45,19 +46,26 @@ class RomReader:
             return decodeSegmentedAddr(ptr.to_bytes(4, "big"), self.segment_data)
         return ptr
 
-    def read_value(self, size, signed=False, address: int|None = None):
-        address = self.address if address is None else address
-        in_bytes = self.data[address : address + size]
-        self.address += size if address is None else 0
-        return int.from_bytes(in_bytes, "big", signed=signed)
+    def read_value(self, size, signed=False, specific_address: int | None = None):
+        if specific_address is None:
+            address = self.address
+            self.address += size
+        else:
+            address = specific_address
+
+        if isinstance(self.data, BufferedReader):
+            self.data.seek(address)
+            in_bytes = self.data.read(size)
+        else:
+            if address + size > len(self.data):
+                in_bytes = None
+            else:
+                in_bytes = self.data[address : address + size]
+        return None if in_bytes is None else int.from_bytes(in_bytes, "big", signed=signed)
 
 
 class BinaryExporter:
-    def __init__(
-        self,
-        export_rom: os.PathLike,
-        output_rom: os.PathLike
-    ):
+    def __init__(self, export_rom: os.PathLike, output_rom: os.PathLike):
         self.export_rom = export_rom
         self.output_rom = output_rom
         self.temp_rom: os.PathLike = tempName(self.output_rom)

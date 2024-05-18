@@ -670,11 +670,20 @@ class TableProps(PropertyGroup):
 
 
 class CleanAnimProps(PropertyGroup):
-    threshold: FloatProperty(name="Threshold", min=0.0, max=0.1, default=0.01, description="When zero, only identical keyframes will be removed",)
+    threshold: FloatProperty(
+        name="Threshold",
+        min=0.0,
+        max=0.2,
+        default=0.01,
+        description="When zero, only identical keyframes will be removed",
+    )
+    continuity_filter: BoolProperty(name="Continuity Filter", default=True)
     to_quaternion: BoolProperty(name="Force Quaternions", default=True)
+
     def draw_props(self, layout: UILayout, tools_context: bool = True):
         col = layout.column()
         prop_split(col, self, "threshold", "Threshold", slider=True)
+        col.prop(self, "continuity_filter")
         if tools_context:
             col.prop(self, "to_quaternion")
             CleanObjectAnim.draw_props(col)
@@ -702,8 +711,8 @@ class ImportProps(PropertyGroup):
     rom: StringProperty(name="Import ROM", subtype="FILE_PATH")
     read_entire_table: BoolProperty(name="Read Entire Table", default=True)
     check_null: BoolProperty(name="Check NULL Delimiter", default=True)
-    table_size_prop: IntProperty(name="Table Size", min=0)
-    table_index_prop: IntProperty(name="Table Index", min=0)
+    table_size_prop: IntProperty(name="Size", min=1)
+    table_index_prop: IntProperty(name="Index", min=0)
     table_address: StringProperty(name="Address", default=intToHex(0x0600FC48))  # Toad animation table
     animation_address: StringProperty(name="Address", default=intToHex(0x0600B75C))  # Toad animation 0
     is_segmented_address_prop: BoolProperty(name="Is Segmented Address", default=True)
@@ -792,7 +801,7 @@ class ImportProps(PropertyGroup):
         if not self.read_entire_table:
             right_row.prop(self, "table_index_prop", text="Index")
         elif not self.check_null:
-            right_row.prop(self, "table_size_prop", text="Size")
+            right_row.prop(self, "table_size_prop")
 
     def draw_binary(self, layout: UILayout, import_rom: os.PathLike | None = None):
         col = layout.column()
@@ -868,7 +877,7 @@ class ImportProps(PropertyGroup):
         col.prop(self, "clear_table")
         col.prop(self, "clean_up")
         if self.clean_up:
-            self.clean_up_props.draw_props(col, False)
+            self.clean_up_props.draw_props(col.box(), False)
         ImportAnim.draw_props(col)
 
 
@@ -1124,7 +1133,7 @@ class AnimProps(PropertyGroup):
             if draw_and_check_tab(col, self, "importing_tab", icon="IMPORT"):
                 self.importing.draw_props(col, import_rom)
         if draw_and_check_tab(col, self, "tools_tab", icon="TOOL_SETTINGS"):
-            self.clean_up.draw_props(col)
+            self.clean_up.draw_props(col.box())
 
 
 properties = (

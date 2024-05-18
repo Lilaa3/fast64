@@ -223,7 +223,7 @@ def naive_flip_diff(a1: float, a2: float) -> float:
     return a2
 
 
-def can_interpolate(time_frames, threshold=0.001):
+def can_interpolate(time_frames: list[tuple[int, Vector]], threshold: float):
     if len(time_frames) < 3:
         return True
     time_start, frame_start = time_frames[0]
@@ -240,17 +240,17 @@ def can_interpolate(time_frames, threshold=0.001):
 
 @dataclasses.dataclass
 class FrameStore:
-    frames: list[tuple[int, Vector]] = dataclasses.field(default_factory=list)
+    frames: dict[int, Vector] = dataclasses.field(default_factory=dict)
 
     @property
     def sorted_frames(self):
-        return sorted(self.frames, key=lambda x: x[0])
+        return sorted(self.frames.items(), key=lambda x: x[0])
 
-    def add_frame(self, timestamp: int, frame: Vector):
-        self.frames.append((timestamp, frame))
+    def add(self, timestamp: int, frame: Vector):
+        self.frames[timestamp] = frame
 
-    def clean(self, threshold=0.01):
-        if threshold == 0.0:
+    def clean(self, threshold: float | None):
+        if threshold is None:
             return
         sorted_frames = self.sorted_frames
         cleaned = FrameStore()
@@ -259,23 +259,21 @@ class FrameStore:
             success = None
             for j, last_time_frame in enumerate(sorted_frames, i):
                 if j == i:
-                    cleaned.add_frame(*sorted_frames[i])
+                    cleaned.add(*sorted_frames[i])
                 frames = sorted_frames[i : j + 1]
                 if can_interpolate(frames, threshold):
                     success = j, last_time_frame
             if success:
                 i = success[0]  # j
-                cleaned.add_frame(*success[1])
+                cleaned.add(*success[1])
             i += 1
-
-        # Update frames with cleaned frames
-        self.frames = cleaned.frames
+        self.frames = cleaned.frames  # Update frames with cleaned frames
 
 
 @dataclasses.dataclass
 class RotationFrameStore(FrameStore):
     def add_rotation_frame(self, timestamp: int, rotation: Quaternion):
-        self.add_frame(timestamp, Vector(rotation))
+        self.add(timestamp, Vector(rotation))
 
     @property
     def quaternion(self):
@@ -302,22 +300,28 @@ class AnimationBone:
 
     def read_translation(self, pairs: list[AnimationPair], scale: float):
         for frame, translation in enumerate(self.read_pairs(pairs)):
-            self.translation.add_frame(frame, Vector(translation) / scale)
+            self.translation.add(frame, Vector(translation) / scale)
 
-    def read_rotation(self, pairs: list[AnimationPair]):
-        rotation_frames: list[Vector] = self.read_pairs(pairs)
+    def continuity_filter(self, frames: list[Euler]):
         prev = Euler([0, 0, 0])
-        for frame, rotation in enumerate(rotation_frames):
-            euler = Euler([naive_flip_diff(prev[0], sm64_to_radian(x)) for i, x in enumerate(rotation)])
-            flipped_euler = [naive_flip_diff(prev[i], x) for i, x in enumerate(flip_euler(e))]
-            de = value_distance(prev, euler)
-            dfe = value_distance(prev, flipped_euler)
-            if dfe < de:
-                e = flipped_euler
-            self.rotation.add_rotation_frame(frame, e.to_quaternion())
-            prev = e
+        for frame, euler in enumerate(frames):
+            euler = Euler([naive_flip_diff(prev[i], x) for i, x in enumerate(euler)])
+            flipped_euler = Euler([naive_flip_diff(prev[i], x) for i, x in enumerate(flip_euler(euler))])
+            distance = value_distance(prev, euler)
+            distance_flipped = value_distance(prev, flipped_euler)
+            if distance_flipped < distance:
+                euler = flipped_euler
+            frames[frame] = prev = euler
+        return frames
 
-    def clean(self, threshold = 0.001):
+    def read_rotation(self, pairs: list[AnimationPair], continuity_filter: bool):
+        frames: list[Euler] = [Euler([sm64_to_radian(x) for x in rot]) for rot in self.read_pairs(pairs)]
+        if continuity_filter:
+            frames = self.continuity_filter(frames)
+        for frame, rot in enumerate(frames):
+            self.rotation.add_rotation_frame(frame, rot.to_quaternion())
+
+    def clean(self, threshold: float | None):
         self.translation.clean(threshold)
         self.rotation.clean(threshold)
 
@@ -327,7 +331,8 @@ def animation_data_to_blender(
     blender_to_sm64_scale: float,
     anim_import: Animation,
     action: Action,
-    threshold = 0.01,
+    threshold: float | None,
+    continuity_filter: bool,
 ):
     anim_bones = get_anim_pose_bones(armature_obj)
 
@@ -337,7 +342,7 @@ def animation_data_to_blender(
         bone = AnimationBone()
         if pair_num == 3:
             bone.read_translation(pairs[0:3], blender_to_sm64_scale)
-        bone.read_rotation(pairs[pair_num : pair_num + 3])
+        bone.read_rotation(pairs[pair_num : pair_num + 3], continuity_filter)
         bone_anim_data.append(bone)
         bone.clean(threshold)
 
@@ -384,8 +389,10 @@ def animation_import_to_blender(
     blender_to_sm64_scale: float,
     anim_import: Animation,
     actor_name: str,
-    remove_name_footer: bool = True,
-    use_custom_name: bool = True,
+    remove_name_footer,
+    use_custom_name,
+    threshold: float | None,
+    continuity_filter: bool,
 ):
     action = bpy.data.actions.new("")
 
@@ -394,10 +401,7 @@ def animation_import_to_blender(
 
     if anim_import.data:
         animation_data_to_blender(
-            armature_obj=armature_obj,
-            blender_to_sm64_scale=blender_to_sm64_scale,
-            anim_import=anim_import,
-            action=action,
+            armature_obj, blender_to_sm64_scale, anim_import, action, threshold, continuity_filter
         )
 
     from_anim_class(action.fast64.sm64, action, anim_import, actor_name, remove_name_footer, use_custom_name)
@@ -598,47 +602,55 @@ def import_animations(context: Context):
                 table_index = import_props.mario_table_index
             else:
                 table_index = import_props.table_index
-
-    if import_type in {"Binary", "Insertable Binary"}:
-        if import_type != "Insertable Binary" or import_props.read_from_rom:
-            rom_path = abspath(import_props.rom if import_props.rom else sm64_props.import_rom)
-            import_rom_checks(rom_path)
-            with open(rom_path, "rb") as rom_file:
-                if import_type == "Insertable Binary" or binary_import_type != "DMA":
-                    segment_data = parseLevelAtPointer(rom_file, level_pointers[level]).segmentData
-                else:
-                    segment_data = None
-                rom_data = rom_file.read()
-        else:
-            rom_data, segment_data = None, None
-        bone_count = len(get_anim_pose_bones(armature_obj)) if import_props.assume_bone_count else None
+    bone_count = len(get_anim_pose_bones(armature_obj)) if import_props.assume_bone_count else None
 
     if import_type == "Binary":
-        if is_segmented_address:
-            address = decodeSegmentedAddr(address.to_bytes(4, "big"), segment_data)
-        import_binary_animations(
-            RomReader(rom_data, address, rom_data=rom_data, segment_data=segment_data),
-            binary_import_type,
-            animation_headers,
-            animation_data,
-            table,
-            table_index,
-            bone_count,
-            table_size,
-        )
+        rom_path = abspath(import_props.rom if import_props.rom else sm64_props.import_rom)
+        import_rom_checks(rom_path)
+        with open(rom_path, "rb") as rom_file:
+            if binary_import_type == "DMA":
+                segment_data = None
+            else:
+                segment_data = parseLevelAtPointer(rom_file, level_pointers[level]).segmentData
+                if is_segmented_address:
+                    address = decodeSegmentedAddr(address.to_bytes(4, "big"), segment_data)
+            import_binary_animations(
+                RomReader(rom_file, address, segment_data=segment_data),
+                binary_import_type,
+                animation_headers,
+                animation_data,
+                table,
+                table_index,
+                bone_count,
+                table_size,
+            )
     elif import_type == "Insertable Binary":
         path = abspath(import_props.path)
         filepath_checks(path)
         with open(path, "rb") as insertable_file:
-            import_insertable_binary_animations(
-                RomReader(insertable_file.read(), 0, None, rom_data, segment_data),
-                animation_headers,
-                animation_data,
-                table,
-                import_props.table_index,
-                bone_count,
-                table_size,
-            )
+            if import_props.read_from_rom:
+                with open(rom_path, "rb") as rom_file:
+                    segment_data = parseLevelAtPointer(rom_file, level_pointers[level]).segmentData
+                    import_insertable_binary_animations(
+                        RomReader(insertable_file.read(), rom_data=rom_file, segment_data=segment_data),
+                        animation_headers,
+                        animation_data,
+                        table,
+                        import_props.table_index,
+                        bone_count,
+                        table_size,
+                    )
+                    return
+            else:
+                import_insertable_binary_animations(
+                    RomReader(insertable_file.read()),
+                    animation_headers,
+                    animation_data,
+                    table,
+                    import_props.table_index,
+                    bone_count,
+                    table_size,
+                )
     elif import_type == "C":
         path_checks(c_path)
         import_c_animations(c_path, animation_headers, animation_data, table)
@@ -653,6 +665,8 @@ def import_animations(context: Context):
             animation_props.actor_name,
             import_props.remove_name_footer,
             import_props.use_custom_name,
+            import_props.clean_up_props.threshold if import_props.clean_up else None,
+            import_props.clean_up_props.continuity_filter,
         )
     from_anim_table_class(table_props, table, import_props.clear_table)
 

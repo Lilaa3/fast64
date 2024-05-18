@@ -29,11 +29,11 @@ class SceneAnimationPanel(SM64_Panel):
 
 
 class ObjectAnimationPanel(Panel):
-    bl_label = "Object Animation Inspector"
-    bl_idname = "OBJECT_PT_SM64_anim_panel"
+    bl_label = "Animation Inspector"
+    bl_idname = "DATA_PT_SM64_anim_panel"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
-    bl_context = "bone"
+    bl_context = "data"
     bl_options = {"HIDE_HEADER"}
 
     @classmethod

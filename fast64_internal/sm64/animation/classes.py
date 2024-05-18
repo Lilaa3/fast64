@@ -668,7 +668,7 @@ class AnimationTable:
     ) -> AnimationHeader | None:
         self.elements.clear()
         self.reference = reader.start_address
-        range_size = size if size else 300
+        range_size = size if size is not None else 300
         if table_index is not None:
             range_size = min(range_size, table_index + 1)
         for i in range(range_size):
@@ -687,6 +687,8 @@ class AnimationTable:
             else:
                 header = None
             self.elements.append(AnimationTableElement(ptr, None, header))
+            if table_index is not None:
+                break
         else:
             if table_index is not None:
                 raise PluginError(f"Table index {table_index} not found in table.")

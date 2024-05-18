@@ -1877,7 +1877,7 @@ class SM64_ObjectProperties(bpy.types.PropertyGroup):
     version: bpy.props.IntProperty(name="SM64_ObjectProperties Version", default=0)
     cur_version = 3  # version after property migration
 
-    animation: bpy.props.PointerProperty(type=AnimProps)
+    animation: bpy.props.PointerProperty(type=AnimProps)  # TODO: Move into armature
     geo_asm: bpy.props.PointerProperty(type=SM64_GeoASMProperties)
     level: bpy.props.PointerProperty(type=SM64_LevelProperties)
     area: bpy.props.PointerProperty(type=SM64_AreaProperties)
