@@ -22,7 +22,7 @@ from ...utility import (
     prop_split,
 )
 
-from ..animation.properties import AnimProps
+from ..animation.properties import AnimProperty
 
 
 def decomp_path_update(self, context: Context):
@@ -72,7 +72,7 @@ Sets bank 4 range to ({hex(defaultExtendSegment4[0])}, {hex(defaultExtendSegment
     force_extended_ram: BoolProperty(name="Force Extended Ram", default=True)
     matstack_fix: BoolProperty(name="Matstack Fix", description="Exports account for matstack fix requirements")
 
-    animation: PointerProperty(type=AnimProps)
+    animation: PointerProperty(type=AnimProperty)
 
     @property
     def binary_export(self):
@@ -125,7 +125,7 @@ Sets bank 4 range to ({hex(defaultExtendSegment4[0])}, {hex(defaultExtendSegment
             if sm64_props.version == 1:
                 sm64_props.upgrade_version_1(scene)
                 print("Upgraded global SM64 settings to version 2")
-        AnimProps.upgrade_changed_props()
+        AnimProperty.upgrade_changed_props()
 
     def draw_props(self, layout: UILayout, show_repo_settings: bool = True):
         col = layout.column()

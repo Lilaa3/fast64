@@ -1,3 +1,7 @@
+from bpy.types import PropertyGroup
+from bpy.props import PointerProperty
+from bpy.utils import register_class, unregister_class
+
 from .settings import (
     settings_props_register,
     settings_props_unregister,
@@ -82,12 +86,14 @@ from .sm64_f3d_writer import (
     sm64_dl_writer_unregister,
 )
 
-from .animation import (
-    anim_panel_register,
-    anim_panel_unregister,
-    anim_register,
-    anim_unregister,
-)
+from .animation import anim_panel_register, anim_panel_unregister, anim_register, anim_unregister, AnimProperty
+
+
+class SM64_ArmatureProperties(PropertyGroup):
+    animation: PointerProperty(type=AnimProperty)
+
+
+classes = (SM64_ArmatureProperties,)
 
 
 def sm64_panel_register():
@@ -136,7 +142,8 @@ def sm64_register(register_panels: bool):
     sm64_dl_writer_register()
     sm64_dl_parser_register()
     settings_props_register()
-
+    for cls in classes:
+        register_class(cls)
     if register_panels:
         sm64_panel_register()
 
@@ -155,6 +162,7 @@ def sm64_unregister(unregister_panels: bool):
     sm64_dl_writer_unregister()
     sm64_dl_parser_unregister()
     settings_props_unregister()
-
+    for cls in classes:
+        unregister_class(cls)
     if unregister_panels:
         sm64_panel_unregister()

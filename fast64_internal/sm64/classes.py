@@ -78,11 +78,11 @@ class BinaryExporter:
         return self
 
     def write_to_range(self, start_address: int, end_address: int, data: bytes):
-        if (start_address + len(data) > end_address):
+        if start_address + len(data) > end_address:
             raise IndexError(f"Data does not fit in the bounds ({intToHex(start_address)}, {intToHex(end_address)})")
         self.write(data, start_address)
 
-    def seek(self, offset: int, whence = 0):
+    def seek(self, offset: int, whence=0):
         self.rom_file_output.seek(offset, whence)
 
     def read(self, n=-1, offset=-1):

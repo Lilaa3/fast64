@@ -22,36 +22,36 @@ from .constants import marioAnimationNames, enumAnimationTables, enumAnimatedBeh
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .properties import AnimProps, SM64_ActionProps
+    from .properties import AnimProperty, SM64_ActionProperty
 
 
 def emulate_no_loop(scene: Scene):
     if scene.gameEditorMode != "SM64":
         return
-    animation_props: AnimProps = scene.fast64.sm64.animation
-    played_action: Action = animation_props.played_action
+    anim_props: AnimProperty = scene.fast64.sm64.animation
+    played_action: Action = anim_props.played_action
     if not played_action:
         return
-    elif not bpy.context.screen.is_animation_playing or animation_props.played_header >= len(
+    if not bpy.context.screen.is_animation_playing or anim_props.played_header >= len(
         played_action.fast64.sm64.headers
     ):
-        animation_props.played_action = None
+        anim_props.played_action = None
         return
-    frame = scene.frame_current
 
-    header_props = played_action.fast64.sm64.headers[animation_props.played_header]
-    loop_start, loop_end = get_frame_range(played_action, header_props)[1:3]
+    frame = scene.frame_current
+    header_props = played_action.fast64.sm64.headers[anim_props.played_header]
+    start, end = get_frame_range(played_action, header_props)[1:]
     if header_props.backwards:
-        if frame < loop_start:
+        if frame < start:
             if header_props.no_loop:
-                scene.frame_set(loop_start)
+                scene.frame_set(start)
             else:
-                scene.frame_set(loop_end - 1)
-    elif frame >= loop_end:
+                anim_props.played_action = None
+    elif frame >= end:
         if header_props.no_loop:
-            scene.frame_set(loop_end - 1)
+            anim_props.played_action = None
         else:
-            scene.frame_set(loop_start)
+            scene.frame_set(start)
 
 
 class PreviewAnim(OperatorBase):
@@ -68,10 +68,10 @@ class PreviewAnim(OperatorBase):
         animation_operator_checks(context)
         played_action = get_action(self.played_action)
         scene = context.scene
-        scene_anim_props = scene.fast64.sm64.animation
+        anim_props = scene.fast64.sm64.animation
 
-        context.selected_objects[0].animation_data.action = played_action
-        action_props: SM64_ActionProps = played_action.fast64.sm64
+        context.object.animation_data.action = played_action
+        action_props: SM64_ActionProperty = played_action.fast64.sm64
 
         if self.played_header >= len(action_props.headers):
             raise ValueError("Invalid Header Index")
@@ -84,8 +84,8 @@ class PreviewAnim(OperatorBase):
             bpy.ops.screen.animation_play()  # in case it was already playing, stop it
         bpy.ops.screen.animation_play()
 
-        scene_anim_props.played_header = self.played_header
-        scene_anim_props.played_action = played_action
+        anim_props.played_header = self.played_header
+        anim_props.played_action = played_action
 
 
 class TableOps(OperatorBase):
@@ -140,7 +140,7 @@ class VariantOps(OperatorBase):
 
     def execute_operator(self, context):
         action = bpy.data.actions[self.action_name]
-        action_props: SM64_ActionProps = action.fast64.sm64
+        action_props: SM64_ActionProperty = action.fast64.sm64
         variants = action_props.header_variants
         position = len(variants) - 1 if self.index == -1 else self.index
         if self.op_name == "MOVE_UP":

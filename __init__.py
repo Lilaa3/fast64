@@ -15,10 +15,10 @@ from .fast64_internal.repo_settings import (
 )
 
 from .fast64_internal.sm64.settings.properties import SM64_Properties
-from .fast64_internal.sm64 import sm64_register, sm64_unregister
+from .fast64_internal.sm64 import sm64_register, sm64_unregister, SM64_ArmatureProperties
 from .fast64_internal.sm64.sm64_geolayout_bone import SM64_BoneProperties
 from .fast64_internal.sm64.sm64_objects import SM64_ObjectProperties
-from .fast64_internal.sm64.animation.properties import SM64_ActionProps
+from .fast64_internal.sm64.animation.properties import SM64_ActionProperty
 
 from .fast64_internal.oot import OOT_Properties, oot_register, oot_unregister
 from .fast64_internal.oot.props_panel_main import OOT_ObjectProperties
@@ -252,7 +252,7 @@ class Fast64_ActionProperties(bpy.types.PropertyGroup):
     Properties in action.fast64.
     """
 
-    sm64: bpy.props.PointerProperty(type=SM64_ActionProps, name="SM64 Properties")
+    sm64: bpy.props.PointerProperty(type=SM64_ActionProperty, name="SM64 Properties")
 
 
 class Fast64_BoneProperties(bpy.types.PropertyGroup):
@@ -272,6 +272,15 @@ class Fast64_ObjectProperties(bpy.types.PropertyGroup):
 
     sm64: bpy.props.PointerProperty(type=SM64_ObjectProperties, name="SM64 Object Properties")
     oot: bpy.props.PointerProperty(type=OOT_ObjectProperties, name="OOT Object Properties")
+
+
+class Fast64_ArmatureProperties(bpy.types.PropertyGroup):
+    """
+    Properties in object.fast64 (bpy.types.Armature)
+    All new armature properties should be children of this property group.
+    """
+
+    sm64: bpy.props.PointerProperty(type=SM64_ArmatureProperties, name="SM64 Armature Properties")
 
 
 class UpgradeF3DMaterialsDialog(bpy.types.Operator):
@@ -363,6 +372,7 @@ classes = (
     Fast64_ActionProperties,
     Fast64_BoneProperties,
     Fast64_ObjectProperties,
+    Fast64_ArmatureProperties,
     F3D_GlobalSettingsPanel,
     Fast64_GlobalSettingsPanel,
     Fast64_GlobalToolsPanel,
@@ -461,7 +471,9 @@ def register():
     bpy.types.Action.fast64 = bpy.props.PointerProperty(type=Fast64_ActionProperties, name="Fast64 Action Properties")
     bpy.types.Bone.fast64 = bpy.props.PointerProperty(type=Fast64_BoneProperties, name="Fast64 Bone Properties")
     bpy.types.Object.fast64 = bpy.props.PointerProperty(type=Fast64_ObjectProperties, name="Fast64 Object Properties")
-
+    bpy.types.Armature.fast64 = bpy.props.PointerProperty(
+        type=Fast64_ArmatureProperties, name="Fast64 Armature Properties"
+    )
     bpy.app.handlers.load_post.append(after_load)
 
 
@@ -491,6 +503,7 @@ def unregister():
     del bpy.types.Scene.fast64
     del bpy.types.Bone.fast64
     del bpy.types.Object.fast64
+    del bpy.types.Armature.fast64
 
     repo_settings_operators_unregister()
 

@@ -14,7 +14,7 @@ from .constants import FLAG_PROPS
 
 
 def animation_operator_checks(context: Context, requires_animation=True, multiple_objects=False):
-    if len(context.selected_objects) == 0:
+    if len(context.selected_objects) == 0 and context.object is None:
         raise PluginError("No armature selected.")
     if not multiple_objects and len(context.selected_objects) > 1:
         raise PluginError("Multiple objects selected at once, make sure to select only one armature.")
@@ -26,12 +26,10 @@ def animation_operator_checks(context: Context, requires_animation=True, multipl
             raise PluginError(f'Armature "{obj.name}" has no animation data.')
 
 
-def get_animation_props(context: Context) -> "AnimProps":
-    scene = context.scene
-    sm64_props: "SM64_Properties" = scene.fast64.sm64
+def get_animation_props(context: Context) -> "AnimProperty":
     if context.space_data.type != "VIEW_3D" and context.object and context.object.type == "ARMATURE":
-        return context.object.fast64.sm64.animation
-    return sm64_props.animation
+        return context.object.data.fast64.sm64.animation
+    return context.scene.fast64.sm64.animation
 
 
 def get_action(action_name: str):
@@ -72,14 +70,14 @@ def get_anim_pose_bones(armature_obj: Object) -> list[PoseBone]:
     return anim_bones
 
 
-def get_frame_range(action: Action, header_props: "HeaderProps") -> tuple[int, int, int]:
+def get_frame_range(action: Action, header_props: "HeaderProperty") -> tuple[int, int, int]:
     if header_props.manual_loop:
         return (header_props.start_frame, header_props.loop_start, header_props.loop_end)
     loop_start, loop_end = getFrameInterval(action)
     return (0, loop_start, loop_end + 1)
 
 
-def get_anim_name(actor_name: str, action: Action, header_props: "HeaderProps") -> str:
+def get_anim_name(actor_name: str, action: Action, header_props: "HeaderProperty") -> str:
     if header_props.set_custom_name:
         return header_props.custom_name
     if header_props.header_variant == 0:
@@ -94,7 +92,7 @@ def get_anim_name(actor_name: str, action: Action, header_props: "HeaderProps") 
     return toAlnum(name)
 
 
-def get_anim_enum(actor_name: str, action: Action, header_props: "HeaderProps") -> str:
+def get_anim_enum(actor_name: str, action: Action, header_props: "HeaderProperty") -> str:
     if header_props.set_custom_enum:
         return header_props.custom_enum
     anim_name = get_anim_name(actor_name, action, header_props)
@@ -104,19 +102,19 @@ def get_anim_enum(actor_name: str, action: Action, header_props: "HeaderProps") 
     return enum_name
 
 
-def get_int_flags(header_props: "HeaderProps"):
+def get_int_flags(header_props: "HeaderProperty"):
     flags: int = 0
     for i, flag in enumerate(FLAG_PROPS):
         flags |= 1 << i if getattr(header_props, flag) else 0
     return flags
 
 
-def update_header_variant_numbers(action_props: "SM64_ActionProps"):
+def update_header_variant_numbers(action_props: "SM64_ActionProperty"):
     for i, variant in enumerate(action_props.headers):
         variant.header_variant = i
 
 
-def get_anim_file_name(action: Action, action_props: "SM64_ActionProps") -> str:
+def get_anim_file_name(action: Action, action_props: "SM64_ActionProperty") -> str:
     name = action_props.custom_file_name if action_props.use_custom_file_name else f"anim_{action.name}.inc.c"
     # Replace any invalid characters with an underscore
     # TODO: Could this be an issue anywhere else in fast64?
@@ -124,7 +122,7 @@ def get_anim_file_name(action: Action, action_props: "SM64_ActionProps") -> str:
     return name
 
 
-def get_max_frame(action: Action, action_props: "SM64_ActionProps") -> int:
+def get_max_frame(action: Action, action_props: "SM64_ActionProperty") -> int:
     if action_props.use_custom_max_frame:
         return action_props.custom_max_frame
 
@@ -137,9 +135,9 @@ def get_max_frame(action: Action, action_props: "SM64_ActionProps") -> int:
 
 
 def get_element_header(
-    element_props: "TableElementProps",
+    element_props: "TableElementProperty",
     use_reference: bool,
-) -> "HeaderProps":
+) -> "HeaderProperty":
     if use_reference and element_props.reference:
         return None
     action = get_element_action(element_props, use_reference)
@@ -148,13 +146,13 @@ def get_element_header(
     return action.fast64.sm64.headers[element_props.variant]
 
 
-def get_element_action(element_props: "TableElementProps", use_reference: bool) -> Action:
+def get_element_action(element_props: "TableElementProperty", use_reference: bool) -> Action:
     if use_reference and element_props.reference:
         return None
     return element_props.action_prop
 
 
-def get_anim_table_name(table_props: "TableProps", actor_name: str) -> str:
+def get_anim_table_name(table_props: "TableProperty", actor_name: str) -> str:
     if table_props.use_custom_table_name:
         return table_props.custom_table_name
     return f"{actor_name}_anims"
@@ -318,7 +316,7 @@ class AnimationBone:
             )
             for frame, rotation in rotations:
                 if rotation_mode == "AXIS_ANGLE":
-                    rotation = [rotation[1]] + list(rotation[0]) 
+                    rotation = [rotation[1]] + list(rotation[0])
                 f_curve.keyframe_points.insert(frame, rotation[property_index])
 
 
@@ -329,5 +327,5 @@ def populate_action(action: Action, bones: list[PoseBone], anim_data: list[Anima
 
 def clean_object_animations(context: Context):
     animation_operator_checks(context, True, True)
-    
+
     raise NotImplementedError("Not implemented")

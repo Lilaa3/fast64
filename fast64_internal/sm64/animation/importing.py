@@ -36,21 +36,21 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .properties import (
-        ImportProps,
-        AnimProps,
-        HeaderProps,
-        TableProps,
-        SM64_ActionProps,
+        ImportProperty,
+        AnimProperty,
+        HeaderProperty,
+        TableProperty,
+        SM64_ActionProperty,
     )
     from ..settings.properties import SM64_Properties
 
 
 def from_header_class(
-    header_props: "HeaderProps",
+    header_props: "HeaderProperty",
     header: AnimationHeader,
     action: Action,
-    actor_name: str = "mario",
-    use_custom_name: bool = True,
+    actor_name: str,
+    use_custom_name: bool,
 ):
     if (
         isinstance(header.reference, str)
@@ -96,12 +96,12 @@ def from_header_class(
 
 
 def from_anim_class(
-    action_props: "SM64_ActionProps",
+    action_props: "SM64_ActionProperty",
     action: Action,
     animation: Animation,
     actor_name: str,
-    remove_name_footer: bool = True,
-    use_custom_name: bool = True,
+    remove_name_footer: bool,
+    use_custom_name: bool,
 ):
     main_header = animation.headers[0]
     is_from_binary = isinstance(main_header.reference, int)
@@ -158,7 +158,7 @@ def from_anim_class(
     update_header_variant_numbers(action_props)
 
 
-def from_table_element_class(element_props: "TableElementProps", element: AnimationTableElement):
+def from_table_element_class(element_props: "TableElementProperty", element: AnimationTableElement):
     if element.header:
         element_props.set_variant(element.header.action, element.header.header_variant)
     else:
@@ -172,7 +172,7 @@ def from_table_element_class(element_props: "TableElementProps", element: Animat
         element_props.enum_name = element.enum_name
 
 
-def from_anim_table_class(table_props: "TableProps", table: AnimationTable, clear_table: bool = False):
+def from_anim_table_class(table_props: "TableProperty", table: AnimationTable, clear_table: bool):
     if clear_table:
         table_props.elements.clear()
     for element in table.elements:
@@ -255,12 +255,7 @@ def animation_import_to_blender(
     armature_obj.animation_data.action = action
 
 
-def find_decls(
-    c_data: str,
-    search_text: str,
-    file: os.PathLike,
-    decl_list: list[CArrayDeclaration],
-):
+def find_decls(c_data: str, search_text: str, file: os.PathLike, decl_list: list[CArrayDeclaration]):
     start_index = c_data.find(search_text)
     while start_index != -1:
         decl_index = c_data.find("{", start_index)
@@ -411,10 +406,10 @@ def import_animations(context: Context):
 
     scene = context.scene
     sm64_props: SM64_Properties = scene.fast64.sm64
-    animation_props: AnimProps = get_animation_props(context)
-    import_props: ImportProps = animation_props.importing
-    table_props: TableProps = animation_props.table
-    armature_obj: Object = context.selected_objects[0]
+    anim_props: AnimProperty = get_animation_props(context)
+    import_props: ImportProperty = anim_props.importing
+    table_props: TableProperty = anim_props.table
+    armature_obj: Object = context.object
 
     animation_data: dict[tuple[str, str], Animation] = {}
     animation_headers: dict[str, AnimationHeader] = {}
@@ -504,10 +499,10 @@ def import_animations(context: Context):
         table.elements = [AnimationTableElement(header=header) for header in animation_headers.values()]
     for animation in animation_data.values():
         animation_import_to_blender(
-            context.selected_objects[0],
+            armature_obj,
             sm64_props.blender_to_sm64_scale,
             animation,
-            animation_props.actor_name,
+            anim_props.actor_name,
             import_props.remove_name_footer,
             import_props.use_custom_name,
             import_props.clean_up,
@@ -522,8 +517,8 @@ def import_all_mario_animations(context: Context):
     scene = context.scene
     sm64_props: SM64_Properties = scene.fast64.sm64
 
-    animation_props: AnimProps = get_animation_props(context)
-    import_props: ImportProps = animation_props.importing
+    anim_props: AnimProperty = get_animation_props(context)
+    import_props: ImportProperty = anim_props.importing
 
     animations: dict[str, Animation] = {}
     table: AnimationTable = AnimationTable()
