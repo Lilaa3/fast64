@@ -521,24 +521,27 @@ def update_behaviour_binary(
     load_set = False
     animate_set = False
     exited = False
-    while not exited:
+    while not exited and not (load_set and animate_set):
         command_index = int.from_bytes(binary_exporter.read(1, address), "big")
         name, size = BEHAVIOR_COMMANDS[command_index]
+        print(name, intToHex(address))
         if name in BEHAVIOR_EXITS:
             exited = True
         if name == "LOAD_ANIMATIONS":
-            binary_exporter.seek(address + 4)
+            ptr_address = address + 4
             print(
                 f"Found LOAD_ANIMATIONS at {intToHex(address)}, "
-                f"replacing {bytesToHex(binary_exporter.read(4))} with {bytesToHex(table_address)}"
+                f"replacing ptr {bytesToHex(binary_exporter.read(4, ptr_address))} "
+                f"at {intToHex(ptr_address)} with {bytesToHex(table_address)}"
             )
-            binary_exporter.write(table_address)
+            binary_exporter.write(table_address, ptr_address)
             load_set = True
         elif name == "ANIMATE":
-            binary_exporter.seek(address + 1)
+            value_address = address + 1
             print(
-                f"Found ANIMATE at {hex(address)}, "
-                f"replacing {bytesToHex(binary_exporter.read(1))} with {beginning_animation}"
+                f"Found ANIMATE at {intToHex(address)}, "
+                f"replacing value {int.from_bytes(binary_exporter.read(1, value_address), 'big')} "
+                f"at {intToHex(value_address)} with {beginning_animation}"
             )
             binary_exporter.write(beginning_animation.to_bytes(1, "big"))
             animate_set = True

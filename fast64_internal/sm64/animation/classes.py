@@ -53,7 +53,7 @@ class AnimationPair:
         self.address = values_reader.address
         for _ in range(max_frame):
             self.values.append(values_reader.read_value(2, True))
-        self.end_address = values_reader.address
+        self.end_address = values_reader.address + 1
         return self
 
 
@@ -105,7 +105,7 @@ class AnimationData:
             pair = AnimationPair()
             pair.read_binary(indices_reader, values_reader)
             self.pairs.append(pair)
-        self.indice_end_address = indices_reader.address
+        self.indice_end_address = indices_reader.address + 1
         self.value_end_address = max(pair.end_address for pair in self.pairs)
 
         self.start_address = min(self.indice_reference, self.values_reference)
@@ -268,7 +268,7 @@ class AnimationHeader:
             header.indice_reference = header_reader.read_ptr()
         header.length = header_reader.read_value(4)
 
-        header.end_address = header_reader.address
+        header.end_address = header_reader.address + 1
         header.table_index = len(animation_headers) if table_index is None else table_index
 
         data_key = (str(header.indice_reference), str(header.values_reference))
@@ -692,7 +692,7 @@ class AnimationTable:
                 raise PluginError(f"Table index {table_index} not found in table.")
             if size is None:
                 raise PluginError(f"Iterated through {range_size} elements and no NULL was found.")
-        self.end_address = reader.address
+        self.end_address = reader.address + 1
         return self
 
     def read_dma_binary(

@@ -1867,12 +1867,11 @@ BEHAVIOR_EXITS = [
     "RETURN",
     "GOTO",
     "END_LOOP",
-    "END_REPEAT",
-    "END_REPEAT_CONTINUE",
     "BREAK",
     "BREAK_UNUSED",
     "DEACTIVATE",
 ]
+
 BEHAVIOR_COMMANDS = [
     # Name, Size
     ("BEGIN", 1),  # bhv_cmd_begin
