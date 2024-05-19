@@ -141,22 +141,35 @@ class VariantOps(OperatorBase):
     def execute_operator(self, context):
         action = bpy.data.actions[self.action_name]
         action_props: SM64_ActionProperty = action.fast64.sm64
+        headers = action_props.headers
         variants = action_props.header_variants
-        position = len(variants) - 1 if self.index == -1 else self.index
+        variant_position = self.index - 1
         if self.op_name == "MOVE_UP":
-            variants.move(self.index, position - 1)
+            if self.index - 1 == 0:
+                variants.add()
+                copyPropertyGroup(headers[0], variants[-1])
+                copyPropertyGroup(headers[self.index], headers[0])
+                copyPropertyGroup(variants[-1], headers[self.index])
+                variants.remove(len(variants) - 1)
+            else:
+                variants.move(variant_position, variant_position - 1)
         elif self.op_name == "MOVE_DOWN":
-            variants.move(self.index, position + 1)
+            if self.index == 0:
+                variants.add()
+                copyPropertyGroup(headers[0], variants[-1])
+                copyPropertyGroup(headers[1], headers[0])
+                copyPropertyGroup(variants[-1], headers[1])
+                variants.remove(len(variants) - 1)
+            else:
+                variants.move(variant_position, variant_position + 1)
         elif self.op_name == "ADD":
             variants.add()
             added_variant = variants[-1]
-            added_variant.action = action
 
-            copyPropertyGroup(action_props.headers[self.index + 1], added_variant)
-
-            variants.move(len(variants) - 1, position)
+            copyPropertyGroup(action_props.headers[self.index], added_variant)
+            variants.move(len(variants) - 1, variant_position)
             update_header_variant_numbers(action_props)
-
+            added_variant.action = action
             added_variant.expand_tab = True
             added_variant.set_custom_name = False
             added_variant.set_custom_enum = False
@@ -164,7 +177,7 @@ class VariantOps(OperatorBase):
                 context.scene.fast64.sm64.animation.actor_name, action, added_variant
             )
         elif self.op_name == "REMOVE":
-            variants.remove(self.index)
+            variants.remove(variant_position)
         if self.op_name == "CLEAR":
             variants.clear()
         update_header_variant_numbers(action_props)

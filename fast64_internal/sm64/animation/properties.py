@@ -88,14 +88,15 @@ def draw_list_op(
         col.enabled = index + 1 < len(collection)
     elif op_name == "CLEAR":
         icon = "TRASH"
-        col.enabled = len(collection) > 0
+        col.enabled = len(collection) > (1 if keep_first else 0)
     elif op_name == "REMOVE":
-        col.enabled = index > 0 or not keep_first
+        col.enabled = len(collection) > index >= (1 if keep_first else 0)
     op = col.operator(op_cls.bl_idname, text=text, icon=icon)
     op.index, op.op_name = index, op_name
     for attr, value in op_args.items():
         setattr(op, attr, value)
     return op
+
 
 def draw_list_ops(
     layout: UILayout,
@@ -104,10 +105,11 @@ def draw_list_ops(
     collection: Optional[Iterable],
     **op_args,
 ):
-    row = layout.row()
+    layout.label(text=str(index))
     ops = ("MOVE_UP", "MOVE_DOWN", "ADD", "REMOVE")
     for op_name in ops:
-        draw_list_op(row, op_cls, op_name, index, collection, **op_args)
+        draw_list_op(layout, op_cls, op_name, index, collection, **op_args)
+
 
 class HeaderProperty(PropertyGroup):
     expand_tab_in_action: BoolProperty(name="Header Properties", default=True)
@@ -308,29 +310,26 @@ class SM64_ActionProperty(PropertyGroup):
     ):
         col = layout.column()
         args = (action, in_table, is_dma, export_type, actor_name, generate_enums)
-        if draw_and_check_tab(col, self.header, "expand_tab_in_action", "Main Header", "NLA"):
-            self.header.draw_props(col, *args)
-        col.separator()
-
         op_row = col.row()
-        op_row.label(
-            text="Header Variants" + (f" ({len(self.header_variants)})" if self.header_variants else ""),
-            icon="NLA",
-        )
-        add_op = draw_list_op(op_row, VariantOps, "ADD")
-        add_op.action_name = action.name
-        clear_op = draw_list_op(op_row, VariantOps, "CLEAR", collection=self.header_variants)
+        op_row.label(text=f"Header Variants ({len(self.headers)})", icon="NLA")
+        clear_op = draw_list_op(op_row, VariantOps, "CLEAR", collection=self.headers, keep_first=True)
         clear_op.action_name = action.name
-        if self.header_variants:
-            box = col.box().column()
-        for i, header in enumerate(self.header_variants):
-            if i != 0:
-                box.separator()
 
-            row = box.row()
-            draw_list_ops(row, VariantOps, i, self.header_variants, action_name=action.name)
-            if draw_and_check_tab(row, header, "expand_tab_in_action", f"Variant {i + 1}"):
-                header.draw_props(box, *args)
+        for i, header in enumerate(self.headers):
+            if i != 0:
+                col.separator()
+
+            row = col.row()
+            if draw_and_check_tab(
+                row,
+                header,
+                "expand_tab_in_action",
+                get_anim_name(actor_name, action, header),
+            ):
+                header.draw_props(col, *args)
+            op_row = row.row()
+            op_row.alignment = "RIGHT"
+            draw_list_ops(op_row, VariantOps, i, self.headers, keep_first=True, action_name=action.name)
 
     def draw_references(self, layout: UILayout, is_binary: bool = False):
         col = layout.column()
@@ -393,6 +392,9 @@ class SM64_ActionProperty(PropertyGroup):
             self.draw_references(col, export_type in {"Binary", "Insertable Binary"})
 
         if specific_variant is not None:
+            if specific_variant < 0 or specific_variant >= len(self.headers):
+                col.box().label(text="Header variant does not exist.", icon="ERROR")
+                return
             self.headers[specific_variant].draw_props(
                 col, action, in_table, is_dma, export_type, actor_name, generate_enums
             )
@@ -458,6 +460,16 @@ class TableElementProperty(PropertyGroup):
             return
         action_props: SM64_ActionProperty = self.action_prop.fast64.sm64
 
+        if 0 <= self.variant < len(action_props.headers):
+            header_props = get_element_header(self, can_reference)
+            name = get_anim_name(actor_name, self.action_prop, header_props)
+            if not draw_and_check_tab(
+                col,
+                self,
+                "expand_tab",
+                name + (" (Variant)" if self.variant else ""),
+            ):
+                return
         variant_row = col.row()
         variant_row.alignment = "LEFT"
         variant_row.prop(self, "variant")
@@ -465,30 +477,17 @@ class TableElementProperty(PropertyGroup):
         remove_op.action_name = self.action_prop.name
         add_op = draw_list_op(variant_row, VariantOps, "ADD", self.variant)
         add_op.action_name = self.action_prop.name
-        if not 0 <= self.variant < len(action_props.headers):
-            col.box().label(text="Header variant does not exist.", icon="ERROR")
-            return
-        elif self.variant != 0:
-            variant_row.label(text=f"Variant")
-
-        header_props = get_element_header(self, can_reference)
-        if draw_and_check_tab(
-            col,
-            self,
-            "expand_tab",
-            f"{get_anim_name(actor_name, self.action_prop, header_props)} Properties",
-        ):
-            action_props.draw_props(
-                layout=col,
-                action=self.action_prop,
-                export_type=export_type,
-                specific_variant=self.variant,
-                in_table=True,
-                draw_file_name=export_type == "C" and not is_dma and export_seperately,
-                actor_name=actor_name,
-                generate_enums=generate_enums,
-                is_dma=is_dma,
-            )
+        action_props.draw_props(
+            layout=col,
+            action=self.action_prop,
+            export_type=export_type,
+            specific_variant=self.variant,
+            in_table=True,
+            draw_file_name=export_type == "C" and not is_dma and export_seperately,
+            actor_name=actor_name,
+            generate_enums=generate_enums,
+            is_dma=is_dma,
+        )
 
 
 class TableProperty(PropertyGroup):
@@ -549,7 +548,6 @@ class TableProperty(PropertyGroup):
 
         op_row = row.row()
         op_row.alignment = "RIGHT"
-        op_row.label(text=str(index))
         draw_list_ops(op_row, TableOps, index, self.elements)
 
         table_element.draw_props(
