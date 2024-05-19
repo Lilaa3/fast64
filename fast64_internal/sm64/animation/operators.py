@@ -96,7 +96,7 @@ class TableOps(OperatorBase):
 
     index: IntProperty()
     op_name: StringProperty()
-    action_name: StringProperty(name="Action")
+    action_name: StringProperty()
     header_variant: IntProperty()
 
     def execute_operator(self, context: Context):
@@ -136,7 +136,7 @@ class VariantOps(OperatorBase):
 
     index: IntProperty()
     op_name: StringProperty()
-    action_name: StringProperty(name="Action")
+    action_name: StringProperty()
 
     def execute_operator(self, context):
         action = bpy.data.actions[self.action_name]

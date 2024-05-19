@@ -73,12 +73,13 @@ def draw_list_op(
     index=-1,
     collection: Optional[Iterable] = None,
     text="",
+    icon="",
     keep_first=False,
     **op_args,
 ):
     col = layout.column()
     collection = [] if collection is None else collection
-    icon = op_name
+    icon = icon if icon else op_name
     if op_name == "MOVE_UP":
         icon = "TRIA_UP"
         col.enabled = index > 0
