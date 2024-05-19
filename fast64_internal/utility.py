@@ -1205,7 +1205,7 @@ def multilineLabel(layout: UILayout, text: str, icon: str = "NONE"):
 def draw_and_check_tab(
     layout: UILayout, data, proprety: str, text: Optional[str] = None, icon: Optional[str] = None
 ) -> bool:
-    row = layout.row()
+    row = layout.row(align=True)
     tab = getattr(data, proprety)
     tria_icon = "TRIA_DOWN" if tab else "TRIA_RIGHT"
     if icon is not None:

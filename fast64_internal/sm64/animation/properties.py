@@ -73,25 +73,40 @@ def draw_list_op(
     index=-1,
     collection: Optional[Iterable] = None,
     text="",
-    icon="",
     keep_first=False,
+    **op_args,
 ):
     col = layout.column()
     collection = [] if collection is None else collection
-    if not icon:
-        icon = {"MOVE_UP": "TRIA_UP", "MOVE_DOWN": "TRIA_DOWN", "CLEAR": "TRASH"}.get(op_name, op_name)
+    icon = op_name
     if op_name == "MOVE_UP":
+        icon = "TRIA_UP"
         col.enabled = index > 0
     elif op_name == "MOVE_DOWN":
+        icon = "TRIA_DOWN"
         col.enabled = index + 1 < len(collection)
     elif op_name == "CLEAR":
+        icon = "TRASH"
         col.enabled = len(collection) > 0
     elif op_name == "REMOVE":
         col.enabled = index > 0 or not keep_first
     op = col.operator(op_cls.bl_idname, text=text, icon=icon)
     op.index, op.op_name = index, op_name
+    for attr, value in op_args.items():
+        setattr(op, attr, value)
     return op
 
+def draw_list_ops(
+    layout: UILayout,
+    op_cls: type,
+    index: int,
+    collection: Optional[Iterable],
+    **op_args,
+):
+    row = layout.row()
+    ops = ("MOVE_UP", "MOVE_DOWN", "ADD", "REMOVE")
+    for op_name in ops:
+        draw_list_op(row, op_cls, op_name, index, collection, **op_args)
 
 class HeaderProperty(PropertyGroup):
     expand_tab_in_action: BoolProperty(name="Header Properties", default=True)
@@ -183,10 +198,9 @@ class HeaderProperty(PropertyGroup):
             col.label(text="Backwards has no porpuse without acceleration.", icon="INFO")
 
         row = col.row()
-        no_row = row.row()
-        no_row.alignment = "LEFT"
-        no_row.enabled = not self.only_horizontal_trans and not self.only_vertical_trans
-        no_row.prop(self, "no_trans", invert_checkbox=True, text="Translate")
+        row.alignment = "LEFT"
+        row.label(text="Translate")
+        row.prop(self, "no_trans", invert_checkbox=True, text="")
         hor_row = row.row()
         hor_row.alignment = "LEFT"
         hor_row.enabled = not self.only_horizontal_trans and not self.no_trans
@@ -313,14 +327,7 @@ class SM64_ActionProperty(PropertyGroup):
                 box.separator()
 
             row = box.row()
-            remove_op = draw_list_op(row, VariantOps, "REMOVE", i)
-            remove_op.action_name = action.name
-            add_op = draw_list_op(row, VariantOps, "ADD", i)
-            add_op.action_name = action.name
-            up_op = draw_list_op(row, VariantOps, "MOVE_UP", i, self.header_variants)
-            up_op.action_name = action.name
-            down_op = draw_list_op(row, VariantOps, "MOVE_DOWN", i, collection=self.header_variants)
-            down_op.action_name = action.name
+            draw_list_ops(row, VariantOps, i, self.header_variants, action_name=action.name)
             if draw_and_check_tab(row, header, "expand_tab_in_action", f"Variant {i + 1}"):
                 header.draw_props(box, *args)
 
@@ -542,11 +549,7 @@ class TableProperty(PropertyGroup):
         op_row = row.row()
         op_row.alignment = "RIGHT"
         op_row.label(text=str(index))
-
-        draw_list_op(op_row, TableOps, "ADD", index)
-        draw_list_op(op_row, TableOps, "REMOVE", index)
-        draw_list_op(op_row, TableOps, "MOVE_UP", index, self.elements)
-        draw_list_op(op_row, TableOps, "MOVE_DOWN", index, self.elements)
+        draw_list_ops(op_row, TableOps, index, self.elements)
 
         table_element.draw_props(
             left_row,
