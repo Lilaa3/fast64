@@ -181,8 +181,7 @@ def naive_flip_diff(a1: float, a2: float) -> float:
 
 
 def can_interpolate(time_frames: list[tuple[int, Vector]], threshold: float):
-    if len(time_frames) < 3:
-        return True
+    assert len(time_frames) >= 3
     time_start, frame_start = time_frames[0]
     time_end, frame_end = time_frames[-1]
     inbetween_frames = time_frames[1:-1]
@@ -190,7 +189,8 @@ def can_interpolate(time_frames: list[tuple[int, Vector]], threshold: float):
     for time, frame in inbetween_frames:
         time_step = time - time_start
         interpolated_frame = frame_start + ((frame_end - frame_start) * time_step / time_difference)
-        if value_distance(frame, interpolated_frame) > threshold:
+        dist = value_distance(frame, interpolated_frame)
+        if dist > threshold:
             return False
     return True
 
@@ -206,26 +206,26 @@ class FrameStore:
     def add(self, timestamp: int, frame: Vector):
         self.frames[timestamp] = frame
 
-    def clean(self, threshold: float | None):
-        if threshold is None:
+    def clean(self, threshold: float):
+        if not self.frames:
             return
         sorted_frames = self.sorted_frames
         cleaned = FrameStore()
         i = 0
         while i < len(sorted_frames):
-            success = None
-            for j, last_time_frame in enumerate(sorted_frames, i):
-                if j == i:
-                    cleaned.add(*sorted_frames[i])
-                frames = sorted_frames[i : j + 1]
-                if can_interpolate(frames, threshold):
-                    success = j, last_time_frame
-            if success:
-                i = success[0]  # j
-                cleaned.add(*success[1])
+            sucess = None
+            if i and value_distance(sorted_frames[i - 1][1], sorted_frames[i][1]) <= threshold:
+                sucess = i + 1
+            for j in range(i, len(sorted_frames)):
+                frames = sorted_frames[i : j + 1] 
+                if len(frames) >= 3 and can_interpolate(frames, threshold):
+                    sucess = j
+            frame = sorted_frames[i]
+            if sucess:
+                i = sucess
+            cleaned.add(*frame)
             i += 1
         self.frames = cleaned.frames  # Update frames with cleaned frames
-
 
 @dataclasses.dataclass
 class RotationFrameStore(FrameStore):
@@ -279,9 +279,10 @@ class AnimationBone:
         for frame, rot in enumerate(frames):
             self.rotation.add_rotation_frame(frame, rot.to_quaternion())
 
-    def clean(self, threshold: float | None):
+    def clean(self, threshold: float):
         self.translation.clean(threshold)
         self.rotation.clean(threshold)
+        self.scale.clean(threshold)
 
     def populate_action(self, action: Action, pose_bone: PoseBone):
         for property_index in range(3):
