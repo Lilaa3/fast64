@@ -204,7 +204,7 @@ def animation_data_to_blender(
     anim_import: Animation,
     action: Action,
     clean: bool,
-    threshold: float,
+    threshold: tuple[float, float],
     continuity_filter: bool,
 ):
     anim_bones = get_anim_pose_bones(armature_obj)
@@ -218,7 +218,7 @@ def animation_data_to_blender(
         bone.read_rotation(pairs[pair_num : pair_num + 3], continuity_filter)
         anim_data.append(bone)
         if clean:
-            bone.clean(threshold)
+            bone.clean(*threshold, 0)
     populate_action(action, anim_bones, anim_data)
 
 
@@ -230,7 +230,7 @@ def animation_import_to_blender(
     remove_name_footer,
     use_custom_name,
     clean: bool,
-    threshold: float,
+    threshold: tuple[float, float],
     continuity_filter: bool,
 ):
     action = bpy.data.actions.new("")
@@ -498,6 +498,7 @@ def import_animations(context: Context):
     if not table.elements:
         table.elements = [AnimationTableElement(header=header) for header in animation_headers.values()]
     for animation in animation_data.values():
+        clean_up = import_props.clean_up_props
         animation_import_to_blender(
             armature_obj,
             sm64_props.blender_to_sm64_scale,
@@ -506,8 +507,8 @@ def import_animations(context: Context):
             import_props.remove_name_footer,
             import_props.use_custom_name,
             import_props.clean_up,
-            import_props.clean_up_props.threshold,
-            import_props.clean_up_props.continuity_filter,
+            (clean_up.translation_threshold, clean_up.rotation_threshold),
+            clean_up.continuity_filter,
         )
     from_anim_table_class(table_props, table, import_props.clear_table)
 

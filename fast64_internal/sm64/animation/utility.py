@@ -217,7 +217,7 @@ class FrameStore:
             if i and value_distance(sorted_frames[i - 1][1], sorted_frames[i][1]) <= threshold:
                 sucess = i + 1
             for j in range(i, len(sorted_frames)):
-                frames = sorted_frames[i : j + 1] 
+                frames = sorted_frames[i : j + 1]
                 if len(frames) >= 3 and can_interpolate(frames, threshold):
                     sucess = j
             frame = sorted_frames[i]
@@ -226,6 +226,7 @@ class FrameStore:
             cleaned.add(*frame)
             i += 1
         self.frames = cleaned.frames  # Update frames with cleaned frames
+
 
 @dataclasses.dataclass
 class RotationFrameStore(FrameStore):
@@ -279,10 +280,10 @@ class AnimationBone:
         for frame, rot in enumerate(frames):
             self.rotation.add_rotation_frame(frame, rot.to_quaternion())
 
-    def clean(self, threshold: float):
-        self.translation.clean(threshold)
-        self.rotation.clean(threshold)
-        self.scale.clean(threshold)
+    def clean(self, translation_threshold: float, rotation_threshold: float, scale_threshold: float):
+        self.translation.clean(translation_threshold)
+        self.rotation.clean(rotation_threshold)
+        self.scale.clean(scale_threshold)
 
     def populate_action(self, action: Action, pose_bone: PoseBone):
         for property_index in range(3):

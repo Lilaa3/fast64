@@ -672,19 +672,36 @@ class TableProperty(PropertyGroup):
 
 
 class CleanAnimProperty(PropertyGroup):
-    threshold: FloatProperty(
+    translation_threshold: FloatProperty(
         name="Threshold",
-        min=0.0,
-        max=0.2,
-        default=0.01,
-        description="When zero, only identical keyframes will be removed",
+        default=1 / MAX_U16,
+        min=0,
+        max=0.01,
+    )
+    rotation_threshold: FloatProperty(
+        name="Threshold",
+        default=16 / MAX_U16,  # SM64's sine LUT is 1/16th of the full range
+        min=0,
+        max=0.01,
+    )
+    scale_threshold: FloatProperty(
+        name="Threshold",
+        default=1 / MAX_U16,
+        min=0,
+        max=0.01,
     )
     continuity_filter: BoolProperty(name="Continuity Filter", default=True)
     to_quaternion: BoolProperty(name="Force Quaternions", default=True)
 
     def draw_props(self, layout: UILayout, tools_context: bool = True):
         col = layout.column()
-        prop_split(col, self, "threshold", "Threshold", slider=True)
+        col.label(text="Thresholds")
+        prop_split(col, self, "translation_threshold", "Translation", slider=True)
+        prop_split(col, self, "rotation_threshold", "Rotation", slider=True)
+        if tools_context:
+            prop_split(col, self, "scale_threshold", "Scale", slider=True)
+        col.separator()
+
         row = col.row()
         if tools_context:
             row.prop(self, "to_quaternion")
