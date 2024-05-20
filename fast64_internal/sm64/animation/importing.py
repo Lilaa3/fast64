@@ -219,7 +219,7 @@ def animation_data_to_blender(
         anim_data.append(bone)
         if clean:
             bone.clean(*threshold, 0)
-    populate_action(action, anim_bones, anim_data)
+    populate_action(len(bpy.data.actions) == 1, action, anim_bones, anim_data)
 
 
 def animation_import_to_blender(

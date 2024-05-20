@@ -226,7 +226,16 @@ class FrameStore:
             cleaned.add(*frame)
             i += 1
         self.frames = cleaned.frames  # Update frames with cleaned frames
-
+    
+    def populate_action(self, action: Action, pose_bone: PoseBone, path: str):
+        for property_index in range(3):
+            f_curve = action.fcurves.new(
+                data_path=pose_bone.path_from_id(path),
+                index=property_index,
+                action_group=pose_bone.name,
+            )
+            for time, frame in self.sorted_frames:
+                f_curve.keyframe_points.insert(time, frame[property_index])
 
 @dataclasses.dataclass
 class RotationFrameStore(FrameStore):
@@ -243,6 +252,35 @@ class RotationFrameStore(FrameStore):
     @property
     def axis_angle(self):
         return [(i, x.to_axis_angle()) for i, x in self.quaternion]
+    
+    def populate_action(self, is_only_action: bool, action: Action, pose_bone: PoseBone):
+        if is_only_action:
+            pose_bone.rotation_mode = "QUATERNION"
+        rotation_mode = pose_bone.rotation_mode
+        rotation_mode_name = {
+            "QUATERNION": "rotation_quaternion",
+            "AXIS_ANGLE": "rotation_axis_angle",
+        }.get(rotation_mode, "rotation_euler")
+        data_path = pose_bone.path_from_id(rotation_mode_name)
+
+        size = 4
+        if rotation_mode == "QUATERNION":
+            rotations = self.quaternion
+        elif rotation_mode == "AXIS_ANGLE":
+            rotations = self.axis_angle
+        else:
+            rotations = self.get_euler(rotation_mode)
+            size = 3
+        for property_index in range(size):
+            f_curve = action.fcurves.new(
+                data_path=data_path,
+                index=property_index,
+                action_group=pose_bone.name,
+            )
+            for frame, rotation in rotations:
+                if rotation_mode == "AXIS_ANGLE":
+                    rotation = [rotation[1]] + list(rotation[0])
+                f_curve.keyframe_points.insert(frame, rotation[property_index])
 
 
 @dataclasses.dataclass
@@ -285,46 +323,16 @@ class AnimationBone:
         self.rotation.clean(rotation_threshold)
         self.scale.clean(scale_threshold)
 
-    def populate_action(self, action: Action, pose_bone: PoseBone):
-        for property_index in range(3):
-            f_curve = action.fcurves.new(
-                data_path=pose_bone.path_from_id("location"),
-                index=property_index,
-                action_group=pose_bone.name,
-            )
-            for frame, translation in self.translation.sorted_frames:
-                f_curve.keyframe_points.insert(frame, translation[property_index])
-
-        rotation_mode = pose_bone.rotation_mode
-        rotation_mode_name = {
-            "QUATERNION": "rotation_quaternion",
-            "AXIS_ANGLE": "rotation_axis_angle",
-        }.get(rotation_mode, "rotation_euler")
-        data_path = pose_bone.path_from_id(rotation_mode_name)
-
-        size = 4
-        if rotation_mode == "QUATERNION":
-            rotations = self.rotation.quaternion
-        elif rotation_mode == "AXIS_ANGLE":
-            rotations = self.rotation.axis_angle
-        else:
-            rotations = self.rotation.get_euler(rotation_mode)
-            size = 3
-        for property_index in range(size):
-            f_curve = action.fcurves.new(
-                data_path=data_path,
-                index=property_index,
-                action_group=pose_bone.name,
-            )
-            for frame, rotation in rotations:
-                if rotation_mode == "AXIS_ANGLE":
-                    rotation = [rotation[1]] + list(rotation[0])
-                f_curve.keyframe_points.insert(frame, rotation[property_index])
+    def populate_action(self, is_only_action: bool, action: Action, pose_bone: PoseBone):
+        self.translation.populate_action(action, pose_bone, "location")
+        self.rotation.populate_action(is_only_action, action, pose_bone)
+        self.scale.populate_action(action, pose_bone, "scale")
+                
 
 
-def populate_action(action: Action, bones: list[PoseBone], anim_data: list[AnimationBone]):
+def populate_action(is_only_action: bool, action: Action, bones: list[PoseBone], anim_data: list[AnimationBone]):
     for pose_bone, bone_data in zip(bones, anim_data):
-        bone_data.populate_action(action, pose_bone)
+        bone_data.populate_action(is_only_action, action, pose_bone)
 
 
 def clean_object_animations(context: Context):
