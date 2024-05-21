@@ -5,66 +5,102 @@ import shutil
 from typing import BinaryIO
 
 from ..utility import intToHex, tempName, decodeSegmentedAddr
+from .sm64_constants import insertableBinaryTypes
 from .sm64_utility import export_rom_checks
+
+
+@dataclasses.dataclass
+class InsertableBinaryData:
+    data_type: str = ""
+    data: bytearray = dataclasses.field(default_factory=bytearray)
+    start_address: int = 0
+    ptrs: list[int] = dataclasses.field(default_factory=list)
+
+    def read(self, file: BufferedReader, expected_type: list = None):
+        print(f"Reading insertable binary data from {file.name}")
+        reader = RomReader(file)
+        type_num = reader.read_value(4)
+        if type_num not in insertableBinaryTypes.values():
+            raise ValueError(f"Unknown data type: {intToHex(type_num)}")
+        self.data_type = next(k for k, v in insertableBinaryTypes.items() if v == type_num)
+        if expected_type and self.data_type not in expected_type:
+            raise ValueError(f"Unexpected data type: {self.data_type}")
+
+        data_size = reader.read_value(4)
+        self.start_address = reader.read_value(4)
+        pointer_count = reader.read_value(4)
+        self.ptrs = []
+        for _ in range(pointer_count):
+            self.ptrs.append(reader.read_value(4))
+
+        actual_start = reader.address + self.start_address
+        self.data = reader.read_data(data_size, actual_start)
+        return self
 
 
 @dataclasses.dataclass
 class RomReader:
     """
-    Simple class that simplifies reading data continously from a starting address.
-    Accounts for insertable binary data.
-    When reading insertable binary data, can also read data from ROM if available.
+    Helper class that simplifies reading data continously from a starting address.
+    Can read insertable binary files, in which it can also read data from ROM if provided.
     """
 
-    data: bytes | BufferedReader = None
+    rom_file: BufferedReader = None
+    insertable_file: BufferedReader = None
     start_address: int = 0
-    insertable: bool = False
-    insertable_ptrs: list[int] = dataclasses.field(default_factory=list)
-    rom_data: bytes | BufferedReader = None
     segment_data: dict[int, tuple[int, int]] = dataclasses.field(default_factory=dict)
+    insertable: InsertableBinaryData = None
     address: int = dataclasses.field(init=False)
 
     def __post_init__(self):
         self.address = self.start_address
+        if self.insertable_file and not self.insertable:
+            self.insertable = InsertableBinaryData().read(self.insertable_file)
+        assert self.insertable or self.rom_file
 
-    def branch(self, start_address=0, data: bytes | BufferedReader | None = None):
+    def branch(self, start_address=-1):
+        start_address = self.address if start_address == -1 else start_address
         if self.read_value(1, specific_address=start_address) is None:
-            if self.insertable and self.rom_data:
-                return RomReader(self.rom_data, start_address, segment_data=self.segment_data)
+            if self.insertable and self.rom_file:
+                return RomReader(self.rom_file, start_address=start_address, segment_data=self.segment_data)
             return None
-        branch = RomReader(
-            data if data else self.data,
+        return RomReader(
+            self.rom_file,
+            self.insertable_file,
             start_address,
-            self.insertable,
-            self.insertable_ptrs,
-            self.rom_data,
             self.segment_data,
+            self.insertable,
         )
-        return branch
 
-    def read_ptr(self):
-        address = self.address
-        ptr = self.read_value(4)
-        if address not in self.insertable_ptrs and self.segment_data:
-            return decodeSegmentedAddr(ptr.to_bytes(4, "big"), self.segment_data)
-        return ptr
-
-    def read_value(self, size, signed=False, specific_address: int | None = None):
-        if specific_address is None:
+    def read_data(self, size=-1, specific_address=-1):
+        if specific_address == -1:
             address = self.address
             self.address += size
         else:
             address = specific_address
 
-        if isinstance(self.data, BufferedReader):
-            self.data.seek(address)
-            in_bytes = self.data.read(size)
+        if self.insertable:
+            data = self.insertable.data[address : address + size]
         else:
-            if address + size > len(self.data):
-                in_bytes = None
-            else:
-                in_bytes = self.data[address : address + size]
-        return None if in_bytes is None else int.from_bytes(in_bytes, "big", signed=signed)
+            self.rom_file.seek(address)
+            data = self.rom_file.read(size)
+        if not data:
+            raise IndexError(f"Value at {intToHex(address)} not present in data.")
+        return data
+
+    def read_ptr(self):
+        address = self.address
+        ptr = self.read_value(4)
+        if self.insertable and address in self.insertable.ptrs:
+            return ptr
+        self.rom_file.seek(address)
+        if self.segment_data:
+            return decodeSegmentedAddr(ptr.to_bytes(4, "big"), self.segment_data)
+        return ptr
+
+    def read_value(self, size=-1, signed=False, specific_address=-1):
+        in_bytes = self.read_data(size, specific_address)
+        return int.from_bytes(in_bytes, "big", signed=signed)
 
 
 @dataclasses.dataclass
@@ -181,33 +217,42 @@ class DMATable:
             if end_of_entry > table_size:
                 table_size = end_of_entry
         self.end_address = self.address + table_size
-        print(f"Found {len(self.entries)} entries")
+        print(f"Found {len(self.entries)} DMA entries")
         return self
 
 
 @dataclasses.dataclass
-class ShortArray:
+class IntArray:
     name: str = ""
     signed: bool = False
+    byte_count: int = 2
+    wrap: int = 6
+    wrap_start: int = 0  # -6 To replicate decomp animation index table formatting
     data: list[int] = dataclasses.field(default_factory=list)
 
     def to_binary(self):
+        assert self.byte_count in (1, 2, 4, 8)
+        print(f"Generating {self.byte_count} byte array with {len(self.data)} elements")
         data = bytearray(0)
         for short in self.data:
-            data += short.to_bytes(2, "big", signed=True)
+            data += short.to_bytes(self.byte_count, "big", signed=self.signed)
         return data
 
     def to_c(self):
+        assert self.name, "Array must have a name"
+        assert self.byte_count in (1, 2, 4, 8)
+        data_type = f"{'s' if self.signed else 'u'}{self.byte_count * 8}"
+        print(f'Generating {data_type} array "{self.name}" with {len(self.data)} elements')
+
         data = StringIO()
         data.write(f"// {len(self.data)}\n")
-        data.write(f"static const {'s' if self.signed else 'u'}16 {self.name}[] = {{\n\t")
-
-        wrap = 9 if self.signed else 6
-        i = 0 if self.signed else -12 + 6
+        data.write(f"static const {data_type} {self.name}[] = {{\n\t")
+        wrap = self.wrap
+        i = self.wrap_start
         for short in self.data:
-            data.write(f"{format(short if short >= 0 else 65536 + short, '#06x')}, ")
+            data.write(f"{intToHex(short, self.byte_count, False)}, ")
             i += 1
-            if i == wrap:
+            if i >= wrap:
                 data.write("\n\t")
                 i = 0
         data.write("\n};\n")

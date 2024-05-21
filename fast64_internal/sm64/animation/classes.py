@@ -8,7 +8,7 @@ from bpy.types import Action
 
 from ...utility import PluginError, encodeSegmentedAddr, is_bit_active, to_s16, intToHex
 from ..sm64_constants import MAX_U16
-from ..classes import RomReader, DMATable, DMATableElement, ShortArray
+from ..classes import RomReader, DMATable, DMATableElement, IntArray
 
 from .constants import HEADER_SIZE, C_FLAGS
 
@@ -45,16 +45,6 @@ class AnimationPair:
 
     def get_frame(self, frame: int):
         return self.values[min(frame, len(self.values) - 1)]
-
-    def read_binary(self, indices_reader: RomReader, values_reader: RomReader):
-        max_frame = indices_reader.read_value(2)
-        self.offset = indices_reader.read_value(2) * 2
-        values_reader = values_reader.branch(values_reader.start_address + self.offset)
-        self.address = values_reader.address
-        for _ in range(max_frame):
-            self.values.append(values_reader.read_value(2, True))
-        self.end_address = values_reader.address + 1
-        return self
 
 
 @dataclasses.dataclass
@@ -99,11 +89,21 @@ class AnimationData:
         return data, values_offset
 
     def read_binary(self, indices_reader: RomReader, values_reader: RomReader, bone_count: int):
+        print(
+            f'Reading pairs from indices table at {intToHex(indices_reader.address)}',
+            f'and values table at {intToHex(values_reader.address)}.',
+        )
         self.indice_reference = indices_reader.start_address
         self.values_reference = values_reader.start_address
         for _ in range((bone_count + 1) * 3):
             pair = AnimationPair()
-            pair.read_binary(indices_reader, values_reader)
+            max_frame = indices_reader.read_value(2)
+            pair.offset = indices_reader.read_value(2) * 2
+            pair.address = values_reader.start_address + pair.offset
+            pair_reader = values_reader.branch(pair.address)
+            for _ in range(max_frame):
+                pair.values.append(pair_reader.read_value(2, True))
+            pair.end_address = pair_reader.address + 1
             self.pairs.append(pair)
         self.indice_end_address = indices_reader.address + 1
         self.value_end_address = max(pair.end_address for pair in self.pairs)
@@ -113,6 +113,7 @@ class AnimationData:
         return self
 
     def read_c(self, indice_decl: CArrayDeclaration, value_decl: CArrayDeclaration):
+        print(f'Reading data from "{indice_decl.name}" and "{value_decl.name}" c declarations.')
         self.indices_file_name, self.values_file_name = indice_decl.file_name, value_decl.file_name
         self.indice_reference, self.values_reference = indice_decl.name, value_decl.name
         for i in range(0, len(indice_decl.values), 2):
@@ -237,45 +238,46 @@ class AnimationHeader:
 
     @staticmethod
     def read_binary(
-        header_reader: RomReader,
+        reader: RomReader,
         animation_headers: dict[str, "AnimationHeader"],
         animation_data: dict[tuple[str, str], "Animation"],
         is_dma: bool = False,
         assumed_bone_count: int | None = None,
         table_index: int | None = None,
     ):
-        if str(header_reader.start_address) in animation_headers:
-            return animation_headers[str(header_reader.start_address)]
+        if str(reader.start_address) in animation_headers:
+            return animation_headers[str(reader.start_address)]
+        print(f"Reading animation header at {intToHex(reader.start_address)}.")
 
         header = AnimationHeader()
-        animation_headers[str(header_reader.start_address)] = header
-        header.reference = header_reader.start_address
-        header.flags = header_reader.read_value(2, True)  # /*0x00*/ s16 flags;
-        header.trans_divisor = header_reader.read_value(2, True)  # /*0x02*/ s16 animYTransDivisor;
-        header.start_frame = header_reader.read_value(2, True)  # /*0x04*/ s16 startFrame;
-        header.loop_start = header_reader.read_value(2, True)  # /*0x06*/ s16 loopStart;
-        header.loop_end = header_reader.read_value(2, True)  # /*0x08*/ s16 loopEnd;
-        bone_count = header_reader.read_value(2, True)  # /*0x0A*/ s16 unusedBoneCount; (Unused in engine)
+        animation_headers[str(reader.start_address)] = header
+        header.reference = reader.start_address
+        header.flags = reader.read_value(2, True)  # /*0x00*/ s16 flags;
+        header.trans_divisor = reader.read_value(2, True)  # /*0x02*/ s16 animYTransDivisor;
+        header.start_frame = reader.read_value(2, True)  # /*0x04*/ s16 startFrame;
+        header.loop_start = reader.read_value(2, True)  # /*0x06*/ s16 loopStart;
+        header.loop_end = reader.read_value(2, True)  # /*0x08*/ s16 loopEnd;
+        bone_count = reader.read_value(2, True)  # /*0x0A*/ s16 unusedBoneCount; (Unused in engine)
         header.bone_count = bone_count if assumed_bone_count is None else assumed_bone_count
         # /*0x0C*/ const s16 *values;
         # /*0x10*/ const u16 *index;
         if is_dma:
-            start_address = header_reader.start_address
-            header.values_reference = start_address + header_reader.read_value(4)
-            header.indice_reference = start_address + header_reader.read_value(4)
+            start_address = reader.start_address
+            header.values_reference = start_address + reader.read_value(4)
+            header.indice_reference = start_address + reader.read_value(4)
         else:
-            header.values_reference = header_reader.read_ptr()
-            header.indice_reference = header_reader.read_ptr()
-        header.length = header_reader.read_value(4)
+            header.values_reference = reader.read_ptr()
+            header.indice_reference = reader.read_ptr()
+        header.length = reader.read_value(4)
 
-        header.end_address = header_reader.address + 1
+        header.end_address = reader.address + 1
         header.table_index = len(animation_headers) if table_index is None else table_index
 
         data_key = (str(header.indice_reference), str(header.values_reference))
         if not data_key in animation_data:
             animation = Animation()
-            indices_reader = header_reader.branch(header.indice_reference)
-            values_reader = header_reader.branch(header.values_reference)
+            indices_reader = reader.branch(header.indice_reference)
+            values_reader = reader.branch(header.values_reference)
             if indices_reader and values_reader:
                 animation.data = AnimationData().read_binary(
                     indices_reader,
@@ -302,7 +304,7 @@ class AnimationHeader:
             return animation_headers[header_decl.name]
         if len(header_decl.values) != 9:
             raise ValueError(f"Header declarion has {len(header_decl.values)} values instead of 9.\n {header_decl}")
-
+        print(f'Reading header "{header_decl.name}" c declaration.')
         header = AnimationHeader()
         animation_headers[header_decl.name] = header
         header.reference = header_decl.name
@@ -475,6 +477,7 @@ class AnimationTable:
         return headers_set, data_set
 
     def get_seperate_anims(self):
+        print("Getting seperate animations from table.")
         anims = []
         headers_set, headers_added = self.get_sets()[0], []
         for header in headers_set:
@@ -490,6 +493,8 @@ class AnimationTable:
         return anims
 
     def get_seperate_anims_dma(self) -> list[Animation]:
+        print("Getting seperate DMA animations from table.")
+
         def num_to_padded_hex(num: int):
             hex_str = hex(num)[2:].upper()  # remove the '0x' prefix
             return hex_str.zfill(2)
@@ -509,6 +514,7 @@ class AnimationTable:
 
             header, data = element.header, element.data
             if header in headers_already_added:
+                print(f"Made duplicate of header {i}.")
                 header = copy.copy(header)
             header.reference = f"anim_{num_to_padded_hex(i)}"
             headers_already_added.append(header)
@@ -522,6 +528,7 @@ class AnimationTable:
             name = f'anim_{"_".join([f"{num_to_padded_hex(num)}" for num in header_nums])}'
             file_name = f"{name}.inc.c"
             if data in data_already_added:
+                print(f"Made duplicate of header {i}'s data.")
                 data = copy.copy(data)
             data_already_added.append(data)
 
@@ -619,7 +626,6 @@ class AnimationTable:
 
     def data_and_headers_to_c_combined(self):
         text_data = StringIO()
-
         headers_set, data_set = self.get_sets()
         if data_set:
             value_table, indice_tables = create_tables(data_set, self.values_reference)
@@ -636,6 +642,7 @@ class AnimationTable:
         return text_data.getvalue()
 
     def enum_list_to_c(self):
+        print(f"Creating enum list {self.reference} for table.")
         text_data = StringIO()
         text_data.write(f"enum {self.enum_list_reference} {{\n")
         for header in self.elements:
@@ -645,6 +652,7 @@ class AnimationTable:
         return text_data.getvalue()
 
     def table_to_c(self):
+        print(f"Creating table {self.reference}.")
         text_data = StringIO()
 
         text_data.write(f"const struct Animation *const {self.reference}[] = {{\n")
@@ -664,6 +672,7 @@ class AnimationTable:
         assumed_bone_count: int | None = 0,
         size: int | None = None,
     ) -> AnimationHeader | None:
+        print(f"Reading table at address {reader.start_address}.")
         self.elements.clear()
         self.reference = reader.start_address
         range_size = size if size is not None else 300
@@ -742,6 +751,7 @@ class AnimationTable:
         values_decls: list[CArrayDeclaration],
         indices_decls: list[CArrayDeclaration],
     ):
+        print(f'Reading table "{table_decl.name}" c declaration.')
         self.elements.clear()
         for value in table_decl.values:
             enum_name_split: list[str] = value.split("=")
@@ -769,14 +779,15 @@ class AnimationTable:
         return self
 
 
-def create_tables(anims_data: list[AnimationData], values_name: str = None):
+def create_tables(anims_data: list[AnimationData], values_name=""):
     """Can generate multiple indices table with only one value table, which improves compression"""
     """This feature is used in table exports"""
 
-    value_table = ShortArray(values_name if values_name else anims_data[0].values_reference, True)
+    name = values_name if values_name else anims_data[0].values_reference
+    value_table = IntArray(name, True, 2, 9)
     data = value_table.data
 
-    # Generate compressed value table and offsets
+    print("Generating compressed value table and offsets.")
     for pair in [pair for anim_data in anims_data for pair in anim_data.pairs]:
         values = pair.values
         assert len(values) <= MAX_U16, "Pair frame count is higher than the 16 bit max."
@@ -790,11 +801,12 @@ def create_tables(anims_data: list[AnimationData], values_name: str = None):
             data.extend(values)
         assert pair.offset <= MAX_U16, "Pair offset is higher than the 16 bit max."
 
-    indice_tables: list[ShortArray] = []
-    # Use calculated offsets to generate the indices table
+    print("Generating indices tables.")
+    indice_tables: list[IntArray] = []
     for anim_data in anims_data:
-        indice_table = ShortArray(anim_data.indice_reference, False)
+        indice_table = IntArray(anim_data.indice_reference, False, 2, 6, -6)
         for pair in anim_data.pairs:
+            # Use calculated offsets
             indice_table.data.extend([len(pair.values), pair.offset])
         indice_tables.append(indice_table)
     return value_table, indice_tables

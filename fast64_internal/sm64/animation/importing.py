@@ -7,7 +7,7 @@ from bpy.types import Object, Action, Context
 
 from ...utility import PluginError, decodeSegmentedAddr, filepath_checks, is_bit_active, path_checks, intToHex
 from ...utility_anim import stashActionInArmature
-from ..sm64_constants import insertableBinaryTypes, level_pointers
+from ..sm64_constants import level_pointers
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_utility import import_rom_checks
 from ..classes import RomReader
@@ -358,39 +358,18 @@ def import_insertable_binary_animations(
     assumed_bone_count: int | None = None,
     table_size: int | None = None,
 ):
-    data_type_num = reader.read_value(4)
-    if data_type_num not in insertableBinaryTypes.values():
-        raise PluginError(f"Unknown data type: {intToHex(data_type_num)}")
-    data_size = reader.read_value(4)
-    start_address = reader.read_value(4)
-
-    pointer_count = reader.read_value(4)
-    pointer_offsets = []
-    for _ in range(pointer_count):
-        pointer_offsets.append(reader.read_value(4))
-
-    actual_start = reader.address + start_address
-    data_reader = reader.branch(
-        0,
-        reader.data[actual_start : actual_start + data_size],
-    )
-    data_reader.insertable_ptrs = pointer_offsets
-
-    data_type = next(key for key, value in insertableBinaryTypes.items() if value == data_type_num)
-    if data_type == "Animation":
+    if reader.insertable.data_type == "Animation":
         AnimationHeader.read_binary(
-            data_reader,
+            reader,
             animation_headers,
             animation_data,
             False,
             assumed_bone_count,
         )
-    elif data_type == "Animation Table":
-        table.read_binary(data_reader, animation_headers, animation_data, table_index, table_size, assumed_bone_count)
-    elif data_type == "Animation DMA Table":
-        table.read_dma_binary(data_reader, animation_headers, animation_data, table_index, assumed_bone_count)
-    else:
-        raise PluginError(f'Wrong animation data type "{data_type}".')
+    elif reader.insertable.data_type == "Animation Table":
+        table.read_binary(reader, animation_headers, animation_data, table_index, table_size, assumed_bone_count)
+    elif reader.insertable.data_type == "Animation DMA Table":
+        table.read_dma_binary(reader, animation_headers, animation_data, table_index, assumed_bone_count)
 
 
 def import_animations(context: Context):
@@ -457,19 +436,22 @@ def import_animations(context: Context):
                 segment_data = parseLevelAtPointer(rom_file, level_pointers[level]).segmentData
                 if is_segmented_address:
                     address = decodeSegmentedAddr(address.to_bytes(4, "big"), segment_data)
-            import_binary_animations(RomReader(rom_file, address, segment_data=segment_data), binary_type, *binary_args)
+            import_binary_animations(
+                RomReader(rom_file, start_address=address, segment_data=segment_data), binary_type, *binary_args
+            )
     elif import_type == "Insertable Binary":
         path = abspath(import_props.path)
         filepath_checks(path)
         with open(path, "rb") as insertable_file:
             if not import_props.read_from_rom:
-                import_insertable_binary_animations(RomReader(insertable_file, insertable=True), *binary_args)
-                return
-            with open(rom_path, "rb") as rom_file:
-                segment_data = parseLevelAtPointer(rom_file, level_pointers[level]).segmentData
-                import_insertable_binary_animations(
-                    RomReader(insertable_file, insertable=True, rom_data=rom_file, segment_data=segment_data), *binary_args
-                )
+                import_insertable_binary_animations(RomReader(insertable_file=insertable_file), *binary_args)
+            else:
+                with open(rom_path, "rb") as rom_file:
+                    segment_data = parseLevelAtPointer(rom_file, level_pointers[level]).segmentData
+                    import_insertable_binary_animations(
+                        RomReader(rom_file, insertable_file=insertable_file, segment_data=segment_data),
+                        *binary_args,
+                    )
     elif import_type == "C":
         path_checks(c_path)
         import_c_animations(c_path, animation_headers, animation_data, table)
