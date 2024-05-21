@@ -2,7 +2,7 @@ import bpy, random, string, os, math, traceback, re, os, mathutils, ast, operato
 from math import pi, ceil, degrees, radians, copysign
 from mathutils import *
 from .utility_anim import *
-from typing import Callable, Iterable, Any, Tuple, Union, Optional
+from typing import Callable, Iterable, Any, Optional, Tuple, Union
 from bpy.types import UILayout
 
 CollectionProperty = Any  # collection prop as defined by using bpy.props.CollectionProperty
