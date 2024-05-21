@@ -226,7 +226,7 @@ class FrameStore:
             cleaned.add(*frame)
             i += 1
         self.frames = cleaned.frames  # Update frames with cleaned frames
-    
+
     def populate_action(self, action: Action, pose_bone: PoseBone, path: str):
         for property_index in range(3):
             f_curve = action.fcurves.new(
@@ -236,6 +236,7 @@ class FrameStore:
             )
             for time, frame in self.sorted_frames:
                 f_curve.keyframe_points.insert(time, frame[property_index])
+
 
 @dataclasses.dataclass
 class RotationFrameStore(FrameStore):
@@ -252,10 +253,8 @@ class RotationFrameStore(FrameStore):
     @property
     def axis_angle(self):
         return [(i, x.to_axis_angle()) for i, x in self.quaternion]
-    
-    def populate_action(self, is_only_action: bool, action: Action, pose_bone: PoseBone):
-        if is_only_action:
-            pose_bone.rotation_mode = "QUATERNION"
+
+    def populate_action(self, action: Action, pose_bone: PoseBone):
         rotation_mode = pose_bone.rotation_mode
         rotation_mode_name = {
             "QUATERNION": "rotation_quaternion",
@@ -323,19 +322,22 @@ class AnimationBone:
         self.rotation.clean(rotation_threshold)
         self.scale.clean(scale_threshold)
 
-    def populate_action(self, is_only_action: bool, action: Action, pose_bone: PoseBone):
+    def populate_action(self, action: Action, pose_bone: PoseBone):
         self.translation.populate_action(action, pose_bone, "location")
-        self.rotation.populate_action(is_only_action, action, pose_bone)
+        self.rotation.populate_action(action, pose_bone)
         self.scale.populate_action(action, pose_bone, "scale")
-                
 
 
-def populate_action(is_only_action: bool, action: Action, bones: list[PoseBone], anim_data: list[AnimationBone]):
+def populate_action(action: Action, bones: list[PoseBone], anim_data: list[AnimationBone], force_quaternion: bool):
     for pose_bone, bone_data in zip(bones, anim_data):
-        bone_data.populate_action(is_only_action, action, pose_bone)
+        if force_quaternion:
+            pose_bone.rotation_mode = "QUATERNION"
+        bone_data.populate_action(action, pose_bone)
 
 
 def clean_object_animations(context: Context):
     animation_operator_checks(context, True, True)
-
+    selected_objects = context.selected_objects if context.selected_objects else context.object
+    for obj in selected_objects:
+        continue
     raise NotImplementedError("Not implemented")

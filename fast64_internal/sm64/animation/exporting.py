@@ -127,7 +127,7 @@ def get_rotation_data(action: Action, bone: PoseBone, max_frame: int):
 def get_animation_pairs(
     sm64_scale: float, max_frame: int, action: Action, armature_obj: Object, quick_read: bool = True
 ) -> tuple[list[int], list[int]]:
-    print(f"Reading animation pair values from action {action.name}.")
+    print(f'Reading pair values from action "{action.name}".')
     anim_bones = get_anim_pose_bones(armature_obj)
     if len(anim_bones) < 1:
         raise PluginError(f'No animation bones in armature "{armature_obj.name}"')

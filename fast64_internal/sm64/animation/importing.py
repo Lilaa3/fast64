@@ -118,6 +118,7 @@ def from_anim_class(
         if index != -1:
             action_name = action_name[index + 5 :]
     action.name = action_name
+    print(f'Populating action "{action_name}" properties.')
 
     indice_reference = main_header.indice_reference
     values_reference = main_header.values_reference
@@ -149,9 +150,11 @@ def from_anim_class(
         action_props.start_address = intToHex(min(start_addresses))
         action_props.end_address = intToHex(max(end_addresses))
 
-    for i in range(len(animation.headers) - 1):
-        action_props.header_variants.add()
-    for header, header_props in zip(animation.headers, action_props.headers):
+    print("Populating header properties.")
+    for i, header in enumerate(animation.headers):
+        if i:
+            action_props.header_variants.add()
+        header_props = action_props.headers[-1]
         header.action = action  # Used in table class to prop
         from_header_class(header_props, header, action, actor_name, use_custom_name)
 
@@ -198,61 +201,51 @@ def from_anim_table_class(table_props: "TableProperty", table: AnimationTable, c
             table_props.data_end_address = intToHex(max(end_addresses))
 
 
-def animation_data_to_blender(
-    armature_obj: Object,
-    blender_to_sm64_scale: float,
-    anim_import: Animation,
-    action: Action,
-    clean: bool,
-    threshold: tuple[float, float],
-    continuity_filter: bool,
-):
-    anim_bones = get_anim_pose_bones(armature_obj)
-
-    anim_data: list[AnimationBone] = []
-    pairs = anim_import.data.pairs
-    for pair_num in range(3, len(pairs), 3):
-        bone = AnimationBone()
-        if pair_num == 3:
-            bone.read_translation(pairs[0:3], blender_to_sm64_scale)
-        bone.read_rotation(pairs[pair_num : pair_num + 3], continuity_filter)
-        anim_data.append(bone)
-        if clean:
-            bone.clean(*threshold, 0)
-    populate_action(len(bpy.data.actions) == 1, action, anim_bones, anim_data)
-
-
 def animation_import_to_blender(
     armature_obj: Object,
     blender_to_sm64_scale: float,
     anim_import: Animation,
     actor_name: str,
-    remove_name_footer,
-    use_custom_name,
+    remove_name_footer: bool,
+    use_custom_name: bool,
     clean: bool,
+    to_quaternion: bool,
     threshold: tuple[float, float],
     continuity_filter: bool,
 ):
-    action = bpy.data.actions.new("")
-
     if armature_obj.animation_data is None:
         armature_obj.animation_data_create()
-
-    if anim_import.data:
-        animation_data_to_blender(
-            armature_obj,
-            blender_to_sm64_scale,
-            anim_import,
+    action = bpy.data.actions.new("")
+    try:
+        if anim_import.data:
+            print("Converting pairs to intermidiate data.")
+            bones = get_anim_pose_bones(armature_obj)
+            bone_data: list[AnimationBone] = []
+            pairs = anim_import.data.pairs
+            for pair_num in range(3, len(pairs), 3):
+                bone = AnimationBone()
+                if pair_num == 3:
+                    bone.read_translation(pairs[0:3], blender_to_sm64_scale)
+                bone.read_rotation(pairs[pair_num : pair_num + 3], continuity_filter)
+                bone_data.append(bone)
+            if clean:
+                print("Cleaning up intermidiate data's keyframes.")
+                for bone in bone_data:
+                    bone.clean(*threshold, 0)
+            print("Populating action keyframes.")
+            populate_action(action, bones, bone_data, to_quaternion)
+        from_anim_class(
+            action.fast64.sm64,
             action,
-            clean,
-            threshold,
-            continuity_filter,
+            anim_import,
+            actor_name,
+            remove_name_footer,
+            use_custom_name,
         )
-
-    from_anim_class(action.fast64.sm64, action, anim_import, actor_name, remove_name_footer, use_custom_name)
-
-    stashActionInArmature(armature_obj, action)
-    armature_obj.animation_data.action = action
+        stashActionInArmature(armature_obj, action)
+    except PluginError as exc:
+        bpy.data.actions.remove(action)
+        raise exc
 
 
 def find_decls(c_data: str, search_text: str, file: os.PathLike, decl_list: list[CArrayDeclaration]):
@@ -299,10 +292,9 @@ def import_c_animations(
 
     header_decls, value_decls, indices_decls, table_decls = [], [], [], []
     for file_path in file_paths:
-        print("Reading from: " + file_path)
+        print(f"Reading from: {file_path}.")
         with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
             c_data = comment_remover(file.read())
-
         find_decls(c_data, "static const struct Animation ", file_path, header_decls)
         find_decls(c_data, "static const u16 ", file_path, indices_decls)
         find_decls(c_data, "static const s16 ", file_path, value_decls)
@@ -422,10 +414,11 @@ def import_animations(context: Context):
         c_path = abspath(import_props.path)
         if import_type == "C":
             c_path = abspath(import_props.path)
-        elif import_type == "Binary":
-            is_segmented_address = import_props.is_segmented_address
-            address = import_props.address
-            binary_import_type = import_props.binary_import_type
+        else:
+            if import_type == "Binary":
+                is_segmented_address = import_props.is_segmented_address
+                address = import_props.address
+                binary_type = import_props.binary_import_type
             table_index = import_props.table_index
     else:  # Preset
         preset = ACTOR_PRESET_INFO[import_props.preset]
@@ -436,67 +429,55 @@ def import_animations(context: Context):
             level = preset.level
             address = preset.animation.address
             table_size = preset.animation.size
-            binary_import_type = "DMA" if preset.animation.dma else "Table"
+            binary_type = "DMA" if preset.animation.dma else "Table"
             is_segmented_address = False if preset.animation.dma else True
             if import_props.preset == "Mario":
                 table_index = import_props.mario_table_index
             else:
                 table_index = import_props.table_index
-    bone_count = len(get_anim_pose_bones(armature_obj)) if import_props.assume_bone_count else None
+    if import_type in {"Binary", "Insertable Binary"}:
+        bone_count = len(get_anim_pose_bones(armature_obj)) if import_props.assume_bone_count else None
+        binary_args = (
+            animation_headers,
+            animation_data,
+            table,
+            table_index,
+            bone_count,
+            table_size,
+        )
 
+    print("Reading animation data.")
     if import_type == "Binary":
         rom_path = abspath(import_props.rom if import_props.rom else sm64_props.import_rom)
         import_rom_checks(rom_path)
         with open(rom_path, "rb") as rom_file:
-            if binary_import_type == "DMA":
+            if binary_type == "DMA":
                 segment_data = None
             else:
                 segment_data = parseLevelAtPointer(rom_file, level_pointers[level]).segmentData
                 if is_segmented_address:
                     address = decodeSegmentedAddr(address.to_bytes(4, "big"), segment_data)
-            import_binary_animations(
-                RomReader(rom_file, address, segment_data=segment_data),
-                binary_import_type,
-                animation_headers,
-                animation_data,
-                table,
-                table_index,
-                bone_count,
-                table_size,
-            )
+            import_binary_animations(RomReader(rom_file, address, segment_data=segment_data), binary_type, *binary_args)
     elif import_type == "Insertable Binary":
         path = abspath(import_props.path)
         filepath_checks(path)
         with open(path, "rb") as insertable_file:
-            if import_props.read_from_rom:
-                with open(rom_path, "rb") as rom_file:
-                    segment_data = parseLevelAtPointer(rom_file, level_pointers[level]).segmentData
-                    import_insertable_binary_animations(
-                        RomReader(insertable_file.read(), rom_data=rom_file, segment_data=segment_data),
-                        animation_headers,
-                        animation_data,
-                        table,
-                        import_props.table_index,
-                        bone_count,
-                        table_size,
-                    )
-                    return
-            else:
+            if not import_props.read_from_rom:
+                import_insertable_binary_animations(RomReader(insertable_file, insertable=True), *binary_args)
+                return
+            with open(rom_path, "rb") as rom_file:
+                segment_data = parseLevelAtPointer(rom_file, level_pointers[level]).segmentData
                 import_insertable_binary_animations(
-                    RomReader(insertable_file.read()),
-                    animation_headers,
-                    animation_data,
-                    table,
-                    import_props.table_index,
-                    bone_count,
-                    table_size,
+                    RomReader(insertable_file, insertable=True, rom_data=rom_file, segment_data=segment_data), *binary_args
                 )
     elif import_type == "C":
         path_checks(c_path)
         import_c_animations(c_path, animation_headers, animation_data, table)
 
     if not table.elements:
+        print("No table was read. Automatically creating table.")
         table.elements = [AnimationTableElement(header=header) for header in animation_headers.values()]
+    print("Importing animations into blender.")
     for animation in animation_data.values():
         clean_up = import_props.clean_up_props
         animation_import_to_blender(
@@ -507,9 +488,11 @@ def import_animations(context: Context):
             import_props.remove_name_footer,
             import_props.use_custom_name,
             import_props.clean_up,
+            clean_up.force_quaternion,
             (clean_up.translation_threshold, clean_up.rotation_threshold),
-            clean_up.continuity_filter,
+            clean_up.continuity_filter if not clean_up.force_quaternion else True,
         )
+    print("Importing animation table into properties.")
     from_anim_table_class(table_props, table, import_props.clear_table)
 
 

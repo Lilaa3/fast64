@@ -691,7 +691,9 @@ class CleanAnimProperty(PropertyGroup):
         max=0.01,
     )
     continuity_filter: BoolProperty(name="Continuity Filter", default=True)
-    to_quaternion: BoolProperty(name="Force Quaternions", default=True)
+    force_quaternion: BoolProperty(
+        name="Force Quaternions", description="Changes bones to quaternion rotation mode, breaks existing actions"
+    )
 
     def draw_props(self, layout: UILayout, tools_context: bool = True):
         col = layout.column()
@@ -703,16 +705,14 @@ class CleanAnimProperty(PropertyGroup):
         col.separator()
 
         row = col.row()
-        if tools_context:
-            row.prop(self, "to_quaternion")
-        to_quaternion = self.to_quaternion and tools_context
-        filter_row = row.row()
-        filter_row.enabled = not to_quaternion
-        # When forcing quaternions, the continuity filter is always on
-        filter_row.prop(
+        row.prop(self, "force_quaternion")
+        continuity_row = row.row()
+        continuity_row.enabled = not self.force_quaternion
+        continuity_row.prop(
             self,
             "continuity_filter",
-            invert_checkbox=(not self.continuity_filter and to_quaternion),
+            text="Continuity Filter" + (" (Always on)" if self.force_quaternion else ""),
+            invert_checkbox=not self.continuity_filter if self.force_quaternion else False,
         )
         if tools_context:
             CleanObjectAnim.draw_props(col)
