@@ -467,13 +467,13 @@ class TableElementProperty(PropertyGroup):
                 col,
                 self,
                 "expand_tab",
-                name + (" (Variant)" if self.variant else ""),
+                name + f" (Variant {self.variant + 1})",
             ):
                 return
         variant_row = col.row()
         variant_row.alignment = "LEFT"
         variant_row.prop(self, "variant")
-        remove_op = draw_list_op(variant_row, VariantOps, "REMOVE", self.variant, keep_first=True)
+        remove_op = draw_list_op(variant_row, VariantOps, "REMOVE", self.variant, action_props.headers, keep_first=True)
         remove_op.action_name = self.action_prop.name
         add_op = draw_list_op(variant_row, VariantOps, "ADD", self.variant)
         add_op.action_name = self.action_prop.name
@@ -536,16 +536,13 @@ class TableProperty(PropertyGroup):
         table_element: TableElementProperty,
         is_dma: bool = False,
         can_reference: bool = True,
-        duplicate_index: int | None = 0,
         export_type: str = "c",
         actor_name: str = "mario",
     ):
         col = layout.column()
         row = col.row()
-
         left_row = row.row()
         left_row.alignment = "EXPAND"
-
         op_row = row.row()
         op_row.alignment = "RIGHT"
         draw_list_ops(op_row, TableOps, index, self.elements)
@@ -560,14 +557,6 @@ class TableProperty(PropertyGroup):
             self.generate_enums,
             actor_name,
         )
-
-        if is_dma and duplicate_index is not None:
-            multilineLabel(
-                col.box(),
-                "In DMA tables, headers for each action must be \nin one sequence or the data will be duplicated.\n"
-                f"Data duplicate at index {duplicate_index}",
-                "INFO",
-            )
 
     def draw_non_exclusive_settings(self, layout: UILayout, is_dma: bool, export_type, actor_name: str):
         col = layout.column()
@@ -647,28 +636,34 @@ class TableProperty(PropertyGroup):
         draw_list_op(op_row, TableOps, "CLEAR", collection=self.elements)
         if self.elements:
             box = col.box().column()
-        actions = []
+        actions = []  # for checking for duplicates
         element_props: TableElementProperty
         for i, element_props in enumerate(self.elements):
             if i != 0:
                 box.separator()
 
             action = get_element_action(element_props, can_reference)
-            if action in actions and actions[-1] != action:
-                duplicate_index = actions.index(action)
-            else:
-                duplicate_index = None
             self.draw_element(
                 box,
                 i,
                 element_props,
                 is_dma,
                 can_reference,
-                duplicate_index,
                 export_type,
                 actor_name,
             )
-            actions.append(action)
+            if is_dma:
+                duplicate_indeces = [str(j) for j, a in enumerate(actions) if a == action and j < i - 1]
+                if duplicate_indeces:
+                    multilineLabel(
+                        box.box(),
+                        "In DMA tables, headers for each action must be \n"
+                        "in one sequence or the data will be duplicated.\n"
+                        f'Data duplicate{"s in elements" if len(duplicate_indeces) > 1 else " in element"} '
+                        + ", ".join(duplicate_indeces),
+                        "INFO",
+                    )
+                actions.append(action)
 
 
 class CleanAnimProperty(PropertyGroup):

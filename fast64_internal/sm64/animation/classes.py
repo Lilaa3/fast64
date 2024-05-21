@@ -90,8 +90,8 @@ class AnimationData:
 
     def read_binary(self, indices_reader: RomReader, values_reader: RomReader, bone_count: int):
         print(
-            f'Reading pairs from indices table at {intToHex(indices_reader.address)}',
-            f'and values table at {intToHex(values_reader.address)}.',
+            f"Reading pairs from indices table at {intToHex(indices_reader.address)}",
+            f"and values table at {intToHex(values_reader.address)}.",
         )
         self.indice_reference = indices_reader.start_address
         self.values_reference = values_reader.start_address
