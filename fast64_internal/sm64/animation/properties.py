@@ -192,7 +192,7 @@ class HeaderProperty(PropertyGroup):
                 custom_split.prop(self, "custom_flags", text="")
             return
         # Draw flag toggles
-        row = col.row()
+        row = col.row(align=True)
         row.alignment = "LEFT"
         row.prop(self, "no_loop", invert_checkbox=True, text="Loop")
         row.prop(self, "no_acceleration", invert_checkbox=True, text="Acceleration")
@@ -200,19 +200,21 @@ class HeaderProperty(PropertyGroup):
         if self.no_acceleration and self.backwards:
             col.label(text="Backwards has no porpuse without acceleration.", icon="INFO")
 
-        row = col.row()
-        row.alignment = "LEFT"
-        row.label(text="Translate")
-        row.prop(self, "no_trans", invert_checkbox=True, text="")
-        hor_row = row.row()
+        trans_row = col.row()
+        trans_prop_row = trans_row.row()
+        trans_prop_row.alignment = "LEFT"
+        trans_prop_row.label(text="Translate")
+        trans_prop_row.prop(self, "no_trans", invert_checkbox=True, text="")
+
+        hor_row = trans_row.row()
         hor_row.alignment = "LEFT"
         hor_row.enabled = not self.only_horizontal_trans and not self.no_trans
         hor_row.prop(self, "only_vertical_trans", text="Only Vertically")
-        vert_row = row.row()
+        vert_row = trans_row.row()
         vert_row.alignment = "LEFT"
         vert_row.enabled = not self.only_vertical_trans and not self.no_trans
         vert_row.prop(self, "only_horizontal_trans", text="Only Horizontally")
-        disabled_row = row.row()
+        disabled_row = trans_row.row()
         disabled_row.alignment = "LEFT"
         disabled_row.enabled = not self.only_vertical_trans and not self.no_trans
         disabled_row.prop(self, "disabled", invert_checkbox=True, text="Shadow")
@@ -642,7 +644,6 @@ class TableProperty(PropertyGroup):
             if i != 0:
                 box.separator()
 
-            action = get_element_action(element_props, can_reference)
             self.draw_element(
                 box,
                 i,
@@ -652,7 +653,8 @@ class TableProperty(PropertyGroup):
                 export_type,
                 actor_name,
             )
-            if is_dma:
+            action = get_element_action(element_props, can_reference)
+            if is_dma and action:
                 duplicate_indeces = [str(j) for j, a in enumerate(actions) if a == action and j < i - 1]
                 if duplicate_indeces:
                     multilineLabel(

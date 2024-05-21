@@ -46,10 +46,10 @@ def emulate_no_loop(scene: Scene):
             if header_props.no_loop:
                 scene.frame_set(start)
             else:
-                anim_props.played_action = None
+                scene.frame_set(end - 1)
     elif frame >= end:
         if header_props.no_loop:
-            anim_props.played_action = None
+            scene.frame_set(end - 1)
         else:
             scene.frame_set(start)
 
