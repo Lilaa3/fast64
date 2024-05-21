@@ -188,6 +188,7 @@ class HeaderProperty(PropertyGroup):
         if self.set_custom_flags:
             if use_int_flags:
                 custom_split.prop(self, "custom_int_flags", text="")
+                string_int_warning(col, self.custom_int_flags)
             else:
                 custom_split.prop(self, "custom_flags", text="")
             return
@@ -378,7 +379,9 @@ class SM64_ActionProperty(PropertyGroup):
 
             if export_type == "Binary" and not is_dma:
                 prop_split(col, self, "start_address", "Start Address")
+                string_int_warning(col, self.start_address)
                 prop_split(col, self, "end_address", "End Address")
+                string_int_warning(col, self.end_address)
             elif draw_file_name:
                 self.draw_file_name(col, action)
         if is_dma or not self.reference_tables:
@@ -423,6 +426,7 @@ class TableElementProperty(PropertyGroup):
         row = layout.row()
         if export_type in {"Binary", "Insertable Binary"}:
             prop_split(row, self, "header_address", "Header Address")
+            string_int_warning(col, self.header_address)
             return
         if generate_enums:
             text_row = row.row()
@@ -612,7 +616,9 @@ class TableProperty(PropertyGroup):
                 col.prop(self, "write_data_seperately")
                 if self.write_data_seperately:
                     prop_split(col, self, "data_address", "Data Address")
+                    string_int_warning(col, self.data_address)
                     prop_split(col, self, "data_end_address", "Data End")
+                    string_int_warning(col, self.data_end_address)
             elif export_type == "C":
                 col.prop(self, "export_seperately")
                 if self.export_seperately:
