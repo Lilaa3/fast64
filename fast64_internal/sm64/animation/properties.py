@@ -30,7 +30,7 @@ from ...utility import (
     writeBoxExportType,
     intToHex,
 )
-from ..sm64_utility import upgrade_hex_prop, import_rom_ui_warnings, string_int_warning
+from ..sm64_utility import upgrade_hex_prop, import_rom_ui_warnings, string_int_prop, string_int_warning
 from ..sm64_constants import MAX_U16, MIN_S16, MAX_S16, level_enums, enumLevelNames
 
 from .operators import (
@@ -340,8 +340,8 @@ class SM64_ActionProperty(PropertyGroup):
         if not self.reference_tables:
             return
         if is_binary:
-            prop_split(col, self, "indices_address", "Indices Table")
-            prop_split(col, self, "values_address", "Value Table")
+            string_int_prop(col, self, "indices_address", "Indices Table")
+            string_int_prop(col, self, "values_address", "Value Table")
         else:
             prop_split(col, self, "indices_table", "Indices Table")
             prop_split(col, self, "values_table", "Value Table")
@@ -378,10 +378,8 @@ class SM64_ActionProperty(PropertyGroup):
             col.separator()
 
             if export_type == "Binary" and not is_dma:
-                prop_split(col, self, "start_address", "Start Address")
-                string_int_warning(col, self.start_address)
-                prop_split(col, self, "end_address", "End Address")
-                string_int_warning(col, self.end_address)
+                string_int_prop(col, self, "start_address", "Start Address")
+                string_int_prop(col, self, "end_address", "End Address")
             elif draw_file_name:
                 self.draw_file_name(col, action)
         if is_dma or not self.reference_tables:
@@ -425,8 +423,7 @@ class TableElementProperty(PropertyGroup):
     def draw_reference(self, layout: UILayout, export_type: str = "C", generate_enums: bool = False):
         row = layout.row()
         if export_type in {"Binary", "Insertable Binary"}:
-            prop_split(row, self, "header_address", "Header Address")
-            string_int_warning(col, self.header_address)
+            string_int_prop(row, self, "header_address", "Header Address")
             return
         if generate_enums:
             text_row = row.row()
@@ -578,11 +575,11 @@ class TableProperty(PropertyGroup):
                 box.label(text=get_anim_table_name(self, actor_name))
         elif export_type == "Binary":
             if is_dma:
-                prop_split(col, self, "dma_address", "DMA Table Address")
-                prop_split(col, self, "dma_end_address", "DMA Table End")
+                string_int_prop(col, self, "dma_address", "DMA Table Address")
+                string_int_prop(col, self, "dma_end_address", "DMA Table End")
                 return
-            prop_split(col, self, "address", "Table Address")
-            prop_split(col, self, "end_address", "Table End")
+            string_int_prop(col, self, "address", "Table Address")
+            string_int_prop(col, self, "end_address", "Table End")
 
             box = col.box().column()
             box.prop(self, "update_behavior")
@@ -615,10 +612,8 @@ class TableProperty(PropertyGroup):
             if export_type == "Binary":
                 col.prop(self, "write_data_seperately")
                 if self.write_data_seperately:
-                    prop_split(col, self, "data_address", "Data Address")
-                    string_int_warning(col, self.data_address)
-                    prop_split(col, self, "data_end_address", "Data End")
-                    string_int_warning(col, self.data_end_address)
+                    string_int_prop(col, self, "data_address", "Data Address")
+                    string_int_prop(col, self, "data_end_address", "Data End")
             elif export_type == "C":
                 col.prop(self, "export_seperately")
                 if self.export_seperately:
@@ -851,7 +846,7 @@ class ImportProperty(PropertyGroup):
             return
         prop_split(col, self, "binary_import_type", "Animation Type")
         if self.binary_import_type == "DMA":
-            prop_split(col, self, "dma_table_address", "DMA Table Address")
+            string_int_prop(col, self, "dma_table_address", "DMA Table Address")
             split = col.split()
             split.prop(self, "read_entire_table")
             if not self.read_entire_table:
