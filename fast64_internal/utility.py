@@ -1211,7 +1211,8 @@ def draw_and_check_tab(
     if icon is not None:
         row.prop(data, proprety, icon=tria_icon, text="")
     row.prop(data, proprety, icon=tria_icon if icon is None else icon, text=text)
-    layout.separator()
+    if tab:
+        layout.separator()
     return tab
 
 
