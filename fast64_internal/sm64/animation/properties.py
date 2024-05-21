@@ -142,7 +142,7 @@ class HeaderProperty(PropertyGroup):
         "end frame",
     )
     backwards: BoolProperty(
-        name="Backwards",
+        name="Loop Backwards",
         description="(ANIM_FLAG_FORWARD/ANIM_FLAG_BACKWARD)\n"
         "When enabled, the animation will loop (or stop if looping is disabled) after reaching "
         "the loop start frame.\n"
@@ -162,20 +162,20 @@ class HeaderProperty(PropertyGroup):
     only_horizontal_trans: BoolProperty(
         name="Only Horizontal Translation",
         description="(ANIM_FLAG_HOR_TRANS)\n"
-        "When enabled, the animation horizontal translation will not be used during rendering "
-        "(shadows included), the data will still be exported and included",
+        "When enabled, only the animation horizontal translation will be used during rendering\n"
+        "(shadows included), the vertical translation will still be exported and included",
     )
     only_vertical_trans: BoolProperty(
         name="Only Vertical Translation",
         description="(ANIM_FLAG_VERT_TRANS)\n"
-        "When enabled, the animation vertical translation will not be applied during rendering, "
-        "the data will still be exported and included",
+        "When enabled, only the animation vertical translation will be applied during rendering\n"
+        "(shadows included) the horizontal translation will still be exported and included",
     )
     no_trans: BoolProperty(
         name="No Translation",
         description="(ANIM_FLAG_NO_TRANS/ANIM_FLAG_6)\n"
-        "When disabled, the animation translation will not be used during rendering "
-        "(shadows included), the data will still be exported and included",
+        "When disabled, the animation translation will not be used during rendering\n"
+        "(shadows included), the translation will still be exported and included",
     )
     # Binary
     table_index: IntProperty(name="Table Index", min=0)
