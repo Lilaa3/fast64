@@ -1,11 +1,9 @@
-import math
 import os
 
 import bpy
 from bpy.types import Object, Action, PoseBone, Context
 from bpy.path import abspath
-import mathutils
-from mathutils import Euler, Quaternion, Vector, Matrix
+from mathutils import Euler, Quaternion, Vector
 
 from ...utility import (
     PluginError,
@@ -18,7 +16,6 @@ from ...utility import (
     radians_to_s16,
     applyBasicTweaks,
     toAlnum,
-    writeInsertableFile,
 )
 from ...utility_anim import stashActionInArmature
 from ..sm64_constants import (
@@ -28,7 +25,7 @@ from ..sm64_constants import (
     defaultExtendSegment4,
     level_pointers,
 )
-from ..classes import BinaryExporter, RomReader
+from ..classes import BinaryExporter, RomReader, InsertableBinaryData
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_rom_tweaks import ExtendBank0x04
 
@@ -617,10 +614,10 @@ def export_animation_table_insertable(
     path = abspath(os.path.join(anim_props.directory_path, table_props.insertable_file_name))
     if is_binary_dma:
         data = table.to_binary_dma()
-        writeInsertableFile(path, insertableBinaryTypes["Animation DMA Table"], [], 0, data)
+        InsertableBinaryData("Animation DMA Table", data).write(path)
     else:
         table_data, data, ptrs = table.to_combined_binary()
-        writeInsertableFile(path, insertableBinaryTypes["Animation Table"], ptrs, 0, table_data + data)
+        InsertableBinaryData("Animation Table", table_data + data, 0, ptrs).write(path)
 
 
 def create_and_get_paths(anim_props: "AnimProperty", decomp: os.PathLike):
@@ -762,7 +759,7 @@ def export_animation_binary(
 def export_animation_insertable(animation: Animation, anim_props: "AnimProperty", anim_file_name: str):
     data, ptrs = animation.to_binary(anim_props.is_binary_dma)
     path = abspath(os.path.join(anim_props.insertable_directory_path, anim_file_name))
-    writeInsertableFile(path, insertableBinaryTypes["Animation"], ptrs, 0, data)
+    InsertableBinaryData("Animation", data, 0, ptrs).write(path)
 
 
 def export_animation_c(
