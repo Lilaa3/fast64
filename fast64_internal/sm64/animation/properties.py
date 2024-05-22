@@ -915,16 +915,9 @@ class AnimProperty(PropertyGroup):
     played_header: IntProperty(min=0)
     played_action: PointerProperty(name="Action", type=Action)
 
-    object_menu_tab: BoolProperty(name="SM64 Animation Inspector")
-
-    table_tab: BoolProperty(name="Table", default=True)
     table: PointerProperty(type=TableProperty)
-    importing_tab: BoolProperty(name="Importing")
     importing: PointerProperty(type=ImportProperty)
-    action_tab: BoolProperty(name="Action", default=False)
     selected_action: PointerProperty(name="Action", type=Action)
-
-    tools_tab: BoolProperty(name="Tools")
     clean_up: PointerProperty(type=CleanAnimProperty)
 
     update_table: BoolProperty(
@@ -1028,6 +1021,10 @@ class AnimProperty(PropertyGroup):
     def is_c_dma(self):
         return self.use_dma_structure if self.header_type == "Custom" else self.header_type == "DMA"
 
+    def is_dma(self, export_type: str):
+        is_binary = export_type in {"Binary", "Insertable Binary"}
+        return (is_binary and self.is_binary_dma) or (not is_binary and self.is_c_dma)
+
     @property
     def level_name(self):
         return self.custom_level_name if self.level_option == "Custom" else self.level_option
@@ -1112,11 +1109,32 @@ class AnimProperty(PropertyGroup):
             if self.update_table:
                 self.table.draw_non_exclusive_settings(box, False, "C", self.actor_name)
 
+    def draw_table(self, layout: UILayout, export_type: str):
+        is_dma = self.is_dma(export_type)
+        self.table.draw_props(
+            layout,
+            self.is_dma(export_type),
+            not self.update_table and not is_dma,
+            export_type,
+            self.actor_name,
+        )
+
+    def draw_action(self, layout: UILayout, export_type: str):
+        col = layout.column()
+        col.prop(self, "selected_action")
+        if self.selected_action:
+            self.selected_action.fast64.sm64.draw_props(
+                layout=col,
+                action=self.selected_action,
+                export_type=export_type,
+                actor_name=self.actor_name,
+                generate_enums=self.table.generate_enums,
+                is_dma=self.is_dma(export_type),
+            )
+
     def draw_export_settings(self, layout: UILayout, export_type: str):
         col = layout.column()
         is_binary = export_type in {"Binary", "Insertable Binary"}
-        is_dma = (is_binary and self.is_binary_dma) or (not is_binary and self.is_c_dma)
-
         if is_binary:
             col.prop(self, "is_binary_dma")
             if export_type == "Binary":
@@ -1126,43 +1144,19 @@ class AnimProperty(PropertyGroup):
         elif export_type == "C":
             self.draw_c_settings(col)
         col.prop(self, "quick_read")
-        col.separator(factor=2)
 
-        if draw_and_check_tab(col, self, "table_tab", icon="ANIM"):
-            self.table.draw_props(
-                col,
-                is_dma,
-                not self.update_table and not is_dma,
-                export_type,
-                self.actor_name,
-            )
-        if draw_and_check_tab(col, self, "action_tab", icon="ACTION"):
-            col.prop(self, "selected_action")
-            if self.selected_action:
-                self.selected_action.fast64.sm64.draw_props(
-                    layout=col,
-                    action=self.selected_action,
-                    export_type=export_type,
-                    actor_name=self.actor_name,
-                    generate_enums=self.table.generate_enums,
-                    is_dma=is_dma,
-                )
+    def draw_tools(self, layout: UILayout):
+        col = layout.column()
+        col.label(text="Clean Up Keyframes", icon="KEYFRAME")
+        self.clean_up.draw_props(col)
 
     def draw_props(
         self,
         layout: UILayout,
-        export_type: str,
-        show_importing: bool = True,
-        import_rom: os.PathLike | None = None,
+        export_type: str
     ):
         col = layout.column()
         self.draw_export_settings(col, export_type)
-        col.separator()
-        if show_importing:
-            if draw_and_check_tab(col, self, "importing_tab", icon="IMPORT"):
-                self.importing.draw_props(col, import_rom)
-        if draw_and_check_tab(col, self, "tools_tab", icon="TOOL_SETTINGS"):
-            self.clean_up.draw_props(col.box())
 
 
 properties = (

@@ -1,7 +1,6 @@
 from bpy.utils import register_class, unregister_class
 from bpy.types import Context, Panel
 
-from ...utility import draw_and_check_tab
 from ...panels import SM64_Panel
 
 from .utility import get_animation_props
@@ -13,58 +12,137 @@ if TYPE_CHECKING:
     from .properties import AnimProperty
 
 
-class SceneAnimationPanel(SM64_Panel):
-    bl_idname = "SM64_PT_anim_panel"
-    bl_label = "SM64 Animations"
-    goal = "Object/Actor/Anim"
-
+# Base
+class AnimationPanel(Panel):
     def draw(self, context: Context):
-        col = self.layout.column()
         sm64_props: SM64_Properties = context.scene.fast64.sm64
-        anim_props: AnimProperty = get_animation_props(context)
-        anim_props.draw_props(
-            col,
-            sm64_props.export_type,
-            sm64_props.show_importing_menus,
-            sm64_props.import_rom,
-        )
+        get_animation_props(context).draw_props(self.layout, sm64_props.export_type)
 
 
-class ObjectAnimationPanel(Panel):
-    bl_label = "Animation Inspector"
+# Base panels
+class SceneAnimPanel(AnimationPanel, SM64_Panel):
+    bl_idname = "SM64_PT_anim_panel"
+    goal = "Object/Actor/Anim"
+    bl_parent_id = "SM64_PT_anim_panel"
+
+
+class ObjAnimPanel(AnimationPanel):
     bl_idname = "DATA_PT_SM64_anim_panel"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "data"
-    bl_options = {"HIDE_HEADER"}
+    bl_parent_id = "DATA_PT_SM64_anim_panel"
 
     @classmethod
-    def poll(cls, context: Context):
+    def is_valid_context(cls, context: Context):
         if not context.object or context.object.type != "ARMATURE":
             return False
         scene = context.scene
         if scene.gameEditorMode != "SM64":
             return False
         scene_goal = scene.fast64.sm64.goal
-        return scene_goal == "All" or scene_goal == "Object/Actor/Anim"
+        return scene_goal in {"All", "Object/Actor/Anim"}
+
+    @classmethod
+    def poll(cls, context: Context):
+        return cls.is_valid_context(context)
+
+
+# Main tab
+class SceneAnimPanelMain(SceneAnimPanel):
+    bl_parent_id = ""
+    bl_label = "SM64 Animations"
+
+
+class ObjAnimPanelMain(ObjAnimPanel):
+    bl_parent_id = ""
+    bl_label = "SM64 Animation Inspector"
+
+
+# Action tab
+
+
+class AnimationPanelAction(AnimationPanel):
+    bl_label = "Action"
 
     def draw(self, context: Context):
-        col = self.layout.column()
-        sm64_props: SM64_Properties = context.scene.fast64.sm64
-        anim_props: AnimProperty = get_animation_props(context)
-        if draw_and_check_tab(col, anim_props, "object_menu_tab", icon="ANIM"):
-            anim_props.draw_props(
-                col,
-                sm64_props.export_type,
-                sm64_props.show_importing_menus,
-                sm64_props.import_rom,
-            )
-        col.separator()
+        get_animation_props(context).draw_action(self.layout, context.scene.fast64.sm64.export_type)
+
+
+class SceneAnimPanelAction(AnimationPanelAction, SceneAnimPanel):
+    bl_idname = "SM64_PT_anim_panel_action"
+
+
+class ObjAnimPanelAction(AnimationPanelAction, ObjAnimPanel):
+    bl_idname = "DATA_PT_SM64_anim_panel_action"
+
+
+# Table tab
+class AnimationPanelTable(AnimationPanel):
+    bl_label = "Table"
+
+    def draw(self, context: Context):
+        get_animation_props(context).draw_table(self.layout, context.scene.fast64.sm64.export_type)
+
+
+class SceneAnimPanelTable(AnimationPanelTable, SceneAnimPanel):
+    bl_idname = "SM64_PT_anim_panel_table"
+
+
+class ObjAnimPanelTable(AnimationPanelTable, ObjAnimPanel):
+    bl_idname = "DATA_PT_SM64_anim_panel_table"
+
+
+# Tools tab
+class AnimationPanelTools(AnimationPanel):
+    bl_label = "Tools"
+
+    def draw(self, context: Context):
+        get_animation_props(context).draw_tools(self.layout)
+
+
+class SceneAnimPanelTools(AnimationPanelTools, SceneAnimPanel):
+    bl_idname = "SM64_PT_anim_panel_tools"
+
+
+class ObjAnimPanelTools(AnimationPanelTools, ObjAnimPanel):
+    bl_idname = "DATA_PT_SM64_anim_panel_tools"
+
+
+# Importing tab
+
+
+class AnimationPanelImport(AnimationPanel):
+    bl_label = "Importing"
+
+    def draw(self, context: Context):
+        get_animation_props(context).importing.draw_props(self.layout, context.scene.fast64.sm64.import_rom)
+
+
+class SceneAnimPanelImport(SceneAnimPanel, AnimationPanelImport):
+    bl_idname = "SM64_PT_anim_panel_import"
+    import_panel = True
+
+
+class ObjAnimPanelImport(ObjAnimPanel, AnimationPanelImport):
+    bl_idname = "DATA_PT_SM64_anim_panel_import"
+
+    @classmethod
+    def poll(cls, context: Context):
+        return cls.is_valid_context(context) and context.scene.fast64.sm64.show_importing_menus
 
 
 panels = (
-    SceneAnimationPanel,
-    ObjectAnimationPanel,
+    ObjAnimPanelMain,
+    ObjAnimPanelAction,
+    ObjAnimPanelTable,
+    ObjAnimPanelImport,
+    ObjAnimPanelTools,
+    SceneAnimPanelMain,
+    SceneAnimPanelAction,
+    SceneAnimPanelTable,
+    SceneAnimPanelImport,
+    SceneAnimPanelTools,
 )
 
 
