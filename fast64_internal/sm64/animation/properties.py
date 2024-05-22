@@ -637,16 +637,14 @@ class TableProperty(PropertyGroup):
         op_row.label(text="Headers" + (f" ({len(self.elements)})" if self.elements else ""), icon="NLA")
         draw_list_op(op_row, TableOps, "ADD")
         draw_list_op(op_row, TableOps, "CLEAR", collection=self.elements)
-        if self.elements:
-            box = col.box().column()
         actions = []  # for checking for duplicates
         element_props: TableElementProperty
         for i, element_props in enumerate(self.elements):
             if i != 0:
-                box.separator()
+                col.separator()
 
             self.draw_element(
-                box,
+                col,
                 i,
                 element_props,
                 is_dma,
