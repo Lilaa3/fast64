@@ -5,6 +5,7 @@ from bpy.path import abspath
 
 from ..utility import PluginError, filepath_checks, multilineLabel, intToHex, prop_split
 
+
 def starSelectWarning(operator, fileStatus):
     if fileStatus is not None and not fileStatus.starSelectC:
         operator.report({"WARNING"}, "star_select.c not found, skipping star select scrolling.")
@@ -83,6 +84,7 @@ def string_int_warning(layout: UILayout, value: str):
     else:
         layout.box().label(text="Empty Number", icon="ERROR")
     return False
+
 
 def string_int_prop(layout: UILayout, data, prop: str, name: str, **prop_args):
     prop_split(layout, data, prop, name, **prop_args)
