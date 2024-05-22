@@ -254,11 +254,11 @@ class HeaderProperty(PropertyGroup):
         self,
         layout: UILayout,
         action: Action,
-        in_table: bool = False,
-        is_dma: bool = False,
-        export_type: str = "C",
-        actor_name: str = "mario",
-        generate_enums: bool = False,
+        in_table: bool,
+        is_dma: bool,
+        export_type: str,
+        actor_name: str,
+        generate_enums: bool,
     ):
         col = layout.column()
         binary = export_type in {"Binary", "Insertable Binary"}
@@ -305,10 +305,10 @@ class SM64_ActionProperty(PropertyGroup):
         self,
         layout: UILayout,
         action: Action,
-        in_table: bool = False,
-        is_dma: bool = False,
-        export_type: str = "C",
-        actor_name: str = "mario",
+        in_table: bool,
+        is_dma: bool,
+        export_type: str,
+        actor_name: str,
         generate_enums: bool = False,
     ):
         col = layout.column()
@@ -360,16 +360,18 @@ class SM64_ActionProperty(PropertyGroup):
         self,
         layout: UILayout,
         action: Action,
-        specific_variant: int | None = None,
-        in_table: bool = False,
-        draw_file_name: bool = True,
-        export_type: str = "C",
-        actor_name: str = "mario",
-        generate_enums: bool = False,
-        is_dma: bool = False,
+        specific_variant: int | None,
+        in_table: bool,
+        draw_file_name: bool,
+        export_type: str,
+        actor_name: str ,
+        generate_enums: bool,
+        is_dma: bool,
     ):
         col = layout.column()
 
+        if specific_variant is not None: 
+            col.label(text=f"Action Properties", icon="ACTION")
         if not in_table:
             split = col.split()
             ExportAnim.draw_props(split)
@@ -380,8 +382,8 @@ class SM64_ActionProperty(PropertyGroup):
             if export_type == "Binary" and not is_dma:
                 string_int_prop(col, self, "start_address", "Start Address")
                 string_int_prop(col, self, "end_address", "End Address")
-            elif draw_file_name:
-                self.draw_file_name(col, action)
+        if draw_file_name:
+            self.draw_file_name(col, action)
         if is_dma or not self.reference_tables:
             max_frame_split = col.split()
             max_frame_split.prop(self, "use_custom_max_frame")
@@ -395,9 +397,11 @@ class SM64_ActionProperty(PropertyGroup):
             self.draw_references(col, export_type in {"Binary", "Insertable Binary"})
 
         if specific_variant is not None:
+            col.separator()
             if specific_variant < 0 or specific_variant >= len(self.headers):
                 col.box().label(text="Header variant does not exist.", icon="ERROR")
                 return
+            col.label(text=f"Header Variant Properties", icon="NLA")
             self.headers[specific_variant].draw_props(
                 col, action, in_table, is_dma, export_type, actor_name, generate_enums
             )
@@ -439,12 +443,12 @@ class TableElementProperty(PropertyGroup):
         self,
         row: UILayout,  # left side of the row for table ops
         prop_layout: UILayout,
-        is_dma: bool = False,
-        can_reference: bool = True,
-        export_seperately: bool = True,
-        export_type: str = "C",
-        generate_enums: bool = False,
-        actor_name: str = "mario",
+        is_dma: bool,
+        can_reference: bool,
+        export_seperately: bool,
+        export_type: str,
+        generate_enums: bool,
+        actor_name: str,
     ):
         col = prop_layout.column()
         reference_row = row.row()
@@ -481,15 +485,15 @@ class TableElementProperty(PropertyGroup):
         add_op = draw_list_op(variant_row, VariantOps, "ADD", self.variant)
         add_op.action_name = self.action_prop.name
         action_props.draw_props(
-            layout=col,
-            action=self.action_prop,
-            export_type=export_type,
-            specific_variant=self.variant,
-            in_table=True,
-            draw_file_name=export_type == "C" and not is_dma and export_seperately,
-            actor_name=actor_name,
-            generate_enums=generate_enums,
-            is_dma=is_dma,
+            col,
+            self.action_prop,
+            self.variant,
+            True,
+            export_type == "C" and not is_dma and export_seperately,
+            export_type,
+            actor_name,
+            generate_enums,
+            is_dma,
         )
 
 
@@ -598,10 +602,10 @@ class TableProperty(PropertyGroup):
     def draw_props(
         self,
         layout: UILayout,
-        is_dma: bool = False,
-        non_exclusive_settings: bool = True,
-        export_type: str = "C",
-        actor_name: str = "mario",
+        is_dma: bool,
+        non_exclusive_settings: bool,
+        export_type: str,
+        actor_name: str,
     ):
         col = layout.column()
         can_reference = not is_dma
@@ -637,14 +641,16 @@ class TableProperty(PropertyGroup):
         op_row.label(text="Headers" + (f" ({len(self.elements)})" if self.elements else ""), icon="NLA")
         draw_list_op(op_row, TableOps, "ADD")
         draw_list_op(op_row, TableOps, "CLEAR", collection=self.elements)
+        if self.elements:
+            box = col.box().column()
         actions = []  # for checking for duplicates
         element_props: TableElementProperty
         for i, element_props in enumerate(self.elements):
             if i != 0:
-                col.separator()
+                box.separator()
 
             self.draw_element(
-                col,
+                box,
                 i,
                 element_props,
                 is_dma,
@@ -1121,13 +1127,17 @@ class AnimProperty(PropertyGroup):
         col = layout.column()
         col.prop(self, "selected_action")
         if self.selected_action:
-            self.selected_action.fast64.sm64.draw_props(
-                layout=col,
-                action=self.selected_action,
-                export_type=export_type,
-                actor_name=self.actor_name,
-                generate_enums=self.table.generate_enums,
-                is_dma=self.is_dma(export_type),
+            action_props: SM64_ActionProperty = self.selected_action.fast64.sm64
+            action_props.draw_props(
+                col,
+                self.selected_action,
+                None,
+                False,
+                False,
+                export_type,
+                self.actor_name, 
+                self.table.generate_enums,
+                self.is_dma(export_type),
             )
 
     def draw_export_settings(self, layout: UILayout, export_type: str):
