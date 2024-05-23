@@ -24,7 +24,7 @@ from ..sm64_constants import (
     defaultExtendSegment4,
     level_pointers,
 )
-from ..classes import BinaryExporter, RomReader, InsertableBinaryData
+from ..sm64_classes import BinaryExporter, RomReader, InsertableBinaryData
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_rom_tweaks import ExtendBank0x04
 
@@ -456,9 +456,7 @@ def update_enum_file(enum_list: os.PathLike, list_name: str, names: list[str], e
         file.write(text)
 
 
-def update_table_file(
-    table: os.PathLike, name: str, names: list[str], add_null_delimiter: bool, override_files: bool
-):
+def update_table_file(table: os.PathLike, name: str, names: list[str], add_null_delimiter: bool, override_files: bool):
     if override_files or not os.path.exists(table):
         text = ""
     else:
@@ -654,7 +652,13 @@ def export_animation_table_c(
 
     header_path = os.path.join(geo_directory, "anim_header.h")
     update_anim_header(header_path, table.reference, table_props.generate_enums)
-    update_table_file(os.path.join(anim_directory, "table.inc.c"), table.reference, table.header_names, table_props.add_null_delimiter, override_files)
+    update_table_file(
+        os.path.join(anim_directory, "table.inc.c"),
+        table.reference,
+        table.header_names,
+        table_props.add_null_delimiter,
+        override_files,
+    )
     if table_props.generate_enums:
         update_enum_file(
             os.path.join(anim_directory, "table_enum.h"),
@@ -770,7 +774,13 @@ def export_animation_c(
             table_name,
             table_props.generate_enums,
         )
-        update_table_file(os.path.join(anim_directory, "table.inc.c"), table_name, animation.header_names, table_props.add_null_delimiter, False)
+        update_table_file(
+            os.path.join(anim_directory, "table.inc.c"),
+            table_name,
+            animation.header_names,
+            table_props.add_null_delimiter,
+            False,
+        )
         if table_props.generate_enums:
             update_enum_file(
                 os.path.join(anim_directory, "table_enum.h"),

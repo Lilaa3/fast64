@@ -7,8 +7,8 @@ from typing import Optional
 from bpy.types import Action
 
 from ...utility import PluginError, encodeSegmentedAddr, is_bit_active, to_s16, intToHex
-from ..sm64_constants import MAX_U16
-from ..classes import RomReader, DMATable, DMATableElement, IntArray
+from ..sm64_constants import MAX_U16, SegmentData
+from ..sm64_classes import RomReader, DMATable, DMATableElement, IntArray
 
 from .constants import HEADER_SIZE, C_FLAGS
 
@@ -212,7 +212,7 @@ class AnimationHeader:
         self,
         values_override: Optional[int] = None,
         indice_override: Optional[int] = None,
-        segment_data: dict[int, tuple[int, int]] = None,
+        segment_data: SegmentData = None,
     ):
         data = bytearray()
         data.extend(self.flags.to_bytes(2, byteorder="big"))  # 0x00
@@ -401,7 +401,7 @@ class Animation:
             indice_offset -= HEADER_SIZE
         return headers, anim_data
 
-    def to_binary(self, start_address: int = 0, segment_data: dict[int, tuple[int, int]] = None):
+    def to_binary(self, start_address: int = 0, segment_data: SegmentData = None):
         data: bytearray = bytearray()
         ptrs: list[int] = []
         if self.data:
@@ -580,12 +580,7 @@ class AnimationTable:
             dma_table.data.extend(data)
         return dma_table.to_binary()
 
-    def to_combined_binary(
-        self,
-        table_address: int = 0,
-        data_address: int = -1,
-        segment_data: dict[int, tuple[int, int]] = None,
-    ):
+    def to_combined_binary(self, table_address: int, data_address=-1, segment_data: SegmentData = None):
         table_data: bytearray = bytearray()
         data: bytearray = bytearray()
         ptrs: list[int] = []
@@ -623,7 +618,7 @@ class AnimationTable:
             if not anim_header.data:
                 data.extend(anim_header.to_binary())
                 continue
-            ptrs.extend([data_start_address + len(data) + 12, data_start_address + len(data) + 16])
+            ptrs.extend([data_address + len(data) + 12, data_address + len(data) + 16])
             indice_offset = indice_tables_offset + sum(
                 len(indice_table.data) * 2 for indice_table in indice_tables[: data_set.index(anim_header.data)]
             )

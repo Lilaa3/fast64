@@ -5,7 +5,7 @@ import shutil
 from typing import BinaryIO
 
 from ..utility import intToHex, tempName, decodeSegmentedAddr
-from .sm64_constants import insertableBinaryTypes
+from .sm64_constants import insertableBinaryTypes, SegmentData
 from .sm64_utility import export_rom_checks
 
 
@@ -68,7 +68,7 @@ class RomReader:
     rom_file: BufferedReader = None
     insertable_file: BufferedReader = None
     start_address: int = 0
-    segment_data: dict[int, tuple[int, int]] = dataclasses.field(default_factory=dict)
+    segment_data: SegmentData = dataclasses.field(default_factory=dict)
     insertable: InsertableBinaryData = None
     address: int = dataclasses.field(init=False)
 

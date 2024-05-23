@@ -10,7 +10,7 @@ from ...utility_anim import stashActionInArmature
 from ..sm64_constants import level_pointers
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_utility import import_rom_checks
-from ..classes import RomReader
+from ..sm64_classes import RomReader
 
 from .utility import (
     animation_operator_checks,

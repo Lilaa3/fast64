@@ -51,6 +51,8 @@ MAX_S32 = 2**31 - 1
 MIN_U32 = 0
 MAX_U32 = 2**32 - 1
 
+SegmentData = dict[int, tuple[int, int]]
+
 commonGeolayoutPointers = {
     "Dorrie": [2039136, "HMC"],
     "Bowser": [1809204, "BFB"],
