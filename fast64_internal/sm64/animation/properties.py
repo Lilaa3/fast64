@@ -58,7 +58,7 @@ from .constants import (
 from .utility import (
     get_anim_enum,
     get_anim_file_name,
-    get_anim_table_name,
+    get_table_name,
     get_max_frame,
     get_anim_name,
     get_element_action,
@@ -371,7 +371,7 @@ class SM64_ActionProperty(PropertyGroup):
         col = layout.column()
 
         if specific_variant is not None:
-            col.label(text=f"Action Properties", icon="ACTION")
+            col.label(text="Action Properties", icon="ACTION")
         if not in_table:
             split = col.split()
             ExportAnim.draw_props(split)
@@ -502,6 +502,7 @@ class TableProperty(PropertyGroup):
 
     export_seperately: BoolProperty(name="Export All Seperately")
     write_data_seperately: BoolProperty(name="Write Data Seperately")
+    add_null_delimiter: BoolProperty(name="Add Null Delimiter")
     override_files_prop: BoolProperty(name="Override Table and Data Files", default=True)
     generate_enums: BoolProperty(name="Generate Enums", default=True)
     use_custom_table_name: BoolProperty(name="Custom Table Name")
@@ -576,7 +577,7 @@ class TableProperty(PropertyGroup):
             else:
                 box = name_split.row().box()
                 box.scale_y = 0.5
-                box.label(text=get_anim_table_name(self, actor_name))
+                box.label(text=get_table_name(self, actor_name))
         elif export_type == "Binary":
             if is_dma:
                 string_int_prop(col, self, "dma_address", "DMA Table Address")
@@ -598,6 +599,7 @@ class TableProperty(PropertyGroup):
                 if self.behaviour == "Custom":
                     prop_split(box, self, "behavior_address_prop", "Behavior Address")
                 prop_split(box, self, "begining_animation", "Beginning Animation")
+        col.prop(self, "add_null_delimiter")
 
     def draw_props(
         self,
@@ -757,11 +759,6 @@ class ImportProperty(PropertyGroup):
     )
 
     path: StringProperty(name="Path", subtype="FILE_PATH", default="anims/")
-    remove_name_footer: BoolProperty(
-        name="Remove Name Footers",
-        description='Remove "anim_" from imported animations',
-        default=True,
-    )
     use_custom_name: BoolProperty(name="Use Custom Name", default=True)
 
     @property
@@ -812,7 +809,6 @@ class ImportProperty(PropertyGroup):
         else:
             prop_split(col, self, "decomp_path", "Decomp Path")
             directory_ui_warnings(col, abspath(self.decomp_path))
-        col.prop(self, "remove_name_footer")
         col.prop(self, "use_custom_name")
 
     def draw_import_rom(self, layout: UILayout, import_rom: os.PathLike | None = None):
@@ -1133,7 +1129,7 @@ class AnimProperty(PropertyGroup):
                 self.selected_action,
                 None,
                 False,
-                False,
+                export_type == "C",
                 export_type,
                 self.actor_name,
                 self.table.generate_enums,

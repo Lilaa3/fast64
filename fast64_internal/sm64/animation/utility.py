@@ -134,10 +134,7 @@ def get_max_frame(action: Action, action_props: "SM64_ActionProperty") -> int:
     return max(loop_ends)
 
 
-def get_element_header(
-    element_props: "TableElementProperty",
-    use_reference: bool,
-) -> "HeaderProperty":
+def get_element_header(element_props: "TableElementProperty", use_reference: bool) -> "HeaderProperty":
     if use_reference and element_props.reference:
         return None
     action = get_element_action(element_props, use_reference)
@@ -152,10 +149,20 @@ def get_element_action(element_props: "TableElementProperty", use_reference: boo
     return element_props.action_prop
 
 
-def get_anim_table_name(table_props: "TableProperty", actor_name: str) -> str:
+def get_table_name(table_props: "TableProperty", actor_name: str) -> str:
     if table_props.use_custom_table_name:
         return table_props.custom_table_name
     return f"{actor_name}_anims"
+
+
+def get_enum_list_name(table_props: "TableProperty", actor_name: str):
+    table_name = get_table_name(table_props, actor_name)
+    return table_name.title().replace("_", "")
+
+
+def get_enum_list_end(table_props: "TableProperty", actor_name: str):
+    table_name = get_table_name(table_props, actor_name)
+    return f"{table_name.upper()}_END"
 
 
 def value_distance(e1: Euler, e2: Euler) -> float:

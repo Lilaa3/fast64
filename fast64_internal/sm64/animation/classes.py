@@ -374,11 +374,19 @@ class Animation:
     action: Action | None = None  # Used in the table class to prop function
 
     @property
-    def enum_and_header_names(self) -> list[str, str]:
+    def header_names(self) -> list[str]:
         names = []
         for header in self.headers:
             assert isinstance(header.reference, str), "Reference is not a string."
-            names.append((header.enum_name, header.reference))
+            names.append(header.reference)
+        return names
+
+    @property
+    def enum_names(self) -> list[str]:
+        names = []
+        for header in self.headers:
+            assert isinstance(header.enum_name, str), "Enum name is not a string."
+            names.append(header.enum_name)
         return names
 
     def to_binary_dma(self):
@@ -450,6 +458,7 @@ class AnimationTableElement:
 class AnimationTable:
     reference: str | int = None
     enum_list_reference: str = ""
+    enum_list_end: str = ""
     file_name: str = ""
     values_reference: str = ""
     elements: list[AnimationTableElement] = dataclasses.field(default_factory=list)
@@ -458,11 +467,19 @@ class AnimationTable:
     end_address: int = 0
 
     @property
-    def enum_and_header_names(self) -> list[str, str]:
+    def header_names(self) -> list[str]:
         names = []
         for element in self.elements:
             assert isinstance(element.reference, str), "Reference is not a string."
-            names.append((element.enum_name, element.reference))
+            names.append(element.reference)
+        return names
+
+    @property
+    def enum_names(self) -> list[str]:
+        names = []
+        for element in self.elements:
+            assert isinstance(element.enum_name, str), "Enum name is not a string."
+            names.append(element.enum_name)
         return names
 
     def get_sets(self) -> tuple[list[AnimationHeader], list[AnimationData]]:
@@ -565,8 +582,8 @@ class AnimationTable:
 
     def to_combined_binary(
         self,
-        table_start_address: int = 0,
-        data_start_address: int = -1,
+        table_address: int = 0,
+        data_address: int = -1,
         segment_data: dict[int, tuple[int, int]] = None,
     ):
         table_data: bytearray = bytearray()
@@ -576,10 +593,10 @@ class AnimationTable:
 
         # Pre calculate offsets
         table_length = len(self.elements) * 4 + 4
-        if data_start_address == -1:
-            headers_offset = table_start_address + table_length
+        if data_address == -1:
+            headers_offset = table_address + table_length
         else:
-            headers_offset = data_start_address
+            headers_offset = data_address
         if data_set:
             headers_length = len(headers_set) * HEADER_SIZE
             value_table, indice_tables = create_tables(data_set, self.values_reference)
@@ -591,7 +608,7 @@ class AnimationTable:
         # Add the animation table
         for i, element in enumerate(self.elements):
             if element.header:
-                ptrs.append(table_start_address + len(table_data))
+                ptrs.append(table_address + len(table_data))
                 header_offset = headers_offset + (headers_set.index(element.header) * HEADER_SIZE)
                 if segment_data:
                     table_data.extend(encodeSegmentedAddr(header_offset, segment_data))
@@ -638,28 +655,6 @@ class AnimationTable:
         for anim_header in headers_set:
             text_data.write(anim_header.to_c(values_override=self.values_reference))
             text_data.write("\n")
-
-        return text_data.getvalue()
-
-    def enum_list_to_c(self):
-        print(f"Creating enum list {self.reference} for table.")
-        text_data = StringIO()
-        text_data.write(f"enum {self.enum_list_reference} {{\n")
-        for header in self.elements:
-            text_data.write(f"\t{header.enum_name},\n")
-        text_data.write(f"\t{self.enum_list_reference.upper()}_END\n")
-        text_data.write("};\n")
-        return text_data.getvalue()
-
-    def table_to_c(self):
-        print(f"Creating table {self.reference}.")
-        text_data = StringIO()
-
-        text_data.write(f"const struct Animation *const {self.reference}[] = {{\n")
-        for element in self.elements:
-            text_data.write(f"\t&{element.reference},\n")
-        text_data.write("\tNULL\n")
-        text_data.write("};\n")
 
         return text_data.getvalue()
 
@@ -752,6 +747,8 @@ class AnimationTable:
         indices_decls: list[CArrayDeclaration],
     ):
         print(f'Reading table "{table_decl.name}" c declaration.')
+        self.reference = table_decl.name
+        self.file_name = table_decl.file_name
         self.elements.clear()
         for value in table_decl.values:
             enum_name_split: list[str] = value.split("=")

@@ -20,6 +20,7 @@ from .utility import (
     get_animation_props,
     get_frame_range,
     update_header_variant_numbers,
+    get_table_name,
     AnimationBone,
     populate_action,
 )
@@ -100,7 +101,6 @@ def from_anim_class(
     action: Action,
     animation: Animation,
     actor_name: str,
-    remove_name_footer: bool,
     use_custom_name: bool,
 ):
     main_header = animation.headers[0]
@@ -113,10 +113,9 @@ def from_anim_class(
     else:
         action_name = main_header.reference
 
-    if remove_name_footer:
-        index = action_name.find("anim_")
-        if index != -1:
-            action_name = action_name[index + 5 :]
+    index = action_name.find("anim_")
+    if index != -1:
+        action_name = action_name[index + 5 :]
     action.name = action_name
     print(f'Populating action "{action_name}" properties.')
 
@@ -175,7 +174,9 @@ def from_table_element_class(element_props: "TableElementProperty", element: Ani
         element_props.enum_name = element.enum_name
 
 
-def from_anim_table_class(table_props: "TableProperty", table: AnimationTable, clear_table: bool):
+def from_anim_table_class(
+    table_props: "TableProperty", table: AnimationTable, clear_table: bool, use_custom_name: bool, actor_name: str
+):
     if clear_table:
         table_props.elements.clear()
     for element in table.elements:
@@ -199,6 +200,11 @@ def from_anim_table_class(table_props: "TableProperty", table: AnimationTable, c
             table_props.write_data_seperately = True
             table_props.data_address = intToHex(min(start_addresses))
             table_props.data_end_address = intToHex(max(end_addresses))
+    elif table.reference:
+        if use_custom_name:
+            table_props.custom_table_name = table.reference
+            if get_table_name(table_props, actor_name) != table_props.custom_table_name:
+                table_props.use_custom_table_name = True
 
 
 def animation_import_to_blender(
@@ -206,7 +212,6 @@ def animation_import_to_blender(
     blender_to_sm64_scale: float,
     anim_import: Animation,
     actor_name: str,
-    remove_name_footer: bool,
     use_custom_name: bool,
     clean: bool,
     to_quaternion: bool,
@@ -239,7 +244,6 @@ def animation_import_to_blender(
             action,
             anim_import,
             actor_name,
-            remove_name_footer,
             use_custom_name,
         )
         stashActionInArmature(armature_obj, action)
@@ -467,7 +471,6 @@ def import_animations(context: Context):
             sm64_props.blender_to_sm64_scale,
             animation,
             anim_props.actor_name,
-            import_props.remove_name_footer,
             import_props.use_custom_name,
             import_props.clean_up,
             clean_up.force_quaternion,
@@ -475,7 +478,9 @@ def import_animations(context: Context):
             clean_up.continuity_filter if not clean_up.force_quaternion else True,
         )
     print("Importing animation table into properties.")
-    from_anim_table_class(table_props, table, import_props.clear_table)
+    from_anim_table_class(
+        table_props, table, import_props.clear_table, import_props.use_custom_name, anim_props.actor_name
+    )
 
 
 def import_all_mario_animations(context: Context):
