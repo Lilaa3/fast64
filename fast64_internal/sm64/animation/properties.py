@@ -364,13 +364,13 @@ class SM64_ActionProperty(PropertyGroup):
         in_table: bool,
         draw_file_name: bool,
         export_type: str,
-        actor_name: str ,
+        actor_name: str,
         generate_enums: bool,
         is_dma: bool,
     ):
         col = layout.column()
 
-        if specific_variant is not None: 
+        if specific_variant is not None:
             col.label(text=f"Action Properties", icon="ACTION")
         if not in_table:
             split = col.split()
@@ -401,7 +401,7 @@ class SM64_ActionProperty(PropertyGroup):
             if specific_variant < 0 or specific_variant >= len(self.headers):
                 col.box().label(text="Header variant does not exist.", icon="ERROR")
                 return
-            col.label(text=f"Header Variant Properties", icon="NLA")
+            col.label(text="Header Variant Properties", icon="NLA")
             self.headers[specific_variant].draw_props(
                 col, action, in_table, is_dma, export_type, actor_name, generate_enums
             )
@@ -1135,7 +1135,7 @@ class AnimProperty(PropertyGroup):
                 False,
                 False,
                 export_type,
-                self.actor_name, 
+                self.actor_name,
                 self.table.generate_enums,
                 self.is_dma(export_type),
             )
@@ -1158,11 +1158,7 @@ class AnimProperty(PropertyGroup):
         col.label(text="Clean Up Keyframes", icon="KEYFRAME")
         self.clean_up.draw_props(col)
 
-    def draw_props(
-        self,
-        layout: UILayout,
-        export_type: str
-    ):
+    def draw_props(self, layout: UILayout, export_type: str):
         col = layout.column()
         self.draw_export_settings(col, export_type)
 
