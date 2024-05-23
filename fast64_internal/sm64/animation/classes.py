@@ -578,7 +578,9 @@ class AnimationTable:
             dma_table.data.extend(data)
         return dma_table.to_binary()
 
-    def to_combined_binary(self, table_address: int, data_address=-1, segment_data: SegmentData = None):
+    def to_combined_binary(
+        self, table_address: int, data_address=-1, segment_data: SegmentData = None, add_null_delimiter=True
+    ):
         table_data: bytearray = bytearray()
         data: bytearray = bytearray()
         ptrs: list[int] = []
@@ -610,7 +612,8 @@ class AnimationTable:
             else:
                 assert isinstance(element.reference, int), f"Reference at element {i} is not an int."
                 table_data.extend(element.reference.to_bytes(4, byteorder="big"))
-        table_data.extend(bytearray([0x00] * 4))  # NULL delimiter
+        if add_null_delimiter:
+            table_data.extend(bytearray([0x00] * 4))  # NULL delimiter
 
         for anim_header in headers_set:  # Add the headers
             if not anim_header.data:

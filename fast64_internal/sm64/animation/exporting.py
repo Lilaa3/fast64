@@ -318,9 +318,7 @@ def to_table_class(
     for i, element_props in enumerate(table_props.elements):
         element = AnimationTableElement()
         if can_reference and element_props.reference:
-            reference = (
-                int(element_props.header_address, 0) if use_addresses else element_props.header_name
-            )
+            reference = int(element_props.header_address, 0) if use_addresses else element_props.header_name
             if not reference:
                 raise ValueError(f"Header in table element {i} is not set.")
             element.reference = reference
@@ -532,7 +530,7 @@ def update_behaviour_binary(
                 f"replacing value {int.from_bytes(binary_exporter.read(1, value_address), 'big')} "
                 f"at {intToHex(value_address)} with {beginning_animation}"
             )
-            binary_exporter.write(beginning_animation.to_bytes(1, "big"))
+            binary_exporter.write(beginning_animation.to_bytes(1, "big"), value_address)
             animate_set = True
         address += 4 * size
     if exited:
@@ -552,11 +550,7 @@ def export_animation_table_binary(
 ):
     if is_binary_dma:
         data = table.to_binary_dma()
-        binary_exporter.write_to_range(
-            int(table_props.dma_address, 0),
-            int(table_props.dma_end_address, 0),
-            data,
-        )
+        binary_exporter.write_to_range(int(table_props.dma_address, 0), int(table_props.dma_end_address, 0), data)
         return
 
     level_parsed = parseLevelAtPointer(binary_exporter.rom_file_output, level_pointers[level_option])
@@ -567,27 +561,16 @@ def export_animation_table_binary(
     table_address = get64bitAlignedAddr(int(table_props.address, 0))
     table_end_address = int(table_props.end_address, 0)
 
+    add_null_delimiter = table_props.add_null_delimiter
     if table_props.write_data_seperately:
         data_address = get64bitAlignedAddr(int(table_props.data_address, 0))
         data_end_address = int(table_props.data_end_address, 0)
-        table_data, data = table.to_combined_binary(table_address, data_address, segment_data)[:2]
-        binary_exporter.write_to_range(
-            table_address,
-            table_end_address,
-            table_data,
-        )
-        binary_exporter.write_to_range(
-            data_address,
-            data_end_address,
-            data,
-        )
+        table_data, data = table.to_combined_binary(table_address, data_address, segment_data, add_null_delimiter)[:2]
+        binary_exporter.write_to_range(table_address, table_end_address, table_data)
+        binary_exporter.write_to_range(data_address, data_end_address, data)
     else:
-        table_data, data = table.to_combined_binary(table_address, -1, segment_data)[:2]
-        binary_exporter.write_to_range(
-            table_address,
-            table_end_address,
-            table_data + data,
-        )
+        table_data, data = table.to_combined_binary(table_address, -1, segment_data, add_null_delimiter)[:2]
+        binary_exporter.write_to_range(table_address, table_end_address, table_data + data)
     if table_props.update_behavior:
         update_behaviour_binary(
             binary_exporter,
