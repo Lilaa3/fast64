@@ -61,13 +61,13 @@ class AnimationData:
     start_address: int = 0
     end_address: int = 0
 
-    def to_c(self, is_dma_structure: bool = False):
+    def to_c(self, dma_structure: bool = False):
         text_data = StringIO()
 
         value_table, indice_tables = create_tables([self])
         indice_table = indice_tables[0]
 
-        if is_dma_structure:
+        if dma_structure:
             text_data.write(indice_table.to_c())
             text_data.write("\n")
             text_data.write(value_table.to_c())
@@ -191,11 +191,11 @@ class AnimationHeader:
         self,
         values_override: Optional[str] = None,
         indice_override: Optional[str] = None,
-        is_dma_structure: bool = False,
+        dma_structure: bool = False,
     ):
         return (
-            f"static const struct Animation {self.reference}{'[]' if is_dma_structure else ''} = {{\n"
-            + (f"\t{intToHex(self.flags, 2)}, " if is_dma_structure else f"\t{self.get_c_flags()}, ")
+            f"static const struct Animation {self.reference}{'[]' if dma_structure else ''} = {{\n"
+            + (f"\t{intToHex(self.flags, 2)}, " if dma_structure else f"\t{self.get_c_flags()}, ")
             + f"// flags {self.get_flags_comment()}\n"
             f"\t{self.trans_divisor}, // animYTransDivisor\n"
             f"\t{self.start_frame}, // startFrame\n"
@@ -420,26 +420,24 @@ class Animation:
             return data, ptrs
         return data, []
 
-    def headers_to_c(self, is_dma_structure: bool) -> str:
+    def headers_to_c(self, dma_structure: bool) -> str:
         text_data = StringIO()
         for header in self.headers:
-            text_data.write(header.to_c(is_dma_structure=is_dma_structure))
+            text_data.write(header.to_c(dma_structure=dma_structure))
             text_data.write("\n")
         return text_data.getvalue()
 
-    def to_c(self, is_dma_structure: bool):
+    def to_c(self, dma_structure: bool):
         text_data = StringIO()
-
-        c_headers = self.headers_to_c(is_dma_structure)
-        if is_dma_structure:
+        c_headers = self.headers_to_c(dma_structure)
+        if dma_structure:
             text_data.write(c_headers)
             text_data.write("\n")
         if self.data:
-            text_data.write(self.data.to_c(is_dma_structure))
+            text_data.write(self.data.to_c(dma_structure))
             text_data.write("\n")
-        if not is_dma_structure:
+        if not dma_structure:
             text_data.write(c_headers)
-
         return text_data.getvalue()
 
 
@@ -632,8 +630,9 @@ class AnimationTable:
 
     def data_and_headers_to_c(self, is_dma: bool) -> list[os.PathLike, str]:
         files_data: dict[str, str] = {}
-        for anim in self.get_seperate_anims_dma() if is_dma else self.get_seperate_anims():
-            files_data[anim.file_name] = anim.to_c(is_dma_structure=is_dma)
+        animation: Animation
+        for animation in self.get_seperate_anims_dma() if is_dma else self.get_seperate_anims():
+            files_data[animation.file_name] = animation.to_c(dma_structure=is_dma)
         return files_data
 
     def data_and_headers_to_c_combined(self):
