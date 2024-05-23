@@ -31,7 +31,12 @@ from ...utility import (
     writeBoxExportType,
     intToHex,
 )
-from ..sm64_utility import (upgrade_hex_prop, import_rom_ui_warnings, string_int_prop, string_int_warning,)
+from ..sm64_utility import (
+    upgrade_hex_prop,
+    import_rom_ui_warnings,
+    string_int_prop,
+    string_int_warning,
+)
 from ..sm64_constants import MAX_U16, MIN_S16, MAX_S16, level_enums, enumLevelNames
 
 from .operators import (
@@ -1025,7 +1030,7 @@ class AnimProperty(PropertyGroup):
     def is_dma(self, export_type: str):
         is_binary = export_type in {"Binary", "Insertable Binary"}
         return (is_binary and self.is_binary_dma) or (not is_binary and self.is_c_dma)
-    
+
     def updates_table(self, export_type: str):
         return self.update_table and export_type != "Insertable Binary"
 
