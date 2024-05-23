@@ -1024,6 +1024,9 @@ class AnimProperty(PropertyGroup):
     def is_dma(self, export_type: str):
         is_binary = export_type in {"Binary", "Insertable Binary"}
         return (is_binary and self.is_binary_dma) or (not is_binary and self.is_c_dma)
+    
+    def updates_table(self, export_type: str):
+        return self.update_table and export_type != "Insertable Binary"
 
     @property
     def level_name(self):
@@ -1112,11 +1115,7 @@ class AnimProperty(PropertyGroup):
     def draw_table(self, layout: UILayout, export_type: str):
         is_dma = self.is_dma(export_type)
         self.table.draw_props(
-            layout,
-            self.is_dma(export_type),
-            not self.update_table and not is_dma,
-            export_type,
-            self.actor_name,
+            layout, self.is_dma(export_type), not self.updates_table(export_type), export_type, self.actor_name
         )
 
     def draw_action(self, layout: UILayout, export_type: str):

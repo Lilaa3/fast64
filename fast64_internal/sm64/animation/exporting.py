@@ -16,14 +16,10 @@ from ...utility import (
     radians_to_s16,
     applyBasicTweaks,
     toAlnum,
+    directory_path_checks,
 )
 from ...utility_anim import stashActionInArmature
-from ..sm64_constants import (
-    BEHAVIOR_COMMANDS,
-    BEHAVIOR_EXITS,
-    defaultExtendSegment4,
-    level_pointers,
-)
+from ..sm64_constants import BEHAVIOR_COMMANDS, BEHAVIOR_EXITS, defaultExtendSegment4, level_pointers
 from ..sm64_classes import BinaryExporter, RomReader, InsertableBinaryData
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_rom_tweaks import ExtendBank0x04
@@ -586,12 +582,14 @@ def export_animation_table_insertable(
     table: AnimationTable,
     is_binary_dma: bool,
 ):
-    path = abspath(os.path.join(anim_props.directory_path, table_props.insertable_file_name))
+    directory = abspath(anim_props.directory_path)
+    directory_path_checks(directory, "Empty directory path.")
+    path = os.path.join(directory, table_props.insertable_file_name)
     if is_binary_dma:
         data = table.to_binary_dma()
         InsertableBinaryData("Animation DMA Table", data).write(path)
     else:
-        table_data, data, ptrs = table.to_combined_binary()
+        table_data, data, ptrs = table.to_combined_binary(add_null_delimiter=table_props.add_null_delimiter)
         InsertableBinaryData("Animation Table", table_data + data, 0, ptrs).write(path)
 
 
