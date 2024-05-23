@@ -300,7 +300,7 @@ def to_table_class(
     can_reference: bool = True,
     actor_name: str = "mario",
     generate_enums: bool = False,
-    use_addresses_for_references: bool = False,
+    use_addresses: bool = False,
 ) -> AnimationTable:
     table = AnimationTable()
     table.reference = get_table_name(table_props, actor_name)
@@ -316,24 +316,19 @@ def to_table_class(
 
     element_props: TableElementProps
     for i, element_props in enumerate(table_props.elements):
-        reference = AnimationTableElement()
+        element = AnimationTableElement()
         if can_reference and element_props.reference:
-            header_reference = (
-                int(
-                    element_props.header_address,
-                    0,
-                )
-                if use_addresses_for_references
-                else element_props.header_name
+            reference = (
+                int(element_props.header_address, 0) if use_addresses else element_props.header_name
             )
-            if not header_reference:
+            if not reference:
                 raise ValueError(f"Header in table element {i} is not set.")
-            reference.reference = header_reference
+            element.reference = reference
             if generate_enums:
                 if not element_props.enum_name:
-                    raise ValueError(f"Enum Name in table element {i} is not set.")
-                reference.enum_name = element_props.enum_name
-            table.elements.append(reference)
+                    raise ValueError(f"Enum name in table element {i} is not set.")
+                element.enum_name = element_props.enum_name
+            table.elements.append(element)
             continue
 
         header: HeaderProperty = get_element_header(element_props, can_reference)
@@ -345,7 +340,7 @@ def to_table_class(
 
         action_props: SM64_ActionProperty = action.fast64.sm64
         if can_reference and action_props.reference_tables:
-            if use_addresses_for_references:
+            if use_addresses:
                 values_reference, indice_reference = (
                     int(action_props.values_address, 0),
                     int(action_props.indices_address, 0),
@@ -359,7 +354,7 @@ def to_table_class(
             data = existing_data[action]
             values_reference, indice_reference = data.values_reference, data.indice_reference
 
-        reference.header = existing_headers.get(
+        element.header = existing_headers.get(
             header,
             to_header_class(
                 header,
@@ -375,9 +370,9 @@ def to_table_class(
                 get_anim_file_name(action, action_props),
             ),
         )
-        reference.reference = reference.header.reference
-        reference.enum_name = reference.header.enum_name
-        table.elements.append(reference)
+        element.reference = element.header.reference
+        element.enum_name = element.header.enum_name
+        table.elements.append(element)
 
     return table
 
@@ -431,11 +426,11 @@ def update_anim_header(header: os.PathLike, table_name: str, generate_enums: boo
             file.write(extern + "\n")
 
 
-def update_enum_file(enum_list: os.PathLike, list_name: str, names: list[str], end: str, override_files: bool):
-    if override_files or not os.path.exists(enum_list):
+def update_enum_file(path: os.PathLike, list_name: str, names: list[str], end: str, override_files: bool):
+    if override_files or not os.path.exists(path):
         text = ""
     else:
-        with open(enum_list, "r", encoding="utf-8") as file:
+        with open(path, "r", encoding="utf-8") as file:
             text = file.read()
 
     enum_list_index = text.find(list_name)
@@ -452,39 +447,50 @@ def update_enum_file(enum_list: os.PathLike, list_name: str, names: list[str], e
                 enum_list_end = text.find("}", enum_list_index)
             text = text[:enum_list_end] + f"{name},\n\t" + text[enum_list_end:]
 
-    with open(enum_list, "w", encoding="utf-8") as file:
+    with open(path, "w", encoding="utf-8") as file:
         file.write(text)
 
 
-def update_table_file(table: os.PathLike, name: str, names: list[str], add_null_delimiter: bool, override_files: bool):
-    if override_files or not os.path.exists(table):
+def update_table_file(path: os.PathLike, name: str, names: list[str], add_null_delimiter: bool, override_files: bool):
+    print(f"Updating table file at {path}.")
+    if override_files or not os.path.exists(path):
         text = ""
     else:
-        with open(table, "r", encoding="utf-8") as file:
+        with open(path, "r", encoding="utf-8") as file:
             text = file.read()
-    table_index = text.find(name)
-    if table_index == -1:  # If there is no table, add one and find again
-        text += f"const struct Animation *const {name}[] = {{\n"
-        if add_null_delimiter:
-            text += "\tNULL,\n"
-        text += "};\n"
-        table_index = text.find(name)
+    table_name_index = text.find(name)
+    if table_name_index == -1:  # If there is no table, add one and find again
+        print("Created new table array.")
+        text += "const struct Animation *const "
+        table_name_index = len(text)
+        text += f"{name}[] = {{\n}};\n"
 
+    table_start = text.find("{", table_name_index)
+    if table_start == -1:
+        raise IndexError("Could not find start of table.")
+    table_end = text.find("}", table_start)
+    if table_end == -1:
+        raise IndexError("Could not find end of table.")
+
+    if add_null_delimiter:
+        delimiter_index = text.find("NULL", table_start, table_end)
+        if delimiter_index == -1:
+            delimiter_index = table_end + 1
+            text = text[:table_end] + "\tNULL,\n" + text[table_end:]
+    else:
+        delimiter_index = table_end
+
+    header_lines = ""
     for header_name in names:
         header_reference = f"&{header_name}"
-        if not override_files and text.find(header_reference, table_index) != -1:
+        if not override_files and text.find(header_reference, table_start, table_end) != -1:
             continue
-        header_line = f"{header_reference},\n"
-        table_end = text.find("NULL", table_index)
-        if table_end == -1:  # If there is no null delimiter, find end of the table
-            table_end = text.find("}", table_index)
-            if table_end == -1:  # If there is no end of the table, raise
-                raise ValueError(f"Could not find end of table in {table}")
-            header_line = "\t" + header_line
+        header_lines += f"\t{header_reference},\n"
+    if add_null_delimiter and header_lines:
+        header_lines = header_lines[1:] + "\t"
+    text = text[:delimiter_index] + header_lines + text[delimiter_index:]
 
-        text = text[:table_end] + header_line + text[table_end:]
-
-    with open(table, "w", encoding="utf-8") as file:
+    with open(path, "w", encoding="utf-8") as file:
         file.write(text)
 
 
