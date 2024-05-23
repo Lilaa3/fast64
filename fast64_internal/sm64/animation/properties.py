@@ -1,4 +1,5 @@
 import os
+from os import PathLike
 from typing import Iterable, Optional
 
 import bpy
@@ -30,7 +31,7 @@ from ...utility import (
     writeBoxExportType,
     intToHex,
 )
-from ..sm64_utility import upgrade_hex_prop, import_rom_ui_warnings, string_int_prop, string_int_warning
+from ..sm64_utility import (upgrade_hex_prop, import_rom_ui_warnings, string_int_prop, string_int_warning,)
 from ..sm64_constants import MAX_U16, MIN_S16, MAX_S16, level_enums, enumLevelNames
 
 from .operators import (
@@ -451,9 +452,9 @@ class TableElementProperty(PropertyGroup):
         actor_name: str,
     ):
         col = prop_layout.column()
-        reference_row = row.row()
-        reference_row.alignment = "LEFT"
         if can_reference:
+            reference_row = row.row()
+            reference_row.alignment = "LEFT"
             reference_row.prop(self, "reference")
             if self.reference:
                 self.draw_reference(col, export_type, generate_enums)
@@ -811,7 +812,7 @@ class ImportProperty(PropertyGroup):
             directory_ui_warnings(col, abspath(self.decomp_path))
         col.prop(self, "use_custom_name")
 
-    def draw_import_rom(self, layout: UILayout, import_rom: os.PathLike | None = None):
+    def draw_import_rom(self, layout: UILayout, import_rom: PathLike = ""):
         col = layout.column()
         col.label(text="Uses scene import ROM by default", icon="INFO")
         prop_split(col, self, "rom", "Import ROM")
@@ -830,7 +831,7 @@ class ImportProperty(PropertyGroup):
         elif not self.check_null:
             right_row.prop(self, "table_size_prop")
 
-    def draw_binary(self, layout: UILayout, import_rom: os.PathLike | None = None):
+    def draw_binary(self, layout: UILayout, import_rom: PathLike):
         col = layout.column()
         self.draw_import_rom(col, import_rom)
         col.separator()
@@ -865,7 +866,7 @@ class ImportProperty(PropertyGroup):
         if self.binary_import_type == "Table":  # Draw settings after level
             self.draw_table_settings(col)
 
-    def draw_insertable_binary(self, layout: UILayout, import_rom: os.PathLike | None = None):
+    def draw_insertable_binary(self, layout: UILayout, import_rom: PathLike):
         col = layout.column()
         self.draw_path(col)
         col.separator()
@@ -882,7 +883,7 @@ class ImportProperty(PropertyGroup):
             self.draw_import_rom(col, import_rom)
             prop_split(col, self, "level", "Level")
 
-    def draw_props(self, layout: UILayout, import_rom: os.PathLike | None = None):
+    def draw_props(self, layout: UILayout, import_rom: PathLike = None):
         col = layout.column()
 
         prop_split(col, self, "import_type", "Type")
@@ -1032,15 +1033,13 @@ class AnimProperty(PropertyGroup):
     def level_name(self):
         return self.custom_level_name if self.level_option == "Custom" else self.level_option
 
-    def get_c_paths(self, decomp: os.PathLike):
+    def get_c_paths(self, decomp: PathLike) -> tuple[PathLike, PathLike, PathLike]:
         custom_export = self.header_type == "Custom"
         base_path = self.directory_path if custom_export else decomp
         if self.is_c_dma:  # DMA or Custom with DMA structure
-            anim_directory: os.PathLike = abspath(os.path.join(base_path, self.dma_folder))
-            directory_path_checks(anim_directory)
-            return (anim_directory, None, None)
+            return (abspath(os.path.join(base_path, self.dma_folder)), "", "")
         dir_name = toAlnum(self.actor_name)
-        header_directory: os.PathLike = abspath(
+        header_directory = abspath(
             getExportDir(
                 custom_export,
                 base_path,
@@ -1051,8 +1050,8 @@ class AnimProperty(PropertyGroup):
             )[0]
         )
         directory_path_checks(header_directory)
-        geo_directory: os.PathLike = abspath(os.path.join(header_directory, dir_name))
-        anim_directory: os.PathLike = abspath(os.path.join(geo_directory, "anims"))
+        geo_directory = abspath(os.path.join(header_directory, dir_name))
+        anim_directory = abspath(os.path.join(geo_directory, "anims"))
         return (anim_directory, geo_directory, header_directory)
 
     def draw_insertable_binary_settings(self, layout: UILayout):

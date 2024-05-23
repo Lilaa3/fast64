@@ -113,7 +113,6 @@ class RomReader:
         ptr = self.read_value(4)
         if self.insertable and address in self.insertable.ptrs:
             return ptr
-        self.rom_file.seek(address)
         if self.segment_data:
             return decodeSegmentedAddr(ptr.to_bytes(4, "big"), self.segment_data)
         return ptr
