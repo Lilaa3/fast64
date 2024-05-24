@@ -19,14 +19,16 @@ class OperatorBase(Operator):
     execute_operator() and catches exceptions for raisePluginError()"""
 
     context_mode: str = ""
-    icon: str = ""
+    icon = "NONE"
 
     @classmethod
-    def draw_operator(cls, layout: UILayout, **prop_kwargs):
-        icon = prop_kwargs.get("icon", cls.icon)
-        if icon:
-            prop_kwargs["icon"] = icon
-        return layout.operator(cls.bl_idname, **prop_kwargs)
+    def draw_props(cls, layout: UILayout, icon="", text: Optional[str] = None, **op_values):
+        """Op args are passed to the operator via setattr()"""
+        icon = icon if icon else cls.icon
+        op = layout.operator(cls.bl_idname, icon=icon, text=text)
+        for key, value in op_values.items():
+            setattr(op, key, value)
+        return op
 
     @classmethod
     def draw_props(cls, layout: UILayout, **prop_kwargs):
