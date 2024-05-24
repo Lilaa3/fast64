@@ -241,7 +241,7 @@ class AnimationHeader:
         reader: RomReader,
         read_headers: dict[str, "AnimationHeader"],
         read_animations: dict[tuple[str, str], "Animation"],
-        is_dma: bool = False,
+        dma: bool = False,
         assumed_bone_count: int | None = None,
         table_index: int | None = None,
     ):
@@ -261,7 +261,7 @@ class AnimationHeader:
         header.bone_count = bone_count if assumed_bone_count is None else assumed_bone_count
         # /*0x0C*/ const s16 *values;
         # /*0x10*/ const u16 *index;
-        if is_dma:
+        if dma:
             start_address = reader.start_address
             header.values_reference = start_address + reader.read_value(4)
             header.indice_reference = start_address + reader.read_value(4)
@@ -631,11 +631,11 @@ class AnimationTable:
 
         return table_data, data, ptrs
 
-    def data_and_headers_to_c(self, is_dma: bool) -> list[os.PathLike, str]:
+    def data_and_headers_to_c(self, dma: bool) -> list[os.PathLike, str]:
         files_data: dict[str, str] = {}
         animation: Animation
-        for animation in self.get_seperate_anims_dma() if is_dma else self.get_seperate_anims():
-            files_data[animation.file_name] = animation.to_c(dma_structure=is_dma)
+        for animation in self.get_seperate_anims_dma() if dma else self.get_seperate_anims():
+            files_data[animation.file_name] = animation.to_c(dma_structure=dma)
         return files_data
 
     def data_and_headers_to_c_combined(self):

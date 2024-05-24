@@ -189,12 +189,12 @@ def to_header_class(
     indice_reference: int | str | None = None,
     table_index: int | None = None,
     actor_name: str | None = "mario",
-    generate_enums: bool = False,
+    gen_enums: bool = False,
     file_name: str | None = "anim_00.inc.c",
 ):
     header = AnimationHeader()
     header.reference = get_anim_name(actor_name, action, header_props)
-    if generate_enums:
+    if gen_enums:
         header.enum_name = get_anim_enum(actor_name, action, header_props)
 
     if header_props.set_custom_flags:
@@ -249,7 +249,7 @@ def to_animation_class(
     can_use_references: bool,
     use_int_flags: bool,
     actor_name: str = "mario",
-    generate_enums: bool = False,
+    gen_enums: bool = False,
     use_addresses_for_references: bool = False,
 ):
     animation = Animation()
@@ -279,7 +279,7 @@ def to_animation_class(
                 indice_reference,
                 None,
                 actor_name,
-                generate_enums,
+                gen_enums,
                 animation.file_name,
             )
         )
@@ -295,7 +295,7 @@ def to_table_class(
     use_int_flags: bool = False,
     can_reference: bool = True,
     actor_name: str = "mario",
-    generate_enums: bool = False,
+    gen_enums: bool = False,
     use_addresses: bool = False,
 ) -> AnimationTable:
     table = AnimationTable()
@@ -318,7 +318,7 @@ def to_table_class(
             if not reference:
                 raise ValueError(f"Header in table element {i} is not set.")
             element.reference = reference
-            if generate_enums:
+            if gen_enums:
                 if not element_props.enum_name:
                     raise ValueError(f"Enum name in table element {i} is not set.")
                 element.enum_name = element_props.enum_name
@@ -360,7 +360,7 @@ def to_table_class(
                 indice_reference,
                 i,
                 actor_name,
-                generate_enums,
+                gen_enums,
                 get_anim_file_name(action, action_props),
             ),
         )
@@ -403,7 +403,7 @@ def update_includes(
         writeIfNotFound(header_path, f'{include_start}/anim_header.h"\n', "#endif")
 
 
-def update_anim_header(header: os.PathLike, table_name: str, generate_enums: bool):
+def update_anim_header(header: os.PathLike, table_name: str, gen_enums: bool):
     print("Writing animation header")
     if os.path.exists(header):
         with open(header, "r", encoding="utf-8") as file:
@@ -411,7 +411,7 @@ def update_anim_header(header: os.PathLike, table_name: str, generate_enums: boo
     else:
         text = ""
     with open(header, "a", encoding="utf-8") as file:
-        if generate_enums:
+        if gen_enums:
             include = '#include "anims/table_enum.h"'
             if include not in text:
                 file.write(include + "\n")
@@ -638,7 +638,7 @@ def export_animation_table_c(
         return
 
     header_path = os.path.join(geo_directory, "anim_header.h")
-    update_anim_header(header_path, table.reference, table_props.generate_enums)
+    update_anim_header(header_path, table.reference, table_props.gen_enums)
     update_table_file(
         os.path.join(anim_directory, "table.inc.c"),
         table.reference,
@@ -646,7 +646,7 @@ def export_animation_table_c(
         table_props.add_null_delimiter,
         override_files,
     )
-    if table_props.generate_enums:
+    if table_props.gen_enums:
         update_enum_file(
             os.path.join(anim_directory, "table_enum.h"),
             table.enum_list_reference,
@@ -759,7 +759,7 @@ def export_animation_c(
         update_anim_header(
             os.path.join(geo_directory, "anim_header.h"),
             table_name,
-            table_props.generate_enums,
+            table_props.gen_enums,
         )
         update_table_file(
             os.path.join(anim_directory, "table.inc.c"),
@@ -768,7 +768,7 @@ def export_animation_c(
             table_props.add_null_delimiter,
             False,
         )
-        if table_props.generate_enums:
+        if table_props.gen_enums:
             update_enum_file(
                 os.path.join(anim_directory, "table_enum.h"),
                 table_name,
@@ -812,7 +812,7 @@ def export_animation(context: Context):
         sm64_props.binary_export or anim_props.header_type == "DMA",
         not sm64_props.binary_export or not anim_props.is_binary_dma,
         actor_name,
-        not sm64_props.binary_export and table_props.generate_enums,
+        not sm64_props.binary_export and table_props.gen_enums,
         sm64_props.binary_export,
     )
     anim_file_name = get_anim_file_name(action, action_props)
@@ -854,10 +854,10 @@ def export_animation_table(context: Context):
     armature_obj: Object = context.object
 
     is_binary_dma = sm64_props.binary_export and anim_props.is_binary_dma
-    is_dma = is_binary_dma or anim_props.is_c_dma
+    dma = is_binary_dma or anim_props.is_c_dma
 
     print("Stashing all actions in table")
-    for action in get_table_actions(table_props, not is_dma):
+    for action in get_table_actions(table_props, not dma):
         stashActionInArmature(armature_obj, action)
 
     print("Reading table data from fast64")
@@ -866,10 +866,10 @@ def export_animation_table(context: Context):
         armature_obj,
         sm64_props.blender_to_sm64_scale,
         anim_props.quick_read,
-        is_dma or sm64_props.binary_export,
-        not is_dma,
+        dma or sm64_props.binary_export,
+        not dma,
         anim_props.actor_name,
-        not is_dma and not sm64_props.binary_export and table_props.generate_enums,
+        not dma and not sm64_props.binary_export and table_props.gen_enums,
         sm64_props.binary_export,
     )
 
