@@ -12,6 +12,8 @@ from .settings import (
 from .tools import (
     tools_operators_register,
     tools_operators_unregister,
+    tools_props_register,
+    tools_props_unregister,
     tools_panels_register,
     tools_panels_unregister,
 )
@@ -130,6 +132,7 @@ def sm64_panel_unregister():
 
 def sm64_register(register_panels: bool):
     tools_operators_register()
+    tools_props_register()
     anim_register()
     sm64_col_register()
     sm64_bone_register()
@@ -150,6 +153,7 @@ def sm64_register(register_panels: bool):
 
 def sm64_unregister(unregister_panels: bool):
     tools_operators_unregister()
+    tools_props_unregister()
     anim_unregister()
     sm64_col_unregister()
     sm64_bone_unregister()
