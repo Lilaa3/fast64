@@ -795,7 +795,8 @@ class ImportProperty(PropertyGroup):
         col = layout.column()
         col.label(text="Uses scene import ROM by default", icon="INFO")
         prop_split(col, self, "rom", "Import ROM")
-        return import_rom_ui_warnings(col, self.rom if import_rom is None else import_rom)
+        picked_rom = abspath(self.rom if self.rom else import_rom)
+        return import_rom_ui_warnings(col, picked_rom)
 
     def draw_table_settings(self, layout: UILayout):
         row = layout.row(align=True)

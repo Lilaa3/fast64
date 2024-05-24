@@ -30,10 +30,6 @@ class OperatorBase(Operator):
             setattr(op, key, value)
         return op
 
-    @classmethod
-    def draw_props(cls, layout: UILayout, **prop_kwargs):
-        return cls.draw_operator(layout, **prop_kwargs)
-
     def execute_operator(self, context: Context):
         raise NotImplementedError()
 
