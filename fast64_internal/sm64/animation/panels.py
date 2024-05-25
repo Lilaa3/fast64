@@ -52,7 +52,12 @@ class AnimationPanelAction(AnimationPanel):
     bl_label = "Action"
 
     def draw(self, context: Context):
-        get_animation_props(context).draw_action(self.layout, context.scene.fast64.sm64.export_type)
+        sm64_props: SM64_Properties = context.scene.fast64.sm64
+        if context.object and context.object.type == "ARMATURE":
+            armature = context.object
+        else:
+            armature = None
+        get_animation_props(context).draw_action(self.layout, sm64_props.export_type, armature)
 
 
 class SceneAnimPanelAction(AnimationPanelAction, SceneAnimPanel):

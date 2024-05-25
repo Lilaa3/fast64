@@ -47,6 +47,7 @@ from .utility import (
     get_table_name,
     get_enum_list_name,
     get_enum_list_end,
+    get_selected_action,
 )
 from .constants import HEADER_SIZE
 
@@ -795,18 +796,18 @@ def export_animation(context: Context):
     sm64_props: SM64_Properties = scene.fast64.sm64
     anim_props: AnimProperty = get_animation_props(context)
     table_props: TableProperty = anim_props.table
-    armature_obj: Object = context.object
+    armature = context.object
 
-    action = anim_props.selected_action
+    action = get_selected_action(anim_props, armature)
     action_props: SM64_ActionProperty = action.fast64.sm64
-    stashActionInArmature(armature_obj, action)
-    bone_count = len(get_anim_pose_bones(armature_obj))
+    stashActionInArmature(armature, action)
+    bone_count = len(get_anim_pose_bones(armature))
 
     actor_name = anim_props.actor_name
     animation: Animation = to_animation_class(
         action_props,
         action,
-        armature_obj,
+        armature,
         sm64_props.blender_to_sm64_scale,
         anim_props.quick_read,
         sm64_props.binary_export or anim_props.header_type == "DMA",

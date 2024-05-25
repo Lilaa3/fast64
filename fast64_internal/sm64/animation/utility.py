@@ -12,6 +12,17 @@ from ..sm64_geolayout_bone import animatableBoneTypes
 
 from .constants import FLAG_PROPS
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .properties import (
+        AnimProperty,
+        HeaderProperty,
+        SM64_ActionProperty,
+        TableElementProperty,
+        TableProperty,
+    )
+
 
 def animation_operator_checks(context: Context, requires_animation=True, multiple_objects=False):
     if len(context.selected_objects) == 0 and context.object is None:
@@ -34,10 +45,20 @@ def get_animation_props(context: Context) -> "AnimProperty":
 
 def get_action(name: str):
     if name == "":
-        raise PluginError("Empty action name.")
+        raise ValueError("Empty action name.")
     if not name in bpy.data.actions:
-        raise PluginError(f"Action ({name}) is not in this file´s action data.")
+        raise IndexError(f"Action ({name}) is not in this file´s action data.")
     return bpy.data.actions[name]
+
+
+def get_selected_action(animation_props: "AnimProperty", armature: Object | None) -> Action:
+    if animation_props.selected_action:
+        return animation_props.selected_action
+    elif armature:
+        if armature.animation_data and armature.animation_data.action:
+            return armature.animation_data.action
+        raise ValueError(f'No action selected in armature "{armature.name}".')
+    raise ValueError("No action selected in properties.")
 
 
 def sm64_to_radian(signed_angle: int):
@@ -46,16 +67,16 @@ def sm64_to_radian(signed_angle: int):
     return math.radians(degree % 360.0)
 
 
-def get_anim_pose_bones(armature_obj: Object) -> list[PoseBone]:
-    bones_to_process: list[str] = findStartBones(armature_obj)
-    current_bone = armature_obj.data.bones[bones_to_process[0]]
+def get_anim_pose_bones(armature: Object) -> list[PoseBone]:
+    bones_to_process: list[str] = findStartBones(armature)
+    current_bone = armature.data.bones[bones_to_process[0]]
     anim_bones = []
 
     # Get animation bones in order
     while len(bones_to_process) > 0:
         bone_name = bones_to_process[0]
-        current_bone = armature_obj.data.bones[bone_name]
-        current_pose_bone = armature_obj.pose.bones[bone_name]
+        current_bone = armature.data.bones[bone_name]
+        current_pose_bone = armature.pose.bones[bone_name]
         bones_to_process = bones_to_process[1:]
 
         # Only handle 0x13 bones for animation

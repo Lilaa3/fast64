@@ -3,7 +3,7 @@ from os import PathLike
 from typing import Iterable, Optional
 
 import bpy
-from bpy.types import PropertyGroup, Action, UILayout, Scene
+from bpy.types import PropertyGroup, Action, UILayout, Scene, Object
 from bpy.utils import register_class, unregister_class
 from bpy.props import (
     BoolProperty,
@@ -31,12 +31,7 @@ from ...utility import (
     writeBoxExportType,
     intToHex,
 )
-from ..sm64_utility import (
-    upgrade_hex_prop,
-    import_rom_ui_warnings,
-    string_int_prop,
-    string_int_warning,
-)
+from ..sm64_utility import upgrade_hex_prop, import_rom_ui_warnings, string_int_prop, string_int_warning
 from ..sm64_constants import MAX_U16, MIN_S16, MAX_S16, level_enums, enumLevelNames
 
 from .operators import (
@@ -67,6 +62,7 @@ from .utility import (
     get_anim_name,
     get_element_action,
     get_element_header,
+    get_selected_action,
 )
 
 
@@ -1099,17 +1095,24 @@ class AnimProperty(PropertyGroup):
         draw_exclusive = not self.updates_table(export_type)
         self.table.draw_props(layout, dma, draw_exclusive, export_type, self.actor_name)
 
-    def draw_action(self, layout: UILayout, export_type: str):
+    def draw_action(self, layout: UILayout, export_type: str, armature: Object):
         is_dma = self.is_dma(export_type)
         file_name, gen_enums = export_type != "Binary", self.table.gen_enums
         col = layout.column()
-        col.prop(self, "selected_action")
-        action = self.selected_action
-        if action:
+
+        if armature:
+            col.label(text=f'Uses "{armature.name}"\'s action by default', icon="INFO")
+
+        split = col.split()
+        split.prop(self, "selected_action")
+        try:
+            action = get_selected_action(self, armature)
             action_props: SM64_ActionProperty = action.fast64.sm64
             action_props.draw_props(
                 col, action, None, False, file_name, export_type, self.actor_name, gen_enums, is_dma
             )
+        except ValueError as exc:
+            multilineLabel(col, str(exc), "ERROR")
 
     def draw_export_settings(self, layout: UILayout, export_type: str):
         col = layout.column()
