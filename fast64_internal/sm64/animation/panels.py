@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 # Base
-class AnimationPanel(Panel):
+class AnimationPanel(SM64_Panel):
     bl_label = "SM64 Animations"
 
     def draw(self, context: Context):
@@ -21,7 +21,7 @@ class AnimationPanel(Panel):
 
 
 # Base panels
-class SceneAnimPanel(AnimationPanel, SM64_Panel):
+class SceneAnimPanel(AnimationPanel):
     bl_idname = "SM64_PT_anim"
     goal = "Object/Actor/Anim"
     bl_parent_id = bl_idname
