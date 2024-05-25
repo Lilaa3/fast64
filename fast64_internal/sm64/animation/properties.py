@@ -189,30 +189,25 @@ class HeaderProperty(PropertyGroup):
         # Draw flag toggles
         row = col.row(align=True)
         row.alignment = "LEFT"
-        row.prop(self, "no_loop", invert_checkbox=True, text="Loop")
-        row.prop(self, "no_acceleration", invert_checkbox=True, text="Acceleration")
-        row.prop(self, "backwards")
+        row.prop(self, "no_loop", invert_checkbox=True, text="Loop", toggle=1)
+        row.prop(self, "backwards", toggle=1)
+        row.prop(self, "no_acceleration", invert_checkbox=True, text="Acceleration", toggle=1)
         if self.no_acceleration and self.backwards:
-            col.label(text="Backwards has no porpuse without acceleration.", icon="INFO")
+            col.label(text="Backwards has no porpuse without acceleration.", icon="INFO", toggle=1)
 
-        trans_row = col.row()
+        trans_row = col.row(align=True)
         trans_prop_row = trans_row.row()
-        trans_prop_row.alignment = "LEFT"
-        trans_prop_row.label(text="Translate")
-        trans_prop_row.prop(self, "no_trans", invert_checkbox=True, text="")
+        trans_prop_row.prop(self, "no_trans", invert_checkbox=True, text="Translate", toggle=1)
 
         hor_row = trans_row.row()
-        hor_row.alignment = "LEFT"
         hor_row.enabled = not self.only_horizontal_trans and not self.no_trans
-        hor_row.prop(self, "only_vertical_trans", text="Only Vertically")
+        hor_row.prop(self, "only_vertical_trans", text="Only Vertically", toggle=1)
         vert_row = trans_row.row()
-        vert_row.alignment = "LEFT"
         vert_row.enabled = not self.only_vertical_trans and not self.no_trans
-        vert_row.prop(self, "only_horizontal_trans", text="Only Horizontally")
+        vert_row.prop(self, "only_horizontal_trans", text="Only Horizontally", toggle=1)
         disabled_row = trans_row.row()
-        disabled_row.alignment = "LEFT"
         disabled_row.enabled = not self.only_vertical_trans and not self.no_trans
-        disabled_row.prop(self, "disabled", invert_checkbox=True, text="Shadow")
+        disabled_row.prop(self, "disabled", invert_checkbox=True, text="Shadow", toggle=1)
 
     def draw_frame_range(self, layout: UILayout):
         col = layout.column()
