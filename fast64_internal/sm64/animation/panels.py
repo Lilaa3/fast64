@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 # Base
 class AnimationPanel(SM64_Panel):
     bl_label = "SM64 Animations"
+    goal = "Object/Actor/Anim"
 
     def draw(self, context: Context):
         sm64_props: SM64_Properties = context.scene.fast64.sm64
@@ -23,7 +24,6 @@ class AnimationPanel(SM64_Panel):
 # Base panels
 class SceneAnimPanel(AnimationPanel):
     bl_idname = "SM64_PT_anim"
-    goal = "Object/Actor/Anim"
     bl_parent_id = bl_idname
 
 
@@ -100,6 +100,7 @@ class ObjAnimPanelTools(AnimationPanelTools, ObjAnimPanel):
 
 class AnimationPanelImport(AnimationPanel):
     bl_label = "Importing"
+    import_panel = True
 
     def draw(self, context: Context):
         sm64_props: SM64_Properties = context.scene.fast64.sm64
@@ -108,15 +109,10 @@ class AnimationPanelImport(AnimationPanel):
 
 class SceneAnimPanelImport(SceneAnimPanel, AnimationPanelImport):
     bl_idname = "SM64_PT_anim_panel_import"
-    import_panel = True
 
 
 class ObjAnimPanelImport(ObjAnimPanel, AnimationPanelImport):
     bl_idname = "DATA_PT_SM64_anim_panel_import"
-
-    @classmethod
-    def poll(cls, context: Context):
-        return context.scene.fast64.sm64.show_importing_menus
 
 
 panels = (
