@@ -120,9 +120,9 @@ class HeaderProperty(PropertyGroup):
     trans_divisor: IntProperty(
         name="Translation Divisor",
         description="(animYTransDivisor)\n"
-        "If set to 0, the translation multiplier will be 1.\n"
-        "Otherwise, the translation multiplier is determined by dividing the object's"
-        "translation dividend (animYTrans) by this divisor",
+        "If set to 0, the translation multiplier will be 1. "
+        "Otherwise, the translation multiplier is determined by "
+        "dividing the object's translation dividend (animYTrans) by this divisor",
         min=MIN_S16,
         max=MAX_S16,
     )
