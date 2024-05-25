@@ -17,7 +17,7 @@ def animation_operator_checks(context: Context, requires_animation=True, multipl
     if len(context.selected_objects) == 0 and context.object is None:
         raise PluginError("No armature selected.")
     if not multiple_objects and len(context.selected_objects) > 1:
-        raise PluginError("Multiple objects selected at once, make sure to select only one armature.")
+        raise PluginError("Multiple objects selected at once.")
 
     for obj in context.selected_objects:
         if obj.type != "ARMATURE":
