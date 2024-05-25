@@ -42,7 +42,7 @@ def get_action(name: str):
 
 def sm64_to_radian(signed_angle: int):
     unsigned_angle = signed_angle + (1 << 16)
-    degree = unsigned_angle * (360.0 / (2 **16))
+    degree = unsigned_angle * (360.0 / (2**16))
     return math.radians(degree % 360.0)
 
 

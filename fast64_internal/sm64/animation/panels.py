@@ -32,6 +32,7 @@ class ObjAnimPanel(AnimationPanel):
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "object"
+    object_type = {"ARMATURE"}
     bl_parent_id = bl_idname
 
 
@@ -42,16 +43,6 @@ class SceneAnimPanelMain(SceneAnimPanel):
 
 class ObjAnimPanelMain(ObjAnimPanel):
     bl_parent_id = ""
-
-    @classmethod
-    def poll(cls, context: Context):
-        if not context.object or context.object.type != "ARMATURE":
-            return False
-        scene = context.scene
-        if scene.gameEditorMode != "SM64":
-            return False
-        scene_goal = scene.fast64.sm64.goal
-        return scene_goal in {"All", "Object/Actor/Anim"}
 
 
 # Action tab
