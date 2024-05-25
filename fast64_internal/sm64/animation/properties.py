@@ -1034,22 +1034,30 @@ class AnimProperty(PropertyGroup):
         anim_directory = abspath(os.path.join(geo_directory, "anims"))
         return (anim_directory, geo_directory, header_directory)
 
-    def draw_insertable_binary_settings(self, layout: UILayout):
+    def draw_non_exclusive_settings(self, layout: UILayout, is_dma: bool, export_type: str):
         col = layout.column()
-        prop_split(col, self, "directory_path", "Directory")
-        directory_ui_warnings(col, abspath(self.directory_path))
+        if is_dma and export_type == "C" or export_type == "Insertable Binary":
+            return
 
-    def draw_binary_settings(self, layout: UILayout):
+        is_binary_dma = export_type == "Binary" and self.is_binary_dma
+        if not is_binary_dma:
+            col.prop(self, "update_table")
+        if self.update_table or is_binary_dma:
+            box = col.box().column()
+            box.label(text="Table Settings:", icon="ANIM")
+            self.table.draw_non_exclusive_settings(box, is_dma, export_type, self.actor_name)
+
+    def draw_binary_settings(self, layout: UILayout, export_type: str):
         col = layout.column()
-        box = layout.box().column()
-        if self.is_binary_dma:
-            col.prop(self, "assume_bone_count")
+        col.prop(self, "is_binary_dma")
+        if export_type == "Insertable Binary":
+            prop_split(col, self, "directory_path", "Directory")
+            directory_ui_warnings(col, abspath(self.directory_path))
         else:
-            col.prop(self, "binary_level")
-            box.prop(self, "update_table")
-            if not self.update_table:
-                return
-        self.table.draw_non_exclusive_settings(box, self.is_binary_dma, "Binary", self.actor_name)
+            if self.is_binary_dma:
+                layout.prop(self, "assume_bone_count")
+            else:
+                layout.prop(self, "binary_level")
 
     def draw_c_settings(self, layout: UILayout):
         col = layout.column()
@@ -1085,11 +1093,6 @@ class AnimProperty(PropertyGroup):
                 self.custom_level_name,
                 self.level_option,
             )
-        if not self.is_c_dma:
-            box = col.box().column()
-            box.prop(self, "update_table")
-            if self.update_table:
-                self.table.draw_non_exclusive_settings(box, False, "C", self.actor_name)
 
     def draw_table(self, layout: UILayout, export_type: str):
         dma = self.is_dma(export_type)
@@ -1110,16 +1113,14 @@ class AnimProperty(PropertyGroup):
 
     def draw_export_settings(self, layout: UILayout, export_type: str):
         col = layout.column()
-        is_binary = export_type in {"Binary", "Insertable Binary"}
-        if is_binary:
-            col.prop(self, "is_binary_dma")
-            if export_type == "Binary":
-                self.draw_binary_settings(col)
-            elif export_type == "Insertable Binary":
-                self.draw_insertable_binary_settings(col)
+        if export_type in {"Binary", "Insertable Binary"}:
+            self.draw_binary_settings(col, export_type)
         elif export_type == "C":
             self.draw_c_settings(col)
         col.prop(self, "quick_read")
+        col.separator()
+
+        self.draw_non_exclusive_settings(col, self.is_dma(export_type), export_type)
 
     def draw_tools(self, layout: UILayout):
         col = layout.column()
