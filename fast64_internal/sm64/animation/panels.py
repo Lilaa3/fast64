@@ -1,5 +1,5 @@
 from bpy.utils import register_class, unregister_class
-from bpy.types import Context, Panel
+from bpy.types import Context
 
 from ...panels import SM64_Panel
 
