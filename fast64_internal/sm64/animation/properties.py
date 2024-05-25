@@ -272,7 +272,7 @@ class HeaderProperty(PropertyGroup):
 
         prop_split(col, self, "trans_divisor", "Translation Divisor")
         self.draw_frame_range(col)
-        self.draw_flag_props(col.box(), dma or binary)
+        self.draw_flag_props(col, dma or binary)
 
 
 class SM64_ActionProperty(PropertyGroup):
