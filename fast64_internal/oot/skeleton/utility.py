@@ -93,7 +93,6 @@ def getGroupIndexOfVert(vert, armatureObj, obj, rootGroupIndex):
 
     if len(actualGroups) == 0:
         # return rootGroupIndex
-        # highlightWeightErrors(obj, [vert], "VERT")
         if len(nonBoneGroups) > 0:
             raise VertexWeightError(
                 "All vertices must be part of a vertex group "

@@ -278,7 +278,7 @@ def maybeSaveSingleLargeTextureSetup(
 
 
 def getTextureNamesFromBasename(baseName: str, texOrPalFormat: str, parent: Union[FModel, FTexRect], isPalette: bool):
-    suffix = getTextureSuffixFromFormat(texOrPalFormat)
+    suffix = getTextureSuffixFromFormat(texOrPalFormat.lower())
     imageName = parent.name + "_" + baseName + "_"
     if isPalette:
         imageName += "pal_"

@@ -1,5 +1,5 @@
-import bpy, random, string, os, math, traceback, re, os, mathutils, ast, operator
-from math import pi, ceil, degrees, radians, copysign
+import bpy, os, math, traceback, re, os, mathutils, ast, operator
+from math import pi, ceil
 from mathutils import *
 from .utility_anim import *
 from typing import Callable, Iterable, Any, Tuple, Union
@@ -19,25 +19,9 @@ class VertexWeightError(PluginError):
 # default indentation to use when writing to decomp files
 indent = " " * 4
 
-geoNodeRotateOrder = "ZXY"
-sm64BoneUp = Vector([1, 0, 0])
-
 transform_mtx_blender_to_n64 = lambda: Matrix(((1, 0, 0, 0), (0, 0, 1, 0), (0, -1, 0, 0), (0, 0, 0, 1)))
 
 yUpToZUp = mathutils.Quaternion((1, 0, 0), math.radians(90.0)).to_matrix().to_4x4()
-
-axis_enums = [
-    ("X", "X", "X"),
-    ("Y", "Y", "Y"),
-    ("-X", "-X", "-X"),
-    ("-Y", "-Y", "-Y"),
-]
-
-enumExportHeaderType = [
-    # ('None', 'None', 'Headers are not written'),
-    ("Actor", "Actor Data", "Headers are written to a group in actors/"),
-    ("Level", "Level Data", "Headers are written to a specific level in levels/"),
-]
 
 
 def isPowerOf2(n):
@@ -80,13 +64,6 @@ def hexOrDecInt(value: Union[int, str]) -> int:
         return int(value, 16)
     else:
         return int(value)
-
-
-def getOrMakeVertexGroup(obj, groupName):
-    for group in obj.vertex_groups:
-        if group.name == groupName:
-            return group
-    return obj.vertex_groups.new(name=groupName)
 
 
 def unhideAllAndGetHiddenState(scene):
@@ -267,60 +244,6 @@ def recursiveCopyOldPropertyGroup(oldProp, newProp):
             setattr(newProp, sub_value_attr, sub_value)
 
 
-def propertyCollectionEquals(oldProp, newProp):
-    if len(oldProp) != len(newProp):
-        print("Unequal size: " + str(oldProp) + " " + str(len(oldProp)) + ", " + str(newProp) + str(len(newProp)))
-        return False
-
-    equivalent = True
-    for i in range(len(oldProp)):
-        item = oldProp[i]
-        newItem = newProp[i]
-        if isinstance(item, bpy.types.PropertyGroup):
-            equivalent &= propertyGroupEquals(item, newItem)
-        elif type(item).__name__ == "bpy_prop_collection_idprop":
-            equivalent &= propertyCollectionEquals(item, newItem)
-        else:
-            try:
-                iterator = iter(item)
-            except TypeError:
-                isEquivalent = newItem == item
-            else:
-                isEquivalent = tuple([i for i in newItem]) == tuple([i for i in item])
-            if not isEquivalent:
-                pass  # print("Not equivalent: " + str(item) + " " + str(newItem))
-            equivalent &= isEquivalent
-
-    return equivalent
-
-
-def propertyGroupEquals(oldProp, newProp):
-    equivalent = True
-    for sub_value_attr in oldProp.bl_rna.properties.keys():
-        if sub_value_attr == "rna_type":
-            continue
-        sub_value = getattr(oldProp, sub_value_attr)
-        if isinstance(sub_value, bpy.types.PropertyGroup):
-            equivalent &= propertyGroupEquals(sub_value, getattr(newProp, sub_value_attr))
-        elif type(sub_value).__name__ == "bpy_prop_collection_idprop":
-            newCollection = getattr(newProp, sub_value_attr)
-            equivalent &= propertyCollectionEquals(sub_value, newCollection)
-        else:
-            newValue = getattr(newProp, sub_value_attr)
-            try:
-                iterator = iter(newValue)
-            except TypeError:
-                isEquivalent = newValue == sub_value
-            else:
-                isEquivalent = tuple([i for i in newValue]) == tuple([i for i in sub_value])
-
-            if not isEquivalent:
-                pass  # print("Not equivalent: " + str(sub_value) + " " + str(newValue) + " " + str(sub_value_attr))
-            equivalent &= isEquivalent
-
-    return equivalent
-
-
 def writeCData(data, headerPath, sourcePath):
     sourceFile = open(sourcePath, "w", newline="\n", encoding="utf-8")
     sourceFile.write(data.source)
@@ -374,84 +297,6 @@ class CScrollData(CData):
         return len(self.functionCalls) > 0
 
 
-def getObjectFromData(data):
-    for obj in bpy.data.objects:
-        if obj.data == data:
-            return obj
-    return None
-
-
-def getTabbedText(text, tabCount):
-    return text.replace("\n", "\n" + "\t" * tabCount)
-
-
-def extendedRAMLabel(layout):
-    return
-    infoBox = layout.box()
-    infoBox.label(text="Be sure to add: ")
-    infoBox.label(text='"#define USE_EXT_RAM"')
-    infoBox.label(text="to include/segments.h.")
-    infoBox.label(text="Extended RAM prevents crashes.")
-
-
-def checkExpanded(filepath):
-    size = os.path.getsize(filepath)
-    if size < 9000000:  # check if 8MB
-        raise PluginError(
-            "ROM at "
-            + filepath
-            + " is too small. You may be using an unexpanded ROM. You can expand a ROM by opening it in SM64 Editor or ROM Manager."
-        )
-
-
-def getPathAndLevel(customExport, exportPath, levelName, levelOption):
-    if customExport:
-        exportPath = bpy.path.abspath(exportPath)
-        levelName = levelName
-    else:
-        exportPath = bpy.path.abspath(bpy.context.scene.decompPath)
-        if levelOption == "custom":
-            levelName = levelName
-        else:
-            levelName = levelOption
-    return exportPath, levelName
-
-
-def findStartBones(armatureObj):
-    noParentBones = sorted(
-        [
-            bone.name
-            for bone in armatureObj.data.bones
-            if bone.parent is None and (bone.geo_cmd != "SwitchOption" and bone.geo_cmd != "Ignore")
-        ]
-    )
-
-    if len(noParentBones) == 0:
-        raise PluginError(
-            "No non switch option start bone could be found "
-            + "in "
-            + armatureObj.name
-            + ". Is this the root armature?"
-        )
-    else:
-        return noParentBones
-
-    if len(noParentBones) == 1:
-        return noParentBones[0]
-    elif len(noParentBones) == 0:
-        raise PluginError(
-            "No non switch option start bone could be found "
-            + "in "
-            + armatureObj.name
-            + ". Is this the root armature?"
-        )
-    else:
-        raise PluginError(
-            "Too many parentless bones found. Make sure your bone hierarchy starts from a single bone, "
-            + 'and that any bones not related to a hierarchy have their geolayout command set to "Ignore".'
-        )
-
-
 def getDataFromFile(filepath):
     if not os.path.exists(filepath):
         raise PluginError('Path "' + filepath + '" does not exist.')
@@ -465,35 +310,6 @@ def saveDataToFile(filepath, data):
     dataFile = open(filepath, "w", newline="\n")
     dataFile.write(data)
     dataFile.close()
-
-
-def applyBasicTweaks(baseDir):
-    enableExtendedRAM(baseDir)
-    return
-
-
-def enableExtendedRAM(baseDir):
-    segmentPath = os.path.join(baseDir, "include/segments.h")
-
-    segmentFile = open(segmentPath, "r", newline="\n")
-    segmentData = segmentFile.read()
-    segmentFile.close()
-
-    matchResult = re.search("#define\s*USE\_EXT\_RAM", segmentData)
-
-    if not matchResult:
-        matchResult = re.search("#ifndef\s*USE\_EXT\_RAM", segmentData)
-        if matchResult is None:
-            raise PluginError(
-                "When trying to enable extended RAM, " + "could not find '#ifndef USE_EXT_RAM' in include/segments.h."
-            )
-        segmentData = (
-            segmentData[: matchResult.start(0)] + "#define USE_EXT_RAM\n" + segmentData[matchResult.start(0) :]
-        )
-
-        segmentFile = open(segmentPath, "w", newline="\n")
-        segmentFile.write(segmentData)
-        segmentFile.close()
 
 
 def writeMaterialHeaders(exportDir, matCInclude, matHInclude):
@@ -548,15 +364,6 @@ def writeMaterialBase(baseDir):
         matCFile.close()
 
 
-def getRGBA16Tuple(color):
-    return (
-        ((int(round(color[0] * 0x1F)) & 0x1F) << 11)
-        | ((int(round(color[1] * 0x1F)) & 0x1F) << 6)
-        | ((int(round(color[2] * 0x1F)) & 0x1F) << 1)
-        | (1 if color[3] > 0.5 else 0)
-    )
-
-
 RGB_TO_LUM_COEF = mathutils.Vector([0.2126729, 0.7151522, 0.0721750])
 
 
@@ -566,20 +373,6 @@ def colorToLuminance(color: mathutils.Color | list[float] | Vector):
     return RGB_TO_LUM_COEF.dot(color[:3])
 
 
-def getIA16Tuple(color):
-    intensity = colorToLuminance(color[0:3])
-    alpha = color[3]
-    return (int(round(intensity * 0xFF)) << 8) | int(alpha * 0xFF)
-
-
-def convertRadiansToS16(value):
-    value = math.degrees(value)
-    # ??? Why is this negative?
-    # TODO: Figure out why this has to be this way
-    value = 360 - (value % 360)
-    return hex(round(value / 360 * 0xFFFF))
-
-
 def cast_integer(value: int, bits: int, signed: bool):
     wrap = 1 << bits
     value %= wrap
@@ -587,7 +380,6 @@ def cast_integer(value: int, bits: int, signed: bool):
 
 
 to_s16 = lambda x: cast_integer(round(x), 16, True)
-radians_to_s16 = lambda d: to_s16(d * 0x10000 / (2 * math.pi))
 
 
 def int_from_s16(value: int) -> int:
@@ -605,36 +397,12 @@ def float_from_u16_str(value: str) -> float:
     return float(int(value, 0)) / (2**16)
 
 
-def decompFolderMessage(layout):
-    layout.box().label(text="This will export to your decomp folder.")
-
-
-def customExportWarning(layout):
-    layout.box().label(text="This will not write any headers/dependencies.")
-
-
 def raisePluginError(operator, exception):
     print(traceback.format_exc())
     if bpy.context.scene.fullTraceback:
         operator.report({"ERROR"}, traceback.format_exc())
     else:
         operator.report({"ERROR"}, str(exception))
-
-
-def highlightWeightErrors(obj, elements, elementType):
-    return  # Doesn't work currently
-    if bpy.context.mode != "OBJECT":
-        bpy.ops.object.mode_set(mode="OBJECT")
-    bpy.ops.object.select_all(action="DESELECT")
-    obj.select_set(True)
-    bpy.context.view_layer.objects.active = obj
-    bpy.ops.object.mode_set(mode="EDIT")
-    bpy.ops.mesh.select_all(action="DESELECT")
-    bpy.ops.mesh.select_mode(type=elementType)
-    bpy.ops.object.mode_set(mode="OBJECT")
-    print(elements)
-    for element in elements:
-        element.select = True
 
 
 def checkIdentityRotation(obj, rotation, allowYaw):
@@ -668,34 +436,6 @@ def setOrigin(target, obj):
 def checkIfPathExists(filePath):
     if not os.path.exists(filePath):
         raise PluginError(filePath + " does not exist.")
-
-
-def makeWriteInfoBox(layout):
-    writeBox = layout.box()
-    writeBox.label(text="Along with header edits, this will write to:")
-    return writeBox
-
-
-def writeBoxExportType(writeBox, headerType, name, levelName, levelOption):
-    if headerType == "Actor":
-        writeBox.label(text="actors/" + toAlnum(name))
-    elif headerType == "Level":
-        if levelOption != "custom":
-            levelName = levelOption
-        writeBox.label(text="levels/" + toAlnum(levelName) + "/" + toAlnum(name))
-
-
-def getExportDir(customExport, dirPath, headerType, levelName, texDir, dirName):
-    # Get correct directory from decomp base, and overwrite texDir
-    if not customExport:
-        if headerType == "Actor":
-            dirPath = os.path.join(dirPath, "actors")
-            texDir = "actors/" + dirName
-        elif headerType == "Level":
-            dirPath = os.path.join(dirPath, "levels/" + levelName)
-            texDir = "levels/" + levelName
-
-    return dirPath, texDir
 
 
 def overwriteData(headerRegex, name, value, filePath, writeNewBeforeString, isFunction):
@@ -762,117 +502,9 @@ def deleteIfFound(filePath, stringValue):
         fileData.close()
 
 
-def yield_children(obj: bpy.types.Object):
-    yield obj
-    if obj.children:
-        for o in obj.children:
-            yield from yield_children(o)
-
-
-def store_original_mtx():
-    active_obj = bpy.context.view_layer.objects.active
-    for obj in yield_children(active_obj):
-        obj["original_mtx"] = obj.matrix_local
-
-
-def rotate_bounds(bounds, mtx: mathutils.Matrix):
-    return [(mtx @ mathutils.Vector(b)).to_tuple() for b in bounds]
-
-
 def obj_scale_is_unified(obj):
     """Combine scale values into a set to ensure all values are the same"""
     return len(set(obj.scale)) == 1
-
-
-def translation_rotation_from_mtx(mtx: mathutils.Matrix):
-    """Strip scale from matrix"""
-    t, r, _ = mtx.decompose()
-    return Matrix.Translation(t) @ r.to_matrix().to_4x4()
-
-
-def scale_mtx_from_vector(scale: mathutils.Vector):
-    return mathutils.Matrix.Diagonal(scale[0:3]).to_4x4()
-
-
-def copy_object_and_apply(obj: bpy.types.Object, apply_scale=False, apply_modifiers=False):
-    if apply_scale or apply_modifiers:
-        # it's a unique mesh, use object name
-        obj["instanced_mesh_name"] = obj.name
-
-        obj.original_name = obj.name
-        if apply_scale:
-            obj["original_mtx"] = translation_rotation_from_mtx(mathutils.Matrix(obj["original_mtx"]))
-
-    obj_copy = obj.copy()
-    obj_copy.data = obj_copy.data.copy()
-
-    if apply_modifiers:
-        # In order to correctly apply modifiers, we have to go through blender and add the object to the collection, then apply modifiers
-        prev_active = bpy.context.view_layer.objects.active
-        bpy.context.collection.objects.link(obj_copy)
-        obj_copy.select_set(True)
-        bpy.context.view_layer.objects.active = obj_copy
-        for modifier in obj_copy.modifiers:
-            attemptModifierApply(modifier)
-
-        bpy.context.view_layer.objects.active = prev_active
-
-    obj_copy.parent = None
-    # reset transformations
-    obj_copy.location = mathutils.Vector([0.0, 0.0, 0.0])
-    obj_copy.scale = mathutils.Vector([1.0, 1.0, 1.0])
-    obj_copy.rotation_quaternion = mathutils.Quaternion([1, 0, 0, 0])
-
-    mtx = transform_mtx_blender_to_n64()
-    if apply_scale:
-        mtx = mtx @ scale_mtx_from_vector(obj.scale)
-
-    obj_copy.data.transform(mtx)
-    # Flag used for finding these temp objects
-    obj_copy["temp_export"] = True
-
-    # Override for F3D culling bounds (used in addCullCommand)
-    bounds_mtx = transform_mtx_blender_to_n64()
-    if apply_scale:
-        bounds_mtx = bounds_mtx @ scale_mtx_from_vector(obj.scale)  # apply scale if needed
-    obj_copy["culling_bounds"] = rotate_bounds(obj_copy.bound_box, bounds_mtx)
-
-
-def store_original_meshes(add_warning: Callable[[str], None]):
-    """
-    - Creates new objects at 0, 0, 0 with shared mesh
-    - Original mesh name is saved to each object
-    """
-    instanced_meshes = set()
-    active_obj = bpy.context.view_layer.objects.active
-    for obj in yield_children(active_obj):
-        if obj.type != "EMPTY":
-            has_modifiers = len(obj.modifiers) != 0
-            has_uneven_scale = not obj_scale_is_unified(obj)
-            shares_mesh = obj.data.users > 1
-            can_instance = not has_modifiers and not has_uneven_scale
-            should_instance = can_instance and (shares_mesh or obj.scaleFromGeolayout)
-
-            if should_instance:
-                # add `_shared_mesh` to instanced name because `obj.data.name` can be the same as object names
-                obj["instanced_mesh_name"] = f"{obj.data.name}_shared_mesh"
-                obj.original_name = obj.name
-
-                if obj.data.name not in instanced_meshes:
-                    instanced_meshes.add(obj.data.name)
-                    copy_object_and_apply(obj)
-            else:
-                if shares_mesh and has_modifiers:
-                    add_warning(
-                        f'Object "{obj.name}" cannot be instanced due to having modifiers so an extra displaylist will be created. Remove modifiers to allow instancing.'
-                    )
-                if shares_mesh and has_uneven_scale:
-                    add_warning(
-                        f'Object "{obj.name}" cannot be instanced due to uneven object scaling and an extra displaylist will be created. Set all scale values to the same value to allow instancing.'
-                    )
-
-                copy_object_and_apply(obj, apply_scale=True, apply_modifiers=has_modifiers)
-    bpy.context.view_layer.objects.active = active_obj
 
 
 def get_obj_temp_mesh(obj):
@@ -993,27 +625,6 @@ def cleanupDuplicatedObjects(selected_objects):
         bpy.data.meshes.remove(mesh)
 
 
-def cleanupTempMeshes():
-    """Delete meshes that have been duplicated for instancing"""
-    remove_data = []
-    for obj in bpy.data.objects:
-        if obj.get("temp_export"):
-            remove_data.append(obj.data)
-            bpy.data.objects.remove(obj)
-        else:
-            if obj.get("instanced_mesh_name"):
-                del obj["instanced_mesh_name"]
-            if obj.get("original_mtx"):
-                del obj["original_mtx"]
-
-    for data in remove_data:
-        data_type = type(data)
-        if data_type == bpy.types.Mesh:
-            bpy.data.meshes.remove(data)
-        elif data_type == bpy.types.Curve:
-            bpy.data.curves.remove(data)
-
-
 def combineObjects(obj, includeChildren, ignoreAttr, areaIndex):
     obj.original_name = obj.name
 
@@ -1069,55 +680,38 @@ def combineObjects(obj, includeChildren, ignoreAttr, areaIndex):
     return joinedObj, meshList
 
 
-def cleanupCombineObj(tempObj, meshList):
-    for mesh in meshList:
-        bpy.data.meshes.remove(mesh)
-    cleanupDuplicatedObjects([tempObj])
-    # obj.select_set(True)
-    # bpy.context.view_layer.objects.active = obj
+def getRGBA16Tuple(color):
+    return (
+        ((int(round(color[0] * 0x1F)) & 0x1F) << 11)
+        | ((int(round(color[1] * 0x1F)) & 0x1F) << 6)
+        | ((int(round(color[2] * 0x1F)) & 0x1F) << 1)
+        | (1 if color[3] > 0.5 else 0)
+    )
 
 
-def writeInsertableFile(filepath, dataType, address_ptrs, startPtr, data):
-    address = 0
-    openfile = open(filepath, "wb")
-
-    # 0-4 - Data Type
-    openfile.write(dataType.to_bytes(4, "big"))
-    address += 4
-
-    # 4-8 - Data Size
-    openfile.seek(address)
-    openfile.write(len(data).to_bytes(4, "big"))
-    address += 4
-
-    # 8-12 Start Address
-    openfile.seek(address)
-    openfile.write(startPtr.to_bytes(4, "big"))
-    address += 4
-
-    # 12-16 - Number of pointer addresses
-    openfile.seek(address)
-    openfile.write(len(address_ptrs).to_bytes(4, "big"))
-    address += 4
-
-    # 16-? - Pointer address list
-    for i in range(len(address_ptrs)):
-        openfile.seek(address)
-        openfile.write(address_ptrs[i].to_bytes(4, "big"))
-        address += 4
-
-    openfile.seek(address)
-    openfile.write(data)
-    openfile.close()
+def getIA16Tuple(color):
+    intensity = colorToLuminance(color[0:3])
+    alpha = color[3]
+    return (int(round(intensity * 0xFF)) << 8) | int(alpha * 0xFF)
 
 
-def colorTo16bitRGBA(color):
-    r = int(round(color[0] * 31))
-    g = int(round(color[1] * 31))
-    b = int(round(color[2] * 31))
-    a = 1 if color[3] > 0.5 else 0
+def read16bitRGBA(data):
+    r = bitMask(data, 11, 5) / ((2**5) - 1)
+    g = bitMask(data, 6, 5) / ((2**5) - 1)
+    b = bitMask(data, 1, 5) / ((2**5) - 1)
+    a = bitMask(data, 0, 1) / ((2**1) - 1)
 
-    return (r << 11) | (g << 6) | (b << 1) | a
+    return [r, g, b, a]
+
+
+# convert 32 bit (8888) to 16 bit (5551) color
+def convert32to16bitRGBA(oldPixel):
+    if oldPixel[3] > 127:
+        alpha = 1
+    else:
+        alpha = 0
+    newPixel = (oldPixel[0] >> 3) << 11 | (oldPixel[1] >> 3) << 6 | (oldPixel[2] >> 3) << 1 | alpha
+    return newPixel.to_bytes(2, "big")
 
 
 # On 2.83/2.91 the rotate operator rotates in the opposite direction (???)
@@ -1156,33 +750,6 @@ def getAddressFromRAMAddress(RAMAddress):
     return addr
 
 
-def getObjectQuaternion(obj):
-    if obj.rotation_mode == "QUATERNION":
-        rotation = mathutils.Quaternion(obj.rotation_quaternion)
-    elif obj.rotation_mode == "AXIS_ANGLE":
-        rotation = mathutils.Quaternion(obj.rotation_axis_angle)
-    else:
-        rotation = mathutils.Euler(obj.rotation_euler, obj.rotation_mode).to_quaternion()
-    return rotation
-
-
-def tempName(name):
-    letters = string.digits
-    return name + "_temp" + "".join(random.choice(letters) for i in range(10))
-
-
-def label_split(layout, name, text):
-    split = layout.split(factor=0.5)
-    split.label(text=name)
-    split.label(text=text)
-
-
-def enum_label_split(layout, name, data, prop, enumItems):
-    split = layout.split(factor=0.5)
-    split.label(text=name)
-    split.enum_item_name(data, prop, enumItems)
-
-
 def prop_split(layout, data, field, name, **prop_kwargs):
     split = layout.split(factor=0.5)
     split.label(text=name)
@@ -1208,13 +775,6 @@ def toAlnum(name, exceptions=[]):
     return name
 
 
-def get64bitAlignedAddr(address):
-    endNibble = hex(address)[-1]
-    if endNibble != "0" and endNibble != "8":
-        address = ceil(address / 8) * 8
-    return address
-
-
 def getNameFromPath(path, removeExtension=False):
     if path[:2] == "//":
         path = path[2:]
@@ -1226,11 +786,6 @@ def getNameFromPath(path, removeExtension=False):
 
 def gammaCorrect(linearColor):
     return list(mathutils.Color(linearColor[:3]).from_scene_linear_to_srgb())
-
-
-def gammaCorrectValue(linearValue):
-    # doesn't need to use `colorToLuminance` since all values are the same
-    return mathutils.Color((linearValue, linearValue, linearValue)).from_scene_linear_to_srgb().v
 
 
 def gammaInverse(sRGBColor):
@@ -1246,23 +801,12 @@ def exportColor(lightColor):
     return [scaleToU8(value) for value in gammaCorrect(lightColor)]
 
 
-def printBlenderMessage(msgSet, message, blenderOp):
-    if blenderOp is not None:
-        blenderOp.report(msgSet, message)
-    else:
-        print(message)
-
-
 def bytesToInt(value):
     return int.from_bytes(value, "big")
 
 
 def bytesToHex(value, byteSize=4):
     return format(bytesToInt(value), "#0" + str(byteSize * 2 + 2) + "x")
-
-
-def bytesToHexClean(value, byteSize=4):
-    return format(bytesToInt(value), "0" + str(byteSize * 2) + "x")
 
 
 def intToHex(value, byteSize=4):
@@ -1301,57 +845,21 @@ def getSegment(address, segmentData):
     raise PluginError("Address " + hex(address) + " is not found in any of the provided segments.")
 
 
-# Position
-def readVectorFromShorts(command, offset):
-    return [readFloatFromShort(command, valueOffset) for valueOffset in range(offset, offset + 6, 2)]
+def get64bitAlignedAddr(address):
+    endNibble = hex(address)[-1]
+    if endNibble != "0" and endNibble != "8":
+        address = ceil(address / 8) * 8
+    return address
 
 
-def readFloatFromShort(command, offset):
-    return int.from_bytes(command[offset : offset + 2], "big", signed=True) / bpy.context.scene.blenderToSM64Scale
-
-
-def writeVectorToShorts(command, offset, values):
-    for i in range(3):
-        valueOffset = offset + i * 2
-        writeFloatToShort(command, valueOffset, values[i])
-
-
-def writeFloatToShort(command, offset, value):
-    command[offset : offset + 2] = int(round(value * bpy.context.scene.blenderToSM64Scale)).to_bytes(
-        2, "big", signed=True
-    )
-
-
-def convertFloatToShort(value):
-    return int(round((value * bpy.context.scene.blenderToSM64Scale)))
-
-
-def convertEulerFloatToShort(value):
-    return int(round(degrees(value)))
-
-
-# Rotation
-
-
-# Rotation is stored as a short.
-# Zero rotation starts at Z+ on an XZ plane and goes counterclockwise.
-# 2**16 - 1 is the last value before looping around again.
-def readEulerVectorFromShorts(command, offset):
-    return [readEulerFloatFromShort(command, valueOffset) for valueOffset in range(offset, offset + 6, 2)]
-
-
-def readEulerFloatFromShort(command, offset):
-    return radians(int.from_bytes(command[offset : offset + 2], "big", signed=True))
-
-
-def writeEulerVectorToShorts(command, offset, values):
-    for i in range(3):
-        valueOffset = offset + i * 2
-        writeEulerFloatToShort(command, valueOffset, values[i])
-
-
-def writeEulerFloatToShort(command, offset, value):
-    command[offset : offset + 2] = int(round(degrees(value))).to_bytes(2, "big", signed=True)
+def getObjectQuaternion(obj):
+    if obj.rotation_mode == "QUATERNION":
+        rotation = mathutils.Quaternion(obj.rotation_quaternion)
+    elif obj.rotation_mode == "AXIS_ANGLE":
+        rotation = mathutils.Quaternion(obj.rotation_axis_angle)
+    else:
+        rotation = mathutils.Euler(obj.rotation_euler, obj.rotation_mode).to_quaternion()
+    return rotation
 
 
 def getObjDirectionVec(obj, toExport: bool):
@@ -1361,33 +869,6 @@ def getObjDirectionVec(obj, toExport: bool):
         rotation = spaceRot @ rotation
     normal = (rotation @ mathutils.Vector((0, 0, 1))).normalized()
     return normal
-
-
-# convert 32 bit (8888) to 16 bit (5551) color
-def convert32to16bitRGBA(oldPixel):
-    if oldPixel[3] > 127:
-        alpha = 1
-    else:
-        alpha = 0
-    newPixel = (oldPixel[0] >> 3) << 11 | (oldPixel[1] >> 3) << 6 | (oldPixel[2] >> 3) << 1 | alpha
-    return newPixel.to_bytes(2, "big")
-
-
-# convert normalized RGB values to bytes (0-255)
-def convertRGB(normalizedRGB):
-    return bytearray([int(normalizedRGB[0] * 255), int(normalizedRGB[1] * 255), int(normalizedRGB[2] * 255)])
-
-
-# convert normalized RGB values to bytes (0-255)
-def convertRGBA(normalizedRGBA):
-    return bytearray(
-        [
-            int(normalizedRGBA[0] * 255),
-            int(normalizedRGBA[1] * 255),
-            int(normalizedRGBA[2] * 255),
-            int(normalizedRGBA[3] * 255),
-        ]
-    )
 
 
 def vector3ComponentMultiply(a, b):
@@ -1422,12 +903,6 @@ def convertFloatToFixed16Bytes(value):
 
 def convertFloatToFixed16(value):
     return int(round(value * (2**5)))
-
-    # We want support for large textures with 32 bit UVs
-    # value *= 2**5
-    # value = min(max(value, -2**15), 2**15 - 1)
-    # return int.from_bytes(
-    # 	int(round(value)).to_bytes(2, 'big', signed = True), 'big')
 
 
 def scaleToU8(val):
@@ -1490,21 +965,8 @@ def getRgbNormalSettings(f3d_mat: "F3DMaterialProperty") -> Tuple[bool, bool, bo
     return has_rgb, has_normal, has_packed_normals
 
 
-def byteMask(data, offset, amount):
-    return bitMask(data, offset * 8, amount * 8)
-
-
 def bitMask(data, offset, amount):
     return (~(-1 << amount) << offset & data) >> offset
-
-
-def read16bitRGBA(data):
-    r = bitMask(data, 11, 5) / ((2**5) - 1)
-    g = bitMask(data, 6, 5) / ((2**5) - 1)
-    b = bitMask(data, 1, 5) / ((2**5) - 1)
-    a = bitMask(data, 0, 1) / ((2**1) - 1)
-
-    return [r, g, b, a]
 
 
 def join_c_args(args: "list[str]"):
@@ -1601,12 +1063,6 @@ def ootGetBaseOrCustomLight(prop, idx, toExport: bool, errIfMissing: bool):
     if toExport:
         col, dir = exportColor(col), normToSigned8Vector(dir)
     return col, dir
-
-
-def getTextureSuffixFromFormat(texFmt):
-    # if texFmt == "RGBA16":
-    #     return "rgb5a1"
-    return texFmt.lower()
 
 
 binOps = {

@@ -13,51 +13,51 @@ from .sm64_f3d_writer import SM64Model, SM64GfxFormatter
 from .sm64_texscroll import modifyTexScrollFiles, modifyTexScrollHeadersGroup
 from .sm64_level_parser import parseLevelAtPointer
 from .sm64_rom_tweaks import ExtendBank0x04
-from .sm64_utility import starSelectWarning
+from .sm64_constants import geoNodeRotateOrder, enumExportHeaderType
+from .sm64_utility import (
+    findStartBones,
+    getExportDir,
+    writeInsertableFile,
+    convertEulerFloatToShort,
+    convertFloatToShort,
+    highlightWeightErrors,
+    getPathAndLevel,
+    applyBasicTweaks,
+    tempName,
+    checkExpanded,
+    customExportWarning,
+    decompFolderMessage,
+    makeWriteInfoBox,
+    writeBoxExportType,
+)
 
 from ..utility import (
     PluginError,
     VertexWeightError,
     setOrigin,
     raisePluginError,
-    findStartBones,
     duplicateHierarchy,
     cleanupDuplicatedObjects,
-    getExportDir,
     toAlnum,
     writeMaterialFiles,
     writeIfNotFound,
     get64bitAlignedAddr,
     encodeSegmentedAddr,
     writeMaterialHeaders,
-    writeInsertableFile,
     bytesToHex,
     checkSM64EmptyUsesGeoLayout,
-    convertEulerFloatToShort,
-    convertFloatToShort,
     checkIsSM64InlineGeoLayout,
     checkIsSM64PreInlineGeoLayout,
     translate_blender_to_n64,
     rotate_quat_blender_to_n64,
     get_obj_temp_mesh,
     getGroupNameFromIndex,
-    highlightWeightErrors,
     getGroupIndexFromname,
     getFMeshName,
     checkUniqueBoneNames,
     applyRotation,
-    getPathAndLevel,
-    applyBasicTweaks,
-    tempName,
-    checkExpanded,
     getAddressFromRAMAddress,
     prop_split,
-    customExportWarning,
-    decompFolderMessage,
-    makeWriteInfoBox,
-    writeBoxExportType,
-    enumExportHeaderType,
-    geoNodeRotateOrder,
 )
 
 from ..f3d.f3d_bleed import (
@@ -3277,7 +3277,6 @@ class SM64_ExportGeolayoutPanel(SM64_Panel):
                     context.scene.geoLevelOption,
                 )
 
-            # extendedRAMLabel(col)
         elif context.scene.fast64.sm64.exportType == "Insertable Binary":
             col.prop(context.scene, "geoInsertableBinaryPath")
         else:

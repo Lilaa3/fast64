@@ -102,6 +102,13 @@ def cmdToPositiveInt(cmd):
     return cmd if cmd >= 0 else 256 + cmd
 
 
+def getOrMakeVertexGroup(obj, groupName):
+    for group in obj.vertex_groups:
+        if group.name == groupName:
+            return group
+    return obj.vertex_groups.new(name=groupName)
+
+
 def parseF3DBinary(romfile, startAddress, scene, bMesh, obj, transformMatrix, groupName, segmentData, vertexBuffer):
     f3d = F3D("F3D")
     currentAddress = startAddress
@@ -1923,9 +1930,6 @@ def parseF3D(
     f3dContext.setCurrentTransform(limbName)
     f3dContext.limbToBoneName[limbName] = boneName
     setattr(f3dContext.mat().draw_layer, drawLayerPropName, drawLayer)
-
-    # vertexGroup = getOrMakeVertexGroup(obj, boneName)
-    # groupIndex = vertexGroup.index
 
     processedDLName = f3dContext.processDLName(dlName)
     if processedDLName is not None:

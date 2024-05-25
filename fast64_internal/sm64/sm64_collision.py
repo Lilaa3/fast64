@@ -15,24 +15,26 @@ from ..utility import (
     encodeSegmentedAddr,
     get64bitAlignedAddr,
     prop_split,
-    getExportDir,
     writeIfNotFound,
     deleteIfFound,
     duplicateHierarchy,
     cleanupDuplicatedObjects,
-    writeInsertableFile,
     applyRotation,
-    getPathAndLevel,
-    applyBasicTweaks,
+    bytesToHex,
+)
+
+from .sm64_constants import enumExportHeaderType
+from .sm64_utility import (
     tempName,
     checkExpanded,
-    bytesToHex,
-    applyRotation,
+    writeInsertableFile,
+    getExportDir,
+    getPathAndLevel,
+    applyBasicTweaks,
     customExportWarning,
     decompFolderMessage,
     makeWriteInfoBox,
     writeBoxExportType,
-    enumExportHeaderType,
 )
 
 

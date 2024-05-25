@@ -1,6 +1,6 @@
 import bpy, mathutils
 from bpy.utils import register_class, unregister_class
-from ..utility import colorTo16bitRGBA, gammaCorrect
+from ..utility import getRGBA16Tuple, gammaCorrect
 
 from .sm64_geolayout_classes import (
     TransformNode,
@@ -92,7 +92,7 @@ def saveCameraSettingsToGeolayout(geolayoutGraph, areaObj, rootObj, meshGeolayou
         zBufferDisable.children.append(orthoNode)
 
         # Uses Level Root here
-        bgColor = colorTo16bitRGBA(
+        bgColor = getRGBA16Tuple(
             gammaCorrect(areaObj.areaBGColor if areaObj.areaOverrideBG else rootObj.backgroundColor) + [1]
         )
         if areaObj.areaOverrideBG:

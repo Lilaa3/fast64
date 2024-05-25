@@ -11,7 +11,7 @@ from ..utility import (
     PluginError,
     decodeSegmentedAddr,
     raisePluginError,
-    bytesToHexClean,
+    bytesToHex,
     bitMask,
     readVectorFromShorts,
     findStartBones,
@@ -818,7 +818,7 @@ def parseSwitch(
         romfile.seek(currentAddress)
         command = romfile.read(commandSize)
         funcParam = int.from_bytes(command[2:4], "big", signed=True)
-        switchFunc = bytesToHexClean(command[4:8])
+        switchFunc = bytesToHex(command[4:8])
 
         boneName = format(nodeIndex, "03") + "-switch"
         if armatureObj is not None:
@@ -1414,7 +1414,7 @@ def parseFunction(
     romfile.seek(currentAddress)
     command = romfile.read(commandSize)
     asmParam = int.from_bytes(command[2:4], "big", signed=True)
-    asmFunc = bytesToHexClean(command[4:8])
+    asmFunc = bytesToHex(command[4:8])
 
     boneName = format(nodeIndex, "03") + "-asm"
     if armatureObj is not None and not ignoreNode:
@@ -1438,7 +1438,7 @@ def parseHeldObject(
     pos = readVectorFromShorts(command, 2)
     translation = mathutils.Matrix.Translation(mathutils.Vector(pos))
     finalTransform = currentTransform @ translation
-    asmFunc = bytesToHexClean(command[8:12])
+    asmFunc = bytesToHex(command[8:12])
 
     if not ignoreNode:
         boneName = format(nodeIndex, "03") + "-held_object"

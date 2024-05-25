@@ -6,9 +6,10 @@ from bpy.props import BoolProperty
 from bpy.path import abspath
 
 from ...operators import AddWaterBox
-from ...utility import PluginError, checkExpanded, decodeSegmentedAddr, encodeSegmentedAddr, raisePluginError
+from ...utility import PluginError, decodeSegmentedAddr, encodeSegmentedAddr, raisePluginError
 
 from ..sm64_constants import level_pointers
+from ..sm64_utility import checkExpanded
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_geolayout_utility import createBoneGroups
 from ..sm64_geolayout_parser import generateMetarig

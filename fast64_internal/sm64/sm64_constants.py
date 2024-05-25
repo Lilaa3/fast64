@@ -1,3 +1,5 @@
+from mathutils import Vector
+
 # RAM address used in evaluating switch for hatless Mario
 marioHatSwitch = 0x80277740
 marioLowPolySwitch = 0x80277150
@@ -22,6 +24,16 @@ lightIndices = [0x86, 0x88, 0x8A, 0x8C, 0x8E, 0x90, 0x92, 0x94]
 
 originalMarioHeadROMInterval = (0x011B4F58, 0x011B5710)
 
+sm64BoneUp = Vector([1, 0, 0])
+geoNodeRotateOrder = "ZXY"
+
+enumExportHeaderType = [
+    # ('None', 'None', 'Headers are not written'),
+    ("Actor", "Actor Data", "Headers are written to a group in actors/"),
+    ("Level", "Level Data", "Headers are written to a specific level in levels/"),
+]
+
+
 marioVanishOffsets = {
     "regular": 0xB0C,
     "metal": 0x9EC,
@@ -33,6 +45,13 @@ commonGeolayoutPointers = {
     "Bowser 2": [1809328, "BFB"],
     "Lakitu": [1985520, "CC"],
 }
+
+enumExportHeaderType = [
+    # ('None', 'None', 'Headers are not written'),
+    ("Actor", "Actor Data", "Headers are written to a group in actors/"),
+    ("Level", "Level Data", "Headers are written to a specific level in levels/"),
+]
+
 
 level_enums = [
     ("HH", "Big Boo's Haunt", "HH"),  # Originally Haunted House

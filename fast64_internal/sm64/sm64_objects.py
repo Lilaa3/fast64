@@ -8,7 +8,7 @@ from ..utility import (
     CData,
     Vector,
     toAlnum,
-    convertRadiansToS16,
+    radians_to_s16,
     checkIdentityRotation,
     obj_scale_is_unified,
     all_values_equal_x,
@@ -624,7 +624,7 @@ class CameraVolume:
             + ", "
             + str(int(round(self.scale[2])))
             + ", "
-            + str(convertRadiansToS16(self.rotation[1]))
+            + str(radians_to_s16(self.rotation[1]))
             + "},"
         )
         return data

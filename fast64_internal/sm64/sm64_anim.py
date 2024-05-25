@@ -25,7 +25,6 @@ from ..utility import (
     applyRotation,
     getPathAndLevel,
     applyBasicTweaks,
-    checkExpanded,
     tempName,
     bytesToHex,
     prop_split,
@@ -37,6 +36,7 @@ from ..utility import (
     enumExportHeaderType,
 )
 
+from .sm64_utility import checkExpanded
 from .sm64_constants import (
     bank0Segment,
     insertableBinaryTypes,

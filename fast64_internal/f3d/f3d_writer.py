@@ -537,6 +537,11 @@ def addCullCommand(obj, fMesh, transformMatrix, matWriteMethod):
 
 
 def exportF3DCommon(obj, fModel, transformMatrix, includeChildren, name, DLFormat, convertTextureData):
+    def cleanupCombineObj(tempObj, meshList):
+        for mesh in meshList:
+            bpy.data.meshes.remove(mesh)
+        cleanupDuplicatedObjects([tempObj])
+
     tempObj, meshList = combineObjects(obj, includeChildren, None, None)
     try:
         infoDict = getInfoDict(tempObj)
