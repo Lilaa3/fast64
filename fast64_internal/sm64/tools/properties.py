@@ -11,12 +11,13 @@ from ..sm64_constants import level_enums
 
 from .operators import SM64_AddrConv
 
+
 class SM64_AddrConvProperties(PropertyGroup):
     rom: StringProperty(name="Import ROM", subtype="FILE_PATH")
     address: StringProperty(name="Address")
     level: EnumProperty(items=level_enums, name="Level", default="IC")
     clipboard: BoolProperty(name="Copy to Clipboard", default=True)
-    
+
     def draw_props(self, layout: UILayout, import_rom: PathLike = None):
         col = layout.column()
         col.label(text="Uses scene import ROM by default", icon="INFO")
@@ -32,13 +33,15 @@ class SM64_AddrConvProperties(PropertyGroup):
             args = {"rom": picked_rom, "level": self.level, "addr": self.address, "clipboard": self.clipboard}
             SM64_AddrConv.draw_props(split, text="Segmented to Virtual", option="TO_VIR", **args)
             SM64_AddrConv.draw_props(split, text="Virtual To Segmented", option="TO_SEG", **args)
-    
-classes = (SM64_AddrConvProperties, )
+
+
+classes = (SM64_AddrConvProperties,)
 
 
 def tools_props_register():
     for cls in classes:
         register_class(cls)
+
 
 def tools_props_unregister():
     for cls in reversed(classes):

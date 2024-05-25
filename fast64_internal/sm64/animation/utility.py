@@ -32,18 +32,17 @@ def get_animation_props(context: Context) -> "AnimProperty":
     return context.scene.fast64.sm64.animation
 
 
-def get_action(action_name: str):
-    if action_name == "":
+def get_action(name: str):
+    if name == "":
         raise PluginError("Empty action name.")
-    if not action_name in bpy.data.actions:
-        raise PluginError(f"Action ({action_name}) is not in this file´s action data.")
+    if not name in bpy.data.actions:
+        raise PluginError(f"Action ({name}) is not in this file´s action data.")
+    return bpy.data.actions[name]
 
-    return bpy.data.actions[action_name]
 
-
-def sm64_to_radian(signed_sm64_angle: int) -> float:
-    unsigned_sm64_angle = signed_sm64_angle + (1 << 16)
-    degree = unsigned_sm64_angle * (360.0 / (1 << 16))
+def sm64_to_radian(signed_angle: int):
+    unsigned_angle = signed_angle + (1 << 16)
+    degree = unsigned_angle * (360.0 / (2 **16))
     return math.radians(degree % 360.0)
 
 

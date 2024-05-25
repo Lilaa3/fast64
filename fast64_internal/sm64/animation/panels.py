@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..settings.properties import SM64_Properties
-    from .properties import AnimProperty
 
 
 # Base
@@ -112,7 +111,8 @@ class AnimationPanelImport(AnimationPanel):
     bl_label = "Importing"
 
     def draw(self, context: Context):
-        get_animation_props(context).importing.draw_props(self.layout, context.scene.fast64.sm64.import_rom)
+        sm64_props: SM64_Properties = context.scene.fast64.sm64
+        get_animation_props(context).importing.draw_props(self.layout, sm64_props.import_rom)
 
 
 class SceneAnimPanelImport(SceneAnimPanel, AnimationPanelImport):
