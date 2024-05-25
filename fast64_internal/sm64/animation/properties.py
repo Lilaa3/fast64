@@ -394,7 +394,7 @@ class SM64_ActionProperty(PropertyGroup):
             if specific_variant < 0 or specific_variant >= len(self.headers):
                 col.box().label(text="Header variant does not exist.", icon="ERROR")
                 return
-            col.label(text="Header Variant Properties", icon="NLA")
+            col.label(text="Variant Properties", icon="NLA")
             self.headers[specific_variant].draw_props(col, action, in_table, dma, export_type, actor_name, gen_enums)
         else:
             col.separator()
