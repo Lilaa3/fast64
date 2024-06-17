@@ -2478,7 +2478,7 @@ class UpdateColorSpacePopup(Operator):
         UpdateColorSpacePopup.already_invoked = False
         return {"CANCELLED"}
 
-    def execute(self, context):
+    def execute(self, context: Context):
         try:
             scene = context.scene
             scene.display_settings.display_device = "sRGB"
