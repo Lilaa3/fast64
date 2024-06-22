@@ -11,23 +11,18 @@ from ..sm64_constants import (
 from .constants import enumRefreshVer, enumExportType, enumCompressionFormat, sm64GoalTypeEnum
 
 
-def get_legacy_export_type():
-    legacy_export_types = ("C", "Binary", "Insertable Binary")
-    scene = bpy.context.scene
-
-    for exportKey in ["animExportType", "colExportType", "DLExportType", "geoExportType"]:
-        eType = scene.pop(exportKey, None)
-        if eType is not None and legacy_export_types[eType] != "C":
-            return legacy_export_types[eType]
-
-    return "C"
-
-
 class SM64_Properties(PropertyGroup):
     """Global SM64 Scene Properties found under scene.fast64.sm64"""
 
-    version: IntProperty(name="SM64_Properties Version", default=0)
-    cur_version = 1  # version after property migration
+    @staticmethod
+    def upgrade_changed_props():
+        from ...upgrade_helper import upgrade_value
+
+        for scene in bpy.data.scenes:
+            prop = scene.fast64.sm64
+            upgrade_value(
+                prop, "exportType", scene, {"animExportType", "colExportType", "DLExportType", "geoExportType"}
+            )
 
     # UI Selection
     showImportingMenus: BoolProperty(name="Show Importing Menus", default=False)
@@ -52,12 +47,6 @@ class SM64_Properties(PropertyGroup):
 
     # Insertable Binary
     # exportInsertableBinaryPath: StringProperty(name = 'Filepath', subtype = 'FILE_PATH')
-
-    @staticmethod
-    def upgrade_changed_props():
-        if bpy.context.scene.fast64.sm64.version != SM64_Properties.cur_version:
-            bpy.context.scene.fast64.sm64.exportType = get_legacy_export_type()
-            bpy.context.scene.fast64.sm64.version = SM64_Properties.cur_version
 
 
 classes = (SM64_Properties,)
