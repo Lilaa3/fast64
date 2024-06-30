@@ -1,9 +1,16 @@
 import bpy
-from bpy.types import Image
+from bpy.types import Image, NodeTree
 
 from ..gltf_utility import GlTF2SubExtension
 from .f3d_gbi import F3D, get_F3D_GBI
-from .f3d_material import all_combiner_uses, update_node_values_with_preset, update_preset_manual_v4, createScenePropertiesForMaterial, F3DMaterialProperty, TextureProperty, link_f3d_material_library
+from .f3d_material import (
+    all_combiner_uses,
+    createScenePropertiesForMaterial,
+    link_f3d_material_library,
+    update_node_values,
+    F3DMaterialProperty,
+    TextureProperty,
+)
 
 # TODO: Check glTF addon version instead
 if bpy.app.version >= (3, 6, 0):
@@ -30,6 +37,64 @@ else:
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.imp.gltf2_blender_image import BlenderImage
 from io_scene_gltf2.io.com.gltf2_io_constants import TextureFilter, TextureWrap
+
+EXCLUDE_FROM_NODE = (
+    "rna_type",
+    "type",
+    "dimensions",
+    "inputs",
+    "interface",
+    "outputs",
+    "internal_links",
+    "texture_mapping",
+    "color_mapping",
+    "image_user",
+)
+EXCLUDE_FROM_INPUT_OUTPUT = (
+    "rna_type",
+    "label",
+    "identifier",
+    "is_output",
+    "is_linked",
+    "is_multi_input",
+    "node",
+    "bl_idname",
+    "default_value",
+)
+
+
+def node_tree_copy(src: NodeTree, dst: NodeTree):
+    def copy_attributes(src, dst, excludes=None):
+        fails = []
+        attributes = (
+            attr.identifier for attr in src.bl_rna.properties if not excludes or attr.identifier not in excludes
+        )
+        for attr in attributes:
+            try:
+                setattr(dst, attr, getattr(src, attr))
+            except Exception as exc:  # pylint: disable=broad-except
+                fails.append(exc)
+        if fails:
+            raise AttributeError("Failed to copy all attributes: " + str(fails))
+
+    dst.nodes.clear()
+    dst.links.clear()
+
+    node_mapping = {}  # To not have to look up the new node for linking
+    for src_node in src.nodes:  # Copy all nodes
+        new_node = dst.nodes.new(src_node.bl_idname)
+        copy_attributes(src_node, new_node, excludes=EXCLUDE_FROM_NODE)
+        node_mapping[src_node] = new_node
+    for src_node, dst_node in node_mapping.items():
+        for i, src_input in enumerate(src_node.inputs):  # Link all nodes
+            for link in src_input.links:
+                connected_node = dst.nodes[link.from_node.name]
+                dst.links.new(connected_node.outputs[link.from_socket.name], dst_node.inputs[i])
+
+        for src_input, dst_input in zip(src_node.inputs, dst_node.inputs):  # Copy all inputs
+            copy_attributes(src_input, dst_input, excludes=EXCLUDE_FROM_INPUT_OUTPUT)
+        for src_output, dst_output in zip(src_node.outputs, dst_node.outputs):  # Copy all outputs
+            copy_attributes(src_output, dst_output, excludes=EXCLUDE_FROM_INPUT_OUTPUT)
 
 
 def is_blender_image_a_webp(image: Image) -> bool:
@@ -77,34 +142,16 @@ class Fast64Extension(GlTF2SubExtension):
 
     def post_init(self):
         self.f3d: F3D = get_F3D_GBI()
-
         if not self.extension.importing:
             return
-        previous_obj = bpy.context.view_layer.objects.active
-        old_material = previous_obj.active_material if previous_obj is not None else None
-
-        # change current material and make other window's shader editor is updated
-        temp_override = get_shader_editor_context()
-        temp_object = bpy.data.objects.new("temp", None)
-        bpy.context.scene.collection.objects.link(temp_object)
-        bpy.context.view_layer.objects.active = temp_object
-
-        link_f3d_material_library()
-        f3d_mat = bpy.data.materials["fast64_f3d_material_library_beefwashere"]
-        bpy.context.object.active_material = f3d_mat
-        temp_override['space'].node_tree = f3d_mat.node_tree
-        # select all nodes and copy them to clipboard
-        for node in f3d_mat.node_tree.nodes:
-            node.select = True
-        bpy.ops.node.clipboard_copy(temp_override)
-        bpy.data.objects.remove(temp_object)
-        bpy.data.materials.remove(f3d_mat)
-
-        # back to original material
-        if previous_obj is not None:
-            bpy.context.view_layer.objects.active = previous_obj
-        if old_material is not None:
-            bpy.context.object.active_material = old_material
+        try:
+            self.print_verbose("Linking f3d material library")
+            link_f3d_material_library()
+            mat = bpy.data.materials["fast64_f3d_material_library_beefwashere"]
+            self.base_node_tree = mat.node_tree.copy()
+            bpy.data.materials.remove(mat)
+        except Exception as exc:
+            raise Exception("Failed to import f3d material node tree") from exc
 
     def sampler_from_f3d(self, f3d_mat: F3DMaterialProperty, f3d_tex: TextureProperty):
         wrap = []
@@ -224,32 +271,45 @@ class Fast64Extension(GlTF2SubExtension):
         data = self.get_gltf2_extension(gltf_material)
         if data is None:
             return
+        try:
+            f3d_mat: F3DMaterialProperty = blender_material.f3d_mat
+            f3d_mat.combiner_from_dict(data.get("combiner", {}))
+            f3d_mat.colors_from_dict(data.get("colors", {}))
+            f3d_mat.rdp_settings.from_dict(data)
+            f3d_mat.extra_texture_settings_from_dict(data.get("textureSettings", {}))
 
-        # Copy nodes HACK
-        temp_override = get_shader_editor_context()
-        temp_override['space'].node_tree = blender_material.node_tree
-        for node in list(blender_material.node_tree.nodes):
-            blender_material.node_tree.nodes.remove(node)
-        bpy.ops.node.clipboard_paste(temp_override)
+            for num, tex_info in data.get("textures", {}).items():
+                index = tex_info["index"]
+                self.print_verbose(f"Importing f3d texture {index}")
+                gltf2_texture = gltf.data.textures[index]
+                f3d_tex = f3d_mat.tex0 if num == "0" else f3d_mat.tex1
+                self.gltf2_texture_to_f3d_texture(gltf2_texture, gltf, f3d_tex)
 
-        createScenePropertiesForMaterial(blender_material)
-        blender_material.is_f3d = True
-        blender_material.mat_ver = 5
-        blender_material.f3d_update_flag = True
+            blender_material.is_f3d = True
+            blender_material.mat_ver = 5
+        except Exception as exc:
+            raise Exception("Failed to import fast64 extension data") from exc
 
-        f3d_mat: F3DMaterialProperty = blender_material.f3d_mat
-        f3d_mat.combiner_from_dict(data.get("combiner", {}))
-        f3d_mat.colors_from_dict(data.get("colors", {}))
-        f3d_mat.rdp_settings.from_dict(data)
-        f3d_mat.extra_texture_settings_from_dict(data.get("textureSettings", {}))
+        try:
+            self.print_verbose("Copying f3d node tree")
+            node_tree_copy(self.base_node_tree, blender_material.node_tree)
+        except Exception as exc:
+            raise Exception("Error copying node tree, material may not render correctly") from exc
+        try:
+            createScenePropertiesForMaterial(blender_material)
+        except Exception as exc:
+            raise Exception("Error creating scene properties, node tree may be invalid") from exc
 
-        for num, tex_info in data.get("textures", {}).items():
-            gltf2_texture = gltf.data.textures[tex_info.get("index", 0)]
-            f3d_tex = f3d_mat.tex0 if num == "0" else f3d_mat.tex1
-            self.gltf2_texture_to_f3d_texture(gltf2_texture, gltf, f3d_tex)
-
-        blender_material.f3d_update_flag = False
-        f3d_mat.use_default_lighting = f3d_mat.use_default_lighting
+        # HACK: The simplest way to cause a reload here is to have a valid material context
+        gltf_temp_obj = bpy.data.objects["##gltf-import:tmp-object##"]
+        bpy.context.scene.collection.objects.link(gltf_temp_obj)
+        try:
+            bpy.context.view_layer.objects.active = gltf_temp_obj
+            gltf_temp_obj.active_material = blender_material
+            update_node_values(blender_material, bpy.context, True)
+        finally:
+            bpy.context.scene.collection.objects.unlink(gltf_temp_obj)
+        
 
 
     def gather_import_node_after_hook(self, _vnode, gltf_node, blender_object, _gltf):
@@ -257,12 +317,3 @@ class Fast64Extension(GlTF2SubExtension):
         if data is None:
             return
         blender_object.use_f3d_culling = data.get("use_culling", True)
-
-def get_shader_editor_context():
-    for screen in bpy.data.screens:
-        for area in screen.areas:
-            if area.type == "NODE_EDITOR":
-                for space in area.spaces:
-                    if space.tree_type == "ShaderNodeTree":
-                        context_override = {"area": area, "space": space, "screen": screen}
-                        return context_override
