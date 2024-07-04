@@ -14,6 +14,13 @@ from .tools import (
     tools_panels_unregister,
 )
 
+from .goddard import (
+    goddard_register,
+    goddard_unregister,
+    goddard_panels_register,
+    goddard_panels_unregister,
+)
+
 from .sm64_collision import (
     sm64_col_panel_register,
     sm64_col_panel_unregister,
@@ -106,6 +113,7 @@ def sm64_panel_register():
     sm64_dl_writer_panel_register()
     sm64_dl_parser_panel_register()
     sm64_anim_panel_register()
+    goddard_panels_register()
 
 
 def sm64_panel_unregister():
@@ -122,11 +130,13 @@ def sm64_panel_unregister():
     sm64_dl_writer_panel_unregister()
     sm64_dl_parser_panel_unregister()
     sm64_anim_panel_unregister()
+    goddard_panels_unregister()
 
 
 def sm64_register(register_panels: bool):
     tools_operators_register()
     tools_props_register()
+    goddard_register()
     sm64_col_register()
     sm64_bone_register()
     sm64_cam_register()
@@ -147,6 +157,7 @@ def sm64_register(register_panels: bool):
 def sm64_unregister(unregister_panels: bool):
     tools_operators_unregister()
     tools_props_unregister()
+    goddard_unregister()
     sm64_col_unregister()
     sm64_bone_unregister()
     sm64_cam_unregister()

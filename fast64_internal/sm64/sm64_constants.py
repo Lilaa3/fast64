@@ -34,6 +34,7 @@ commonGeolayoutPointers = {
     "Lakitu": [1985520, "CC"],
 }
 
+SegmentData = dict[int, tuple[int, int]]
 
 level_enums = [
     ("HH", "Big Boo's Haunt", "HH"),  # Originally Haunted House

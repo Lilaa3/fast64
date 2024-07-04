@@ -9,7 +9,9 @@ from ...render_settings import on_update_render_settings
 from ...utility import directory_path_checks, directory_ui_warnings, prop_split
 from ..sm64_constants import defaultExtendSegment4
 from ..sm64_utility import export_rom_ui_warnings, import_rom_ui_warnings
+
 from ..tools import SM64_AddrConvProperties
+from ..goddard import SM64_GoddardProperties
 
 from .constants import (
     enum_refresh_versions,
@@ -55,6 +57,8 @@ class SM64_Properties(PropertyGroup):
     )
 
     address_converter: PointerProperty(type=SM64_AddrConvProperties)
+    goddard: PointerProperty(type=SM64_GoddardProperties)
+
     # C
     decomp_path: StringProperty(
         name="Decomp Folder",
