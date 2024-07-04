@@ -640,7 +640,7 @@ class DynContext:
 
     def int_or_enum(self, arg: str):
         if arg in self.enums:
-            return dyn_context.enums[arg]
+            return self.enums[arg]
         if arg in enum_to_value:
             return enum_to_value[arg]
         return int_from_str(arg)

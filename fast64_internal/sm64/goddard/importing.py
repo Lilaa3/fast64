@@ -40,10 +40,10 @@ def process_dyn_cmd_macro(macro: str, str_args: list[str], dyn_context: DynConte
     for field, arg in zip(cmd_fields, str_args):
         try:
             if field.type == DynObjName:
-                if dyn_context.use_integer_names:
+                if dyn_context.use_integer_names and not cmd_cls == SetParamPtr:
                     setattr(cmd, field.name, dyn_context.int_or_enum(arg))
                 else:
-                    setattr(cmd, field.name, str(arg))
+                    setattr(cmd, field.name, arg if arg != "NULL" else None)
             elif field.type == int:
                 setattr(cmd, field.name, dyn_context.int_or_enum(arg))
             elif field.type == float:
@@ -66,6 +66,8 @@ def process_dyn_cmd_macro(macro: str, str_args: list[str], dyn_context: DynConte
             raise ValueError(f"Invalid argument for {cmd_cls.__name__}.{field.name}: {arg}") from exc
     if isinstance(cmd, UseIntegerNames):
         dyn_context.use_integer_names = cmd.enable
+    elif isinstance(cmd, SetParamPtr):
+        cmd.value = cmd.value if cmd.param == DParmPtr.PARM_PTR_CHAR else int_from_str(cmd.value)
     return cmd
 
 
@@ -89,17 +91,17 @@ def dynlist_from_c(text: str, dyn_context: DynContext):
 
     for name, content in dynlist_matches:
         cmd_list: list[DynListCmd] = []
+        dyn_context.lists[name] = cmd_list
         macro_matches = macro_pattern.findall(content)
         for macro, args in macro_matches:
             macro, args = macro.strip(), args.strip()
             str_args = [arg.strip().lstrip("&") for arg in args.split(",") if arg.strip()]
             cmd_list.append(process_dyn_cmd_macro(macro, str_args, dyn_context))
 
-        dyn_context.lists[name] = cmd_list
-
 
 def dynlist_from_binary(reader: RomReader, dyn_context: DynContext):
     cmd_list = []
+    dyn_context.lists[reader.start_address] = cmd_list
     while True:
         cmd_num = reader.read_int(signed=True)
         cmd_cls = dynlist_cmds_by_num[cmd_num]
@@ -133,11 +135,18 @@ def dynlist_from_binary(reader: RomReader, dyn_context: DynContext):
                 elif field.type in DynListEnum.__subclasses__():
                     setattr(cmd, field.name, field.type(reader.read_int(signed=True)))
                 elif field.type == list[DynListCmd]:
-                    setattr(cmd, field.name, dyn_context.lists.setdefault(reader.read_ptr(), []))
+                    ptr = reader.read_ptr()
+                    if ptr not in dyn_context.lists:
+                        dynlist_from_binary(reader.branch(ptr), dyn_context)
+                    setattr(cmd, field.name, dyn_context.lists[ptr])
                 elif field.type == ObjShape:
-                    setattr(cmd, field.name, dyn_context.shapes.setdefault(reader.read_ptr(), ObjShape()))
-                elif field.type == object:
-                    setattr(cmd, field.name, dyn_context.objs.setdefault(reader.read_ptr(), GdObj()))
+                    reader.read_int()
+                    # setattr(cmd, field.name, dyn_context.shapes.setdefault(reader.read_ptr(), ObjShape()))
+                elif (
+                    field.type == object
+                ):  # Data that can be attatched to an object, usually a data group that then gets attatched to an animator
+                    reader.read_int()
+                    # setattr(cmd, field.name, dyn_context.objs.setdefault(reader.read_ptr(), GdObj()))
                 else:
                     raise NotImplementedError(f"{field.type} not implemented")
             except ValueError as exc:
@@ -148,4 +157,3 @@ def dynlist_from_binary(reader: RomReader, dyn_context: DynContext):
             cmd.value = cmd.value if cmd.param == DParmPtr.PARM_PTR_OBJ_VTX else reader.read_str(cmd.value)
         elif cmd_cls == EndList:
             break
-    dyn_context.lists[reader.start_address] = cmd_list

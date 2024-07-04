@@ -32,9 +32,12 @@ class SM64_ImportDynList(OperatorBase):
             with open(abspath(sm64_props.import_rom), "rb") as f:
                 reader = RomReader(f, start_address=address, segment_data=segment_data)
                 dynlist_from_binary(reader, dyn_context)
-                pprint.pprint(dyn_context)
+                for key, list in dyn_context.lists.items():
+                    pprint.pprint(key)
+                    pprint.pprint(list)
                 return
 
+        # TODO: Update this to let the user type in a dynlist name
         # file_path = importing_props.get_file_path(sm64_props.decomp_path)
         text = StringIO()
         for root, _, files in os.walk(importing_props.get_path(sm64_props.decomp_path)):
@@ -42,7 +45,7 @@ class SM64_ImportDynList(OperatorBase):
                 with open(os.path.join(root, file_name), "r", encoding="utf-8") as f:
                     text.write(f.read())
         dynlist_from_c(text.getvalue(), dyn_context)
-        pprint.pprint(dyn_context)
+        pprint.pprint(dyn_context.lists["dynlist_mario_master"])
 
 
 classes = (SM64_ImportDynList,)

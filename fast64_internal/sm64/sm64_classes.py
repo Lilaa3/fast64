@@ -132,7 +132,7 @@ class RomReader:
     def read_str(self, specific_address=-1):
         ptr = self.read_ptr() if specific_address == -1 else specific_address
         if not ptr:
-            return ""
+            return None
         branch = self.branch(ptr)
         text_data = bytearray()
         while True:
