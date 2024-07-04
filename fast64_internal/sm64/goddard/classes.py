@@ -5,14 +5,16 @@ from typing import TypeVar
 
 from ..sm64_utility import int_from_str
 
-DynObjName = str | int # depends on UseIntegerNames
+DynObjName = str | int  # depends on UseIntegerNames
 DynUnion = object | str | int
 T = TypeVar("T")
 
+
 @dataclass(unsafe_hash=True)
-class UserEnum():
+class UserEnum:
     name: str
     value: int
+
 
 class DynListEnum(Enum):
     pass
@@ -136,15 +138,18 @@ class GdColour:
 class ObjShape:  # TODO
     pass
 
+
 @dataclass
-class GdObj():  # TODO
+class GdObj:  # TODO
     name: DynObjName = 0
     type: ObjTypeFlag = 0
+
 
 @dataclass
 class ObjGroup(GdObj):
     type: ObjTypeFlag = ObjTypeFlag.OBJ_TYPE_GROUPS
     members: list[GdObj] = field(default_factory=list)
+
 
 class ObjAnimator(GdObj):  # TODO
     animatedPartsGrp: ObjGroup = field(default_factory=ObjGroup)
@@ -164,7 +169,7 @@ class DynListCmd:
     @classmethod
     def arg_count(cls):
         return len(cls.arg_fields())
-    
+
     @classmethod
     @cache
     def arg_fields(cls):
@@ -511,7 +516,7 @@ class Attach(DynListCmd):  # d_attach
 class AttachTo(DynListCmd):  # d_attachto_dynid
     cmd = 40
 
-    flags: int = field(default=0, metadata={"var": "w2"}) # if equals 9 some logic is run
+    flags: int = field(default=0, metadata={"var": "w2"})  # if equals 9 some logic is run
     name: DynObjName = field(default=None, metadata={"var": "w1"})
 
 
@@ -544,9 +549,7 @@ class SetParamPtr(DynListCmd):  # d_set_parm_ptr
     cmd = 45
 
     param: DParmPtr = field(default=0, metadata={"var": "w2"})
-    value: int | str = field(
-        default=0, metadata={"var": "w1"}
-    )  # TODO: when param is PARM_PTR_OBJ_VTX it's an index
+    value: int | str = field(default=0, metadata={"var": "w1"})  # TODO: when param is PARM_PTR_OBJ_VTX it's an index
 
 
 @dataclass
@@ -620,9 +623,11 @@ class MakeNetFromShapePtrPtr(DynListCmd):  # d_make_netfromshape_ptrptr
 
     shapes: ObjShape = field(default=ObjShape(), metadata={"var": "w1", "is_dptr": True})
 
+
 dynlist_cmds_by_name = {cls.__name__: cls for cls in DynListCmd.__subclasses__()}
 dynlist_cmds_by_num = {cls.cmd: cls for cls in DynListCmd.__subclasses__()}
 enum_to_value = {e.name: e for cls in DynListEnum.__subclasses__() for e in cls}
+
 
 @dataclass
 class DynContext:

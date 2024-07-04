@@ -92,7 +92,7 @@ class RomReader:
             self.segment_data,
             self.insertable,
         )
-    
+
     def skip(self, size: int):
         self.address += size
 
@@ -124,11 +124,11 @@ class RomReader:
     def read_int(self, size=4, signed=False, specific_address=-1):
         in_bytes = self.read_data(size, specific_address)
         return int.from_bytes(in_bytes, "big", signed=signed)
-    
+
     def read_float(self, size=4, specific_address=-1):
         in_bytes = self.read_data(size, specific_address)
         return struct.unpack(">f", in_bytes)[0]
-    
+
     def read_str(self, specific_address=-1):
         ptr = self.read_ptr() if specific_address == -1 else specific_address
         if not ptr:
@@ -137,10 +137,10 @@ class RomReader:
         text_data = bytearray()
         while True:
             byte = branch.read_data(1)
-            if byte == b'\x00' or not byte:
+            if byte == b"\x00" or not byte:
                 break
             text_data.append(ord(byte))
-        text = text_data.decode('utf-8')
+        text = text_data.decode("utf-8")
         return text
 
 

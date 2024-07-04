@@ -8,16 +8,11 @@ from .classes import *
 from .constants import DYNLIST_CMD_SIZE
 
 
-comment_pattern = re.compile(
-    r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
-    re.DOTALL | re.MULTILINE
-)
+comment_pattern = re.compile(r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"', re.DOTALL | re.MULTILINE)
 dynlist_pattern = re.compile(r"struct DynList\s+(\w+)\[\]\s*=\s*{\s*(.*?)\s*};", re.DOTALL)
 macro_pattern = re.compile(r"(\w+)\s*\((.*?)\)", re.DOTALL)
-enum_pattern = re.compile(
-    r'enum\s+\w*\s*{\s*([^}]*)\s*};',
-    re.DOTALL
-)
+enum_pattern = re.compile(r"enum\s+\w*\s*{\s*([^}]*)\s*};", re.DOTALL)
+
 
 def remove_unneeded(text):
     def replacer(match):  # without this, a legal expression int/**/x=5; would become intx=5;

@@ -13,6 +13,7 @@ from ..sm64_classes import RomReader
 from .importing import dynlist_from_c, dynlist_from_binary
 from .classes import DynContext
 
+
 class SM64_ImportDynList(OperatorBase):
     bl_idname = "sm64.import_dynlist"
     bl_label = "Import DynList"
@@ -26,7 +27,7 @@ class SM64_ImportDynList(OperatorBase):
 
         if importing_props.import_type == "Binary":
             import_rom_checks(abspath(sm64_props.import_rom))
-            segment_data = {4: (0x00000000002739a0, 0x00000000002a6120)}
+            segment_data = {4: (0x00000000002739A0, 0x00000000002A6120)}
             address = int_from_str(importing_props.address)
             with open(abspath(sm64_props.import_rom), "rb") as f:
                 reader = RomReader(f, start_address=address, segment_data=segment_data)
@@ -34,7 +35,7 @@ class SM64_ImportDynList(OperatorBase):
                 pprint.pprint(dyn_context)
                 return
 
-        #file_path = importing_props.get_file_path(sm64_props.decomp_path)
+        # file_path = importing_props.get_file_path(sm64_props.decomp_path)
         text = StringIO()
         for root, _, files in os.walk(importing_props.get_path(sm64_props.decomp_path)):
             for file_name in files:
