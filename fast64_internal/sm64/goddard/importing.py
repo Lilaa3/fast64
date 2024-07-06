@@ -1,13 +1,10 @@
 import re
-import struct
 
 from ...utility import PluginError
 from ..sm64_utility import int_from_str
 from ..sm64_classes import RomReader
 
 from .classes import *
-from .constants import DYNLIST_CMD_SIZE
-
 
 comment_pattern = re.compile(r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"', re.DOTALL | re.MULTILINE)
 dynlist_pattern = re.compile(r"struct DynList\s+(\w+)\[\]\s*=\s*{\s*(.*?)\s*};", re.DOTALL)
@@ -168,7 +165,7 @@ def dynlist_from_binary(reader: RomReader, dyn_context: DynContext):
             break
     return cmd_list
 
-def dynlist_to_bpy(main_list: list[DynListCmd], dyn_context: DynContext):
-    for name, cmd_list in dyn_context.lists.items():
-        for cmd in cmd_list:
-            pass
+
+def dynlist_to_bpy(cmd_list: list[DynListCmd], dyn_context: DynContext):
+    for cmd in cmd_list:
+        pass

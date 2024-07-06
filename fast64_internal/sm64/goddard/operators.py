@@ -29,8 +29,8 @@ class SM64_ImportDynList(OperatorBase):
             import_rom_checks(abspath(sm64_props.import_rom))
             segment_data = {
                 4: (0x2739A0, 0x2A6120),  # Dynlist segment
-                #128: (0x21F4C0, 0x269EA0),  # Goddard segment
-                #1: (0x269EA0, 0x269EA0),  # Goddard bss data segment
+                # 128: (0x21F4C0, 0x269EA0),  # Goddard segment
+                # 1: (0x269EA0, 0x269EA0),  # Goddard bss data segment
             }
             address = int_from_str(importing_props.address)
             with open(abspath(sm64_props.import_rom), "rb") as f:

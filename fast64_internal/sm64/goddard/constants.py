@@ -18,5 +18,3 @@ goddard_import_addresses = [
     (hex(0x2739D0 + 0x4E10), "Mustache Shape", "dynlist_mario_mustache_shape"),
 ]
 MARIO_HEAD_DYNLIST_NAME = "dynlist_mario_master.c"
-
-DYNLIST_CMD_SIZE = 3 * 4 + (3 * 4)
