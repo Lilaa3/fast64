@@ -112,9 +112,9 @@ class RomReader:
             raise IndexError(f"Value at {intToHex(address)} not present in data.")
         return data
 
-    def read_ptr(self):
-        address = self.address
-        ptr = self.read_int(4)
+    def read_ptr(self, specific_address=-1):
+        address = self.address if specific_address == -1 else specific_address
+        ptr = self.read_int(4, specific_address=specific_address)
         if self.insertable and address in self.insertable.ptrs:
             return ptr
         if ptr and self.segment_data:

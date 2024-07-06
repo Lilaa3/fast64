@@ -127,7 +127,21 @@ class SM64_GoddardProperties(PropertyGroup):
         col.label(text="Test")
 
 
-classes = (SM64_GoddardImportingProperties, SM64_GoddardProperties)
+class SM64_DynListProperties(PropertyGroup):
+    """Object properties found under object.fast64.sm64.goddard.dynlist"""
+
+    use_integer_names: BoolProperty(
+        name="Use Integer Names",
+        default=False,
+        description="UseIntegerNames(TRUE)\nUse integers instead of strings, off by default but enabled in Mario's master dynlist",
+    )
+
+    def draw_props(self, layout: UILayout):
+        col = layout.column()
+        col.prop(self, "use_integer_names")
+
+
+classes = (SM64_GoddardImportingProperties, SM64_GoddardProperties, SM64_DynListProperties)
 
 
 def goddard_props_register():

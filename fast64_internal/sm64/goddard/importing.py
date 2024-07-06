@@ -1,6 +1,7 @@
 import re
 import struct
 
+from ...utility import PluginError
 from ..sm64_utility import int_from_str
 from ..sm64_classes import RomReader
 
@@ -68,14 +69,14 @@ def process_dyn_cmd_macro(macro: str, str_args: list[str], dyn_context: DynConte
         dyn_context.use_integer_names = cmd.enable
     elif isinstance(cmd, SetParamPtr):
         cmd.value = cmd.value if cmd.param == DParmPtr.PARM_PTR_CHAR else int_from_str(cmd.value)
+
     return cmd
 
 
 def dynlist_from_c(text: str, dyn_context: DynContext):
     clean_c = remove_unneeded(text)
 
-    enum_matches = enum_pattern.findall(clean_c)
-    for enum_list in enum_matches:
+    for enum_list in enum_pattern.findall(clean_c):
         i = 0
         for enum in enum_list.strip().split(","):
             enum = enum.strip().split("=")
@@ -87,9 +88,7 @@ def dynlist_from_c(text: str, dyn_context: DynContext):
                 value = i = int_from_str(enum[1])
             dyn_context.enums[name] = UserEnum(name, value)
 
-    dynlist_matches = dynlist_pattern.findall(clean_c)
-
-    for name, content in dynlist_matches:
+    for name, content in dynlist_pattern.findall(clean_c):
         cmd_list: list[DynListCmd] = []
         dyn_context.lists[name] = cmd_list
         macro_matches = macro_pattern.findall(content)
@@ -105,19 +104,19 @@ def dynlist_from_binary(reader: RomReader, dyn_context: DynContext):
     while True:
         cmd_num = reader.read_int(signed=True)
         cmd_cls = dynlist_cmds_by_num[cmd_num]
-        vars = {}
+        field_vars = {}
         fields = cmd_cls.arg_fields()
         for field in fields:
-            vars[field.metadata.get("var")] = field
+            field_vars[field.metadata.get("var")] = field
 
         cmd = cmd_cls()
         cmd_list.append(cmd)
 
         for var_name in ("w1", "w2", "vec.x", "vec.y", "vec.z"):
-            if var_name not in vars:
+            if var_name not in field_vars:
                 reader.skip(4)
                 continue
-            field = vars[var_name]
+            field = field_vars[var_name]
             try:
                 if field.type == DynObjName:
                     if dyn_context.use_integer_names or cmd_cls == SetParamPtr:
@@ -140,11 +139,21 @@ def dynlist_from_binary(reader: RomReader, dyn_context: DynContext):
                         dynlist_from_binary(reader.branch(ptr), dyn_context)
                     setattr(cmd, field.name, dyn_context.lists[ptr])
                 elif field.type == ObjShape:
-                    reader.read_int()
-                    # setattr(cmd, field.name, dyn_context.shapes.setdefault(reader.read_ptr(), ObjShape()))
+                    try:
+                        if field.metadata.get("is_dptr"):
+                            ptr = reader.read_ptr(reader.read_ptr())
+                        else:
+                            ptr = reader.read_ptr()
+                        if ptr not in dyn_context.shapes:
+                            dyn_context.shapes[ptr] = ObjShape()
+                        setattr(cmd, field.name, dyn_context.shapes[ptr])
+                    except PluginError as exc:  # Probably outside of the segmnet
+                        reader.skip(-4)
+                        ptr_val = reader.read_int()
+                        setattr(cmd, field.name, ptr_val)
                 elif (
                     field.type == object
-                ):  # Data that can be attatched to an object, usually a data group that then gets attatched to an animator
+                ):  # TODO: Data that can be attatched to an object, usually a data group that then gets attatched to an animator
                     reader.read_int()
                     # setattr(cmd, field.name, dyn_context.objs.setdefault(reader.read_ptr(), GdObj()))
                 else:
@@ -157,3 +166,9 @@ def dynlist_from_binary(reader: RomReader, dyn_context: DynContext):
             cmd.value = cmd.value if cmd.param == DParmPtr.PARM_PTR_OBJ_VTX else reader.read_str(cmd.value)
         elif cmd_cls == EndList:
             break
+    return cmd_list
+
+def dynlist_to_bpy(main_list: list[DynListCmd], dyn_context: DynContext):
+    for name, cmd_list in dyn_context.lists.items():
+        for cmd in cmd_list:
+            pass

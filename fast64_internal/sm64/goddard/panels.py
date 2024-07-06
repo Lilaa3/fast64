@@ -25,7 +25,20 @@ class SM64_GoddardImportPanel(SM64_Panel):
         sm64_props.goddard.importing.draw_props(self.layout, abspath(sm64_props.decomp_path))
 
 
-classes = (SM64_GoddardPanel, SM64_GoddardImportPanel)
+class SM64_DynListPanel(SM64_Panel):
+    bl_idname = "SM64_PT_goddard_dynlist"
+    bl_parent_id = "OBJECT_PT_context_object"
+    bl_label = "SM64 DynList"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "object"
+    object_type = {"ARMATURE"}
+
+    def draw(self, context: Context):
+        context.object.fast64.sm64.dynlist.draw_props(self.layout)
+
+
+classes = (SM64_GoddardPanel, SM64_GoddardImportPanel, SM64_DynListPanel)
 
 
 def goddard_panels_register():

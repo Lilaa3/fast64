@@ -16,6 +16,8 @@ from ..utility import (
     prop_split,
 )
 
+from .goddard import SM64_DynListProperties
+
 from .sm64_constants import (
     levelIDNames,
     enumLevelNames,
@@ -1870,6 +1872,8 @@ class SM64_ObjectProperties(bpy.types.PropertyGroup):
     area: bpy.props.PointerProperty(type=SM64_AreaProperties)
     game_object: bpy.props.PointerProperty(type=SM64_GameObjectProperties)
     segment_loads: bpy.props.PointerProperty(type=SM64_SegmentProperties)
+
+    dynlist: bpy.props.PointerProperty(type=SM64_DynListProperties)
 
     @staticmethod
     def upgrade_changed_props():

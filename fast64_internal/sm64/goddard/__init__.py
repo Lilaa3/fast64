@@ -6,6 +6,7 @@ from .properties import (
     goddard_props_register,
     goddard_props_unregister,
     SM64_GoddardProperties,
+    SM64_DynListProperties,
 )
 
 from .operators import (
