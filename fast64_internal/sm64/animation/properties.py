@@ -30,8 +30,9 @@ from ...utility import (
     toAlnum,
     writeBoxExportType,
     intToHex,
+    upgrade_old_prop,
 )
-from ..sm64_utility import upgrade_hex_prop, import_rom_ui_warnings, string_int_prop, string_int_warning
+from ..sm64_utility import import_rom_ui_warnings, string_int_prop, string_int_warning
 from ..sm64_constants import MAX_U16, MIN_S16, MAX_S16, level_enums, enumLevelNames
 
 from .operators import (
@@ -925,58 +926,51 @@ class AnimProperty(PropertyGroup):
     def update_version_0(self, scene: Scene):
         importing: ImportProperty = self.importing
 
-        upgrade_hex_prop(importing, scene, "animation_address", "animStartImport")
-        importing.is_segmented_address_prop = scene.get(
-            "animIsSegPtr",
-            importing.is_segmented_address_prop,
-        )
-        importing.level = scene.get("levelAnimImport", importing.level)
-        importing.table_index_prop = scene.get("animListIndexImport", importing.table_index_prop)
-        if importing.get("isDMAImport", False):
+        upgrade_old_prop(importing, "animation_address", scene, "animStartImport", fix_forced_base_16=True)
+        upgrade_old_prop(importing, "is_segmented_address_prop", scene, "animIsSegPtr")
+        upgrade_old_prop(importing, "level", scene, "levelAnimImport")
+        upgrade_old_prop(importing, "table_index_prop", scene, "animListIndexImport")
+        if scene.pop("isDMAImport", False):
             importing.binary_import_type = "DMA"
-        elif importing.get("animIsAnimList", True):
+        elif scene.pop("animIsAnimList", True):
             importing.binary_import_type = "Table"
         # Export
+        loop = scene.pop("loopAnimation", False)
         for action in bpy.data.actions:
             action_props: SM64_ActionProperty = action.fast64.sm64
-            action_props.header.no_loop = not scene.get(
-                "loopAnimation",
-                not action_props.header.no_loop,
-            )
-            upgrade_hex_prop(action_props, scene, "start_address", "animExportStart")
-            upgrade_hex_prop(action_props, scene, "end_address", "animExportEnd")
-        custom_export = scene.get("animCustomExport", False)
+            action_props.header.no_loop = not loop
+            upgrade_old_prop(action_props, "start_address", scene, "animExportStart", fix_forced_base_16=True)
+            upgrade_old_prop(action_props, "start_address", scene, "animExportStart", fix_forced_base_16=True)
+            upgrade_old_prop(action_props, "end_address", scene, "animExportEnd", fix_forced_base_16=True)
+        custom_export = scene.pop("animCustomExport", False)
         if custom_export:
             self.header_type = "Custom"
         else:
-            header_type = scene.get("animExportHeaderType", None)
-            if header_type:
-                self.header_type = enumAnimExportTypes[header_type][0]
+            upgrade_old_prop(self, "header_type", scene, "animExportHeaderType")
 
         self.directory_path = scene.get("animExportPath", self.directory_path)
-        self.actor_name_prop = scene.get("animName", self.actor_name_prop)
-        self.group_name = scene.get("animGroupName", self.group_name)
-        level_option = scene.get("animLevelOption", None)
-        if level_option:
-            self.level_option = enumLevelNames[level_option][0]
-        self.custom_level_name = scene.get("animLevelName", self.custom_level_name)
-        self.is_binary_dma = scene.get("isDMAExport", self.is_binary_dma)
+        upgrade_old_prop(self, "directory_path", scene, "animExportPath")
+        upgrade_old_prop(self, "actor_name_prop", scene, "animName")
+        upgrade_old_prop(self, "group_name", scene, "animGroupName")
+        upgrade_old_prop(self, "level_option", scene, "animLevelOption")
+        upgrade_old_prop(self, "custom_level_name", scene, "animLevelName")
+        upgrade_old_prop(self, "is_binary_dma", scene, "isDMAExport")
 
-        insertable_directory_path = scene.get("animInsertableBinaryPath", "")
+        insertable_directory_path = scene.pop("animInsertableBinaryPath", "")
         if insertable_directory_path:
             # Ignores file name
             self.insertable_directory_path = os.path.split(insertable_directory_path)[0]
 
-        self.update_table = scene.get("setAnimListIndex", self.update_table)
+        upgrade_old_prop(self, "update_table", scene, "setAnimListIndex")
         table: TableProperty = self.table
-        # upgrade_hex_prop(table, scene, "", "addr_0x27")
+        # upgrade_old_prop(table, "", scene, "addr_0x27", fix_forced_base_16=True)
         table.update_behavior = scene.get("overwrite_0x28", table.update_behavior)
-        upgrade_hex_prop(table, scene, "animate_command_address", "addr_0x28")
-        table.begining_animation = scene.get("animListIndexExport", table.begining_animation)
-        self.binary_level = scene.get("levelAnimExport", self.binary_level)
+        upgrade_old_prop(table, "update_behavior", scene, "overwrite_0x28")
+        upgrade_old_prop(table, "animate_command_address", scene, "addr_0x28", fix_forced_base_16=True)
+        upgrade_old_prop(table, "begining_animation", scene, "animListIndexExport")
+        upgrade_old_prop(table, "binary_level", scene, "levelAnimExport")
 
         self.version = 1
-        print("Upgraded global SM64 animation settings to version 1")
 
     @staticmethod
     def upgrade_changed_props():

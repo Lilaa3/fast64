@@ -13,7 +13,7 @@ from .fast64_internal.repo_settings import (
     repo_settings_operators_unregister,
 )
 
-from .fast64_internal.sm64 import sm64_register, sm64_unregister
+from .fast64_internal.sm64 import sm64_register, sm64_unregister, SM64_ArmatureProperties
 from .fast64_internal.sm64.settings.properties import SM64_Properties
 from .fast64_internal.sm64.sm64_geolayout_bone import SM64_BoneProperties
 from .fast64_internal.sm64.sm64_objects import SM64_ObjectProperties
@@ -328,6 +328,7 @@ classes = (
     Fast64RenderSettings_Properties,
     Fast64_Properties,
     Fast64_ActionProperties,
+    Fast64_ArmatureProperties,
     Fast64_BoneProperties,
     Fast64_ObjectProperties,
     F3D_GlobalSettingsPanel,
