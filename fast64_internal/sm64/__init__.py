@@ -88,11 +88,11 @@ from .sm64_f3d_writer import (
     sm64_dl_writer_unregister,
 )
 
-from .animation import anim_panel_register, anim_panel_unregister, anim_register, anim_unregister, AnimProperty
+from .animation import anim_panel_register, anim_panel_unregister, anim_register, anim_unregister, SM64_AnimProperties
 
 
 class SM64_ArmatureProperties(PropertyGroup):
-    animation: PointerProperty(type=AnimProperty)
+    animation: PointerProperty(type=SM64_AnimProperties)
 
 
 classes = (SM64_ArmatureProperties,)

@@ -22,13 +22,13 @@ from .constants import marioAnimationNames, enumAnimationTables, enumAnimatedBeh
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .properties import AnimProperty, SM64_ActionProperty
+    from .properties import SM64_AnimProperties, SM64_ActionProperty
 
 
 def emulate_no_loop(scene: Scene):
     if scene.gameEditorMode != "SM64":
         return
-    anim_props: AnimProperty = scene.fast64.sm64.animation
+    anim_props: SM64_AnimProperties = scene.fast64.sm64.animation
     played_action: Action = anim_props.played_action
     if not played_action:
         return

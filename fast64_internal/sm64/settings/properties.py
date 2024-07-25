@@ -10,7 +10,7 @@ from ...utility import directory_path_checks, directory_ui_warnings, prop_split,
 from ..sm64_constants import defaultExtendSegment4
 from ..sm64_utility import export_rom_ui_warnings, import_rom_ui_warnings
 from ..tools import SM64_AddrConvProperties
-from ..animation.properties import AnimProperty
+from ..animation.properties import SM64_AnimProperties
 
 from .constants import (
     enum_refresh_versions,
@@ -80,7 +80,7 @@ class SM64_Properties(PropertyGroup):
         description="Exports account for matstack fix requirements",
     )
 
-    animation: PointerProperty(type=AnimProperty)
+    animation: PointerProperty(type=SM64_AnimProperties)
 
     @property
     def binary_export(self):
@@ -88,7 +88,6 @@ class SM64_Properties(PropertyGroup):
 
     @staticmethod
     def upgrade_changed_props():
-        AnimProperty.upgrade_changed_props()
         old_scene_props_to_new = {
             "importRom": "import_rom",
             "exportRom": "export_rom",
@@ -103,6 +102,7 @@ class SM64_Properties(PropertyGroup):
         for scene in bpy.data.scenes:
             sm64_props: SM64_Properties = scene.fast64.sm64
             sm64_props.address_converter.upgrade_changed_props(scene)
+            sm64_props.animation.upgrade_changed_props(scene)
             if sm64_props.version == SM64_Properties.cur_version:
                 continue
             upgrade_old_prop(
