@@ -1,5 +1,6 @@
 import math, bpy, mathutils
 from bpy.utils import register_class, unregister_class
+from re import findall
 from .sm64_function_map import func_map
 
 from ..utility import (

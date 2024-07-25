@@ -10,11 +10,6 @@ from ..utility import (
     prop_split,
 )
 
-from bpy.types import UILayout
-from bpy.path import abspath
-
-from ..utility import PluginError, filepath_checks, multilineLabel, intToHex, prop_split
-
 
 def starSelectWarning(operator, fileStatus):
     if fileStatus is not None and not fileStatus.starSelectC:

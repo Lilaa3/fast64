@@ -486,6 +486,8 @@ class SM64_ExportCollision(bpy.types.Operator):
             if len(context.selected_objects) == 0:
                 raise PluginError("Object not selected.")
             obj = context.active_object
+            # if type(obj.data) is not bpy.types.Mesh:
+            # 	raise PluginError("Mesh not selected.")
 
             # T, R, S = obj.matrix_world.decompose()
             # objTransform = R.to_matrix().to_4x4() @ \

@@ -200,14 +200,6 @@ class Fast64Settings_Properties(bpy.types.PropertyGroup):
         default=True,
     )
 
-    repo_settings_tab: bpy.props.BoolProperty(default=True, name="Repo Settings")
-    repo_settings_path: bpy.props.StringProperty(name="Path", subtype="FILE_PATH", update=repo_path_update)
-    auto_repo_load_settings: bpy.props.BoolProperty(
-        name="Auto Load Repo's Settings",
-        description="When enabled, this will make fast64 automatically load repo settings if they are found after picking a decomp path",
-        default=True,
-    )
-
 
 class Fast64_Properties(bpy.types.PropertyGroup):
     """
@@ -430,9 +422,9 @@ def register():
     )
 
     bpy.types.Scene.fast64 = bpy.props.PointerProperty(type=Fast64_Properties, name="Fast64 Properties")
-    bpy.types.Action.fast64 = bpy.props.PointerProperty(type=Fast64_ActionProperties, name="Fast64 Action Properties")
     bpy.types.Bone.fast64 = bpy.props.PointerProperty(type=Fast64_BoneProperties, name="Fast64 Bone Properties")
     bpy.types.Object.fast64 = bpy.props.PointerProperty(type=Fast64_ObjectProperties, name="Fast64 Object Properties")
+    bpy.types.Action.fast64 = bpy.props.PointerProperty(type=Fast64_ActionProperties, name="Fast64 Action Properties")
     bpy.types.Armature.fast64 = bpy.props.PointerProperty(
         type=Fast64_ArmatureProperties, name="Fast64 Armature Properties"
     )
@@ -463,9 +455,8 @@ def unregister():
     del bpy.types.Scene.fast64
     del bpy.types.Bone.fast64
     del bpy.types.Object.fast64
+    del bpy.types.Action.fast64
     del bpy.types.Armature.fast64
-
-    repo_settings_operators_unregister()
 
     repo_settings_operators_unregister()
 

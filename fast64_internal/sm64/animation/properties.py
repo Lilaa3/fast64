@@ -955,6 +955,7 @@ class AnimProperty(PropertyGroup):
         upgrade_old_prop(self, "level_option", scene, "animLevelOption")
         upgrade_old_prop(self, "custom_level_name", scene, "animLevelName")
         upgrade_old_prop(self, "is_binary_dma", scene, "isDMAExport")
+        upgrade_old_prop(self, "binary_level", scene, "levelAnimExport")
 
         insertable_directory_path = scene.pop("animInsertableBinaryPath", "")
         if insertable_directory_path:
@@ -964,11 +965,9 @@ class AnimProperty(PropertyGroup):
         upgrade_old_prop(self, "update_table", scene, "setAnimListIndex")
         table: TableProperty = self.table
         # upgrade_old_prop(table, "", scene, "addr_0x27", fix_forced_base_16=True)
-        table.update_behavior = scene.get("overwrite_0x28", table.update_behavior)
+        # upgrade_old_prop(table, "", scene, "addr_0x28", fix_forced_base_16=True)
         upgrade_old_prop(table, "update_behavior", scene, "overwrite_0x28")
-        upgrade_old_prop(table, "animate_command_address", scene, "addr_0x28", fix_forced_base_16=True)
         upgrade_old_prop(table, "begining_animation", scene, "animListIndexExport")
-        upgrade_old_prop(table, "binary_level", scene, "levelAnimExport")
 
         self.version = 1
 

@@ -601,7 +601,7 @@ def cast_integer(value: int, bits: int, signed: bool):
 
 
 to_s16 = lambda x: cast_integer(round(x), 16, True)
-radians_to_s16 = lambda d: round(d * 10430.37835047)  # 0x10000 / (2 * math.pi)
+radians_to_s16 = lambda d: to_s16(d * 0x10000 / (2 * math.pi))
 
 
 def int_from_s16(value: int) -> int:
