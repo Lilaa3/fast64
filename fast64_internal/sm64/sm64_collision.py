@@ -470,32 +470,6 @@ def collisionVertIndex(vert, vertArray):
     return None
 
 
-class CollisionSettings:
-    def __init__(self):
-        self.collision_type = "SURFACE_DEFAULT"
-        self.collision_type_simple = "SURFACE_DEFAULT"
-        self.collision_custom = "SURFACE_DEFAULT"
-        self.collision_all_options = False
-        self.use_collision_param = False
-        self.collision_param = "0x0000"
-
-    def load(self, material):
-        self.collision_type = material.collision_type
-        self.collision_type_simple = material.collision_type_simple
-        self.collision_custom = material.collision_custom
-        self.collision_all_options = material.collision_all_options
-        self.use_collision_param = material.use_collision_param
-        self.collision_param = material.collision_param
-
-    def apply(self, material):
-        material.collision_type = self.collision_type
-        material.collision_type_simple = self.collision_type_simple
-        material.collision_custom = self.collision_custom
-        material.collision_all_options = self.collision_all_options
-        material.use_collision_param = self.use_collision_param
-        material.collision_param = self.collision_param
-
-
 class SM64_ExportCollision(bpy.types.Operator):
     # set bl_ properties
     bl_idname = "object.sm64_export_collision"
@@ -513,7 +487,14 @@ class SM64_ExportCollision(bpy.types.Operator):
                 raise PluginError("Object not selected.")
             obj = context.active_object
 
-            scaleValue = bpy.context.scene.fast64.sm64.blender_to_sm64_scale
+            # T, R, S = obj.matrix_world.decompose()
+            # objTransform = R.to_matrix().to_4x4() @ \
+            # 	mathutils.Matrix.Diagonal(S).to_4x4()
+            # finalTransform = (blenderToSM64Rotation * \
+            # 	(bpy.context.scene.blenderToSM64Scale)).to_4x4()
+            # finalTransform = mathutils.Matrix.Identity(4)
+
+            scaleValue = context.scene.fast64.sm64.blender_to_sm64_scale
             finalTransform = mathutils.Matrix.Diagonal(mathutils.Vector((scaleValue, scaleValue, scaleValue))).to_4x4()
         except Exception as e:
             raisePluginError(self, e)

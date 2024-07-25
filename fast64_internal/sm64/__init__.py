@@ -166,7 +166,6 @@ def sm64_unregister(unregister_panels: bool):
     sm64_dl_writer_unregister()
     sm64_dl_parser_unregister()
     settings_props_unregister()
-    for cls in classes:
-        unregister_class(cls)
+
     if unregister_panels:
         sm64_panel_unregister()

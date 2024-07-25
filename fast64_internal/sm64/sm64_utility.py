@@ -1,4 +1,14 @@
 import os
+from bpy.types import UILayout
+
+from ..utility import (
+    PluginError,
+    filepath_checks,
+    filepath_ui_warnings,
+    run_and_draw_errors,
+    multilineLabel,
+    prop_split,
+)
 
 from bpy.types import UILayout
 from bpy.path import abspath
@@ -26,42 +36,49 @@ def getMemoryCFilePath(decompDir):
     return os.path.join(decompDir, relPath)
 
 
-def import_rom_checks(rom: os.PathLike):
+MIB = 1024.0**2.0
+SIZE_8MIB = 8 * MIB
+
+
+def check_expanded(rom: os.PathLike, include_path=True):
+    filepath_checks(rom, include_path=include_path)
+    size = os.path.getsize(rom)
+    if size <= SIZE_8MIB:
+        raise PluginError(
+            "ROM " + (f"at {rom} " if include_path else "") + "is vanilla sized (8.38 MB).\n"
+            "You may be using an unexpanded ROM.\n"
+            "You can expand it using ROM Manager or sm64Extend."
+        )
+
+
+def import_rom_checks(rom: os.PathLike, include_path=True):
     filepath_checks(
         rom,
-        empty_error="Import ROM path is empty.",
-        doesnt_exist_error="Import ROM path does not exist.",
-        not_a_file_error="Import ROM path is not a file.",
+        "Import ROM path is empty.",
+        "Import ROM path {}does not exist.",
+        "Import ROM path {}is not a file.",
+        include_path,
     )
-    check_expanded(rom)
+    check_expanded(rom, include_path)
 
 
-def export_rom_checks(rom: os.PathLike):
+def export_rom_checks(rom: os.PathLike, include_path=True):
     filepath_checks(
         rom,
-        empty_error="Export ROM path is empty.",
-        doesnt_exist_error="Export ROM path does not exist.",
-        not_a_file_error="Export ROM path is not a file.",
+        "Export ROM path is empty.",
+        "Export ROM path {}does not exist.",
+        "Export ROM path {}is not a file.",
+        include_path,
     )
-    check_expanded(rom)
+    check_expanded(rom, include_path)
 
 
-def import_rom_ui_warnings(layout: UILayout, rom: os.PathLike) -> bool:
-    try:
-        import_rom_checks(abspath(rom))
-        return True
-    except Exception as exc:
-        multilineLabel(layout.box(), str(exc), "ERROR")
-        return False
+def import_rom_ui_warnings(layout: UILayout, rom: os.PathLike):
+    return run_and_draw_errors(layout, import_rom_checks, rom, False)
 
 
-def export_rom_ui_warnings(layout: UILayout, rom: os.PathLike) -> bool:
-    try:
-        export_rom_checks(abspath(rom))
-        return True
-    except Exception as exc:
-        multilineLabel(layout.box(), str(exc), "ERROR")
-        return False
+def export_rom_ui_warnings(layout: UILayout, rom: os.PathLike):
+    return run_and_draw_errors(layout, export_rom_checks, rom, False)
 
 
 def int_from_str(value: str):
@@ -75,7 +92,7 @@ def int_from_str(value: str):
 
     value = value.strip()
     prefix = value[:2].lower() if len(value) > 1 else ""
-    number_part = value[2:] if prefix else value
+    number_part = value[2:] if prefix in bases else value
     if not number_part:
         raise ValueError("Empty value.")
 
@@ -101,17 +118,3 @@ def string_int_prop(layout: UILayout, data, prop: str, name="", split=True, **pr
     else:
         layout.prop(data, prop, text=name, **prop_kwargs)
     return string_int_warning(layout, getattr(data, prop))
-
-
-def check_expanded(rom: os.PathLike):
-    size = os.path.getsize(rom)
-    if size < 9000000:  # check if 8MB
-        raise PluginError(
-            f"ROM at {rom} is too small.\nYou may be using an unexpanded ROM.\nYou can expand a ROM by opening it in SM64 Editor or ROM Manager."
-        )
-
-
-def upgrade_hex_prop(prop_location, old_prop_location, prop_name: str, hex_prop_name: str):
-    value = old_prop_location.get(hex_prop_name, None)
-    if value is not None:
-        setattr(prop_location, prop_name, intToHex(int(value, 16)))

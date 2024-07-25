@@ -632,6 +632,7 @@ def parseLevelScript(filepath, levelName):
                 or macroCmd[0] == "LOAD_YAY0"
                 or macroCmd[0] == "LOAD_YAY0_TEXTURE"
                 or macroCmd[0] == "LOAD_RAW"
+                or macroCmd[0] == "LOAD_VANILLA_OBJECTS"
             ):
                 levelscript.segmentLoads.append(macroCmd)
             elif macroCmd[0] == "JUMP_LINK":
@@ -1153,7 +1154,7 @@ class SM64_ExportLevel(ObjectDataExporter):
                     raise PluginError("Cannot find level empty.")
                 selectSingleObject(obj)
 
-            scaleValue = bpy.context.scene.fast64.sm64.blender_to_sm64_scale
+            scaleValue = context.scene.fast64.sm64.blender_to_sm64_scale
             finalTransform = mathutils.Matrix.Diagonal(mathutils.Vector((scaleValue, scaleValue, scaleValue))).to_4x4()
 
         except Exception as e:

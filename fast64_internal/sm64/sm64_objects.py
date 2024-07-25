@@ -13,6 +13,7 @@ from ..utility import (
     all_values_equal_x,
     checkIsSM64PreInlineGeoLayout,
     prop_split,
+    upgrade_old_prop,
 )
 
 from .sm64_constants import (
@@ -261,13 +262,14 @@ enumPuppycamFlags = [
 
 
 class SM64_Object:
-    def __init__(self, model, position, rotation, behaviour, bparam, acts):
+    def __init__(self, model, position, rotation, behaviour, bparam, acts, name):
         self.model = model
         self.behaviour = behaviour
         self.bparam = bparam
         self.acts = acts
         self.position = position
         self.rotation = rotation
+        self.name = name  # to sort by when exporting
 
     def to_c(self):
         if self.acts == 0x1F:
@@ -324,6 +326,7 @@ class SM64_Whirpool:
         self.condition = condition
         self.strength = strength
         self.position = position
+        self.name = "whirlpool"  # for sorting
 
     def to_c(self):
         return (
@@ -452,6 +455,7 @@ class SM64_Mario_Start:
         self.area = area
         self.position = position
         self.rotation = rotation
+        self.name = "Mario"  # for sorting
 
     def to_c(self):
         return (
@@ -499,7 +503,8 @@ class SM64_Area:
         data += "\tAREA(" + str(self.index) + ", " + self.geolayout.name + "),\n"
         for warpNode in self.warpNodes:
             data += "\t\t" + warpNode + ",\n"
-        for obj in self.objects:
+        # export objects in name order
+        for obj in sorted(self.objects, key=(lambda obj: obj.name)):
             data += "\t\t" + obj.to_c() + ",\n"
         data += "\t\tTERRAIN(" + self.collision.name + "),\n"
         if includeRooms:
@@ -735,12 +740,10 @@ def exportAreaCommon(areaObj, transformMatrix, geolayout, collision, name):
 # These are all done in reference to refresh 8
 def handleRefreshDiffModelIDs(modelID):
     refresh_version = bpy.context.scene.fast64.sm64.refresh_version
-    if refresh_version == "Refresh 8" or refresh_version == "Refresh 7":
-        pass
-    elif refresh_version == "Refresh 6":
+    if refresh_version == "Refresh 6":
         if modelID == "MODEL_TWEESTER":
             modelID = "MODEL_TORNADO"
-    elif refresh_version == "Refresh 5" or refresh_version == "Refresh 4" or refresh_version == "Refresh 3":
+    elif refresh_version == {"Refresh 3", "Refresh 4", "Refresh 5"}:
         if modelID == "MODEL_TWEESTER":
             modelID = "MODEL_TORNADO"
         elif modelID == "MODEL_WAVE_TRAIL":
@@ -751,19 +754,6 @@ def handleRefreshDiffModelIDs(modelID):
             modelID = "MODEL_SPOT_ON_GROUND"
 
     return modelID
-
-
-def handleRefreshDiffSpecials(preset):
-    if bpy.context.scene.fast64.sm64.refresh_version in {
-        "Refresh 8",
-        "Refresh 7",
-        "Refresh 6",
-        "Refresh 5",
-        "Refresh 4",
-        "Refresh 3",
-    }:
-        pass
-    return preset
 
 
 def start_process_sm64_objects(obj, area, transformMatrix, specialsOnly):
@@ -784,7 +774,7 @@ def process_sm64_objects(obj, area, rootMatrix, transformMatrix, specialsOnly):
     )
 
     # Hacky solution to handle Z-up to Y-up conversion
-    rotation = originalRotation @ mathutils.Quaternion((1, 0, 0), math.radians(90.0))
+    rotation = (originalRotation @ mathutils.Quaternion((1, 0, 0), math.radians(90.0))).to_euler("ZXY")
 
     if obj.type == "EMPTY":
         if obj.sm64_obj_type == "Area Root" and obj.areaIndex != area.index:
@@ -792,19 +782,18 @@ def process_sm64_objects(obj, area, rootMatrix, transformMatrix, specialsOnly):
         if specialsOnly:
             if obj.sm64_obj_type == "Special":
                 preset = obj.sm64_special_enum if obj.sm64_special_enum != "Custom" else obj.sm64_obj_preset
-                preset = handleRefreshDiffSpecials(preset)
                 area.specials.append(
                     SM64_Special_Object(
                         preset,
                         translation,
-                        rotation.to_euler() if obj.sm64_obj_set_yaw else None,
+                        rotation if obj.sm64_obj_set_yaw else None,
                         obj.fast64.sm64.game_object.get_behavior_params()
                         if (obj.sm64_obj_set_yaw and obj.sm64_obj_set_bparam)
                         else None,
                     )
                 )
             elif obj.sm64_obj_type == "Water Box":
-                checkIdentityRotation(obj, rotation, False)
+                checkIdentityRotation(obj, rotation.to_quaternion(), False)
                 area.water_boxes.append(CollisionWaterBox(obj.waterBoxType, translation, scale, obj.empty_display_size))
         else:
             if obj.sm64_obj_type == "Object":
@@ -819,10 +808,11 @@ def process_sm64_objects(obj, area, rootMatrix, transformMatrix, specialsOnly):
                     SM64_Object(
                         modelID,
                         translation,
-                        rotation.to_euler(),
+                        rotation,
                         behaviour,
                         obj.fast64.sm64.game_object.get_behavior_params(),
                         get_act_string(obj),
+                        obj.name,
                     )
                 )
             elif obj.sm64_obj_type == "Macro":
@@ -831,12 +821,12 @@ def process_sm64_objects(obj, area, rootMatrix, transformMatrix, specialsOnly):
                     SM64_Macro_Object(
                         macro,
                         translation,
-                        rotation.to_euler(),
+                        rotation,
                         obj.fast64.sm64.game_object.get_behavior_params() if obj.sm64_obj_set_bparam else None,
                     )
                 )
             elif obj.sm64_obj_type == "Mario Start":
-                mario_start = SM64_Mario_Start(obj.sm64_obj_mario_start_area, translation, rotation.to_euler())
+                mario_start = SM64_Mario_Start(obj.sm64_obj_mario_start_area, translation, rotation)
                 area.objects.append(mario_start)
                 area.mario_start = mario_start
             elif obj.sm64_obj_type == "Trajectory":
@@ -856,7 +846,7 @@ def process_sm64_objects(obj, area, rootMatrix, transformMatrix, specialsOnly):
                         triggerIndex,
                         obj.cameraVolumeFunction,
                         translation,
-                        rotation.to_euler(),
+                        rotation,
                         scale,
                         obj.empty_display_size,
                     )
@@ -1725,12 +1715,8 @@ class SM64_GeoASMProperties(bpy.types.PropertyGroup):
     @staticmethod
     def upgrade_object(obj: bpy.types.Object):
         geo_asm = obj.fast64.sm64.geo_asm
-
-        func = obj.get("geoASMFunc") or obj.get("geo_func") or geo_asm.func
-        geo_asm.func = func
-
-        param = obj.get("geoASMParam") or obj.get("func_param") or geo_asm.param
-        geo_asm.param = str(param)
+        upgrade_old_prop(geo_asm, "func", obj, {"geoASMFunc", "geo_func"})
+        upgrade_old_prop(geo_asm, "param", obj, {"geoASMParam", "func_param"})
 
 
 class SM64_AreaProperties(bpy.types.PropertyGroup):
@@ -1781,11 +1767,7 @@ class SM64_GameObjectProperties(bpy.types.PropertyGroup):
     def upgrade_object(obj):
         game_object: SM64_GameObjectProperties = obj.fast64.sm64.game_object
 
-        game_object.bparams = obj.get("sm64_obj_bparam", game_object.bparams)
-
-        # delete legacy property
-        if "sm64_obj_bparam" in obj:
-            del obj["sm64_obj_bparam"]
+        upgrade_old_prop(game_object, "bparams", obj, "sm64_obj_bparam")
 
         # get combined bparams, if they arent the default value then return because they have been set
         combined_bparams = game_object.get_combined_bparams()

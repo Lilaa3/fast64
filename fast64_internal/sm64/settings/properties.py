@@ -1,33 +1,31 @@
 import os
 import bpy
-from bpy.types import PropertyGroup, UILayout, Scene, Context
+from bpy.types import PropertyGroup, UILayout, Context
 from bpy.props import BoolProperty, StringProperty, EnumProperty, IntProperty, FloatProperty, PointerProperty
 from bpy.path import abspath
 from bpy.utils import register_class, unregister_class
 
 from ...render_settings import on_update_render_settings
-from ...utility import directory_path_checks, directory_ui_warnings, prop_split
-from ..sm64_constants import (
-    enum_refresh_versions,
-    defaultExtendSegment4,
-    enum_export_type,
-    enum_compression_formats,
-    enum_sm64_goal_type,
-)
+from ...utility import directory_path_checks, directory_ui_warnings, prop_split, upgrade_old_prop
+from ..sm64_constants import defaultExtendSegment4
 from ..sm64_utility import export_rom_ui_warnings, import_rom_ui_warnings
 from ..tools import SM64_AddrConvProperties
-
 from ..animation.properties import AnimProperty
+
+from .constants import (
+    enum_refresh_versions,
+    enum_compression_formats,
+    enum_export_type,
+    enum_sm64_goal_type,
+)
 
 
 def decomp_path_update(self, context: Context):
-    try:
-        directory_path_checks(abspath(self.decomp_path))
-        context.scene.fast64.settings.repo_settings_path = os.path.join(
-            os.path.dirname(abspath(self.decomp_path)), "fast64.json"
-        )
-    except:
-        pass  # Silently fail
+    fast64_settings = context.scene.fast64.settings
+    if fast64_settings.repo_settings_path:
+        return
+    directory_path_checks(abspath(self.decomp_path))
+    fast64_settings.repo_settings_path = os.path.join(abspath(self.decomp_path), "fast64.json")
 
 
 class SM64_Properties(PropertyGroup):
@@ -72,7 +70,11 @@ class SM64_Properties(PropertyGroup):
         name="Compression",
         default="mio0",
     )
-    force_extended_ram: BoolProperty(name="Force Extended Ram", default=True)
+    force_extended_ram: BoolProperty(
+        name="Force Extended Ram",
+        default=True,
+        description="USE_EXT_RAM will be defined in include/segments.h on export, increasing the available RAM by 4MB but requiring the expansion pack, this prevents crashes from running out of RAM",
+    )
     matstack_fix: BoolProperty(
         name="Matstack Fix",
         description="Exports account for matstack fix requirements",
@@ -84,54 +86,40 @@ class SM64_Properties(PropertyGroup):
     def binary_export(self):
         return self.export_type in ["Binary", "Insertable Binary"]
 
-    def get_legacy_export_type(self, scene: Scene):
-        legacy_export_types = ("C", "Binary", "Insertable Binary")
-
-        for export_key in ["animExportType", "colExportType", "DLExportType", "geoExportType"]:
-            export_type = legacy_export_types[scene.get(export_key, 0)]
-            if export_type != "C":
-                return export_type
-
-        return "C"
-
-    def upgrade_version_1(self, scene: Scene):
+    @staticmethod
+    def upgrade_changed_props():
+        AnimProperty.upgrade_changed_props()
         old_scene_props_to_new = {
             "importRom": "import_rom",
             "exportRom": "export_rom",
             "outputRom": "output_rom",
-            "convertibleAddr": "convertible_addr",
-            "levelConvert": "level_convert",
             "disableScroll": "disable_scroll",
             "blenderToSM64Scale": "blender_to_sm64_scale",
             "decompPath": "decomp_path",
             "extendBank4": "extend_bank_4",
+            "refreshVer": "refresh_version",
+            "exportType": "export_type",
         }
-        for old, new in old_scene_props_to_new.items():
-            setattr(self, new, scene.get(old, getattr(self, new)))
-
-        refresh_version = scene.get("refreshVer", None)
-        if refresh_version is not None:
-            self.refresh_version = enum_refresh_versions[refresh_version][0]
-
-        self.show_importing_menus = self.get("showImportingMenus", self.show_importing_menus)
-
-        export_type = self.get("exportType", None)
-        if export_type is not None:
-            self.export_type = enum_export_type[export_type][0]
-
-        self.version = 2
-
-    @staticmethod
-    def upgrade_changed_props():
         for scene in bpy.data.scenes:
             sm64_props: SM64_Properties = scene.fast64.sm64
-            if sm64_props.version == 0:
-                sm64_props.export_type = sm64_props.get_legacy_export_type(scene)
-                print("Upgraded global SM64 settings to version 1")
-            if sm64_props.version == 1:
-                sm64_props.upgrade_version_1(scene)
-                print("Upgraded global SM64 settings to version 2")
-        AnimProperty.upgrade_changed_props()
+            sm64_props.address_converter.upgrade_changed_props(scene)
+            if sm64_props.version == SM64_Properties.cur_version:
+                continue
+            upgrade_old_prop(
+                sm64_props,
+                "export_type",
+                scene,
+                {
+                    "animExportType",
+                    "colExportType",
+                    "DLExportType",
+                    "geoExportType",
+                },
+            )
+            for old, new in old_scene_props_to_new.items():
+                upgrade_old_prop(sm64_props, new, scene, old)
+            upgrade_old_prop(sm64_props, "show_importing_menus", sm64_props, "showImportingMenus")
+            sm64_props.version = SM64_Properties.cur_version
 
     def draw_props(self, layout: UILayout, show_repo_settings: bool = True):
         col = layout.column()

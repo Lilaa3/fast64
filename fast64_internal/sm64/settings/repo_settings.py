@@ -6,17 +6,15 @@ from ...utility import draw_and_check_tab, prop_split
 
 
 def save_sm64_repo_settings(scene: Scene):
-    data: dict[str, Any] = {}
-
     world = scene.world
-
+    data: dict[str, Any] = {}
     draw_layers: dict[str, Any] = {}
     data["draw_layers"] = draw_layers
 
     for layer in range(8):
         draw_layers[layer] = {
-            "cycle_1": world.get(f"draw_layer_{layer}_cycle_1"),
-            "cycle_2": world.get(f"draw_layer_{layer}_cycle_2"),
+            "cycle_1": getattr(world, f"draw_layer_{layer}_cycle_1"),
+            "cycle_2": getattr(world, f"draw_layer_{layer}_cycle_2"),
         }
 
     sm64_props = scene.fast64.sm64
