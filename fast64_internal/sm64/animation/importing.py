@@ -175,7 +175,11 @@ def from_table_element_class(element_props: "SM64_AnimTableElement", element: An
 
 
 def from_anim_table_class(
-    table_props: "SM64_AnimTableProperties", table: AnimationTable, clear_table: bool, use_custom_name: bool, actor_name: str
+    table_props: "SM64_AnimTableProperties",
+    table: AnimationTable,
+    clear_table: bool,
+    use_custom_name: bool,
+    actor_name: str,
 ):
     if clear_table:
         table_props.elements.clear()

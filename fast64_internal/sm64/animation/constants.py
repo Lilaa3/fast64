@@ -54,7 +54,7 @@ enumAnimationTables = [("Custom", "Custom", "Custom")]
 for actor_name, preset_info in ACTOR_PRESET_INFO.items():
     if preset_info.animation is None:
         continue
-    behaviours = ActorPresetInfo.get_member_dict(actor_name, preset_info.animation.behaviours)
+    behaviours = ActorPresetInfo.get_member_as_dict(actor_name, preset_info.animation.behaviours)
     enumAnimatedBehaviours.extend(
         [
             (
@@ -65,7 +65,7 @@ for actor_name, preset_info in ACTOR_PRESET_INFO.items():
             for name, address in behaviours.items()
         ]
     )
-    tables = ActorPresetInfo.get_member_dict(actor_name, preset_info.animation.address)
+    tables = ActorPresetInfo.get_member_as_dict(actor_name, preset_info.animation.address)
     enumAnimationTables.extend(
         [
             (
