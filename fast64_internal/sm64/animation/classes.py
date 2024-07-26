@@ -1,7 +1,5 @@
-import dataclasses
+import dataclasses, os, copy, numpy as np
 from io import StringIO
-import os
-import copy
 from typing import Optional
 
 from bpy.types import Action
@@ -23,7 +21,7 @@ class CArrayDeclaration:
 
 @dataclasses.dataclass
 class AnimationPair:
-    values: list[int] = dataclasses.field(default_factory=list)
+    values: np.array = dataclasses.field(compare=False)
 
     # Importing
     address: int = 0
@@ -31,17 +29,21 @@ class AnimationPair:
     # For compressing
     offset: int = 0
 
-    def clean_frames(self):
-        if not self.values:
-            self.values = [0]
+    def __post_init__(self):
+        assert isinstance(self.values, np.ndarray) and self.values.size > 0, "values cannot be empty"
 
+    def __eq__(self, other):
+        return np.array_equal(self.values, other.values)
+
+    def clean_frames(self):
+        # Find the index of the last occurrence of a different value
         last_value = self.values[-1]
-        for i, value in enumerate(reversed(self.values)):
-            if value != last_value:
-                if i > 1:
-                    self.values = self.values[: -(i - 1)]
-                return
-        self.values = self.values[:1]
+        diffs = np.where(self.values != last_value)[0]
+        if diffs.size > 0:
+            i = diffs[-1]
+            self.values = self.values[: i + 1]
+        else:  # all values are the same
+            self.values = self.values[:1]
 
     def get_frame(self, frame: int):
         return self.values[min(frame, len(self.values) - 1)]
@@ -95,17 +97,17 @@ class AnimationData:
         )
         self.indice_reference = indices_reader.start_address
         self.values_reference = values_reader.start_address
-        for _ in range((bone_count + 1) * 3):
-            pair = AnimationPair()
-            max_frame = indices_reader.read_int(2)
-            pair.offset = indices_reader.read_int(2) * 2
-            pair.address = values_reader.start_address + pair.offset
-            pair_reader = values_reader.branch(pair.address)
-            for _ in range(max_frame):
-                pair.values.append(pair_reader.read_int(2, True))
-            pair.end_address = pair_reader.address + 1
+
+        indices_size = (((bone_count + 1) * 3) * 2) * 2
+        indices_values = np.frombuffer(indices_reader.read_data(indices_size), dtype=">u2")
+        for i in range(0, len(indices_values), 2):
+            max_frame, offset = indices_values[i], indices_values[i + 1]
+            address = values_reader.start_address + (offset * 2)
+            size = max_frame * 2
+            values = np.frombuffer(values_reader.read_data(size, address), dtype=">i2", count=max_frame)
+            pair = AnimationPair(values, address, address + size, offset)
             self.pairs.append(pair)
-        self.indice_end_address = indices_reader.address + 1
+        self.indice_end_address = indices_reader.address
         self.value_end_address = max(pair.end_address for pair in self.pairs)
 
         self.start_address = min(self.indice_reference, self.values_reference)
@@ -116,13 +118,13 @@ class AnimationData:
         print(f'Reading data from "{indice_decl.name}" and "{value_decl.name}" c declarations.')
         self.indices_file_name, self.values_file_name = indice_decl.file_name, value_decl.file_name
         self.indice_reference, self.values_reference = indice_decl.name, value_decl.name
-        for i in range(0, len(indice_decl.values), 2):
-            pair = AnimationPair()
-            max_frame = int(indice_decl.values[i], 0)
-            offset = int(indice_decl.values[i + 1], 0)
-            for j in range(max_frame):
-                pair.values.append(to_s16(int(value_decl.values[offset + j], 0)))
-            self.pairs.append(pair)
+
+        indices_values = np.vectorize(lambda x: int(x, 0), otypes=[np.uint16])(indice_decl.values)
+        values_array = np.vectorize(lambda x: int(x, 0), otypes=[np.int16])(value_decl.values)
+
+        for i in range(0, len(indices_values), 2):
+            max_frame, offset = indices_values[i], indices_values[i + 1]
+            self.pairs.append(AnimationPair(values_array[offset : offset + max_frame], None, None, offset))
         return self
 
 

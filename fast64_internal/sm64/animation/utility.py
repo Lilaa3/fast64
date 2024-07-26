@@ -1,6 +1,4 @@
-import dataclasses
-import math
-import re
+import dataclasses, math, re, numpy as np
 
 import bpy
 from mathutils import Euler, Quaternion, Vector
@@ -24,10 +22,10 @@ if TYPE_CHECKING:
     )
 
 
-def animation_operator_checks(context: Context, requires_animation=True, multiple_objects=False):
+def animation_operator_checks(context: Context, requires_animation=True):
     if len(context.selected_objects) == 0 and context.object is None:
         raise PluginError("No armature selected.")
-    if not multiple_objects and len(context.selected_objects) > 1:
+    if len(context.selected_objects) > 1:
         raise PluginError("Multiple objects selected at once.")
 
     for obj in context.selected_objects:
@@ -61,10 +59,30 @@ def get_selected_action(animation_props: "SM64_AnimProperties", armature: Object
     raise ValueError("No action selected in properties.")
 
 
-def sm64_to_radian(signed_angle: int):
-    unsigned_angle = signed_angle + (1 << 16)
-    degree = unsigned_angle * (360.0 / (2**16))
-    return math.radians(degree % 360.0)
+def euler_to_quaternion(euler_angles: np.ndarray):
+    """euler_angles is an array of shape (-1, 3)"""
+    phi = euler_angles[:, 0]
+    theta = euler_angles[:, 1]
+    psi = euler_angles[:, 2]
+
+    half_phi = phi / 2.0
+    half_theta = theta / 2.0
+    half_psi = psi / 2.0
+
+    cos_half_phi = np.cos(half_phi)
+    sin_half_phi = np.sin(half_phi)
+    cos_half_theta = np.cos(half_theta)
+    sin_half_theta = np.sin(half_theta)
+    cos_half_psi = np.cos(half_psi)
+    sin_half_psi = np.sin(half_psi)
+
+    q_w = cos_half_phi * cos_half_theta * cos_half_psi + sin_half_phi * sin_half_theta * sin_half_psi
+    q_x = sin_half_phi * cos_half_theta * cos_half_psi - cos_half_phi * sin_half_theta * sin_half_psi
+    q_y = cos_half_phi * sin_half_theta * cos_half_psi + sin_half_phi * cos_half_theta * sin_half_psi
+    q_z = cos_half_phi * cos_half_theta * sin_half_psi - sin_half_phi * sin_half_theta * cos_half_psi
+
+    quaternions = np.vstack((q_w, q_x, q_y, q_z)).T  # shape (-1, 4)
+    return quaternions
 
 
 def get_anim_pose_bones(armature: Object) -> list[PoseBone]:
@@ -185,26 +203,21 @@ def get_enum_list_end(table_props: "SM64_AnimTableProperties", actor_name: str):
     return f"{table_name.upper()}_END"
 
 
-def value_distance(e1: Euler, e2: Euler) -> float:
-    result = 0
-    for x1, x2 in zip(e1, e2):
-        result += abs(x1 - x2)
-    return result
+def value_distance(e1: Euler | list, e2: Euler | list) -> float:
+    return math.sqrt((e1[0] - e2[0]) ** 2 + (e1[1] - e2[1]) ** 2 + (e1[2] - e2[2]) ** 2)
 
 
-def flip_euler(euler: Euler) -> Euler:
-    ret = euler.copy()
-
-    ret[0] += math.pi
-    ret[2] += math.pi
-    ret[1] = -ret[1] + math.pi
-    return ret
+def flip_euler(euler: np.ndarray) -> np.ndarray:
+    euler = euler.copy()
+    euler[1] = -euler[1]
+    euler += np.pi
+    return euler
 
 
-def naive_flip_diff(a1: float, a2: float) -> float:
-    while abs(a1 - a2) > math.pi:
-        a2 += (-2 if a1 < a2 else 2) * math.pi
-    return a2
+def naive_flip_diff(a1: np.ndarray, a2: np.ndarray) -> np.ndarray:
+    diff = a1 - a2
+    mask = np.abs(diff) > np.pi
+    return a2 + mask * np.sign(diff) * 2 * np.pi
 
 
 def can_interpolate(time_frames: list[tuple[int, Vector]], threshold: float):
@@ -216,43 +229,14 @@ def can_interpolate(time_frames: list[tuple[int, Vector]], threshold: float):
     for time, frame in inbetween_frames:
         time_step = time - time_start
         interpolated_frame = frame_start + ((frame_end - frame_start) * time_step / time_difference)
-        dist = value_distance(frame, interpolated_frame)
-        if dist > threshold:
+        if value_distance(frame, interpolated_frame) > threshold:
             return False
     return True
 
 
 @dataclasses.dataclass
 class FrameStore:
-    frames: dict[int, Vector] = dataclasses.field(default_factory=dict)
-
-    @property
-    def sorted_frames(self):
-        return sorted(self.frames.items(), key=lambda x: x[0])
-
-    def add(self, timestamp: int, frame: Vector):
-        self.frames[timestamp] = frame
-
-    def clean(self, threshold: float):
-        if not self.frames:
-            return
-        sorted_frames = self.sorted_frames
-        cleaned = FrameStore()
-        i = 0
-        while i < len(sorted_frames):
-            sucess = None
-            if i and value_distance(sorted_frames[i - 1][1], sorted_frames[i][1]) <= threshold:
-                sucess = i + 1
-            for j in range(i, len(sorted_frames)):
-                frames = sorted_frames[i : j + 1]
-                if len(frames) >= 3 and can_interpolate(frames, threshold):
-                    sucess = j
-            frame = sorted_frames[i]
-            if sucess:
-                i = sucess
-            cleaned.add(*frame)
-            i += 1
-        self.frames = cleaned.frames  # Update frames with cleaned frames
+    frames: np.ndarray = dataclasses.field(default_factory=list)
 
     def populate_action(self, action: Action, pose_bone: PoseBone, path: str):
         for property_index in range(3):
@@ -261,25 +245,26 @@ class FrameStore:
                 index=property_index,
                 action_group=pose_bone.name,
             )
-            for time, frame in self.sorted_frames:
+            for time, frame in enumerate(self.frames):
                 f_curve.keyframe_points.insert(time, frame[property_index])
 
 
 @dataclasses.dataclass
 class RotationFrameStore(FrameStore):
-    def add_rotation_frame(self, timestamp: int, rotation: Quaternion):
-        self.add(timestamp, Vector(rotation))
-
     @property
     def quaternion(self):
-        return [(i, Quaternion(x)) for i, x in self.sorted_frames]
+        return euler_to_quaternion(self.frames)
 
     def get_euler(self, order: str):
-        return [(i, x.to_euler(order)) for i, x in self.quaternion]
+        if order == "XYZ":
+            return self.frames
+        return [Quaternion(x).to_euler(order) for x in self.quaternion]
 
     @property
     def axis_angle(self):
-        return [(i, x.to_axis_angle()) for i, x in self.quaternion]
+        for x in self.quaternion:
+            x = Quaternion(x).to_axis_angle()
+            yield [x[1]] + list(x[0])
 
     def populate_action(self, action: Action, pose_bone: PoseBone):
         rotation_mode = pose_bone.rotation_mode
@@ -303,9 +288,7 @@ class RotationFrameStore(FrameStore):
                 index=property_index,
                 action_group=pose_bone.name,
             )
-            for frame, rotation in rotations:
-                if rotation_mode == "AXIS_ANGLE":
-                    rotation = [rotation[1]] + list(rotation[0])
+            for frame, rotation in enumerate(rotations):
                 f_curve.keyframe_points.insert(frame, rotation[property_index])
 
 
@@ -316,43 +299,45 @@ class AnimationBone:
     scale: FrameStore = dataclasses.field(default_factory=FrameStore)
 
     def read_pairs(self, pairs: list["AnimationPair"]):
-        array: list[int] = []
-        max_frame = max(len(pair.values) for pair in pairs)
-        array = [[x.get_frame(frame) for x in pairs] for frame in range(max_frame)]
-        return array
+        pair_count = len(pairs)
+        max_length = max(len(pair.values) for pair in pairs)
+        result = np.empty((max_length, pair_count), dtype=np.int16)
+
+        for i, pair in enumerate(pairs):
+            current_length = len(pair.values)
+            result[:current_length, i] = pair.values
+            result[current_length:, i] = pair.values[-1]
+        return result
 
     def read_translation(self, pairs: list["AnimationPair"], scale: float):
-        for frame, translation in enumerate(self.read_pairs(pairs)):
-            self.translation.add(frame, Vector(translation) / scale)
+        self.translation.frames = self.read_pairs(pairs) / scale
 
-    def continuity_filter(self, frames: list[Euler]):
-        prev = Euler([0, 0, 0])
+    def continuity_filter(self, frames: np.ndarray) -> np.ndarray:
+        if len(frames) <= 1:
+            return frames
+
+        # There is no way to fully vectorize this function
+        prev = frames[0]
         for frame, euler in enumerate(frames):
-            euler = Euler([naive_flip_diff(prev[i], x) for i, x in enumerate(euler)])
-            flipped_euler = Euler([naive_flip_diff(prev[i], x) for i, x in enumerate(flip_euler(euler))])
-            distance = value_distance(prev, euler)
-            distance_flipped = value_distance(prev, flipped_euler)
-            if distance_flipped < distance:
+            euler = naive_flip_diff(prev, euler)
+            flipped_euler = naive_flip_diff(prev, flip_euler(euler))
+            if np.all((prev - flipped_euler) ** 2 < (prev - euler) ** 2):
                 euler = flipped_euler
             frames[frame] = prev = euler
+
         return frames
 
     def read_rotation(self, pairs: list["AnimationPair"], continuity_filter: bool):
-        frames: list[Euler] = [Euler([sm64_to_radian(x) for x in rot]) for rot in self.read_pairs(pairs)]
+        frames = self.read_pairs(pairs).astype(np.uint16).astype(np.float32)
+        frames *= 360.0 / (2**16)
+        frames = np.radians(frames)
         if continuity_filter:
             frames = self.continuity_filter(frames)
-        for frame, rot in enumerate(frames):
-            self.rotation.add_rotation_frame(frame, rot.to_quaternion())
-
-    def clean(self, translation_threshold: float, rotation_threshold: float, scale_threshold: float):
-        self.translation.clean(translation_threshold)
-        self.rotation.clean(rotation_threshold)
-        self.scale.clean(scale_threshold)
+        self.rotation.frames = frames
 
     def populate_action(self, action: Action, pose_bone: PoseBone):
         self.translation.populate_action(action, pose_bone, "location")
         self.rotation.populate_action(action, pose_bone)
-        self.scale.populate_action(action, pose_bone, "scale")
 
 
 def populate_action(action: Action, bones: list[PoseBone], anim_data: list[AnimationBone], force_quaternion: bool):
@@ -360,11 +345,3 @@ def populate_action(action: Action, bones: list[PoseBone], anim_data: list[Anima
         if force_quaternion:
             pose_bone.rotation_mode = "QUATERNION"
         bone_data.populate_action(action, pose_bone)
-
-
-def clean_object_animations(context: Context):
-    animation_operator_checks(context, True, True)
-    selected_objects = context.selected_objects if context.selected_objects else context.object
-    for obj in selected_objects:
-        continue
-    raise NotImplementedError("Not implemented")

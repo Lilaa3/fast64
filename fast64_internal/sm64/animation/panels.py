@@ -84,22 +84,6 @@ class ObjAnimPanelTable(AnimationPanelTable, ObjAnimPanel):
     bl_idname = "DATA_PT_SM64_anim_panel_table"
 
 
-# Tools tab
-class AnimationPanelTools(AnimationPanel):
-    bl_label = "Tools"
-
-    def draw(self, context: Context):
-        get_animation_props(context).draw_tools(self.layout)
-
-
-class SceneAnimPanelTools(AnimationPanelTools, SceneAnimPanel):
-    bl_idname = "SM64_PT_anim_panel_tools"
-
-
-class ObjAnimPanelTools(AnimationPanelTools, ObjAnimPanel):
-    bl_idname = "DATA_PT_SM64_anim_panel_tools"
-
-
 # Importing tab
 
 
@@ -125,12 +109,10 @@ panels = (
     ObjAnimPanelAction,
     ObjAnimPanelTable,
     ObjAnimPanelImport,
-    ObjAnimPanelTools,
     SceneAnimPanelMain,
     SceneAnimPanelAction,
     SceneAnimPanelTable,
     SceneAnimPanelImport,
-    SceneAnimPanelTools,
 )
 
 

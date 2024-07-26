@@ -1,4 +1,5 @@
 import os
+import numpy as np
 
 import bpy
 from bpy.types import Object, Action, PoseBone, Context
@@ -64,59 +65,59 @@ if TYPE_CHECKING:
     from ..settings.properties import SM64_Properties
 
 
-def get_entire_fcurve_data(action: Action, bone: PoseBone, prop: str, max_frame: int, max_index: int = 0) -> list:
+def get_entire_fcurve_data(action: Action, bone: PoseBone, prop: str, max_frame: int) -> list:
     data_path = bone.path_from_id(prop)
-    values = [None] * max_index
-    for fcurve in action.fcurves:
-        if fcurve.data_path != data_path:
-            continue
-        values[fcurve.array_index] = [fcurve.evaluate(frame) for frame in range(max_frame)]
 
-    for i, value in enumerate(values):
-        if not value:
-            values[i] = [getattr(bone, prop)[i]] * max_frame
+    # Get the default property values from the bone and determine the number of channels
+    default_values = np.array(list(getattr(bone, prop)), dtype=np.float32)
+    num_channels = default_values.size
+
+    # Pre-allocate the values array with default values
+    values = np.full((max_frame, num_channels), default_values, dtype=np.float32)
+
+    for fcurve in action.fcurves:
+        if fcurve.data_path == data_path:
+            array_index = fcurve.array_index
+            for frame in range(max_frame):
+                values[frame, array_index] = fcurve.evaluate(frame)
+
     return values
 
 
 def get_trans_data(action: Action, bone: PoseBone, max_frame: int, blender_to_sm64_scale: float) -> tuple:
-    translation_pairs = (
-        AnimationPair(),
-        AnimationPair(),
-        AnimationPair(),
-    )
-    for x, y, z in zip(*get_entire_fcurve_data(action, bone, "location", max_frame, 3)):
-        translation_pairs[0].values.append(int(x * blender_to_sm64_scale))
-        translation_pairs[1].values.append(int(y * blender_to_sm64_scale))
-        translation_pairs[2].values.append(int(z * blender_to_sm64_scale))
-    return translation_pairs
+    fcurve_data = get_entire_fcurve_data(action, bone, "location", max_frame)
+    fcurve_data *= blender_to_sm64_scale
+    fcurve_data = np.round(fcurve_data).astype(np.int16)
+    return [AnimationPair(fcurve_data[:, i]) for i in range(3)]
 
 
 def get_rotation_data(action: Action, bone: PoseBone, max_frame: int):
-    rotation_pairs = (
-        AnimationPair(),
-        AnimationPair(),
-        AnimationPair(),
-    )
-    rotation = (rotation_pairs[0].values, rotation_pairs[1].values, rotation_pairs[2].values)
-    if bone.rotation_mode == "QUATERNION":
-        for w, x, y, z in zip(*get_entire_fcurve_data(action, bone, "rotation_quaternion", max_frame, 4)):
-            euler = Quaternion((w, x, y, z)).to_euler()
-            rotation[0].append(radians_to_s16(euler.x))
-            rotation[1].append(radians_to_s16(euler.y))
-            rotation[2].append(radians_to_s16(euler.z))
-    elif bone.rotation_mode == "AXIS_ANGLE":
-        for x, y, z, w in zip(*get_entire_fcurve_data(action, bone, "rotation_axis_angle", max_frame, 4)):
-            euler = Quaternion((x, y, z), w).to_euler()
-            rotation[0].append(radians_to_s16(euler.x))
-            rotation[1].append(radians_to_s16(euler.y))
-            rotation[2].append(radians_to_s16(euler.z))
+    mode = bone.rotation_mode
+    prop = {"QUATERNION": "rotation_quaternion", "AXIS_ANGLE": "rotation_axis_angle"}.get(mode, "rotation_euler")
+
+    def to_xyz(row):
+        euler = Euler(row, mode)
+        return [euler.x, euler.y, euler.z]
+
+    fcurve_data: np.array = get_entire_fcurve_data(action, bone, prop, max_frame)
+
+    if mode == "QUATERNION":
+        eulers = np.apply_along_axis(lambda row: list(Quaternion(row).to_euler()), 1, fcurve_data)
+    elif mode == "AXIS_ANGLE":
+        eulers = np.apply_along_axis(lambda row: list(Quaternion(row[1:], row[0]).to_euler()), 1, fcurve_data)
     else:
-        for x, y, z in zip(*get_entire_fcurve_data(action, bone, "rotation_euler", max_frame, 3)):
-            euler = Euler((x, y, z), bone.rotation_mode)
-            rotation[0].append(radians_to_s16(euler.x))
-            rotation[1].append(radians_to_s16(euler.y))
-            rotation[2].append(radians_to_s16(euler.z))
-    return rotation_pairs
+        if mode != "XYZ":
+            eulers = np.apply_along_axis(to_xyz, 1, fcurve_data)
+        else:
+            eulers = fcurve_data
+
+    sm64_angles = (np.degrees(eulers) * (2**16 / 360.0)).astype(np.int16)
+
+    return [
+        AnimationPair(sm64_angles[:, 0]),
+        AnimationPair(sm64_angles[:, 1]),
+        AnimationPair(sm64_angles[:, 2]),
+    ]
 
 
 def get_animation_pairs(
@@ -137,43 +138,30 @@ def get_animation_pairs(
     else:
         pre_export_frame = bpy.context.scene.frame_current
         pre_export_action = armature_obj.animation_data.action
-        armature_obj.animation_data.action = action
+        try:
+            armature_obj.animation_data.action = action
 
-        pairs = [
-            AnimationPair(),
-            AnimationPair(),
-            AnimationPair(),
-        ]
-        rotation_pairs: list[tuple[AnimationPair]] = []
-        for _ in anim_bones:
-            rotation = (
-                AnimationPair(),
-                AnimationPair(),
-                AnimationPair(),
-            )
-            rotation_pairs.append(rotation)
-            pairs.extend(rotation)
+            pairs = [AnimationPair() for _ in range(((len(anim_bones) + 1) * 3))]
 
-        scale = armature_obj.matrix_world.to_scale() * sm64_scale
-        for frame in range(max_frame):
-            bpy.context.scene.frame_set(frame)
-            for i, pose_bone in enumerate(anim_bones):
-                matrix = armature_obj.convert_space(
-                    pose_bone=pose_bone,
-                    matrix=pose_bone.matrix,
-                    from_space="WORLD",
-                    to_space="LOCAL",
-                )
-                if i == 0:  # Only first bone has translation.
-                    translation: Vector = matrix.to_translation() * scale
-                    for j, pair in enumerate(pairs[:3]):
-                        pair.values.append(int(translation[j]))
-                rot = matrix.to_euler()
-                for j, pair in enumerate(rotation_pairs[i]):
-                    pair.values.append(radians_to_s16(rot[j]))
+            scale = armature_obj.matrix_world.to_scale() * sm64_scale
+            for frame in range(max_frame):
+                bpy.context.scene.frame_set(frame)
+                for i, pose_bone in enumerate(anim_bones):
+                    local_matrix = armature_obj.convert_space(
+                        pose_bone=pose_bone, matrix=pose_bone.matrix, from_space="POSE", to_space="LOCAL"
+                    )
 
-        armature_obj.animation_data.action = pre_export_action
-        bpy.context.scene.frame_current = pre_export_frame
+                    if i == 0:  # Only first bone has translation.
+                        translation: Vector = local_matrix.to_translation() * scale
+                        for j, pair in enumerate(pairs[:3]):
+                            pair.values.append(int(translation[j]))
+
+                    rot = local_matrix.to_euler()
+                    for j, pair in enumerate(pairs[(i + 1) * 3 : (i + 2) * 3]):
+                        pair.values.append(radians_to_s16(rot[j]))
+        finally:
+            armature_obj.animation_data.action = pre_export_action
+            bpy.context.scene.frame_set(pre_export_frame)
 
     for pair in pairs:
         pair.clean_frames()

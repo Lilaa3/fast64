@@ -15,7 +15,6 @@ from .utility import (
     get_frame_range,
     update_header_variant_numbers,
     get_animation_props,
-    clean_object_animations,
 )
 from .constants import marioAnimationNames, enumAnimationTables, enumAnimatedBehaviours
 
@@ -263,21 +262,6 @@ class SearchAnimatedBehavior(SearchEnumOperatorBase):
         get_animation_props(context).table.behaviour = self.behaviour
 
 
-class CleanObjectAnim(OperatorBase):
-    bl_description = "Clean object animations"
-    bl_idname = "object.clean_object_animations"
-    bl_label = "Clean Object Animations"
-    bl_options = {"REGISTER", "UNDO", "PRESET"}
-    context_mode = "OBJECT"
-    icon = "KEYFRAME"
-
-    threshold: FloatProperty(name="Threshold", min=0.0, max=1.0, default=0.01)
-
-    def execute_operator(self, context: Context):
-        clean_object_animations(context)
-        self.report({"INFO"}, "Cleaned object animations successfully!")
-
-
 operators = (
     ExportAnimTable,
     ExportAnim,
@@ -288,7 +272,6 @@ operators = (
     SearchMarioAnim,
     SearchAnimatedBehavior,
     SearchTableAnim,
-    CleanObjectAnim,
 )
 
 

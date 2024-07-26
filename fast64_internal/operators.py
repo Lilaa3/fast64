@@ -1,4 +1,7 @@
-import bpy, mathutils, math
+from cProfile import Profile
+from pstats import SortKey, Stats
+
+import bpy, mathutils
 from bpy.types import Operator, Context, UILayout, EnumProperty
 from bpy.utils import register_class, unregister_class
 from .utility import *
@@ -12,6 +15,9 @@ def addMaterialByName(obj, matName, preset):
     else:
         material = createF3DMat(obj, preset=preset)
         material.name = matName
+
+
+PROFILE_ENABLED = True
 
 
 class OperatorBase(Operator):
@@ -40,7 +46,12 @@ class OperatorBase(Operator):
         try:
             if self.context_mode and self.context_mode != starting_mode_set:
                 bpy.ops.object.mode_set(mode=self.context_mode)
-            self.execute_operator(context)
+            if PROFILE_ENABLED:
+                with Profile() as profile:
+                    self.execute_operator(context)
+                    print(Stats(profile).strip_dirs().sort_stats(SortKey.CUMULATIVE).print_stats())
+            else:
+                self.execute_operator(context)
             return {"FINISHED"}
         except Exception as exc:
             raisePluginError(self, exc)

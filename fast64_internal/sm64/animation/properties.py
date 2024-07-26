@@ -45,7 +45,6 @@ from .operators import (
     SearchMarioAnim,
     SearchAnimatedBehavior,
     SearchTableAnim,
-    CleanObjectAnim,
 )
 from .constants import (
     enumAnimImportTypes,
@@ -189,7 +188,6 @@ class SM64_AnimHeaderProperties(PropertyGroup):
             return
         # Draw flag toggles
         row = col.row(align=True)
-        row.alignment = "LEFT"
         row.prop(self, "no_loop", invert_checkbox=True, text="Loop", toggle=1)
         row.prop(self, "backwards", toggle=1)
         row.prop(self, "no_acceleration", invert_checkbox=True, text="Acceleration", toggle=1)
@@ -649,56 +647,20 @@ class SM64_AnimTableProperties(PropertyGroup):
                 actions.append(action)
 
 
-class CleanAnimProperty(PropertyGroup):
-    translation_threshold: FloatProperty(
-        name="Threshold",
-        default=1 / MAX_U16,
-        min=0,
-        max=0.01,
+class SM64_AnimImportProperties(PropertyGroup):
+    run_decimate: BoolProperty(name="Run Decimate (Allowed Change)", default=True)
+    decimate_margin: FloatProperty(
+        name="Error Margin",
+        default=0.025,
+        min=0.0,
+        max=0.025,
+        description="Use blender's builtin decimate (allowed change) operator to clean up all the keyframes, generally the better option compared to clean keyframes but can be slow",
     )
-    rotation_threshold: FloatProperty(
-        name="Threshold",
-        default=16 / MAX_U16,  # SM64's sine LUT is 1/16th of the full range
-        min=0,
-        max=0.01,
-    )
-    scale_threshold: FloatProperty(
-        name="Threshold",
-        default=1 / MAX_U16,
-        min=0,
-        max=0.01,
-    )
+
     continuity_filter: BoolProperty(name="Continuity Filter", default=True)
     force_quaternion: BoolProperty(
-        name="Force Quaternions", description="Changes bones to quaternion rotation mode, breaks existing actions"
+        name="Force Quaternions", description="Changes bones to quaternion rotation mode, can break actions"
     )
-
-    def draw_props(self, layout: UILayout, tools_context: bool = True):
-        col = layout.column()
-        col.label(text="Thresholds")
-        prop_split(col, self, "translation_threshold", "Translation", slider=True)
-        prop_split(col, self, "rotation_threshold", "Rotation", slider=True)
-        if tools_context:
-            prop_split(col, self, "scale_threshold", "Scale", slider=True)
-        col.separator()
-
-        row = col.row()
-        row.prop(self, "force_quaternion")
-        continuity_row = row.row()
-        continuity_row.enabled = not self.force_quaternion
-        continuity_row.prop(
-            self,
-            "continuity_filter",
-            text="Continuity Filter" + (" (Always on)" if self.force_quaternion else ""),
-            invert_checkbox=not self.continuity_filter if self.force_quaternion else False,
-        )
-        if tools_context:
-            CleanObjectAnim.draw_props(col)
-
-
-class SM64_AnimImportProperties(PropertyGroup):
-    clean_up: BoolProperty(name="Clean Up Keyframes", default=True)
-    clean_up_props: PointerProperty(type=CleanAnimProperty)
 
     clear_table: BoolProperty(name="Clear Table On Import", default=True)
     import_type: EnumProperty(items=enumAnimImportTypes, name="Type", default="C")
@@ -769,6 +731,25 @@ class SM64_AnimImportProperties(PropertyGroup):
     @property
     def table_size(self):
         return None if self.check_null else self.table_size_prop
+
+    def draw_clean_up(self, layout: UILayout):
+        col = layout.column()
+        col.prop(self, "run_decimate")
+        if self.run_decimate:
+            prop_split(col, self, "decimate_margin", "Error Margin")
+            col.box().label(text="While very useful and stable, it can be very slow", icon="INFO")
+        col.separator()
+
+        row = col.row()
+        row.prop(self, "force_quaternion")
+        continuity_row = row.row()
+        continuity_row.enabled = not self.force_quaternion
+        continuity_row.prop(
+            self,
+            "continuity_filter",
+            text="Continuity Filter" + (" (Always on)" if self.force_quaternion else ""),
+            invert_checkbox=not self.continuity_filter if self.force_quaternion else False,
+        )
 
     def draw_path(self, layout: UILayout):
         prop_split(layout, self, "path", "Directory or File Path")
@@ -874,10 +855,8 @@ class SM64_AnimImportProperties(PropertyGroup):
             col.prop(self, "assume_bone_count")
         col.separator()
 
+        self.draw_clean_up(col)
         col.prop(self, "clear_table")
-        col.prop(self, "clean_up")
-        if self.clean_up:
-            self.clean_up_props.draw_props(col.box(), False)
         ImportAnim.draw_props(col)
 
 
@@ -891,7 +870,6 @@ class SM64_AnimProperties(PropertyGroup):
     table: PointerProperty(type=SM64_AnimTableProperties)
     importing: PointerProperty(type=SM64_AnimImportProperties)
     selected_action: PointerProperty(name="Action", type=Action)
-    clean_up: PointerProperty(type=CleanAnimProperty)
 
     update_table: BoolProperty(
         name="Update Table On Action Export",
@@ -1111,11 +1089,6 @@ class SM64_AnimProperties(PropertyGroup):
 
         self.draw_non_exclusive_settings(col, self.is_dma(export_type), export_type)
 
-    def draw_tools(self, layout: UILayout):
-        col = layout.column()
-        col.label(text="Clean Up Keyframes", icon="KEYFRAME")
-        self.clean_up.draw_props(col)
-
     def draw_props(self, layout: UILayout, export_type: str):
         col = layout.column()
         self.draw_export_settings(col, export_type)
@@ -1126,7 +1099,6 @@ properties = (
     SM64_AnimTableElement,
     SM64_ActionProperty,
     SM64_AnimTableProperties,
-    CleanAnimProperty,
     SM64_AnimImportProperties,
     SM64_AnimProperties,
 )

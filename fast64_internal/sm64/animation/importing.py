@@ -217,9 +217,7 @@ def animation_import_to_blender(
     anim_import: Animation,
     actor_name: str,
     use_custom_name: bool,
-    clean: bool,
     to_quaternion: bool,
-    threshold: tuple[float, float],
     continuity_filter: bool,
 ):
     if armature_obj.animation_data is None:
@@ -237,12 +235,9 @@ def animation_import_to_blender(
                     bone.read_translation(pairs[0:3], blender_to_sm64_scale)
                 bone.read_rotation(pairs[pair_num : pair_num + 3], continuity_filter)
                 bone_data.append(bone)
-            if clean:
-                print("Cleaning up intermidiate data's keyframes.")
-                for bone in bone_data:
-                    bone.clean(*threshold, 0)
             print("Populating action keyframes.")
             populate_action(action, bones, bone_data, to_quaternion)
+
         from_anim_class(
             action.fast64.sm64,
             action,
@@ -251,26 +246,13 @@ def animation_import_to_blender(
             use_custom_name,
         )
         stashActionInArmature(armature_obj, action)
+        return action
     except PluginError as exc:
         bpy.data.actions.remove(action)
         raise exc
 
 
-def find_decls(c_data: str, search_text: str, file: os.PathLike, decl_list: list[CArrayDeclaration]):
-    start_index = c_data.find(search_text)
-    while start_index != -1:
-        decl_index = c_data.find("{", start_index)
-        end_index = c_data.find("};", start_index)
-        name = c_data[start_index + len(search_text) : decl_index]
-        name = name.replace("[]", "").replace("=", "").rstrip().lstrip()
-        values = [value.strip() for value in c_data[decl_index + 1 : end_index].split(",")]
-        if values[-1] == "":
-            values = values[:-1]
-        decl_list.append(CArrayDeclaration(name, file, os.path.basename(file), values))
-        start_index = c_data.find(search_text, end_index)
-
-
-pattern = re.compile(r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"', re.DOTALL | re.MULTILINE)
+COMMENT_SUB_PATTERN = re.compile(r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"', re.DOTALL | re.MULTILINE)
 
 
 def comment_remover(text: str):
@@ -281,13 +263,28 @@ def comment_remover(text: str):
         else:
             return s
 
-    return re.sub(pattern, replacer, text)
+    return re.sub(COMMENT_SUB_PATTERN, replacer, text)
+
+
+DECL_PATTERN = re.compile(
+    r"(static\s+const\s+struct\s+Animation|static\s+const\s+u16|static\s+const\s+s16|const\s+struct Animation\s+\*const)\s+(\w+)\s*?(?:\[.*?\])?\s*?=\s*?\{(.*?)\};",
+    re.DOTALL,
+)
+VALUE_SPLIT_PATTERN = re.compile(r"\s*(.*?),\s*")
+
+
+def find_decls(c_data: str, f: os.PathLike, decl_list: dict[str, list[CArrayDeclaration]]):
+    file_basename = os.path.basename(f)
+    matches = DECL_PATTERN.findall(c_data)
+    for decl_type, name, value_text in matches:
+        values = VALUE_SPLIT_PATTERN.findall(value_text)
+        decl_list[decl_type].append(CArrayDeclaration(name, f, file_basename, values))
 
 
 def import_c_animations(
     path: os.PathLike,
-    animation_headers: dict[str, AnimationHeader],
-    animation_data: dict[tuple[str, str], Animation],
+    read_headers: dict[str, AnimationHeader],
+    read_animations: dict[tuple[str, str], Animation],
     table: AnimationTable,
 ):
     path_checks(path)
@@ -298,57 +295,66 @@ def import_c_animations(
             [os.path.join(root, filename) for root, _, files in os.walk(path) for filename in files],
         )
 
-    header_decls, value_decls, indices_decls, table_decls = [], [], [], []
+    print(f"Reading from: {', '.join(file_paths)}.")
+    decl_lists = {
+        "static const struct Animation": [],
+        "static const u16": [],
+        "static const s16": [],
+        "const struct Animation *const": [],
+    }
+
     for file_path in file_paths:
         print(f"Reading from: {file_path}.")
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
-            c_data = comment_remover(file.read())
-        find_decls(c_data, "static const struct Animation ", file_path, header_decls)
-        find_decls(c_data, "static const u16 ", file_path, indices_decls)
-        find_decls(c_data, "static const s16 ", file_path, value_decls)
-        find_decls(c_data, "const struct Animation *const ", file_path, table_decls)
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            c_data = comment_remover(f.read())
+        find_decls(c_data, file_path, decl_lists)
+
+    header_decls = decl_lists["static const struct Animation"]
+    indices_decls = decl_lists["static const u16"]
+    value_decls = decl_lists["static const s16"]
+    table_decls = decl_lists["const struct Animation *const"]
 
     if table_decls:
         if len(table_decls) > 1:
             raise ValueError("More than 1 table declaration")
         table.read_c(
             table_decls[0],
-            animation_headers,
-            animation_data,
+            read_headers,
+            read_animations,
             header_decls,
             value_decls,
             indices_decls,
         )
-        return
-    for header_decl in header_decls:
-        AnimationHeader().read_c(
-            header_decl,
-            value_decls,
-            indices_decls,
-            animation_headers,
-            animation_data,
-        )
+    else:
+        for header_decl in header_decls:
+            AnimationHeader().read_c(
+                header_decl,
+                value_decls,
+                indices_decls,
+                read_headers,
+                read_animations,
+            )
 
 
 def import_binary_animations(
     data_reader: RomReader,
     import_type: str,
-    animation_headers: dict[str, AnimationHeader],
-    animation_data: dict[tuple[str, str], Animation],
+    read_headers: dict[str, AnimationHeader],
+    read_animations: dict[tuple[str, str], Animation],
     table: AnimationTable,
     table_index: int | None = None,
     assumed_bone_count: int | None = None,
     table_size: int | None = None,
 ):
     if import_type == "Table":
-        table.read_binary(data_reader, animation_headers, animation_data, table_index, assumed_bone_count, table_size)
+        table.read_binary(data_reader, read_headers, read_animations, table_index, assumed_bone_count, table_size)
     elif import_type == "DMA":
-        table.read_dma_binary(data_reader, animation_headers, animation_data, table_index, assumed_bone_count)
+        table.read_dma_binary(data_reader, read_headers, read_animations, table_index, assumed_bone_count)
     elif import_type == "Animation":
         AnimationHeader.read_binary(
             data_reader,
-            animation_headers,
-            animation_data,
+            read_headers,
+            read_animations,
             False,
             assumed_bone_count,
             table_size,
@@ -359,8 +365,8 @@ def import_binary_animations(
 
 def import_insertable_binary_animations(
     reader: RomReader,
-    animation_headers: dict[str, AnimationHeader],
-    animation_data: dict[tuple[str, str], Animation],
+    read_headers: dict[str, AnimationHeader],
+    read_animations: dict[tuple[str, str], Animation],
     table: AnimationTable,
     table_index: int | None = None,
     assumed_bone_count: int | None = None,
@@ -369,15 +375,15 @@ def import_insertable_binary_animations(
     if reader.insertable.data_type == "Animation":
         AnimationHeader.read_binary(
             reader,
-            animation_headers,
-            animation_data,
+            read_headers,
+            read_animations,
             False,
             assumed_bone_count,
         )
     elif reader.insertable.data_type == "Animation Table":
-        table.read_binary(reader, animation_headers, animation_data, table_index, table_size, assumed_bone_count)
+        table.read_binary(reader, read_headers, read_animations, table_index, table_size, assumed_bone_count)
     elif reader.insertable.data_type == "Animation DMA Table":
-        table.read_dma_binary(reader, animation_headers, animation_data, table_index, assumed_bone_count)
+        table.read_dma_binary(reader, read_headers, read_animations, table_index, assumed_bone_count)
 
 
 def import_animations(context: Context):
@@ -390,8 +396,8 @@ def import_animations(context: Context):
     table_props: SM64_AnimTableProperties = anim_props.table
     armature_obj: Object = context.object
 
-    animation_data: dict[tuple[str, str], Animation] = {}
-    animation_headers: dict[str, AnimationHeader] = {}
+    read_animations: dict[tuple[str, str], Animation] = {}
+    read_headers: dict[str, AnimationHeader] = {}
     table = AnimationTable()
 
     import_type = import_props.import_type
@@ -425,8 +431,8 @@ def import_animations(context: Context):
     if import_type in {"Binary", "Insertable Binary"}:
         bone_count = len(get_anim_pose_bones(armature_obj)) if import_props.assume_bone_count else None
         binary_args = (
-            animation_headers,
-            animation_data,
+            read_headers,
+            read_animations,
             table,
             table_index,
             bone_count,
@@ -462,25 +468,43 @@ def import_animations(context: Context):
                     )
     elif import_type == "C":
         path_checks(c_path)
-        import_c_animations(c_path, animation_headers, animation_data, table)
+        import_c_animations(c_path, read_headers, read_animations, table)
 
     if not table.elements:
         print("No table was read. Automatically creating table.")
-        table.elements = [AnimationTableElement(header=header) for header in animation_headers.values()]
+        table.elements = [AnimationTableElement(header=header) for header in read_headers.values()]
+
     print("Importing animations into blender.")
-    for animation in animation_data.values():
-        clean_up = import_props.clean_up_props
-        animation_import_to_blender(
-            armature_obj,
-            sm64_props.blender_to_sm64_scale,
-            animation,
-            anim_props.actor_name,
-            import_props.use_custom_name,
-            import_props.clean_up,
-            clean_up.force_quaternion,
-            (clean_up.translation_threshold, clean_up.rotation_threshold),
-            clean_up.continuity_filter if not clean_up.force_quaternion else True,
+    actions = []
+    for animation in read_animations.values():
+        actions.append(
+            animation_import_to_blender(
+                armature_obj,
+                sm64_props.blender_to_sm64_scale,
+                animation,
+                anim_props.actor_name,
+                import_props.use_custom_name,
+                import_props.force_quaternion,
+                import_props.continuity_filter if not import_props.force_quaternion else True,
+            )
         )
+    if import_props.run_decimate:
+        old_area = bpy.context.area.type
+        old_action = armature_obj.animation_data.action
+        try:
+            bpy.ops.object.posemode_toggle()  # Select all bones
+            bpy.ops.pose.select_all(action="SELECT")
+
+            bpy.context.area.type = "GRAPH_EDITOR"
+            for action in actions:
+                print(f"Decimating {action.name}.")
+                armature_obj.animation_data.action = action
+                bpy.ops.graph.select_all(action="SELECT")
+                bpy.ops.graph.decimate(mode="ERROR", factor=1, remove_error_margin=import_props.decimate_margin)
+        finally:
+            bpy.context.area.type = old_area
+            armature_obj.animation_data.action = old_action
+
     print("Importing animation table into properties.")
     from_anim_table_class(
         table_props, table, import_props.clear_table, import_props.use_custom_name, anim_props.actor_name
