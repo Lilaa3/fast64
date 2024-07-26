@@ -97,12 +97,12 @@ class AnimationData:
         self.values_reference = values_reader.start_address
         for _ in range((bone_count + 1) * 3):
             pair = AnimationPair()
-            max_frame = indices_reader.read_value(2)
-            pair.offset = indices_reader.read_value(2) * 2
+            max_frame = indices_reader.read_int(2)
+            pair.offset = indices_reader.read_int(2) * 2
             pair.address = values_reader.start_address + pair.offset
             pair_reader = values_reader.branch(pair.address)
             for _ in range(max_frame):
-                pair.values.append(pair_reader.read_value(2, True))
+                pair.values.append(pair_reader.read_int(2, True))
             pair.end_address = pair_reader.address + 1
             self.pairs.append(pair)
         self.indice_end_address = indices_reader.address + 1
@@ -252,23 +252,23 @@ class AnimationHeader:
         header = AnimationHeader()
         read_headers[str(reader.start_address)] = header
         header.reference = reader.start_address
-        header.flags = reader.read_value(2, True)  # /*0x00*/ s16 flags;
-        header.trans_divisor = reader.read_value(2, True)  # /*0x02*/ s16 animYTransDivisor;
-        header.start_frame = reader.read_value(2, True)  # /*0x04*/ s16 startFrame;
-        header.loop_start = reader.read_value(2, True)  # /*0x06*/ s16 loopStart;
-        header.loop_end = reader.read_value(2, True)  # /*0x08*/ s16 loopEnd;
-        bone_count = reader.read_value(2, True)  # /*0x0A*/ s16 unusedBoneCount; (Unused in engine)
+        header.flags = reader.read_int(2, True)  # /*0x00*/ s16 flags;
+        header.trans_divisor = reader.read_int(2, True)  # /*0x02*/ s16 animYTransDivisor;
+        header.start_frame = reader.read_int(2, True)  # /*0x04*/ s16 startFrame;
+        header.loop_start = reader.read_int(2, True)  # /*0x06*/ s16 loopStart;
+        header.loop_end = reader.read_int(2, True)  # /*0x08*/ s16 loopEnd;
+        bone_count = reader.read_int(2, True)  # /*0x0A*/ s16 unusedBoneCount; (Unused in engine)
         header.bone_count = bone_count if assumed_bone_count is None else assumed_bone_count
         # /*0x0C*/ const s16 *values;
         # /*0x10*/ const u16 *index;
         if dma:
             start_address = reader.start_address
-            header.values_reference = start_address + reader.read_value(4)
-            header.indice_reference = start_address + reader.read_value(4)
+            header.values_reference = start_address + reader.read_int(4)
+            header.indice_reference = start_address + reader.read_int(4)
         else:
             header.values_reference = reader.read_ptr()
             header.indice_reference = reader.read_ptr()
-        header.length = reader.read_value(4)
+        header.length = reader.read_int(4)
 
         header.end_address = reader.address + 1
         header.table_index = len(read_headers) if table_index is None else table_index

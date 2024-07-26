@@ -1,8 +1,6 @@
-import dataclasses
 from io import BufferedReader, StringIO
-import os
-import shutil
 from typing import BinaryIO
+import dataclasses, os, shutil, struct
 
 from ..utility import intToHex, tempName, decodeSegmentedAddr
 from .sm64_constants import insertableBinaryTypes, SegmentData
@@ -39,22 +37,22 @@ class InsertableBinaryData:
     def read(self, file: BufferedReader, expected_type: list = None):
         print(f"Reading insertable binary data from {file.name}")
         reader = RomReader(file)
-        type_num = reader.read_value(4)
+        type_num = reader.read_int(4)
         if type_num not in insertableBinaryTypes.values():
             raise ValueError(f"Unknown data type: {intToHex(type_num)}")
         self.data_type = next(k for k, v in insertableBinaryTypes.items() if v == type_num)
         if expected_type and self.data_type not in expected_type:
             raise ValueError(f"Unexpected data type: {self.data_type}")
 
-        data_size = reader.read_value(4)
-        self.start_address = reader.read_value(4)
-        pointer_count = reader.read_value(4)
+        data_size = reader.read_int(4)
+        self.start_address = reader.read_int(4)
+        pointer_count = reader.read_int(4)
         self.ptrs = []
         for _ in range(pointer_count):
-            self.ptrs.append(reader.read_value(4))
+            self.ptrs.append(reader.read_int(4))
 
         actual_start = reader.address + self.start_address
-        self.data = reader.read_data(data_size, actual_start)
+        self.data = reader.read_int(data_size, actual_start)
         return self
 
 
@@ -80,7 +78,7 @@ class RomReader:
 
     def branch(self, start_address=-1):
         start_address = self.address if start_address == -1 else start_address
-        if self.read_value(1, specific_address=start_address) is None:
+        if self.read_int(1, specific_address=start_address) is None:
             if self.insertable and self.rom_file:
                 return RomReader(self.rom_file, start_address=start_address, segment_data=self.segment_data)
             return None
@@ -92,10 +90,13 @@ class RomReader:
             self.insertable,
         )
 
+    def skip(self, size: int):
+        self.address += size
+
     def read_data(self, size=-1, specific_address=-1):
         if specific_address == -1:
             address = self.address
-            self.address += size
+            self.skip(size)
         else:
             address = specific_address
 
@@ -108,18 +109,36 @@ class RomReader:
             raise IndexError(f"Value at {intToHex(address)} not present in data.")
         return data
 
-    def read_ptr(self):
-        address = self.address
-        ptr = self.read_value(4)
+    def read_ptr(self, specific_address=-1):
+        address = self.address if specific_address == -1 else specific_address
+        ptr = self.read_int(4, specific_address=specific_address)
         if self.insertable and address in self.insertable.ptrs:
             return ptr
-        if self.segment_data:
+        if ptr and self.segment_data:
             return decodeSegmentedAddr(ptr.to_bytes(4, "big"), self.segment_data)
         return ptr
 
-    def read_value(self, size=-1, signed=False, specific_address=-1):
+    def read_int(self, size=4, signed=False, specific_address=-1):
         in_bytes = self.read_data(size, specific_address)
         return int.from_bytes(in_bytes, "big", signed=signed)
+
+    def read_float(self, size=4, specific_address=-1):
+        in_bytes = self.read_data(size, specific_address)
+        return struct.unpack(">f", in_bytes)[0]
+
+    def read_str(self, specific_address=-1):
+        ptr = self.read_ptr() if specific_address == -1 else specific_address
+        if not ptr:
+            return None
+        branch = self.branch(ptr)
+        text_data = bytearray()
+        while True:
+            byte = branch.read_data(1)
+            if byte == b"\x00" or not byte:
+                break
+            text_data.append(ord(byte))
+        text = text_data.decode("utf-8")
+        return text
 
 
 @dataclasses.dataclass
@@ -220,13 +239,13 @@ class DMATable:
         print("Reading DMA table at", intToHex(reader.start_address))
         self.address = reader.start_address
 
-        num_entries = reader.read_value(4)  # numEntries
-        self.address_place_holder = reader.read_value(4)  # addrPlaceholder
+        num_entries = reader.read_int(4)  # numEntries
+        self.address_place_holder = reader.read_int(4)  # addrPlaceholder
 
         table_size = 0
         for _ in range(num_entries):
-            offset = reader.read_value(4)
-            size = reader.read_value(4)
+            offset = reader.read_int(4)
+            size = reader.read_int(4)
             address = self.address + offset
             self.entries.append(DMATableElement(offset, size, address, address + size))
             end_of_entry = offset + size
