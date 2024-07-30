@@ -1,13 +1,12 @@
-import os
-import re
+import os, re, dataclasses, numpy as np
 
 import bpy
 from bpy.path import abspath
-from bpy.types import Object, Action, Context
+from bpy.types import Object, Action, Context, PoseBone
 
 from ...utility import PluginError, decodeSegmentedAddr, filepath_checks, is_bit_active, path_checks, intToHex
 from ...utility_anim import stashActionInArmature
-from ..sm64_constants import level_pointers
+from ..sm64_constants import level_pointers, ActorPresetInfo
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_utility import import_rom_checks
 from ..sm64_classes import RomReader
@@ -21,8 +20,6 @@ from .utility import (
     get_frame_range,
     update_header_variant_numbers,
     get_table_name,
-    AnimationBone,
-    populate_action,
 )
 from .classes import (
     Animation,
@@ -31,7 +28,7 @@ from .classes import (
     AnimationTable,
     AnimationTableElement,
 )
-from .constants import FLAG_PROPS, ACTOR_PRESET_INFO
+from .constants import FLAG_PROPS, ACTOR_PRESET_INFO, C_FLAGS
 
 from typing import TYPE_CHECKING
 
@@ -44,6 +41,152 @@ if TYPE_CHECKING:
         SM64_ActionProperty,
     )
     from ..settings.properties import SM64_Properties
+
+
+def flip_euler(euler: np.ndarray) -> np.ndarray:
+    euler = euler.copy()
+    euler[1] = -euler[1]
+    euler += np.pi
+    return euler
+
+
+def naive_flip_diff(a1: np.ndarray, a2: np.ndarray) -> np.ndarray:
+    diff = a1 - a2
+    mask = np.abs(diff) > np.pi
+    return a2 + mask * np.sign(diff) * 2 * np.pi
+
+
+@dataclasses.dataclass
+class FramesHolder:
+    frames: np.ndarray = dataclasses.field(default_factory=list)
+
+    def populate_action(self, action: Action, pose_bone: PoseBone, path: str):
+        for property_index in range(3):
+            f_curve = action.fcurves.new(
+                data_path=pose_bone.path_from_id(path),
+                index=property_index,
+                action_group=pose_bone.name,
+            )
+            for time, frame in enumerate(self.frames):
+                f_curve.keyframe_points.insert(time, frame[property_index])
+
+
+def euler_to_quaternion(euler_angles: np.ndarray):
+    """
+    Fast vectorized euler to quaternion function, euler_angles is an array of shape (-1, 3)
+    """
+    phi = euler_angles[:, 0]
+    theta = euler_angles[:, 1]
+    psi = euler_angles[:, 2]
+
+    half_phi = phi / 2.0
+    half_theta = theta / 2.0
+    half_psi = psi / 2.0
+
+    cos_half_phi = np.cos(half_phi)
+    sin_half_phi = np.sin(half_phi)
+    cos_half_theta = np.cos(half_theta)
+    sin_half_theta = np.sin(half_theta)
+    cos_half_psi = np.cos(half_psi)
+    sin_half_psi = np.sin(half_psi)
+
+    q_w = cos_half_phi * cos_half_theta * cos_half_psi + sin_half_phi * sin_half_theta * sin_half_psi
+    q_x = sin_half_phi * cos_half_theta * cos_half_psi - cos_half_phi * sin_half_theta * sin_half_psi
+    q_y = cos_half_phi * sin_half_theta * cos_half_psi + sin_half_phi * cos_half_theta * sin_half_psi
+    q_z = cos_half_phi * cos_half_theta * sin_half_psi - sin_half_phi * sin_half_theta * cos_half_psi
+
+    quaternions = np.vstack((q_w, q_x, q_y, q_z)).T  # shape (-1, 4)
+    return quaternions
+
+
+@dataclasses.dataclass
+class RotationFramesHolder(FramesHolder):
+    @property
+    def quaternion(self):
+        return euler_to_quaternion(self.frames)
+
+    def get_euler(self, order: str):
+        if order == "XYZ":
+            return self.frames
+        return [Quaternion(x).to_euler(order) for x in self.quaternion]
+
+    @property
+    def axis_angle(self):
+        for x in self.quaternion:
+            x = Quaternion(x).to_axis_angle()
+            yield [x[1]] + list(x[0])
+
+    def populate_action(self, action: Action, pose_bone: PoseBone):
+        rotation_mode = pose_bone.rotation_mode
+        rotation_mode_name = {
+            "QUATERNION": "rotation_quaternion",
+            "AXIS_ANGLE": "rotation_axis_angle",
+        }.get(rotation_mode, "rotation_euler")
+        data_path = pose_bone.path_from_id(rotation_mode_name)
+
+        size = 4
+        if rotation_mode == "QUATERNION":
+            rotations = self.quaternion
+        elif rotation_mode == "AXIS_ANGLE":
+            rotations = self.axis_angle
+        else:
+            rotations = self.get_euler(rotation_mode)
+            size = 3
+        for property_index in range(size):
+            f_curve = action.fcurves.new(
+                data_path=data_path,
+                index=property_index,
+                action_group=pose_bone.name,
+            )
+            for frame, rotation in enumerate(rotations):
+                f_curve.keyframe_points.insert(frame, rotation[property_index])
+
+
+@dataclasses.dataclass
+class IntermidiateAnimationBone:
+    translation: FramesHolder = dataclasses.field(default_factory=FramesHolder)
+    rotation: RotationFramesHolder = dataclasses.field(default_factory=RotationFramesHolder)
+
+    def read_pairs(self, pairs: list["SM64_AnimPair"]):
+        pair_count = len(pairs)
+        max_length = max(len(pair.values) for pair in pairs)
+        result = np.empty((max_length, pair_count), dtype=np.int16)
+
+        for i, pair in enumerate(pairs):
+            current_length = len(pair.values)
+            result[:current_length, i] = pair.values
+            result[current_length:, i] = pair.values[-1]
+        return result
+
+    def read_translation(self, pairs: list["SM64_AnimPair"], scale: float):
+        self.translation.frames = self.read_pairs(pairs) / scale
+
+    def continuity_filter(self, frames: np.ndarray) -> np.ndarray:
+        if len(frames) <= 1:
+            return frames
+
+        # There is no way to fully vectorize this function
+        prev = frames[0]
+        for frame, euler in enumerate(frames):
+            euler = naive_flip_diff(prev, euler)
+            flipped_euler = naive_flip_diff(prev, flip_euler(euler))
+            if np.all((prev - flipped_euler) ** 2 < (prev - euler) ** 2):
+                euler = flipped_euler
+            frames[frame] = prev = euler
+
+        return frames
+
+    def read_rotation(self, pairs: list["SM64_AnimPair"], continuity_filter: bool):
+        frames = self.read_pairs(pairs).astype(np.uint16).astype(np.float32)
+        frames *= 360.0 / (2**16)
+        frames = np.radians(frames)
+        if continuity_filter:
+            frames = self.continuity_filter(frames)
+        self.rotation.frames = frames
+
+    def populate_action(self, action: Action, pose_bone: PoseBone):
+        self.translation.populate_action(action, pose_bone, "location")
+        self.rotation.populate_action(action, pose_bone)
 
 
 def from_header_class(
@@ -79,11 +222,12 @@ def from_header_class(
         header_props.custom_flags = header.flags
         int_flags = 0
 
-        flags = header.flags.replace(" ", "").lstrip("(").rstrip(")").split(" | ")
+        flags = header.flags.lstrip("(").rstrip(")").split("|")
         try:
             int_flags = int(header.flags, 0)
         except ValueError:
             for flag in flags:
+                flag = flag.strip()
                 index = next((index for index, flag_tuple in enumerate(C_FLAGS) if flag in flag_tuple), None)
                 if index is not None:
                     int_flags |= 1 << index
@@ -106,16 +250,16 @@ def from_anim_class(
     main_header = animation.headers[0]
     is_from_binary = isinstance(main_header.reference, int)
 
-    if main_header.file_name:
+    if animation.action_name:
+        action_name = animation.action_name
+    elif main_header.file_name:
         action_name = main_header.file_name.rstrip(".c").rstrip(".inc")
     elif is_from_binary:
         action_name = intToHex(main_header.reference)
-    else:
-        action_name = main_header.reference
 
     index = action_name.find("anim_")
     if index != -1:
-        action_name = action_name[index + 5 :]
+        action_name = action_name.lstrip("anim_")
     action.name = action_name
     print(f'Populating action "{action_name}" properties.')
 
@@ -217,7 +361,7 @@ def animation_import_to_blender(
     anim_import: Animation,
     actor_name: str,
     use_custom_name: bool,
-    to_quaternion: bool,
+    force_quaternion: bool,
     continuity_filter: bool,
 ):
     if armature_obj.animation_data is None:
@@ -227,16 +371,19 @@ def animation_import_to_blender(
         if anim_import.data:
             print("Converting pairs to intermidiate data.")
             bones = get_anim_pose_bones(armature_obj)
-            bone_data: list[AnimationBone] = []
+            bones_data: list[IntermidiateAnimationBone] = []
             pairs = anim_import.data.pairs
             for pair_num in range(3, len(pairs), 3):
-                bone = AnimationBone()
+                bone = IntermidiateAnimationBone()
                 if pair_num == 3:
                     bone.read_translation(pairs[0:3], blender_to_sm64_scale)
                 bone.read_rotation(pairs[pair_num : pair_num + 3], continuity_filter)
-                bone_data.append(bone)
+                bones_data.append(bone)
             print("Populating action keyframes.")
-            populate_action(action, bones, bone_data, to_quaternion)
+            for pose_bone, bone_data in zip(bones, bones_data):
+                if force_quaternion:
+                    pose_bone.rotation_mode = "QUATERNION"
+                bone_data.populate_action(action, pose_bone)
 
         from_anim_class(
             action.fast64.sm64,
@@ -402,6 +549,7 @@ def import_animations(context: Context):
 
     import_type = import_props.import_type
     if import_type == "Insertable Binary" or import_props.preset == "Custom":
+        preset = None
         level = import_props.level
         table_size = import_props.table_size
         c_path = abspath(import_props.path)
@@ -424,10 +572,8 @@ def import_animations(context: Context):
             table_size = preset.animation.size
             binary_type = "DMA" if preset.animation.dma else "Table"
             is_segmented_address = False if preset.animation.dma else True
-            if import_props.preset == "Mario":
-                table_index = import_props.mario_table_index
-            else:
-                table_index = import_props.table_index
+            table_index = import_props.table_index
+
     if import_type in {"Binary", "Insertable Binary"}:
         bone_count = len(get_anim_pose_bones(armature_obj)) if import_props.assume_bone_count else None
         binary_args = (
@@ -474,6 +620,15 @@ def import_animations(context: Context):
         print("No table was read. Automatically creating table.")
         table.elements = [AnimationTableElement(header=header) for header in read_headers.values()]
 
+    if preset:
+        preset_animation_names = get_preset_anim_name_list(import_props.preset)
+        for animation in read_animations.values():
+            animation_names = []
+            for header in animation.headers:
+                if header.table_index < len(preset_animation_names):
+                    animation_names.append(preset_animation_names[header.table_index])
+            if animation_names:
+                animation.action_name = " ".join(animation_names)
     print("Importing animations into blender.")
     actions = []
     for animation in read_animations.values():
@@ -488,6 +643,7 @@ def import_animations(context: Context):
                 import_props.continuity_filter if not import_props.force_quaternion else True,
             )
         )
+
     if import_props.run_decimate:
         old_area = bpy.context.area.type
         old_action = armature_obj.animation_data.action
@@ -510,42 +666,18 @@ def import_animations(context: Context):
         table_props, table, import_props.clear_table, import_props.use_custom_name, anim_props.actor_name
     )
 
+def get_preset_anim_name_list(preset: str):
+    assert preset in ACTOR_PRESET_INFO, "Selected preset not in actor presets"
+    preset_info = ACTOR_PRESET_INFO[preset]
+    assert preset_info.animation is not None, "Selected preset's actor has not animation information"
+    return preset_info.animation.names
 
-def import_all_mario_animations(context: Context):
-    animation_operator_checks(context, False)
-    scene = context.scene
-    sm64_props: SM64_Properties = scene.fast64.sm64
-
-    anim_props: SM64_AnimProperties = get_animation_props(context)
-    import_props: SM64_AnimImportProperties = anim_props.importing
-
-    animations: dict[str, Animation] = {}
-    table: AnimationTable = AnimationTable()
-
-    mario_dma_table_address = 0x4EC000
-
-    if import_props.import_type == "Binary":
-        rom_path = abspath(import_props.rom if import_props.rom else sm64_props.import_rom)
-        import_rom_checks(rom_path)
-        with open(rom_path, "rb") as rom:
-            rom_data = rom.read()
-            for entrie_str, name, _ in marioAnimationNames[1:]:
-                entrie_num = int(entrie_str)
-                dma_table = DMATable()
-                dma_table.read_binary(rom_data, mario_dma_table_address)
-                if entrie_num < 0 or entrie_num >= len(dma_table.entries):
-                    raise PluginError(
-                        f"Index {entrie_num} outside of defined table ({len(dma_table.entries)} entries)."
-                    )
-
-                entrie: DMATableEntrie = dma_table.entries[entrie_num]
-                header = import_binary_header(rom_data, entrie.address, True, animations, None)
-                table.elements.append(header)
-                header.reference = toAlnum(name)
-                header.data.action_name = name
-    else:
-        raise PluginError("Unimplemented import type.")
-
-    for _, data in animations.items():
-        animation_import_to_blender(armature_obj, sm64_props.blender_to_sm64_scale, data)
-    from_anim_table_class(sm64_props.animation.table, table)
+def get_enum_from_import_preset(self, context):
+    try:
+        preset = get_animation_props(context).importing.preset
+        animation_names = get_preset_anim_name_list(preset)
+        return [("Custom", "Custom", "Pick your own animation index", len(animation_names))] + [
+            (str(i), name, f'"{preset}" Animation {i}', i) for i, name in enumerate(animation_names)
+        ]
+    except:
+        return [("Custom", "Custom", "Pick your own animation index", 0)]

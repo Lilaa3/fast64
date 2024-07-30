@@ -1,12 +1,12 @@
 import bpy
 from bpy.utils import register_class, unregister_class
 from bpy.types import Context, Object, Scene, Action
-from bpy.props import EnumProperty, StringProperty, IntProperty, FloatProperty
+from bpy.props import EnumProperty, StringProperty, IntProperty
 
 from ...operators import OperatorBase, SearchEnumOperatorBase
 from ...utility import copyPropertyGroup
 
-from .importing import import_all_mario_animations, import_animations
+from .importing import import_animations, get_enum_from_import_preset
 from .exporting import export_animation, export_animation_table
 from .utility import (
     get_action,
@@ -16,7 +16,7 @@ from .utility import (
     update_header_variant_numbers,
     get_animation_props,
 )
-from .constants import marioAnimationNames, enumAnimationTables, enumAnimatedBehaviours
+from .constants import enumAnimationTables, enumAnimatedBehaviours
 
 from typing import TYPE_CHECKING
 
@@ -208,18 +208,6 @@ class ExportAnim(OperatorBase):
         self.report({"INFO"}, "Exported animation successfully!")
 
 
-class ImportAllMarioAnims(OperatorBase):
-    bl_idname = "scene.sm64_import_mario_anims"
-    bl_label = "Import All Mario Animations"
-    bl_description = "Imports all of Mario's animations into the call context's animation propreties, scene or object"
-    bl_options = {"REGISTER", "UNDO", "PRESET"}
-    context_mode = "OBJECT"
-    icon = "IMPORT"
-
-    def execute_operator(self, context):
-        import_all_mario_animations(context)
-
-
 class ImportAnim(OperatorBase):
     bl_idname = "scene.sm64_import_anim"
     bl_label = "Import Animation(s)"
@@ -234,12 +222,12 @@ class ImportAnim(OperatorBase):
 
 class SearchMarioAnim(SearchEnumOperatorBase):
     bl_idname = "scene.search_mario_anim_enum_operator"
-    bl_property = "mario_animations"
+    bl_property = "preset_animations"
 
-    mario_animations: EnumProperty(items=marioAnimationNames)
+    preset_animations: EnumProperty(items=get_enum_from_import_preset)
 
     def update_enum(self, context: Context):
-        get_animation_props(context).importing.mario_animation = self.mario_animations
+        get_animation_props(context).importing.mario_animation = self.preset_animations
 
 
 class SearchTableAnim(SearchEnumOperatorBase):

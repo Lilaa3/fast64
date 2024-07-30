@@ -29,7 +29,7 @@ from .classes import (
     Animation,
     AnimationHeader,
     AnimationData,
-    AnimationPair,
+    SM64_AnimPair,
     AnimationTable,
     AnimationTableElement,
 )
@@ -88,7 +88,7 @@ def get_trans_data(action: Action, bone: PoseBone, max_frame: int, blender_to_sm
     fcurve_data = get_entire_fcurve_data(action, bone, "location", max_frame)
     fcurve_data *= blender_to_sm64_scale
     fcurve_data = np.round(fcurve_data).astype(np.int16)
-    return [AnimationPair(fcurve_data[:, i]) for i in range(3)]
+    return [SM64_AnimPair(fcurve_data[:, i]) for i in range(3)]
 
 
 def get_rotation_data(action: Action, bone: PoseBone, max_frame: int):
@@ -114,9 +114,9 @@ def get_rotation_data(action: Action, bone: PoseBone, max_frame: int):
     sm64_angles = (np.degrees(eulers) * (2**16 / 360.0)).astype(np.int16)
 
     return [
-        AnimationPair(sm64_angles[:, 0]),
-        AnimationPair(sm64_angles[:, 1]),
-        AnimationPair(sm64_angles[:, 2]),
+        SM64_AnimPair(sm64_angles[:, 0]),
+        SM64_AnimPair(sm64_angles[:, 1]),
+        SM64_AnimPair(sm64_angles[:, 2]),
     ]
 
 
@@ -141,7 +141,7 @@ def get_animation_pairs(
         try:
             armature_obj.animation_data.action = action
 
-            pairs = [AnimationPair() for _ in range(((len(anim_bones) + 1) * 3))]
+            pairs = [SM64_AnimPair() for _ in range(((len(anim_bones) + 1) * 3))]
 
             scale = armature_obj.matrix_world.to_scale() * sm64_scale
             for frame in range(max_frame):

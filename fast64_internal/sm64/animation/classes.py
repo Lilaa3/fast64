@@ -20,7 +20,7 @@ class CArrayDeclaration:
 
 
 @dataclasses.dataclass
-class AnimationPair:
+class SM64_AnimPair:
     values: np.array = dataclasses.field(compare=False)
 
     # Importing
@@ -51,7 +51,7 @@ class AnimationPair:
 
 @dataclasses.dataclass
 class AnimationData:
-    pairs: list[AnimationPair] = dataclasses.field(default_factory=list)
+    pairs: list[SM64_AnimPair] = dataclasses.field(default_factory=list)
     indice_reference: str | int = ""
     values_reference: str | int = ""
     indices_file_name: str | int = ""
@@ -105,7 +105,7 @@ class AnimationData:
             address = values_reader.start_address + (offset * 2)
             size = max_frame * 2
             values = np.frombuffer(values_reader.read_data(size, address), dtype=">i2", count=max_frame)
-            pair = AnimationPair(values, address, address + size, offset)
+            pair = SM64_AnimPair(values, address, address + size, offset)
             self.pairs.append(pair)
         self.indice_end_address = indices_reader.address
         self.value_end_address = max(pair.end_address for pair in self.pairs)
@@ -124,7 +124,7 @@ class AnimationData:
 
         for i in range(0, len(indices_values), 2):
             max_frame, offset = indices_values[i], indices_values[i + 1]
-            self.pairs.append(AnimationPair(values_array[offset : offset + max_frame], None, None, offset))
+            self.pairs.append(SM64_AnimPair(values_array[offset : offset + max_frame], None, None, offset))
         return self
 
 
@@ -301,6 +301,7 @@ class AnimationHeader:
         indices_decls,
         read_headers: dict[str, "AnimationHeader"],
         read_animations: dict[tuple[str, str], "Animation"],
+        table_index: int | None = None,
     ):
         if header_decl.name in read_headers:
             return read_headers[header_decl.name]
@@ -344,6 +345,8 @@ class AnimationHeader:
         header.values_reference = designated["values"]
         header.indice_reference = designated["index"]
 
+        header.table_index = len(read_headers) if table_index is None else table_index
+
         data_key = (header.indice_reference, header.values_reference)
         if not data_key in read_animations:
             indices_decl = next(
@@ -370,9 +373,10 @@ class AnimationHeader:
 class Animation:
     data: AnimationData = None
     headers: list[AnimationHeader] = dataclasses.field(default_factory=list)
-    file_name: str | None = ""
+    file_name: str = ""
 
     # Imports
+    action_name: str = ""
     action: Action | None = None  # Used in the table class to prop function
 
     @property
@@ -749,7 +753,7 @@ class AnimationTable:
         self.reference = table_decl.name
         self.file_name = table_decl.file_name
         self.elements.clear()
-        for value in table_decl.values:
+        for table_index, value in enumerate(table_decl.values):
             enum_name_split: list[str] = value.split("=")
             header_name = enum_name_split[-1].replace("&", "").strip()
             enum_name = (
@@ -760,7 +764,14 @@ class AnimationTable:
 
             header_decl = next((header for header in header_decls if header.name == header_name), None)
             if header_decl:
-                header = AnimationHeader.read_c(header_decl, values_decls, indices_decls, read_headers, read_animations)
+                header = AnimationHeader.read_c(
+                    header_decl,
+                    values_decls,
+                    indices_decls,
+                    read_headers,
+                    read_animations,
+                    table_index,
+                )
             else:
                 header = None
             self.elements.append(AnimationTableElement(enum_name_split[-1], enum_name, header))

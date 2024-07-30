@@ -49,7 +49,6 @@ from .operators import (
 from .constants import (
     enumAnimImportTypes,
     enumAnimBinaryImportTypes,
-    marioAnimationNames,
     enumAnimExportTypes,
     enumAnimatedBehaviours,
     enumAnimationTables,
@@ -64,6 +63,7 @@ from .utility import (
     get_element_header,
     get_selected_action,
 )
+from .importing import get_enum_from_import_preset
 
 
 def draw_list_op(
@@ -676,7 +676,7 @@ class SM64_AnimImportProperties(PropertyGroup):
     check_null: BoolProperty(name="Check NULL Delimiter", default=True)
     table_size_prop: IntProperty(name="Size", min=1)
     table_index_prop: IntProperty(name="Index", min=0)
-    mario_animation: EnumProperty(name="Selected Preset Mario Animation", items=marioAnimationNames)
+    preset_animation: EnumProperty(name="Selected Preset Animation", items=get_enum_from_import_preset)
 
     rom: StringProperty(name="Import ROM", subtype="FILE_PATH")
     table_address: StringProperty(name="Address", default=intToHex(0x0600FC48))  # Toad
@@ -694,18 +694,14 @@ class SM64_AnimImportProperties(PropertyGroup):
     use_custom_name: BoolProperty(name="Use Custom Name", default=True)
 
     @property
-    def mario_table_index(self):
+    def table_index(self):
         return (
             None
             if self.read_entire_table
-            else int(self.mario_animation, 0)
-            if self.mario_animation != "Custom"
-            else self.table_index
+            else int(self.preset_animation, 0)
+            if self.preset_animation != "Custom" and self.import_type != "Insertable Binary"
+            else self.table_index_prop
         )
-
-    @property
-    def table_index(self):
-        return None if self.read_entire_table else self.table_index_prop
 
     @property
     def address(self):
@@ -793,9 +789,8 @@ class SM64_AnimImportProperties(PropertyGroup):
             split = col.split()
             split.prop(self, "read_entire_table")
             if not self.read_entire_table:
-                if self.preset == "Mario":
-                    SearchMarioAnim.draw_props(split, self, "mario_animation", "")
-                if self.preset != "Mario" or self.mario_animation == "Custom":
+                SearchMarioAnim.draw_props(split, self, "preset_animation", "")
+                if self.preset_animation == "Custom":
                     split.prop(self, "table_index_prop", text="Index")
             return
         prop_split(col, self, "binary_import_type", "Animation Type")
