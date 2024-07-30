@@ -666,11 +666,13 @@ def import_animations(context: Context):
         table_props, table, import_props.clear_table, import_props.use_custom_name, anim_props.actor_name
     )
 
+
 def get_preset_anim_name_list(preset: str):
     assert preset in ACTOR_PRESET_INFO, "Selected preset not in actor presets"
     preset_info = ACTOR_PRESET_INFO[preset]
     assert preset_info.animation is not None, "Selected preset's actor has not animation information"
     return preset_info.animation.names
+
 
 def get_enum_from_import_preset(self, context):
     try:
