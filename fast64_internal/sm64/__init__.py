@@ -40,6 +40,7 @@ from .sm64_camera import (
 )
 
 from .sm64_objects import (
+    SM64_CombinedObjectProperties,
     sm64_obj_panel_register,
     sm64_obj_panel_unregister,
     sm64_obj_register,
@@ -61,8 +62,6 @@ from .sm64_geolayout_writer import (
 )
 
 from .sm64_level_writer import (
-    sm64_level_panel_register,
-    sm64_level_panel_unregister,
     sm64_level_register,
     sm64_level_unregister,
 )
@@ -107,7 +106,6 @@ def sm64_panel_register():
     sm64_obj_panel_register()
     sm64_geo_parser_panel_register()
     sm64_geo_writer_panel_register()
-    sm64_level_panel_register()
     sm64_spline_panel_register()
     sm64_dl_writer_panel_register()
     sm64_dl_parser_panel_register()
@@ -123,7 +121,6 @@ def sm64_panel_unregister():
     sm64_obj_panel_unregister()
     sm64_geo_parser_panel_unregister()
     sm64_geo_writer_panel_unregister()
-    sm64_level_panel_unregister()
     sm64_spline_panel_unregister()
     sm64_dl_writer_panel_unregister()
     sm64_dl_parser_panel_unregister()
