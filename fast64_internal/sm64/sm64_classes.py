@@ -257,7 +257,7 @@ class DMATable:
 
 
 @dataclasses.dataclass
-class IntArray:  # TODO: Explicitly use numpy
+class IntArray:
     name: str = ""
     wrap: int = 6
     wrap_start: int = 0  # -6 To replicate decomp animation index table formatting
@@ -276,13 +276,9 @@ class IntArray:  # TODO: Explicitly use numpy
         c_data = StringIO()
         c_data.write(f"// {len(self.data)}\n")
         c_data.write(f"static const {data_type} {self.name}[] = {{\n\t")
-        wrap = self.wrap
-        i = self.wrap_start
-        for short in self.data:
+        for i, short in enumerate(self.data, self.wrap_start):
             c_data.write(f"{intToHex(short, byte_count, False)}, ")
-            i += 1
-            if i >= wrap:
+            if i % self.wrap == self.wrap - 1:
                 c_data.write("\n\t")
-                i = 0
         c_data.write("\n};\n")
         return c_data.getvalue()
