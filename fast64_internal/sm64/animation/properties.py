@@ -665,7 +665,7 @@ class SM64_AnimImportProperties(PropertyGroup):
     clear_table: BoolProperty(name="Clear Table On Import", default=True)
     import_type: EnumProperty(items=enumAnimImportTypes, name="Type", default="C")
     preset: bpy.props.EnumProperty(items=enumAnimationTables, name="Preset", default="Mario")
-    decomp_path: StringProperty(name="Decomp Path", subtype="FILE_PATH", default="/home/user/sm64")
+    decomp_path: StringProperty(name="Decomp Path", subtype="FILE_PATH", default="")
     binary_import_type: EnumProperty(items=enumAnimBinaryImportTypes, name="Type", default="Table")
     assume_bone_count: BoolProperty(
         name="Assume Bone Count",
@@ -751,13 +751,15 @@ class SM64_AnimImportProperties(PropertyGroup):
         prop_split(layout, self, "path", "Directory or File Path")
         path_ui_warnings(layout, abspath(self.path))
 
-    def draw_c(self, layout: UILayout):
+    def draw_c(self, layout: UILayout, decomp_path: PathLike = ""):
         col = layout.column()
         if self.preset == "Custom":
             self.draw_path(col)
         else:
+            col.label(text="Uses scene decomp path by default", icon="INFO")
             prop_split(col, self, "decomp_path", "Decomp Path")
-            directory_ui_warnings(col, abspath(self.decomp_path))
+            picked_decomp_path = abspath(self.decomp_path if self.decomp_path else decomp_path)
+            directory_ui_warnings(col, picked_decomp_path)
         col.prop(self, "use_custom_name")
 
     def draw_import_rom(self, layout: UILayout, import_rom: PathLike = ""):
@@ -831,7 +833,7 @@ class SM64_AnimImportProperties(PropertyGroup):
             self.draw_import_rom(col, import_rom)
             prop_split(col, self, "level", "Level")
 
-    def draw_props(self, layout: UILayout, import_rom: PathLike = None):
+    def draw_props(self, layout: UILayout, import_rom: PathLike = None, decomp_path: PathLike = None):
         col = layout.column()
 
         prop_split(col, self, "import_type", "Type")
@@ -841,7 +843,7 @@ class SM64_AnimImportProperties(PropertyGroup):
             col.separator()
 
         if self.import_type == "C":
-            self.draw_c(col)
+            self.draw_c(col, decomp_path)
         elif self.import_type in {"Binary", "Insertable Binary"}:
             if self.import_type == "Binary":
                 self.draw_binary(col, import_rom)

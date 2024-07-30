@@ -93,7 +93,7 @@ class AnimationPanelImport(AnimationPanel):
 
     def draw(self, context: Context):
         sm64_props: SM64_Properties = context.scene.fast64.sm64
-        get_animation_props(context).importing.draw_props(self.layout, sm64_props.import_rom)
+        get_animation_props(context).importing.draw_props(self.layout, sm64_props.import_rom, sm64_props.decomp_path)
 
 
 class SceneAnimPanelImport(SceneAnimPanel, AnimationPanelImport):

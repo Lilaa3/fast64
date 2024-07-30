@@ -780,34 +780,42 @@ class AnimationTable:
         return self
 
 
+import numpy as np
+
+
 def create_tables(anims_data: list[AnimationData], values_name=""):
     """Can generate multiple indices table with only one value table, which improves compression"""
     """This feature is used in table exports"""
 
     name = values_name if values_name else anims_data[0].values_reference
-    value_table = IntArray(name, True, 2, 9)
-    data = value_table.data
+    data = np.array([], np.int16)
 
     print("Generating compressed value table and offsets.")
     for pair in [pair for anim_data in anims_data for pair in anim_data.pairs]:
-        values = pair.values
-        assert len(values) <= MAX_U16, "Pair frame count is higher than the 16 bit max."
+        pair_values = pair.values
+        assert len(pair_values) <= MAX_U16, "Pair frame count is higher than the 16 bit max."
 
         # It's never worth to find an offset for values bigger than 1 frame from my testing
-        # the one use case resulted in a 286 bytes improvement, which for a slow down of all exports
-        # is not worth it
-        pair.offset = data.index(values[0]) if len(values) == 1 and values[0] in data else None
-        if pair.offset is None:
-            pair.offset = len(data)
-            data.extend(values)
-        assert pair.offset <= MAX_U16, "Pair offset is higher than the 16 bit max."
+        # the one use case resulted in a 286 bytes improvement
+        offset = None
+        if len(pair_values) == 1:
+            indices = np.isin(data, pair_values[0]).nonzero()[0]
+            offset = indices[0] if indices.size > 0 else None
+        if offset is None:
+            offset = len(data)
+            data = np.concatenate((data, pair_values))
+        assert offset <= MAX_U16, "Pair offset is higher than the 16 bit max."
+        pair.offset = offset
+
+    value_table = IntArray(name, 9, data=data)
 
     print("Generating indices tables.")
     indice_tables: list[IntArray] = []
     for anim_data in anims_data:
-        indice_table = IntArray(anim_data.indice_reference, False, 2, 6, -6)
+        indice_values = []
         for pair in anim_data.pairs:
-            # Use calculated offsets
-            indice_table.data.extend([len(pair.values), pair.offset])
+            indice_values.extend([len(pair.values), pair.offset])  # Use calculated offsets
+        indice_table = IntArray(anim_data.indice_reference, 6, -6, np.array(indice_values, dtype=np.uint16))
         indice_tables.append(indice_table)
+
     return value_table, indice_tables

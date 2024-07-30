@@ -1,6 +1,6 @@
 from io import BufferedReader, StringIO
 from typing import BinaryIO
-import dataclasses, os, shutil, struct
+import dataclasses, os, shutil, struct, numpy as np
 
 from ..utility import intToHex, tempName, decodeSegmentedAddr
 from .sm64_constants import insertableBinaryTypes, SegmentData
@@ -257,38 +257,32 @@ class DMATable:
 
 
 @dataclasses.dataclass
-class IntArray:
+class IntArray:  # TODO: Explicitly use numpy
     name: str = ""
-    signed: bool = False
-    byte_count: int = 2
     wrap: int = 6
     wrap_start: int = 0  # -6 To replicate decomp animation index table formatting
-    data: list[int] = dataclasses.field(default_factory=list)
+    data: np.ndarray = None
 
     def to_binary(self):
-        assert self.byte_count in (1, 2, 4, 8)
-        print(f"Generating {self.byte_count} byte array with {len(self.data)} elements")
-        data = bytearray(0)
-        for short in self.data:
-            data += short.to_bytes(self.byte_count, "big", signed=self.signed)
-        return data
+        return self.data.newbyteorder(">").tobytes()
 
     def to_c(self):
         assert self.name, "Array must have a name"
-        assert self.byte_count in (1, 2, 4, 8)
-        data_type = f"{'s' if self.signed else 'u'}{self.byte_count * 8}"
+        data = self.data
+        byte_count = data.itemsize
+        data_type = f"{'s' if data.dtype == np.int16 else 'u'}{byte_count * 8}"
         print(f'Generating {data_type} array "{self.name}" with {len(self.data)} elements')
 
-        data = StringIO()
-        data.write(f"// {len(self.data)}\n")
-        data.write(f"static const {data_type} {self.name}[] = {{\n\t")
+        c_data = StringIO()
+        c_data.write(f"// {len(self.data)}\n")
+        c_data.write(f"static const {data_type} {self.name}[] = {{\n\t")
         wrap = self.wrap
         i = self.wrap_start
         for short in self.data:
-            data.write(f"{intToHex(short, self.byte_count, False)}, ")
+            c_data.write(f"{intToHex(short, byte_count, False)}, ")
             i += 1
             if i >= wrap:
-                data.write("\n\t")
+                c_data.write("\n\t")
                 i = 0
-        data.write("\n};\n")
-        return data.getvalue()
+        c_data.write("\n};\n")
+        return c_data.getvalue()

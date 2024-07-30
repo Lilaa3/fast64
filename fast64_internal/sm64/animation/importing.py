@@ -473,13 +473,9 @@ def import_c_animations(
             indices_decls,
         )
     else:
-        for header_decl in header_decls:
+        for table_index, header_decl in enumerate(sorted(header_decls, key=lambda h: h.name)):
             AnimationHeader().read_c(
-                header_decl,
-                value_decls,
-                indices_decls,
-                read_headers,
-                read_animations,
+                header_decl, value_decls, indices_decls, read_headers, read_animations, table_index
             )
 
 
@@ -552,7 +548,6 @@ def import_animations(context: Context):
         preset = None
         level = import_props.level
         table_size = import_props.table_size
-        c_path = abspath(import_props.path)
         if import_type == "C":
             c_path = abspath(import_props.path)
         else:
@@ -564,8 +559,11 @@ def import_animations(context: Context):
     else:  # Preset
         preset = ACTOR_PRESET_INFO[import_props.preset]
         if import_type == "C":
-            directory = preset.animation.directory if preset.animation.directory else preset.decomp_path
-            c_path = os.path.join(import_props.decomp_path, directory)
+            decomp_path = import_props.decomp_path
+            decomp_path = decomp_path if decomp_path else sm64_props.decomp_path
+            directory = preset.animation.directory
+            directory = directory if directory else f"{preset.decomp_path}/anims"
+            c_path = os.path.join(decomp_path, directory)
         else:
             level = preset.level
             address = preset.animation.address
@@ -629,6 +627,7 @@ def import_animations(context: Context):
                     animation_names.append(preset_animation_names[header.table_index])
             if animation_names:
                 animation.action_name = " ".join(animation_names)
+
     print("Importing animations into blender.")
     actions = []
     for animation in read_animations.values():
