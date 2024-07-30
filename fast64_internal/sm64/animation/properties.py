@@ -66,6 +66,18 @@ from .utility import (
 from .importing import get_enum_from_import_preset
 
 
+def draw_custom_or_auto(holder, layout: UILayout, prop: str, default: str):
+    use_custom_prop = "use_custom_" + prop
+    name_split = layout.split()
+    name_split.prop(holder, use_custom_prop)
+    if getattr(holder, use_custom_prop):
+        name_split.prop(holder, "custom_" + prop, text="")
+    else:
+        box = name_split.row().box()
+        box.scale_y = 0.5
+        box.label(text=default)
+
+
 def draw_list_op(
     layout: UILayout,
     op_cls: type,
@@ -109,9 +121,9 @@ class SM64_AnimHeaderProperties(PropertyGroup):
     expand_tab_in_action: BoolProperty(name="Header Properties", default=True)
     header_variant: IntProperty(name="Header Variant Number", min=0)
 
-    set_custom_name: BoolProperty(name="Custom Name")
+    use_custom_name: BoolProperty(name="Custom Name")
     custom_name: StringProperty(name="Name", default="anim_00")
-    set_custom_enum: BoolProperty(name="Custom Enum")
+    use_custom_enum: BoolProperty(name="Custom Enum")
     custom_enum: StringProperty(name="Enum", default="ANIM_00")
     manual_loop: BoolProperty(name="Manual Loop Points")
     start_frame: IntProperty(name="Start", min=0, max=MAX_S16)
@@ -220,22 +232,8 @@ class SM64_AnimHeaderProperties(PropertyGroup):
     def draw_names(self, layout: UILayout, action: Action, actor_name: str, gen_enums: bool):
         col = layout.column()
         if gen_enums:
-            enum_split = col.split()
-            enum_split.prop(self, "set_custom_enum")
-            if self.set_custom_enum:
-                enum_split.prop(self, "custom_enum", text="")
-            else:
-                auto_enum_box = enum_split.row().box()
-                auto_enum_box.scale_y = 0.5
-                auto_enum_box.label(text=get_anim_enum(actor_name, action, self))
-        name_split = col.split()
-        name_split.prop(self, "set_custom_name")
-        if self.set_custom_name:
-            name_split.prop(self, "custom_name", text="")
-        else:
-            auto_name_box = name_split.row().box()
-            auto_name_box.scale_y = 0.5
-            auto_name_box.label(text=get_anim_name(actor_name, action, self))
+            draw_custom_or_auto(self, col, "enum", get_anim_enum(actor_name, action, self))
+        draw_custom_or_auto(self, col, "name", get_anim_name(actor_name, action, self))
 
     def draw_props(
         self,
@@ -339,16 +337,6 @@ class SM64_ActionProperty(PropertyGroup):
             prop_split(col, self, "indices_table", "Indices Table")
             prop_split(col, self, "values_table", "Value Table")
 
-    def draw_file_name(self, layout: UILayout, action: Action):
-        name_split = layout.split()
-        name_split.prop(self, "use_custom_file_name")
-        if self.use_custom_file_name:
-            name_split.prop(self, "custom_file_name", text="")
-        else:
-            box = name_split.box()
-            box.scale_y = 0.5
-            box.label(text=get_anim_file_name(action, self))
-
     def draw_props(
         self,
         layout: UILayout,
@@ -375,16 +363,9 @@ class SM64_ActionProperty(PropertyGroup):
                 string_int_prop(col, self, "start_address", "Start Address")
                 string_int_prop(col, self, "end_address", "End Address")
         if draw_file_name:
-            self.draw_file_name(col, action)
+            draw_custom_or_auto(self, col, "file_name", get_anim_file_name(action, self))
         if dma or not self.reference_tables:
-            max_frame_split = col.split()
-            max_frame_split.prop(self, "use_custom_max_frame")
-            if self.use_custom_max_frame:
-                max_frame_split.prop(self, "custom_max_frame", text="")
-            else:
-                box = max_frame_split.box()
-                box.scale_y = 0.4
-                box.label(text=f"{get_max_frame(action, self)}")
+            draw_custom_or_auto(self, col, "max_frame", str(get_max_frame(action, self)))
         if not dma:
             self.draw_references(col, export_type in {"Binary", "Insertable Binary"})
 
@@ -557,14 +538,7 @@ class SM64_AnimTableProperties(PropertyGroup):
         col = layout.column()
         if export_type == "C":
             col.prop(self, "gen_enums")
-            name_split = col.split()
-            name_split.prop(self, "use_custom_table_name")
-            if self.use_custom_table_name:
-                name_split.prop(self, "custom_table_name", text="")
-            else:
-                box = name_split.row().box()
-                box.scale_y = 0.5
-                box.label(text=get_table_name(self, actor_name))
+            draw_custom_or_auto(self, col, "table_name", get_table_name(self, actor_name))
         elif export_type == "Binary":
             if dma:
                 string_int_prop(col, self, "dma_address", "DMA Table Address")

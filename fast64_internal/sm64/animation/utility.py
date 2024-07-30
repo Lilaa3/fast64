@@ -89,7 +89,7 @@ def get_frame_range(action: Action, header_props: "SM64_AnimHeaderProperties") -
 
 
 def get_anim_name(actor_name: str, action: Action, header_props: "SM64_AnimHeaderProperties") -> str:
-    if header_props.set_custom_name:
+    if header_props.use_custom_name:
         return header_props.custom_name
     if header_props.header_variant == 0:
         if actor_name:
@@ -104,7 +104,7 @@ def get_anim_name(actor_name: str, action: Action, header_props: "SM64_AnimHeade
 
 
 def get_anim_enum(actor_name: str, action: Action, header_props: "SM64_AnimHeaderProperties") -> str:
-    if header_props.set_custom_enum:
+    if header_props.use_custom_enum:
         return header_props.custom_enum
     anim_name = get_anim_name(actor_name, action, header_props)
     enum_name = anim_name.upper()

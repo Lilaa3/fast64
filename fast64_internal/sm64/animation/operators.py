@@ -170,8 +170,8 @@ class VariantOps(OperatorBase):
             update_header_variant_numbers(action_props)
             added_variant.action = action
             added_variant.expand_tab = True
-            added_variant.set_custom_name = False
-            added_variant.set_custom_enum = False
+            added_variant.use_custom_name = False
+            added_variant.use_custom_enum = False
             added_variant.custom_name = get_anim_name(
                 context.scene.fast64.sm64.animation.actor_name, action, added_variant
             )

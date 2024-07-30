@@ -202,7 +202,7 @@ def from_header_class(
         and use_custom_name
     ):
         header_props.custom_name = header.reference
-        header_props.set_custom_name = True
+        header_props.use_custom_name = True
 
     correct_frame_range = header.start_frame, header.loop_start, header.loop_end
     header_props.start_frame, header_props.loop_start, header_props.loop_end = correct_frame_range
