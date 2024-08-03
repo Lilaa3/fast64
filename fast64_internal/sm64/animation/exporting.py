@@ -4,7 +4,7 @@ import numpy as np
 import bpy
 from bpy.types import Object, Action, PoseBone, Context
 from bpy.path import abspath
-from mathutils import Euler, Quaternion, Vector
+from mathutils import Euler, Quaternion
 
 from ...utility import (
     PluginError,
@@ -65,107 +65,122 @@ if TYPE_CHECKING:
     from ..settings.properties import SM64_Properties
 
 
-def get_entire_fcurve_data(action: Action, bone: PoseBone, prop: str, max_frame: int) -> list:
+def get_entire_fcurve_data(action: Action, bone: PoseBone, prop: str, max_frame: int, values: np.ndarray) -> list:
     data_path = bone.path_from_id(prop)
 
-    # Get the default property values from the bone and determine the number of channels
-    default_values = np.array(list(getattr(bone, prop)), dtype=np.float32)
-    num_channels = default_values.size
-
-    # Pre-allocate the values array with default values
-    values = np.full((max_frame, num_channels), default_values, dtype=np.float32)
+    default_values = list(getattr(bone, prop))
+    populated = [False] * len(default_values)
 
     for fcurve in action.fcurves:
         if fcurve.data_path == data_path:
             array_index = fcurve.array_index
             for frame in range(max_frame):
-                values[frame, array_index] = fcurve.evaluate(frame)
+                values[array_index, frame] = fcurve.evaluate(frame)
+            populated[array_index] = True
+
+    for i, is_populated in enumerate(populated):
+        if not is_populated:
+            values[i] = np.full(values[i].size, default_values[i])
 
     return values
 
 
-def get_trans_data(action: Action, bone: PoseBone, max_frame: int, blender_to_sm64_scale: float) -> tuple:
-    fcurve_data = get_entire_fcurve_data(action, bone, "location", max_frame)
-    fcurve_data *= blender_to_sm64_scale
-    fcurve_data = np.round(fcurve_data).astype(np.int16)
-    return [SM64_AnimPair(fcurve_data[:, i]) for i in range(3)]
-
-
-def get_rotation_data(action: Action, bone: PoseBone, max_frame: int):
-    mode = bone.rotation_mode
-    prop = {"QUATERNION": "rotation_quaternion", "AXIS_ANGLE": "rotation_axis_angle"}.get(mode, "rotation_euler")
-
-    def to_xyz(row):
-        euler = Euler(row, mode)
-        return [euler.x, euler.y, euler.z]
-
-    fcurve_data: np.array = get_entire_fcurve_data(action, bone, prop, max_frame)
-
-    if mode == "QUATERNION":
-        eulers = np.apply_along_axis(lambda row: list(Quaternion(row).to_euler()), 1, fcurve_data)
-    elif mode == "AXIS_ANGLE":
-        eulers = np.apply_along_axis(lambda row: list(Quaternion(row[1:], row[0]).to_euler()), 1, fcurve_data)
-    else:
-        if mode != "XYZ":
-            eulers = np.apply_along_axis(to_xyz, 1, fcurve_data)
-        else:
-            eulers = fcurve_data
-
-    sm64_angles = (np.degrees(eulers) * (2**16 / 360.0)).astype(np.int16)
-
-    return [
-        SM64_AnimPair(sm64_angles[:, 0]),
-        SM64_AnimPair(sm64_angles[:, 1]),
-        SM64_AnimPair(sm64_angles[:, 2]),
-    ]
-
-
 def get_animation_pairs(
-    sm64_scale: float, max_frame: int, action: Action, armature_obj: Object, quick_read: bool = True
-) -> tuple[list[int], list[int]]:
-    print(f'Reading pair values from action "{action.name}".')
+    sm64_scale: float, actions: list[Action], armature_obj: Object, quick_read: bool = True
+) -> list[list[SM64_AnimPair]]:
     anim_bones = get_anim_pose_bones(armature_obj)
-    if len(anim_bones) < 1:
+    anim_bones_len = len(anim_bones)
+    if anim_bones_len == 0:
         raise PluginError(f'No animation bones in armature "{armature_obj.name}"')
 
-    pairs = []
-    if quick_read:
-        root_bone = anim_bones[0]
-        pairs.extend(get_trans_data(action, root_bone, max_frame, sm64_scale))
+    max_frames = [get_max_frame(action, action.fast64.sm64) for action in actions]
+    highest_max_frame = max(max_frames)
 
-        for i, pose_bone in enumerate(anim_bones):
-            pairs.extend(get_rotation_data(action, pose_bone, max_frame))
+    trans_values = np.zeros((len(actions), 3, highest_max_frame), dtype=np.float32)
+    rot_values = np.zeros((len(actions), anim_bones_len * 3, highest_max_frame), dtype=np.float32)
+
+    action_pairs = []
+    if quick_read:
+        quats = np.empty((4, highest_max_frame), dtype=np.float32)
+
+        def to_xyz(row):
+            euler = Euler(row, mode)
+            return [euler.x, euler.y, euler.z]
+
+        for action, max_frame, action_trans, action_rot in zip(actions, max_frames, trans_values, rot_values):
+            max_frame = get_max_frame(action, action.fast64.sm64)
+            root_bone = anim_bones[0]
+            get_entire_fcurve_data(action, root_bone, "location", max_frame, action_trans)
+
+            for bone_index, pose_bone in enumerate(anim_bones):
+                mode = pose_bone.rotation_mode
+                prop = {"QUATERNION": "rotation_quaternion", "AXIS_ANGLE": "rotation_axis_angle"}.get(
+                    mode, "rotation_euler"
+                )
+
+                index = bone_index * 3
+                if mode == "QUATERNION":
+                    get_entire_fcurve_data(action, pose_bone, prop, max_frame, quats)
+                    action_rot[index : index + 3] = np.apply_along_axis(
+                        lambda row: Quaternion(row).to_euler(), 1, quats.T
+                    ).T
+                elif mode == "AXIS_ANGLE":
+                    get_entire_fcurve_data(action, pose_bone, prop, max_frame, quats)
+                    action_rot[index : index + 3] = np.apply_along_axis(
+                        lambda row: list(Quaternion(row[1:], row[0]).to_euler()), 1, quats.T
+                    ).T
+                else:
+                    get_entire_fcurve_data(action, pose_bone, prop, max_frame, action_rot[index : index + 3])
+                    if mode != "XYZ":
+                        action_rot[index : index + 3] = np.apply_along_axis(
+                            to_xyz, -1, action_rot[index : index + 3].T
+                        ).T
     else:
+        # Alternative to quick_read, read the actual matrix data
         pre_export_frame = bpy.context.scene.frame_current
         pre_export_action = armature_obj.animation_data.action
+        was_playing = bpy.context.screen.is_animation_playing
+
         try:
-            armature_obj.animation_data.action = action
-
-            pairs = [SM64_AnimPair() for _ in range(((len(anim_bones) + 1) * 3))]
-
-            scale = armature_obj.matrix_world.to_scale() * sm64_scale
-            for frame in range(max_frame):
-                bpy.context.scene.frame_set(frame)
-                for i, pose_bone in enumerate(anim_bones):
+            if bpy.context.screen.is_animation_playing:
+                bpy.ops.screen.animation_play()  # if an animation is being played, stop it
+            for action, action_trans, action_rot, max_frame in zip(actions, trans_values, rot_values, max_frames):
+                print(f'Reading animation data from action "{action.name}".')
+                armature_obj.animation_data.action = action
+                for frame in range(get_max_frame(action, action.fast64.sm64)):
+                    bpy.context.scene.frame_set(frame)
+                    pose_bone = anim_bones[0]  # Root bone
                     local_matrix = armature_obj.convert_space(
                         pose_bone=pose_bone, matrix=pose_bone.matrix, from_space="POSE", to_space="LOCAL"
                     )
+                    action_trans[0:3, frame] = list(local_matrix.to_translation())
 
-                    if i == 0:  # Only first bone has translation.
-                        translation: Vector = local_matrix.to_translation() * scale
-                        for j, pair in enumerate(pairs[:3]):
-                            pair.values.append(int(translation[j]))
-
-                    rot = local_matrix.to_euler()
-                    for j, pair in enumerate(pairs[(i + 1) * 3 : (i + 2) * 3]):
-                        pair.values.append(radians_to_s16(rot[j]))
+                    for bone_index, pose_bone in enumerate(anim_bones):
+                        local_matrix = armature_obj.convert_space(
+                            pose_bone=pose_bone, matrix=pose_bone.matrix, from_space="POSE", to_space="LOCAL"
+                        )
+                        index = bone_index * 3
+                        action_rot[index : index + 3, frame] = list(local_matrix.to_euler())
         finally:
             armature_obj.animation_data.action = pre_export_action
             bpy.context.scene.frame_set(pre_export_frame)
+            if was_playing != bpy.context.screen.is_animation_playing:
+                bpy.ops.screen.animation_play()
 
-    for pair in pairs:
-        pair.clean_frames()
-    return pairs
+    trans_values *= sm64_scale
+    trans_values = np.round(trans_values).astype(np.int16)
+
+    rot_values = (np.degrees(rot_values) * (2**16 / 360.0)).astype(np.int16)
+
+    action_pairs = []
+    for action_trans, action_rot, max_frame in zip(trans_values, rot_values, max_frames):
+        pairs = [SM64_AnimPair(action_trans[i, :max_frame]) for i in range(3)]
+        pairs.extend([SM64_AnimPair(action_rot[i, :max_frame]) for i in range(len(anim_bones) * 3)])
+        for pair in pairs:
+            pair.clean_frames()
+        action_pairs.append(pairs)
+
+    return action_pairs
 
 
 def to_header_class(
@@ -207,19 +222,12 @@ def to_header_class(
 
 def to_data_class(
     action: Action,
-    armature_obj: Object,
+    pairs: list[SM64_AnimPair],
     blender_to_sm64_scale: float,
     quick_read: bool,
     file_name: str = "anim_00.inc.c",
 ):
     data = AnimationData()
-    pairs = get_animation_pairs(
-        blender_to_sm64_scale,
-        get_max_frame(action, action.fast64.sm64),
-        action,
-        armature_obj,
-        quick_read,
-    )
     data_name: str = toAlnum(f"anim_{action.name}")
     values_reference = f"{data_name}_values"
     indice_reference = f"{data_name}_indices"
@@ -252,7 +260,8 @@ def to_animation_class(
         else:
             values_reference, indice_reference = action_props.values_table, action_props.indices_table
     else:
-        animation.data = to_data_class(action, armature_obj, blender_to_sm64_scale, quick_read, animation.file_name)
+        pairs = get_animation_pairs(blender_to_sm64_scale, [action], armature_obj, quick_read)[0]
+        animation.data = to_data_class(action, pairs, blender_to_sm64_scale, quick_read, animation.file_name)
         values_reference = animation.data.values_reference
         indice_reference = animation.data.indice_reference
     bone_count = len(get_anim_pose_bones(armature_obj))
@@ -276,6 +285,72 @@ def to_animation_class(
     return animation
 
 
+def to_table_element_class(
+    element_props: "SM64_AnimTableElementProperties",
+    header_dict: dict["SM64_AnimHeaderProperties", AnimationHeader],
+    data_dict: dict[Action, AnimationData],
+    bone_count: int,
+    table_index: int,
+    use_int_flags: bool = False,
+    can_reference: bool = True,
+    actor_name: str = "mario",
+    gen_enums: bool = False,
+    use_addresses: bool = False,
+):
+    element = AnimationTableElement()
+    if can_reference and element_props.reference:
+        reference = int(element_props.header_address, 0) if use_addresses else element_props.header_name
+        if reference == "":
+            raise PluginError("Header is not set.")
+        element.reference = reference
+        if gen_enums:
+            if not element_props.enum_name:
+                raise PluginError("Enum name is not set.")
+            element.enum_name = element_props.enum_name
+        return element
+
+    # Not reference
+    header, action = get_element_header(element_props, can_reference), get_element_action(element_props, can_reference)
+    if not header:
+        raise PluginError("Header is not set.")
+    if not action:
+        raise PluginError("Action is not set.")
+
+    action_props: SM64_ActionProperty = action.fast64.sm64
+    if can_reference and action_props.reference_tables:
+        if use_addresses:
+            values_reference, indice_reference = (
+                int(action_props.values_address, 0),
+                int(action_props.indices_address, 0),
+            )
+        else:
+            values_reference, indice_reference = action_props.values_table, action_props.indices_table
+        data = None
+    else:
+        data = data_dict[action]
+        values_reference, indice_reference = data.values_reference, data.indice_reference
+
+    element.header = header_dict.get(
+        header,
+        to_header_class(
+            header,
+            bone_count,
+            data,
+            action,
+            use_int_flags,
+            values_reference,
+            indice_reference,
+            table_index,
+            actor_name,
+            gen_enums,
+            get_anim_file_name(action, action_props),
+        ),
+    )
+    element.reference = element.header.reference
+    element.enum_name = element.header.enum_name
+    return element
+
+
 def to_table_class(
     table_props: "SM64_AnimTableProperties",
     armature_obj: Object,
@@ -287,86 +362,44 @@ def to_table_class(
     gen_enums: bool = False,
     use_addresses: bool = False,
 ) -> AnimationTable:
-    table = AnimationTable()
-    table.reference = get_table_name(table_props, actor_name)
-    table.enum_list_reference = get_enum_list_name(table_props, actor_name)
-    table.enum_list_end = get_enum_list_end(table_props, actor_name)
-    table.file_name = "table_animations.inc.c"
-    table.values_reference = toAlnum(f"anim_{actor_name}_values")
+    table = AnimationTable(
+        get_table_name(table_props, actor_name),
+        get_enum_list_name(table_props, actor_name),
+        get_enum_list_end(table_props, actor_name),
+        "table.inc.c",
+        toAlnum(f"anim_{actor_name}_values"),
+    )
+
+    header_dict: dict[SM64_AnimHeaderProperties, AnimationHeader] = {}
 
     bone_count = len(get_anim_pose_bones(armature_obj))
-
-    existing_data: dict[Action, AnimationData] = {}
-    existing_headers: dict[SM64_AnimHeaderProperties, AnimationHeader] = {}
+    actions = table_props.get_table_actions(can_reference)
+    action_pairs = get_animation_pairs(blender_to_sm64_scale, actions, armature_obj, quick_read)
+    data_dict = {
+        action: to_data_class(action, action_pairs[i], blender_to_sm64_scale, quick_read)
+        for i, action in enumerate(actions)
+    }
 
     element_props: TableElementProps
     for i, element_props in enumerate(table_props.elements):
-        element = AnimationTableElement()
-        if can_reference and element_props.reference:
-            reference = int(element_props.header_address, 0) if use_addresses else element_props.header_name
-            if not reference:
-                raise ValueError(f"Header in table element {i} is not set.")
-            element.reference = reference
-            if gen_enums:
-                if not element_props.enum_name:
-                    raise ValueError(f"Enum name in table element {i} is not set.")
-                element.enum_name = element_props.enum_name
-            table.elements.append(element)
-            continue
-
-        header: SM64_AnimHeaderProperties = get_element_header(element_props, can_reference)
-        if not header:
-            raise ValueError(f"Header in table element {i} is not set.")
-        action: Action = get_element_action(element_props, can_reference)
-        if not action:
-            raise ValueError(f"Action in table element {i} is not set.")
-
-        action_props: SM64_ActionProperty = action.fast64.sm64
-        if can_reference and action_props.reference_tables:
-            if use_addresses:
-                values_reference, indice_reference = (
-                    int(action_props.values_address, 0),
-                    int(action_props.indices_address, 0),
+        try:
+            table.elements.append(
+                to_table_element_class(
+                    element_props,
+                    header_dict,
+                    data_dict,
+                    bone_count,
+                    i,
+                    use_int_flags,
+                    can_reference,
+                    actor_name,
+                    gen_enums,
+                    use_addresses,
                 )
-            else:
-                values_reference, indice_reference = action_props.values_table, action_props.indices_table
-            data = None
-        else:
-            if not action in existing_data:
-                existing_data[action] = to_data_class(action, armature_obj, blender_to_sm64_scale, quick_read)
-            data = existing_data[action]
-            values_reference, indice_reference = data.values_reference, data.indice_reference
-
-        element.header = existing_headers.get(
-            header,
-            to_header_class(
-                header,
-                bone_count,
-                data,
-                action,
-                use_int_flags,
-                values_reference,
-                indice_reference,
-                i,
-                actor_name,
-                gen_enums,
-                get_anim_file_name(action, action_props),
-            ),
-        )
-        element.reference = element.header.reference
-        element.enum_name = element.header.enum_name
-        table.elements.append(element)
-
+            )
+        except Exception as exc:
+            raise PluginError(f"Error in table element {i}: {exc}") from exc
     return table
-
-
-def get_table_actions(table_props: "SM64_AnimTableProperties", can_reference: bool) -> list[Action]:
-    actions = []
-    for element_props in table_props.elements:
-        action = get_element_action(element_props, can_reference)
-        if action and action not in actions:
-            actions.append(action)
-    return actions
 
 
 def update_includes(
@@ -846,7 +879,7 @@ def export_animation_table(context: Context):
     dma = is_binary_dma or anim_props.is_c_dma
 
     print("Stashing all actions in table")
-    for action in get_table_actions(table_props, not dma):
+    for action in table_props.get_table_actions(not dma):
         stashActionInArmature(armature_obj, action)
 
     print("Reading table data from fast64")

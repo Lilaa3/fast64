@@ -276,9 +276,13 @@ class IntArray:
         c_data = StringIO()
         c_data.write(f"// {len(self.data)}\n")
         c_data.write(f"static const {data_type} {self.name}[] = {{\n\t")
-        for i, short in enumerate(self.data, self.wrap_start):
-            c_data.write(f"{intToHex(short, byte_count, False)}, ")
-            if i % self.wrap == self.wrap - 1:
+        i = self.wrap_start
+        for value in self.data:
+            c_data.write(f"{intToHex(value, byte_count, False)}, ")
+            i += 1
+            if i > self.wrap:
                 c_data.write("\n\t")
+                i = 0
+
         c_data.write("\n};\n")
         return c_data.getvalue()

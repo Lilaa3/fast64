@@ -3,10 +3,11 @@ import os, re, dataclasses, numpy as np
 import bpy
 from bpy.path import abspath
 from bpy.types import Object, Action, Context, PoseBone
+from mathutils import Quaternion
 
 from ...utility import PluginError, decodeSegmentedAddr, filepath_checks, is_bit_active, path_checks, intToHex
 from ...utility_anim import stashActionInArmature
-from ..sm64_constants import level_pointers, ActorPresetInfo
+from ..sm64_constants import level_pointers
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_utility import import_rom_checks
 from ..sm64_classes import RomReader
@@ -68,7 +69,7 @@ class FramesHolder:
                 action_group=pose_bone.name,
             )
             for time, frame in enumerate(self.frames):
-                f_curve.keyframe_points.insert(time, frame[property_index])
+                f_curve.keyframe_points.insert(time, frame[property_index], options={"FAST"})
 
 
 def euler_to_quaternion(euler_angles: np.ndarray):
@@ -112,9 +113,11 @@ class RotationFramesHolder(FramesHolder):
 
     @property
     def axis_angle(self):
+        result = []
         for x in self.quaternion:
             x = Quaternion(x).to_axis_angle()
-            yield [x[1]] + list(x[0])
+            result.append([x[1]] + list(x[0]))
+        return result
 
     def populate_action(self, action: Action, pose_bone: PoseBone):
         rotation_mode = pose_bone.rotation_mode
@@ -139,7 +142,7 @@ class RotationFramesHolder(FramesHolder):
                 action_group=pose_bone.name,
             )
             for frame, rotation in enumerate(rotations):
-                f_curve.keyframe_points.insert(frame, rotation[property_index])
+                f_curve.keyframe_points.insert(frame, rotation[property_index], options={"FAST"})
 
 
 @dataclasses.dataclass
@@ -417,7 +420,7 @@ DECL_PATTERN = re.compile(
     r"(static\s+const\s+struct\s+Animation|static\s+const\s+u16|static\s+const\s+s16|const\s+struct Animation\s+\*const)\s+(\w+)\s*?(?:\[.*?\])?\s*?=\s*?\{(.*?)\};",
     re.DOTALL,
 )
-VALUE_SPLIT_PATTERN = re.compile(r"\s*(.*?),\s*")
+VALUE_SPLIT_PATTERN = re.compile(r"\s*([^,\s]+)\s*(?:,|$)")
 
 
 def find_decls(c_data: str, f: os.PathLike, decl_list: dict[str, list[CArrayDeclaration]]):
@@ -563,7 +566,7 @@ def import_animations(context: Context):
             decomp_path = decomp_path if decomp_path else sm64_props.decomp_path
             directory = preset.animation.directory
             directory = directory if directory else f"{preset.decomp_path}/anims"
-            c_path = os.path.join(decomp_path, directory)
+            c_path = abspath(os.path.join(decomp_path, directory))
         else:
             level = preset.level
             address = preset.animation.address

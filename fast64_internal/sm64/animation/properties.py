@@ -73,7 +73,7 @@ def draw_custom_or_auto(holder, layout: UILayout, prop: str, default: str):
     if getattr(holder, use_custom_prop):
         name_split.prop(holder, "custom_" + prop, text="")
     else:
-        box = name_split.row().box()
+        box = name_split.box()
         box.scale_y = 0.5
         box.label(text=default)
 
@@ -505,6 +505,14 @@ class SM64_AnimTableProperties(PropertyGroup):
     def override_files(self):
         return not self.export_seperately or self.override_files_prop
 
+    def get_table_actions(self, can_reference: bool) -> list[Action]:
+        actions = []
+        for element_props in self.elements:
+            action = get_element_action(element_props, can_reference)
+            if action and action not in actions:
+                actions.append(action)
+        return actions
+
     def draw_element(
         self,
         layout: UILayout,
@@ -848,7 +856,9 @@ class SM64_AnimProperties(PropertyGroup):
         default=True,
     )
     quick_read: BoolProperty(
-        name="Quick Data Read", default=True, description="Read fcurves directly, should work with the majority of rigs"
+        name="Quick Data Read",
+        default=False,
+        description="Read fcurves directly, should work with the majority of rigs",
     )
     directory_path: StringProperty(name="Directory Path", subtype="FILE_PATH")
     dma_folder: StringProperty(name="DMA Folder", default="assets/anims/")
