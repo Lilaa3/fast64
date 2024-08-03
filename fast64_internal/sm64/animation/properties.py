@@ -1075,7 +1075,7 @@ class SM64_AnimProperties(PropertyGroup):
         self.draw_export_settings(col, export_type)
 
 
-properties = (
+classes = (
     SM64_AnimHeaderProperties,
     SM64_AnimTableElement,
     SM64_ActionProperty,
@@ -1086,10 +1086,10 @@ properties = (
 
 
 def anim_props_register():
-    for cls in properties:
+    for cls in classes:
         register_class(cls)
 
 
 def anim_props_unregister():
-    for cls in reversed(properties):
+    for cls in reversed(classes):
         unregister_class(cls)

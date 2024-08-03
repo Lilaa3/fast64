@@ -104,7 +104,7 @@ class ObjAnimPanelImport(ObjAnimPanel, AnimationPanelImport):
     bl_idname = "DATA_PT_SM64_anim_panel_import"
 
 
-panels = (
+classes = (
     ObjAnimPanelMain,
     ObjAnimPanelAction,
     ObjAnimPanelTable,
@@ -117,10 +117,10 @@ panels = (
 
 
 def anim_panel_register():
-    for cls in panels:
+    for cls in classes:
         register_class(cls)
 
 
 def anim_panel_unregister():
-    for cls in reversed(panels):
+    for cls in reversed(classes):
         unregister_class(cls)

@@ -250,7 +250,7 @@ class SearchAnimatedBehavior(SearchEnumOperatorBase):
         get_animation_props(context).table.behaviour = self.behaviour
 
 
-operators = (
+classes = (
     ExportAnimTable,
     ExportAnim,
     PreviewAnim,
@@ -263,15 +263,15 @@ operators = (
 )
 
 
-def anim_operator_register():
-    for cls in operators:
+def anim_ops_register():
+    for cls in classes:
         register_class(cls)
 
     bpy.app.handlers.frame_change_pre.append(emulate_no_loop)
 
 
-def anim_operator_unregister():
-    for cls in reversed(operators):
+def anim_ops_unregister():
+    for cls in reversed(classes):
         unregister_class(cls)
 
     if emulate_no_loop in bpy.app.handlers.frame_change_pre:
