@@ -28,10 +28,10 @@ class SceneAnimPanel(AnimationPanel):
 
 
 class ObjAnimPanel(AnimationPanel):
-    bl_idname = "OBJECT_PT_SM64_Animation_Inspector"
+    bl_idname = "OBJECT_PT_SM64_anim"
+    bl_context = "object"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
-    bl_context = "object"
     object_type = {"ARMATURE"}
     bl_parent_id = bl_idname
 
@@ -42,7 +42,7 @@ class SceneAnimPanelMain(SceneAnimPanel):
 
 
 class ObjAnimPanelMain(ObjAnimPanel):
-    bl_parent_id = ""
+    bl_parent_id = "OBJECT_PT_context_object"
 
 
 # Action tab
@@ -65,7 +65,7 @@ class SceneAnimPanelAction(AnimationPanelAction, SceneAnimPanel):
 
 
 class ObjAnimPanelAction(AnimationPanelAction, ObjAnimPanel):
-    bl_idname = "DATA_PT_SM64_anim_panel_action"
+    bl_idname = "OBJECT_PT_SM64_anim_action"
 
 
 # Table tab
@@ -77,11 +77,11 @@ class AnimationPanelTable(AnimationPanel):
 
 
 class SceneAnimPanelTable(AnimationPanelTable, SceneAnimPanel):
-    bl_idname = "SM64_PT_anim_panel_table"
+    bl_idname = "SM64_PT_anim_table"
 
 
 class ObjAnimPanelTable(AnimationPanelTable, ObjAnimPanel):
-    bl_idname = "DATA_PT_SM64_anim_panel_table"
+    bl_idname = "OBJECT_PT_SM64_anim_table"
 
 
 # Importing tab
@@ -101,7 +101,7 @@ class SceneAnimPanelImport(SceneAnimPanel, AnimationPanelImport):
 
 
 class ObjAnimPanelImport(ObjAnimPanel, AnimationPanelImport):
-    bl_idname = "DATA_PT_SM64_anim_panel_import"
+    bl_idname = "OBJECT_PT_SM64_anim_panel_import"
 
 
 classes = (
