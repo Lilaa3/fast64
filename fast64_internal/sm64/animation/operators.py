@@ -53,7 +53,7 @@ def emulate_no_loop(scene: Scene):
             scene.frame_set(start)
 
 
-class PreviewAnim(OperatorBase):
+class SM64_PreviewAnim(OperatorBase):
     bl_idname = "scene.sm64_preview_animation"
     bl_label = "Preview Animation"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
@@ -87,7 +87,7 @@ class PreviewAnim(OperatorBase):
         anim_props.played_action = played_action
 
 
-class TableOps(OperatorBase):
+class SM64_AnimTableOps(OperatorBase):
     bl_idname = "scene.sm64_table_operations"
     bl_label = "Table Operations"
     bl_description = "Move, remove, clear or add table elements"
@@ -127,7 +127,7 @@ class TableOps(OperatorBase):
             table_elements.clear()
 
 
-class VariantOps(OperatorBase):
+class SM64_AnimVariantOps(OperatorBase):
     bl_idname = "scene.sm64_header_variant_operations"
     bl_label = "Header Variant Operations"
     bl_description = "Move, remove, clear or add variants"
@@ -182,7 +182,7 @@ class VariantOps(OperatorBase):
         update_header_variant_numbers(action_props)
 
 
-class ExportAnimTable(OperatorBase):
+class SM64_ExportAnimTable(OperatorBase):
     bl_idname = "scene.sm64_export_anim_table"
     bl_label = "Export"
     bl_description = "Exports the animation table found in the call context, scene or object"
@@ -195,7 +195,7 @@ class ExportAnimTable(OperatorBase):
         self.report({"INFO"}, "Exported animation table successfully!")
 
 
-class ExportAnim(OperatorBase):
+class SM64_ExportAnim(OperatorBase):
     bl_idname = "scene.sm64_export_anim"
     bl_label = "Export"
     bl_description = "Exports the select action found in the call context, scene or object"
@@ -208,7 +208,7 @@ class ExportAnim(OperatorBase):
         self.report({"INFO"}, "Exported animation successfully!")
 
 
-class ImportAnim(OperatorBase):
+class SM64_ImportAnim(OperatorBase):
     bl_idname = "scene.sm64_import_anim"
     bl_label = "Import Animation(s)"
     bl_description = "Imports animations into the call context's animation propreties, scene or object"
@@ -220,7 +220,7 @@ class ImportAnim(OperatorBase):
         import_animations(context)
 
 
-class SearchMarioAnim(SearchEnumOperatorBase):
+class SM64_SearchAnimPresets(SearchEnumOperatorBase):
     bl_idname = "scene.search_mario_anim_enum_operator"
     bl_property = "preset_animations"
 
@@ -230,7 +230,7 @@ class SearchMarioAnim(SearchEnumOperatorBase):
         get_animation_props(context).importing.mario_animation = self.preset_animations
 
 
-class SearchTableAnim(SearchEnumOperatorBase):
+class SM64_SearchAnimTablePresets(SearchEnumOperatorBase):
     bl_idname = "scene.search_anim_table_enum_operator"
     bl_property = "preset"
 
@@ -240,7 +240,7 @@ class SearchTableAnim(SearchEnumOperatorBase):
         get_animation_props(context).importing.preset = self.preset
 
 
-class SearchAnimatedBehavior(SearchEnumOperatorBase):
+class SM64_SSearchAnimatedBhvs(SearchEnumOperatorBase):
     bl_idname = "scene.search_animated_behavior_enum_operator"
     bl_property = "behaviour"
 
@@ -251,15 +251,15 @@ class SearchAnimatedBehavior(SearchEnumOperatorBase):
 
 
 classes = (
-    ExportAnimTable,
-    ExportAnim,
-    PreviewAnim,
-    TableOps,
-    VariantOps,
-    ImportAnim,
-    SearchMarioAnim,
-    SearchAnimatedBehavior,
-    SearchTableAnim,
+    SM64_ExportAnimTable,
+    SM64_ExportAnim,
+    SM64_PreviewAnim,
+    SM64_AnimTableOps,
+    SM64_AnimVariantOps,
+    SM64_ImportAnim,
+    SM64_SearchAnimPresets,
+    SM64_SSearchAnimatedBhvs,
+    SM64_SearchAnimTablePresets,
 )
 
 
