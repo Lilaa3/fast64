@@ -791,7 +791,7 @@ def export_area_c(
     # Write collision, rooms MUST be done first
     setRooms(area_root)
     collision = exportCollisionCommon(
-        area_root, transformMatrix, True, True, f"{level_name}_{areaName}", area_root.areaIndex
+        area_root, transformMatrix, True, True, f"{level_name}_{areaName}", area_root.areaIndex, fModel
     )
     collisionC = collision.to_c()
     saveDataToFile(os.path.join(areaDir, "collision.inc.c"), collisionC.source)
