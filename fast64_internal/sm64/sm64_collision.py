@@ -141,7 +141,7 @@ class Collision:
         data.source = ""
         for collisionType, triangles in self.triangles.items():
             if isinstance(collisionType, tuple):
-                f3d_mat = collisionType[1]
+                f3d_mat = collisionType[1][0]
                 mat_data, revert_data = f3d_mat.material.to_c(f3d), f3d_mat.revert.to_c(f3d)
                 data.source += mat_data.source + "\n" + revert_data.source
                 data.header += mat_data.header + "\n" + revert_data.header
@@ -152,8 +152,20 @@ class Collision:
             data.source += "\t" + vertex.to_c()
         for collisionType, triangles in self.triangles.items():
             if isinstance(collisionType, tuple):
-                collisionType, f3d_mat = collisionType
-                data.source += "\tCOL_TRI_MAT_INIT(" + collisionType + ", " + f3d_mat.material.name + ", " + f3d_mat.revert.name + ", " + str(len(triangles)) + "),\n"
+                collisionType, (f3d_mat, draw_layer) = collisionType
+                data.source += (
+                    "\tCOL_TRI_MAT_INIT("
+                    + collisionType
+                    + ", "
+                    + f3d_mat.material.name
+                    + ", "
+                    + f3d_mat.revert.name
+                    + ", "
+                    + str(draw_layer)
+                    + ", "
+                    + str(len(triangles))
+                    + "),\n"
+                )
             else:
                 data.source += "\tCOL_TRI_INIT(" + collisionType + ", " + str(len(triangles)) + "),\n"
             for triangle in triangles:
@@ -396,7 +408,7 @@ def exportCollisionInsertableBinary(obj, transformMatrix, filepath, includeSpeci
     return data
 
 
-def exportCollisionCommon(obj, transformMatrix, includeSpecials, includeChildren, name, areaIndex, fModel = None):
+def exportCollisionCommon(obj, transformMatrix, includeSpecials, includeChildren, name, areaIndex, fModel=None):
     bpy.ops.object.select_all(action="DESELECT")
     obj.select_set(True)
 
@@ -441,7 +453,7 @@ def exportCollisionCommon(obj, transformMatrix, includeSpecials, includeChildren
     return collision
 
 
-def addCollisionTriangles(obj, collisionDict, includeChildren, transformMatrix, areaIndex, fModel = None):
+def addCollisionTriangles(obj, collisionDict, includeChildren, transformMatrix, areaIndex, fModel=None):
     if obj.type == "MESH" and not obj.ignore_collision:
         if len(obj.data.materials) == 0:
             raise PluginError(obj.name + " must have a material associated with it.")
@@ -449,7 +461,9 @@ def addCollisionTriangles(obj, collisionDict, includeChildren, transformMatrix, 
         f3d_mat_dict: dict[bpy.types.Material, FMaterial] = {}
         if fModel:
             for mat_key, f3d_mat in fModel.materials.items():
-                f3d_mat = copy.copy(f3d_mat[0]) # maybe account for tex size?
+                draw_layer = mat_key[0].f3d_mat.draw_layer.sm64
+
+                f3d_mat = copy.copy(f3d_mat[0])  # maybe account for tex size?
                 f3d_mat.material = copy.copy(f3d_mat.material)
                 f3d_mat.material.name += "_collision"
                 f3d_mat_dict[mat_key[0]] = f3d_mat
@@ -460,9 +474,11 @@ def addCollisionTriangles(obj, collisionDict, includeChildren, transformMatrix, 
                 f3d_mat.revert = GfxList(f3d_mat.material.name + "_revert", GfxListTag.MaterialRevert, fModel.DLFormat)
                 reset_cmd_dict = {}
                 [bleed_gfx_lists.add_reset_cmd(cmd, reset_cmd_dict) for cmd in bleed_gfx_lists.bled_mats]
-                f3d_mat.revert.commands = BleedGraphics().create_reset_cmds(reset_cmd_dict, fModel.getRenderMode(mat_key[0].f3d_mat.draw_layer.sm64))
-                
-                f3d_mat_dict[mat_key[0]] = f3d_mat
+                f3d_mat.revert.commands = BleedGraphics().create_reset_cmds(
+                    reset_cmd_dict, fModel.getRenderMode(draw_layer)
+                )
+
+                f3d_mat_dict[mat_key[0]] = (f3d_mat, draw_layer)
 
         for face in obj.data.loop_triangles:
             material = obj.material_slots[face.material_index].material
@@ -484,7 +500,7 @@ def addCollisionTriangles(obj, collisionDict, includeChildren, transformMatrix, 
             if magSqr <= 0:
                 print("Ignore denormalized triangle.")
                 continue
-            
+
             if material in f3d_mat_dict:
                 key = (colType, f3d_mat_dict[material])
             else:
