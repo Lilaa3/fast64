@@ -15,7 +15,7 @@ from .sm64_level_parser import parseLevelAtPointer
 from .sm64_rom_tweaks import ExtendBank0x04
 from ..panels import SM64_Panel
 
-from ..f3d.f3d_writer import FMaterial, get_F3D_GBI, GfxList, GfxListTag
+from ..f3d.f3d_writer import FMaterial, get_F3D_GBI, GfxList, GfxListTag, SPEndDisplayList
 from ..f3d.f3d_bleed import BleedGfxLists, BleedGraphics
 
 from ..utility import (
@@ -481,6 +481,7 @@ def addCollisionTriangles(obj, collisionDict, includeChildren, transformMatrix, 
                 f3d_mat.revert.commands = BleedGraphics().create_reset_cmds(
                     reset_cmd_dict, fModel.getRenderMode(draw_layer)
                 )
+                f3d_mat.revert.commands.append(SPEndDisplayList())
 
                 f3d_mat_dict[mat_key[0]] = (f3d_mat, draw_layer)
 
