@@ -308,8 +308,10 @@ class LevelData:
     puppycam_data: str = ""
     geo_data: str = ""
     collision_data: str = ""
-    collision_header_data: str = ""  # append after all areas, after the model data
     header_data: str = ""
+    # append after all areas, after the model data
+    collision_header_data: str = ""
+    collision_script_data: str = "" 
 
 
 class LevelScript:
@@ -796,14 +798,14 @@ def export_area_c(
     )
     collisionC = collision.to_c()
     saveDataToFile(os.path.join(areaDir, "collision.inc.c"), collisionC.source)
-    level_data.script_data += include_proto("collision.inc.c")
+    level_data.collision_script_data += include_proto("collision.inc.c")
     level_data.collision_header_data += collisionC.header
 
     # Write rooms
     if area_root.enableRoomSwitch:
         roomsC = collision.to_c_rooms()
         saveDataToFile(os.path.join(areaDir, "room.inc.c"), roomsC.source)
-        level_data.script_data += include_proto("room.inc.c")
+        level_data.collision_script_data += include_proto("room.inc.c")
         level_data.collision_header_data += roomsC.header
 
     # Get area
@@ -990,6 +992,7 @@ def exportLevelC(obj, transformMatrix, level_name, exportDir, savePNG, customExp
 
     level_data.script_data += include_proto("model.inc.c")
     level_data.header_data += staticData.header
+    level_data.script_data += level_data.collision_script_data
     level_data.header_data += level_data.collision_header_data
 
     # Write data
