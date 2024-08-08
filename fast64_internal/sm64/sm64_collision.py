@@ -16,7 +16,16 @@ from .sm64_rom_tweaks import ExtendBank0x04
 from .sm64_f3d_writer import SM64Model
 from ..panels import SM64_Panel
 
-from ..f3d.f3d_writer import get_F3D_GBI, saveOrGetF3DMaterial, FMaterial, GfxList, GfxListTag, SPEndDisplayList, GfxMatWriteMethod, DLFormat
+from ..f3d.f3d_writer import (
+    get_F3D_GBI,
+    saveOrGetF3DMaterial,
+    FMaterial,
+    GfxList,
+    GfxListTag,
+    SPEndDisplayList,
+    GfxMatWriteMethod,
+    DLFormat,
+)
 from ..f3d.f3d_bleed import BleedGfxLists, BleedGraphics
 
 from ..utility import (
@@ -421,7 +430,9 @@ def exportCollisionCommon(obj, transformMatrix, includeSpecials, includeChildren
     # addCollisionTriangles(obj, collisionDict, includeChildren, transformMatrix, areaIndex)
     tempObj, allObjs = duplicateHierarchy(obj, None, True, areaIndex)
     try:
-        addCollisionTriangles(tempObj, collisionDict, includeChildren, transformMatrix, areaIndex, fmaterial_dict, fModel)
+        addCollisionTriangles(
+            tempObj, collisionDict, includeChildren, transformMatrix, areaIndex, fmaterial_dict, fModel
+        )
         if not collisionDict:
             raise PluginError("No collision data to export")
         cleanupDuplicatedObjects(allObjs)
@@ -463,7 +474,9 @@ def exportCollisionCommon(obj, transformMatrix, includeSpecials, includeChildren
     return collision
 
 
-def addCollisionTriangles(obj, collisionDict, includeChildren, transformMatrix, areaIndex, fmaterial_dict: dict, fModel=None):
+def addCollisionTriangles(
+    obj, collisionDict, includeChildren, transformMatrix, areaIndex, fmaterial_dict: dict, fModel=None
+):
     if obj.type == "MESH" and not obj.ignore_collision:
         if len(obj.data.materials) == 0:
             raise PluginError(obj.name + " must have a material associated with it.")
@@ -473,7 +486,9 @@ def addCollisionTriangles(obj, collisionDict, includeChildren, transformMatrix, 
 
             if fModel and material not in fmaterial_dict:
                 draw_layer = material.f3d_mat.draw_layer.sm64
-                fmaterial, _tex_dimensions = saveOrGetF3DMaterial(material, fModel, obj, draw_layer, bpy.context.scene.saveTextures)
+                fmaterial, _tex_dimensions = saveOrGetF3DMaterial(
+                    material, fModel, obj, draw_layer, bpy.context.scene.saveTextures
+                )
 
                 fmaterial.revert = GfxList(material.name + "_revert", GfxListTag.MaterialRevert, fModel.DLFormat)
                 reset_cmd_dict = {}
@@ -514,7 +529,13 @@ def addCollisionTriangles(obj, collisionDict, includeChildren, transformMatrix, 
     if includeChildren:
         for child in obj.children:
             addCollisionTriangles(
-                child, collisionDict, includeChildren, transformMatrix @ child.matrix_local, areaIndex, fmaterial_dict, fModel
+                child,
+                collisionDict,
+                includeChildren,
+                transformMatrix @ child.matrix_local,
+                areaIndex,
+                fmaterial_dict,
+                fModel,
             )
 
 
