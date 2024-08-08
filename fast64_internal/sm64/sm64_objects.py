@@ -527,6 +527,8 @@ class SM64_Area:
         data += "\t\tTERRAIN(" + self.collision.name + "),\n"
         if includeRooms:
             data += "\t\tROOMS(" + self.collision.rooms_name() + "),\n"
+        if len(self.collision.displaylists) > 0:
+            data += "\t\tTERRAIN_MAT_LUT(" + self.collision.material_lut_name + "),\n"
         data += "\t\tMACRO_OBJECTS(" + self.macros_name() + "),\n"
         if self.music_seq is None:
             data += "\t\tSTOP_MUSIC(0),\n"

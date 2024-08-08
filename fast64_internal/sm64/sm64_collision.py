@@ -120,6 +120,11 @@ class Collision:
         self.triangles = {}
         self.specials = []
         self.water_boxes = []
+        self.displaylists = []
+
+    @property
+    def material_lut_name(self):
+        return self.name + "_materials"
 
     def set_addr(self, startAddress):
         startAddress = get64bitAlignedAddr(startAddress)
@@ -138,23 +143,15 @@ class Collision:
         f3d = get_F3D_GBI()
         data = CData()
         data.header = "extern const Collision " + self.name + "[];\n"
-        data.header += f"extern const Gfx {self.name + '_materials'}[][];\n"
-
-        materials = set()  # remove duplicates, order does not matter
-        for collisionType, triangles in self.triangles.items():
-            if isinstance(collisionType, tuple):
-                f3d_mat = collisionType[1][0]
-                materials.add(f3d_mat.material)
-                materials.add(f3d_mat.revert)
-        materials = list(materials)  # cast back into a list
+        data.header += f"extern const Gfx {self.material_lut_name}[][];\n"
 
         data.source = ""
-        lut_source = f"const Gfx {self.name + '_materials'}[][] = {{\n"
-        for material in materials:
-            mat_data = material.to_c(f3d)
-            data.source += mat_data.source
-            data.header += mat_data.header
-            lut_source += f"\t{material.name},\n"
+        lut_source = f"const Gfx {self.material_lut_name}[][] = {{\n"
+        for dl in self.displaylists:
+            dl_data = dl.to_c(f3d)
+            data.source += dl_data.source
+            data.header += dl_data.header
+            lut_source += f"\t{dl.name},\n"
         lut_source += "};\n\n"
         data.source += lut_source
 
@@ -170,9 +167,9 @@ class Collision:
                     "\tCOL_TRI_MAT_INIT("
                     + collisionType
                     + ", "
-                    + str(materials.index(f3d_mat.material))
+                    + str(self.displaylists.index(f3d_mat.material))
                     + ", "
-                    + str(materials.index(f3d_mat.revert))
+                    + str(self.displaylists.index(f3d_mat.revert))
                     + ", "
                     + str(draw_layer)
                     + ", "
@@ -445,6 +442,12 @@ def exportCollisionCommon(obj, transformMatrix, includeSpecials, includeChildren
     collision = Collision(toAlnum(name) + "_collision")
     for collisionType, faces in collisionDict.items():
         collision.triangles[collisionType] = []
+        if isinstance(collisionType, tuple):
+            material = collisionType[1][0]
+            if material.material not in collision.displaylists:
+                collision.displaylists.append(material.material)
+            if material.revert not in collision.displaylists:
+                collision.displaylists.append(material.revert)
         for faceVerts, specialParam, room in faces:
             indices = []
             for roundedPosition in faceVerts:
