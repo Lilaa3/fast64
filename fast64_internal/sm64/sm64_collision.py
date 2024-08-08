@@ -148,6 +148,7 @@ class Collision:
         data.source = ""
         lut_source = f"const Gfx* {self.material_lut_name}[] = {{\n"
         for dl in self.displaylists:
+            dl.name = f"{self.name}_{dl.name}"
             dl_data = dl.to_c(f3d)
             data.source += dl_data.source
             data.header += dl_data.header
@@ -477,17 +478,18 @@ def addCollisionTriangles(obj, collisionDict, includeChildren, transformMatrix, 
         f3d_mat_dict: dict[bpy.types.Material, FMaterial] = {}
         if fModel:
             for mat_key, f3d_mat in fModel.materials.items():
-                draw_layer = mat_key[0].f3d_mat.draw_layer.sm64
+                material = mat_key[0]
+                draw_layer = material.f3d_mat.draw_layer.sm64
 
                 f3d_mat = copy.copy(f3d_mat[0])  # maybe account for tex size?
                 f3d_mat.material = copy.copy(f3d_mat.material)
-                f3d_mat.material.name += "_collision"
-                f3d_mat_dict[mat_key[0]] = f3d_mat
+                f3d_mat.material.name = material.name
+                f3d_mat_dict[material] = f3d_mat
 
                 bleed_gfx_lists = BleedGfxLists()
                 bleed_gfx_lists.bled_mats = f3d_mat.material.commands
 
-                f3d_mat.revert = GfxList(f3d_mat.material.name + "_revert", GfxListTag.MaterialRevert, fModel.DLFormat)
+                f3d_mat.revert = GfxList(material.name + "_revert", GfxListTag.MaterialRevert, fModel.DLFormat)
                 reset_cmd_dict = {}
                 [bleed_gfx_lists.add_reset_cmd(cmd, reset_cmd_dict) for cmd in bleed_gfx_lists.bled_mats]
                 f3d_mat.revert.commands = BleedGraphics().create_reset_cmds(
@@ -502,7 +504,6 @@ def addCollisionTriangles(obj, collisionDict, includeChildren, transformMatrix, 
             colType = material.collision_type if material.collision_all_options else material.collision_type_simple
             if colType == "Custom":
                 colType = material.collision_custom
-
             specialParam = material.collision_param if material.use_collision_param else None
 
             (x1, y1, z1) = roundPosition(transformMatrix @ obj.data.vertices[face.vertices[0]].co)
