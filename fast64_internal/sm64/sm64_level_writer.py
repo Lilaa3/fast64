@@ -308,7 +308,7 @@ class LevelData:
     puppycam_data: str = ""
     geo_data: str = ""
     collision_data: str = ""
-    collision_header_data: str = "" # append after all areas, after the model data
+    collision_header_data: str = ""  # append after all areas, after the model data
     header_data: str = ""
 
 
