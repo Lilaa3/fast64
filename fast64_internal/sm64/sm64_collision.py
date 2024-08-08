@@ -138,17 +138,26 @@ class Collision:
         f3d = get_F3D_GBI()
         data = CData()
         data.header = "extern const Collision " + self.name + "[];\n"
-        data.source = ""
+        data.header += f"extern const Gfx {self.name + '_materials'}[][];\n"
+
         materials = set()  # remove duplicates, order does not matter
         for collisionType, triangles in self.triangles.items():
             if isinstance(collisionType, tuple):
                 f3d_mat = collisionType[1][0]
                 materials.add(f3d_mat.material)
                 materials.add(f3d_mat.revert)
+        materials = list(materials)  # cast back into a list
+
+        data.source = ""
+        lut_source = f"const Gfx {self.name + '_materials'}[][] = {{\n"
         for material in materials:
             mat_data = material.to_c(f3d)
             data.source += mat_data.source
             data.header += mat_data.header
+            lut_source += f"\t{material.name},\n"
+        lut_source += "};\n"
+        data.source += lut_source
+
         data.source += "const Collision " + self.name + "[] = {\n"
         data.source += "\tCOL_INIT(),\n"
         data.source += "\tCOL_VERTEX_INIT(" + str(len(self.vertices)) + "),\n"
@@ -161,9 +170,9 @@ class Collision:
                     "\tCOL_TRI_MAT_INIT("
                     + collisionType
                     + ", "
-                    + f3d_mat.material.name
+                    + str(materials.index(f3d_mat.material))
                     + ", "
-                    + f3d_mat.revert.name
+                    + str(materials.index(f3d_mat.revert))
                     + ", "
                     + str(draw_layer)
                     + ", "
