@@ -155,7 +155,7 @@ class Collision:
             data.source += mat_data.source
             data.header += mat_data.header
             lut_source += f"\t{material.name},\n"
-        lut_source += "};\n"
+        lut_source += "};\n\n"
         data.source += lut_source
 
         data.source += "const Collision " + self.name + "[] = {\n"
