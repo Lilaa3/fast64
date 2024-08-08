@@ -143,15 +143,15 @@ class Collision:
         f3d = get_F3D_GBI()
         data = CData()
         data.header = "extern const Collision " + self.name + "[];\n"
-        data.header += f"extern const Gfx {self.material_lut_name}[][];\n"
+        data.header += f"extern const Gfx* {self.material_lut_name}[];\n"
 
         data.source = ""
-        lut_source = f"const Gfx {self.material_lut_name}[][] = {{\n"
+        lut_source = f"const Gfx* {self.material_lut_name}[] = {{\n"
         for dl in self.displaylists:
             dl_data = dl.to_c(f3d)
             data.source += dl_data.source
             data.header += dl_data.header
-            lut_source += f"\t{dl.name},\n"
+            lut_source += f"\t&{dl.name},\n"
         lut_source += "};\n\n"
         data.source += lut_source
 
