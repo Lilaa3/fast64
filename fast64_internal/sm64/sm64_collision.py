@@ -489,8 +489,8 @@ def addCollisionTriangles(
                 fmaterial, _tex_dimensions = saveOrGetF3DMaterial(
                     material, fModel, obj, draw_layer, bpy.context.scene.saveTextures
                 )
-
-                fmaterial.revert = GfxList(material.name + "_revert", GfxListTag.MaterialRevert, fModel.DLFormat)
+                fmaterial.material.name = toAlnum(f"{material.name}_layer_{draw_layer}")
+                fmaterial.revert = GfxList(fmaterial.material.name + "_revert", GfxListTag.MaterialRevert, fModel.DLFormat)
                 reset_cmd_dict = {}
                 bleed_gfx_lists = BleedGfxLists()
                 bleed_gfx_lists.bled_mats = fmaterial.material.commands
