@@ -510,10 +510,7 @@ def addCollisionTriangles(obj, collisionDict, includeChildren, transformMatrix, 
                 print("Ignore denormalized triangle.")
                 continue
 
-            if material in f3d_mat_dict:
-                key = (colType, f3d_mat_dict[material])
-            else:
-                key = colType
+            key = (colType, f3d_mat_dict[material]) if material in f3d_mat_dict else colType
             if key not in collisionDict:
                 collisionDict[key] = []
 
