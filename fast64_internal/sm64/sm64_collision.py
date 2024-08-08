@@ -22,6 +22,7 @@ from ..f3d.f3d_writer import (
     GfxList,
     GfxListTag,
     SPEndDisplayList,
+    DPPipeSync,
 )
 from ..f3d.f3d_bleed import BleedGfxLists, BleedGraphics
 
@@ -489,18 +490,25 @@ def addCollisionTriangles(
                 fmaterial = copy.copy(fmaterial)
                 fmaterial.material = copy.copy(fmaterial.material)
                 fmaterial.material.name = toAlnum(f"{material.name}_layer_{draw_layer}")
-                fmaterial.revert = GfxList(
-                    fmaterial.material.name + "_revert", GfxListTag.MaterialRevert, fModel.DLFormat
-                )
-                reset_cmd_dict = {}
-                bleed_gfx_lists = BleedGfxLists()
-                bleed_gfx_lists.bled_mats = fmaterial.material.commands
-                for cmd in bleed_gfx_lists.bled_mats:
-                    bleed_gfx_lists.add_reset_cmd(cmd, reset_cmd_dict)
-                fmaterial.revert.commands = BleedGraphics().create_reset_cmds(
-                    reset_cmd_dict, fModel.getRenderMode(draw_layer)
-                )
-                fmaterial.revert.commands.append(SPEndDisplayList())
+                if bpy.context.scene.exportInlineF3D or fmaterial.revert is None:
+                    fmaterial.revert = GfxList(
+                        fmaterial.material.name + "_revert", GfxListTag.MaterialRevert, fModel.DLFormat
+                    )
+                    fmaterial.revert.commands.append(SPEndDisplayList())
+                if bpy.context.scene.exportInlineF3D:
+                    reset_cmd_dict = {}
+                    bleed_gfx_lists = BleedGfxLists()
+                    bleed_gfx_lists.bled_mats = fmaterial.material.commands
+                    for cmd in bleed_gfx_lists.bled_mats:
+                        bleed_gfx_lists.add_reset_cmd(cmd, reset_cmd_dict)
+                    fmaterial.revert.commands = BleedGraphics().create_reset_cmds(
+                        reset_cmd_dict, fModel.getRenderMode(draw_layer)
+                    )
+                    if DPPipeSync in fmaterial.revert.commands:
+                        fmaterial.revert.commands.remove(DPPipeSync)
+                        fmaterial.revert.commands.insert(0, DPPipeSync)
+                    fmaterial.revert.commands.append(SPEndDisplayList())
+
                 fmaterial_dict[material] = (fmaterial, draw_layer)
 
             colType = material.collision_type if material.collision_all_options else material.collision_type_simple
