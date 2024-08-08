@@ -164,18 +164,9 @@ class Collision:
         for collisionType, triangles in self.triangles.items():
             if isinstance(collisionType, tuple):
                 collisionType, (f3d_mat, draw_layer) = collisionType
+                mat_i, revert_i = self.displaylists.index(f3d_mat.material), self.displaylists.index(f3d_mat.revert)
                 data.source += (
-                    "\tCOL_TRI_MAT_INIT("
-                    + collisionType
-                    + ", "
-                    + str(self.displaylists.index(f3d_mat.material))
-                    + ", "
-                    + str(self.displaylists.index(f3d_mat.revert))
-                    + ", "
-                    + str(draw_layer)
-                    + ", "
-                    + str(len(triangles))
-                    + "),\n"
+                    f"\tCOL_TRI_MAT_INIT({collisionType}, {mat_i}, {revert_i}, {draw_layer}, {len(triangles)}),\n"
                 )
             else:
                 data.source += "\tCOL_TRI_INIT(" + collisionType + ", " + str(len(triangles)) + "),\n"
