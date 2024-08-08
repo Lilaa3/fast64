@@ -13,7 +13,6 @@ from .sm64_utility import export_rom_checks
 from .sm64_objects import SM64_Area, start_process_sm64_objects
 from .sm64_level_parser import parseLevelAtPointer
 from .sm64_rom_tweaks import ExtendBank0x04
-from .sm64_f3d_writer import SM64Model
 from ..panels import SM64_Panel
 
 from ..f3d.f3d_writer import (
@@ -23,8 +22,6 @@ from ..f3d.f3d_writer import (
     GfxList,
     GfxListTag,
     SPEndDisplayList,
-    GfxMatWriteMethod,
-    DLFormat,
 )
 from ..f3d.f3d_bleed import BleedGfxLists, BleedGraphics
 
@@ -489,8 +486,12 @@ def addCollisionTriangles(
                 fmaterial, _tex_dimensions = saveOrGetF3DMaterial(
                     material, fModel, obj, draw_layer, bpy.context.scene.saveTextures
                 )
+                fmaterial = copy.copy(fmaterial)
+                fmaterial.material = copy.copy(fmaterial.material)
                 fmaterial.material.name = toAlnum(f"{material.name}_layer_{draw_layer}")
-                fmaterial.revert = GfxList(fmaterial.material.name + "_revert", GfxListTag.MaterialRevert, fModel.DLFormat)
+                fmaterial.revert = GfxList(
+                    fmaterial.material.name + "_revert", GfxListTag.MaterialRevert, fModel.DLFormat
+                )
                 reset_cmd_dict = {}
                 bleed_gfx_lists = BleedGfxLists()
                 bleed_gfx_lists.bled_mats = fmaterial.material.commands
