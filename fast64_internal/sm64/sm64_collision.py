@@ -139,12 +139,16 @@ class Collision:
         data = CData()
         data.header = "extern const Collision " + self.name + "[];\n"
         data.source = ""
+        materials = set()  # remove duplicates, order does not matter
         for collisionType, triangles in self.triangles.items():
             if isinstance(collisionType, tuple):
                 f3d_mat = collisionType[1][0]
-                mat_data, revert_data = f3d_mat.material.to_c(f3d), f3d_mat.revert.to_c(f3d)
-                data.source += mat_data.source + revert_data.source
-                data.header += mat_data.header + revert_data.header
+                materials.add(f3d_mat.material)
+                materials.add(f3d_mat.revert)
+        for material in materials:
+            mat_data = material.to_c(f3d)
+            data.source += mat_data.source
+            data.header += mat_data.header
         data.source += "const Collision " + self.name + "[] = {\n"
         data.source += "\tCOL_INIT(),\n"
         data.source += "\tCOL_VERTEX_INIT(" + str(len(self.vertices)) + "),\n"
