@@ -489,6 +489,7 @@ def addCollisionTriangles(
                 )
                 fmaterial = copy.copy(fmaterial)
                 fmaterial.material = copy.copy(fmaterial.material)
+                fmaterial.revert = copy.copy(fmaterial.revert)
                 fmaterial.material.name = toAlnum(f"{material.name}_layer_{draw_layer}")
                 if bpy.context.scene.exportInlineF3D or fmaterial.revert is None:
                     fmaterial.revert = GfxList(
