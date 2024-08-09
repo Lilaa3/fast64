@@ -311,7 +311,7 @@ class LevelData:
     header_data: str = ""
     # append after all areas, after the model data
     collision_header_data: str = ""
-    collision_script_data: str = "" 
+    collision_script_data: str = ""
 
 
 class LevelScript:

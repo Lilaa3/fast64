@@ -149,10 +149,9 @@ class Collision:
 
     def to_c(self):
         f3d = get_F3D_GBI()
-        data = CData()
-        data.header = "extern const Collision " + self.name + "[];\n"
-        data.header += f"extern const Gfx* {self.material_lut_name}[];\n"
 
+        data = CData()
+        data.header = f"extern const Gfx* {self.material_lut_name}[];\n"
         data.source = ""
         lut_source = f"const Gfx* {self.material_lut_name}[] = {{\n"
         for dl in self.displaylists:
@@ -164,6 +163,7 @@ class Collision:
         lut_source += "};\n\n"
         data.source += lut_source
 
+        data.header += "extern const Collision " + self.name + "[];\n"
         data.source += "const Collision " + self.name + "[] = {\n"
         data.source += "\tCOL_INIT(),\n"
         data.source += "\tCOL_VERTEX_INIT(" + str(len(self.vertices)) + "),\n"
@@ -428,6 +428,7 @@ def exportCollisionCommon(obj, transformMatrix, includeSpecials, includeChildren
     if fModel:
         fModel = copy.copy(fModel)
         fModel.materials = copy.copy(fModel.materials)
+
     # addCollisionTriangles(obj, collisionDict, includeChildren, transformMatrix, areaIndex)
     tempObj, allObjs = duplicateHierarchy(obj, None, True, areaIndex)
     try:
@@ -446,6 +447,7 @@ def exportCollisionCommon(obj, transformMatrix, includeSpecials, includeChildren
         raise Exception(str(e))
 
     collision = Collision(toAlnum(name) + "_collision")
+
     for collisionType, faces in collisionDict.items():
         collision.triangles[collisionType] = []
         if isinstance(collisionType, tuple):
@@ -488,7 +490,7 @@ def addCollisionTriangles(
             if fModel and material not in fmaterial_dict:
                 draw_layer = material.f3d_mat.draw_layer.sm64
                 fmaterial, _tex_dimensions = saveOrGetF3DMaterial(
-                    material, fModel, obj, draw_layer, bpy.context.scene.saveTextures
+                    material, fModel, obj, draw_layer, not bpy.context.scene.saveTextures
                 )
                 fmaterial = copy.copy(fmaterial)
                 fmaterial.material = copy.copy(fmaterial.material)
