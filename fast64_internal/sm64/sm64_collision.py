@@ -425,6 +425,9 @@ def exportCollisionCommon(obj, transformMatrix, includeSpecials, includeChildren
     # dict of collisionType : faces
     collisionDict = {}
     fmaterial_dict: dict[bpy.types.Material, FMaterial] = {}
+    if fModel:
+        fModel = copy.copy(fModel)
+        fModel.materials = copy.copy(fModel.materials)
     # addCollisionTriangles(obj, collisionDict, includeChildren, transformMatrix, areaIndex)
     tempObj, allObjs = duplicateHierarchy(obj, None, True, areaIndex)
     try:
