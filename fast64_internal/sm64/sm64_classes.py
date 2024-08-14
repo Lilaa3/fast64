@@ -52,7 +52,7 @@ class InsertableBinaryData:
             self.ptrs.append(reader.read_int(4))
 
         actual_start = reader.address + self.start_address
-        self.data = reader.read_int(data_size, actual_start)
+        self.data = reader.read_data(data_size, actual_start)
         return self
 
 
@@ -105,7 +105,7 @@ class RomReader:
         else:
             self.rom_file.seek(address)
             data = self.rom_file.read(size)
-        if not data:
+        if size > 0 and not data:
             raise IndexError(f"Value at {intToHex(address)} not present in data.")
         return data
 
@@ -264,7 +264,7 @@ class IntArray:
     data: np.ndarray = None
 
     def to_binary(self):
-        return self.data.newbyteorder(">").tobytes()
+        return self.data.astype('>i2').tobytes()
 
     def to_c(self):
         assert self.name, "Array must have a name"

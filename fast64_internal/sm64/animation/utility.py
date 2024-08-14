@@ -22,16 +22,20 @@ if TYPE_CHECKING:
     )
 
 
-def animation_operator_checks(context: Context, requires_animation=True):
-    if len(context.selected_objects) == 0 and context.object is None:
-        raise PluginError("No armature selected.")
-    if len(context.selected_objects) > 1:
-        raise PluginError("Multiple objects selected at once.")
+def animation_operator_checks(context: Context, requires_animation=True, specific_obj: Object = None):
+    if specific_obj:
+        obj = specific_obj
+    else:
+        if len(context.selected_objects) == 0 and context.object is None:
+            raise PluginError("No armature selected.")
+        if len(context.selected_objects) > 1:
+            raise PluginError("Multiple objects selected at once.")
+        obj = context.object
 
-    if context.object.type != "ARMATURE":
-        raise PluginError(f'Selected object "{context.object.name}" is not an armature.')
-    if requires_animation and context.object.animation_data is None:
-        raise PluginError(f'Armature "{context.object.name}" has no animation data.')
+    if obj.type != "ARMATURE":
+        raise PluginError(f'Selected object "{obj.name}" is not an armature.')
+    if requires_animation and obj.animation_data is None:
+        raise PluginError(f'Armature "{obj.name}" has no animation data.')
 
 
 def get_animation_props(context: Context) -> "SM64_AnimProperties":
@@ -48,16 +52,13 @@ def get_action(name: str):
     return bpy.data.actions[name]
 
 
-def get_selected_action(animation_props: "SM64_AnimProperties", armature: Object | None) -> Action:
-    if animation_props.selected_action:
-        return animation_props.selected_action
-    elif armature:
-        if armature.animation_data and armature.animation_data.action:
-            return armature.animation_data.action
-        raise ValueError(f'No action selected in armature "{armature.name}".')
-    raise ValueError("No action selected in properties.")
+def get_selected_action(armature: Object) -> Action:
+    if armature.animation_data and armature.animation_data.action:
+        return armature.animation_data.action
+    raise ValueError(f'No action selected in armature "{armature.name}".')
 
 
+# TODO: MOVE THESE
 def get_anim_pose_bones(armature: Object) -> list[PoseBone]:
     bones_to_process: list[str] = findStartBones(armature)
     current_bone = armature.data.bones[bones_to_process[0]]
@@ -101,6 +102,15 @@ def get_anim_name(actor_name: str, action: Action, header_props: "SM64_AnimHeade
     name = f"{main_header_name}_{header_props.header_variant}"
 
     return toAlnum(name)
+
+
+def num_to_padded_hex(num: int):
+    hex_str = hex(num)[2:].upper()  # remove the '0x' prefix
+    return hex_str.zfill(2)
+
+
+def get_dma_anim_name(index: int):
+    return f"anim_{num_to_padded_hex(index)}"
 
 
 def get_anim_enum(actor_name: str, action: Action, header_props: "SM64_AnimHeaderProperties") -> str:
@@ -160,17 +170,11 @@ def get_element_action(element_props: "SM64_AnimTableElement", use_reference: bo
     return element_props.action_prop
 
 
-def get_table_name(table_props: "SM64_AnimTableProperties", actor_name: str) -> str:
-    if table_props.use_custom_table_name:
-        return table_props.custom_table_name
-    return f"{actor_name}_anims"
-
-
 def get_enum_list_name(table_props: "SM64_AnimTableProperties", actor_name: str):
-    table_name = get_table_name(table_props, actor_name)
+    table_name = table_props.get_name(actor_name)
     return table_name.title().replace("_", "")
 
 
 def get_enum_list_end(table_props: "SM64_AnimTableProperties", actor_name: str):
-    table_name = get_table_name(table_props, actor_name)
+    table_name = table_props.get_name(actor_name)
     return f"{table_name.upper()}_END"

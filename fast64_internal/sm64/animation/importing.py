@@ -20,7 +20,6 @@ from .utility import (
     get_animation_props,
     get_frame_range,
     update_header_variant_numbers,
-    get_table_name,
 )
 from .classes import (
     Animation,
@@ -36,12 +35,13 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .properties import (
         SM64_AnimImportProperties,
-        SM64_AnimProperties,
+        SM64_ArmatureAnimProperties,
         SM64_AnimHeaderProperties,
         SM64_AnimTableProperties,
         SM64_ActionProperty,
     )
     from ..settings.properties import SM64_Properties
+    from ..sm64_objects import SM64_CombinedObjectProperties
 
 
 def flip_euler(euler: np.ndarray) -> np.ndarray:
@@ -354,7 +354,7 @@ def from_anim_table_class(
     elif table.reference:
         if use_custom_name:
             table_props.custom_table_name = table.reference
-            if get_table_name(table_props, actor_name) != table_props.custom_table_name:
+            if table_props.get_name(actor_name) != table_props.custom_table_name:
                 table_props.use_custom_table_name = True
 
 
@@ -527,7 +527,7 @@ def import_insertable_binary_animations(
             assumed_bone_count,
         )
     elif reader.insertable.data_type == "Animation Table":
-        table.read_binary(reader, read_headers, read_animations, table_index, table_size, assumed_bone_count)
+        table.read_binary(reader, read_headers, read_animations, table_index, assumed_bone_count, table_size)
     elif reader.insertable.data_type == "Animation DMA Table":
         table.read_dma_binary(reader, read_headers, read_animations, table_index, assumed_bone_count)
 
@@ -536,11 +536,12 @@ def import_animations(context: Context):
     animation_operator_checks(context, False)
 
     scene = context.scene
-    sm64_props: SM64_Properties = scene.fast64.sm64
-    anim_props: SM64_AnimProperties = get_animation_props(context)
-    import_props: SM64_AnimImportProperties = anim_props.importing
-    table_props: SM64_AnimTableProperties = anim_props.table
     armature_obj: Object = context.object
+    sm64_props: SM64_Properties = scene.fast64.sm64
+    combined_props: SM64_CombinedObjectProperties = sm64_props.combined_export
+    import_props: SM64_AnimImportProperties = sm64_props.animation.importing
+    anim_props: SM64_ArmatureAnimProperties = armature_obj.data.fast64.sm64.animation
+    table_props: SM64_AnimTableProperties = anim_props.table
 
     read_animations: dict[tuple[str, str], Animation] = {}
     read_headers: dict[str, AnimationHeader] = {}
@@ -639,7 +640,7 @@ def import_animations(context: Context):
                 armature_obj,
                 sm64_props.blender_to_sm64_scale,
                 animation,
-                anim_props.actor_name,
+                combined_props.obj_name_anim,  # TODO: is this fine?
                 import_props.use_custom_name,
                 import_props.force_quaternion,
                 import_props.continuity_filter if not import_props.force_quaternion else True,
@@ -664,8 +665,8 @@ def import_animations(context: Context):
             armature_obj.animation_data.action = old_action
 
     print("Importing animation table into properties.")
-    from_anim_table_class(
-        table_props, table, import_props.clear_table, import_props.use_custom_name, anim_props.actor_name
+    from_anim_table_class(  # TODO: is the table address range including the null delimiter?
+        table_props, table, import_props.clear_table, import_props.use_custom_name, combined_props.obj_name_anim
     )
 
 
@@ -676,7 +677,7 @@ def get_preset_anim_name_list(preset: str):
     return preset_info.animation.names
 
 
-def get_enum_from_import_preset(self, context):
+def get_enum_from_import_preset(_self, context):
     try:
         preset = get_animation_props(context).importing.preset
         animation_names = get_preset_anim_name_list(preset)

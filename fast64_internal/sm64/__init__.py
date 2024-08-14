@@ -87,11 +87,17 @@ from .sm64_f3d_writer import (
     sm64_dl_writer_unregister,
 )
 
-from .animation import anim_panel_register, anim_panel_unregister, anim_register, anim_unregister, SM64_AnimProperties
+from .animation import (
+    anim_panel_register,
+    anim_panel_unregister,
+    anim_register,
+    anim_unregister,
+    SM64_ArmatureAnimProperties,
+)
 
 
 class SM64_ArmatureProperties(PropertyGroup):
-    animation: PointerProperty(type=SM64_AnimProperties)
+    animation: PointerProperty(type=SM64_ArmatureAnimProperties)
 
 
 classes = (SM64_ArmatureProperties,)
@@ -163,6 +169,8 @@ def sm64_unregister(unregister_panels: bool):
     sm64_dl_writer_unregister()
     sm64_dl_parser_unregister()
     settings_props_unregister()
+    for cls in reversed(classes):
+        unregister_class(cls)
 
     if unregister_panels:
         sm64_panel_unregister()

@@ -4,21 +4,19 @@ from bpy.types import Context
 from ...panels import SM64_Panel
 
 from .utility import get_animation_props
+from .operators import SM64_ExportAnimTable, SM64_ExportAnim
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..settings.properties import SM64_Properties
+    from ..sm64_objects import SM64_CombinedObjectProperties
 
 
 # Base
 class AnimationPanel(SM64_Panel):
     bl_label = "SM64 Animations"
     goal = "Object/Actor/Anim"
-
-    def draw(self, context: Context):
-        sm64_props: SM64_Properties = context.scene.fast64.sm64
-        get_animation_props(context).draw_props(self.layout, sm64_props.export_type)
 
 
 # Base panels
@@ -40,9 +38,31 @@ class ObjAnimPanel(AnimationPanel):
 class SceneAnimPanelMain(SceneAnimPanel):
     bl_parent_id = ""
 
+    @classmethod
+    def poll(cls, context):
+        sm64_props: SM64_Properties = context.scene.fast64.sm64
+        if sm64_props.export_type == "C" and not sm64_props.show_importing_menus:
+            return False
+        return super().poll(context)
+
+    def draw(self, context: Context):
+        sm64_props: SM64_Properties = context.scene.fast64.sm64
+        combined_props: SM64_CombinedObjectProperties = sm64_props.combined_export
+        if sm64_props.export_type == "C":
+            return
+        combined_props.draw_anim_props(self.layout, sm64_props.export_type)
+        SM64_ExportAnim.draw_props(self.layout)
+        SM64_ExportAnimTable.draw_props(self.layout)
+
 
 class ObjAnimPanelMain(ObjAnimPanel):
     bl_parent_id = "OBJECT_PT_context_object"
+
+    def draw(self, context: Context):
+        sm64_props: SM64_Properties = context.scene.fast64.sm64
+        context.object.data.fast64.sm64.animation.draw_props(
+            self.layout, sm64_props.export_type, sm64_props.combined_export.export_header_type
+        )
 
 
 # Action tab
@@ -69,19 +89,15 @@ class ObjAnimPanelAction(AnimationPanelAction, ObjAnimPanel):
 
 
 # Table tab
-class AnimationPanelTable(AnimationPanel):
+class ObjAnimPanelTable(ObjAnimPanel):
     bl_label = "Table"
+    bl_idname = "OBJECT_PT_SM64_anim_table"
 
     def draw(self, context: Context):
-        get_animation_props(context).draw_table(self.layout, context.scene.fast64.sm64.export_type)
-
-
-class SceneAnimPanelTable(AnimationPanelTable, SceneAnimPanel):
-    bl_idname = "SM64_PT_anim_table"
-
-
-class ObjAnimPanelTable(AnimationPanelTable, ObjAnimPanel):
-    bl_idname = "OBJECT_PT_SM64_anim_table"
+        sm64_props: SM64_Properties = context.scene.fast64.sm64
+        get_animation_props(context).draw_table(
+            self.layout, sm64_props.export_type, sm64_props.combined_export.obj_name_anim
+        )
 
 
 # Importing tab
@@ -106,12 +122,9 @@ class ObjAnimPanelImport(ObjAnimPanel, AnimationPanelImport):
 
 classes = (
     ObjAnimPanelMain,
-    ObjAnimPanelAction,
     ObjAnimPanelTable,
-    ObjAnimPanelImport,
     SceneAnimPanelMain,
     SceneAnimPanelAction,
-    SceneAnimPanelTable,
     SceneAnimPanelImport,
 )
 

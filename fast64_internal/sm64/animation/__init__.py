@@ -5,7 +5,7 @@ from .operators import (
 from .properties import (
     anim_props_register,
     anim_props_unregister,
-    SM64_AnimProperties,
+    SM64_ArmatureAnimProperties,
 )
 from .panels import (
     anim_panel_register,

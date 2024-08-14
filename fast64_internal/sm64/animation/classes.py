@@ -4,11 +4,12 @@ from typing import Optional
 
 from bpy.types import Action
 
-from ...utility import PluginError, encodeSegmentedAddr, is_bit_active, to_s16, intToHex
+from ...utility import PluginError, encodeSegmentedAddr, is_bit_active, intToHex
 from ..sm64_constants import MAX_U16, SegmentData
 from ..sm64_classes import RomReader, DMATable, DMATableElement, IntArray
 
 from .constants import HEADER_SIZE, C_FLAGS
+from .utility import num_to_padded_hex, get_dma_anim_name
 
 
 @dataclasses.dataclass
@@ -32,7 +33,7 @@ class SM64_AnimPair:
     def __post_init__(self):
         assert isinstance(self.values, np.ndarray) and self.values.size > 0, "values cannot be empty"
 
-    def __eq__(self, other):
+    def __eq__(self, other): # TODO: do i still need this
         return np.array_equal(self.values, other.values)
 
     def clean_frames(self):
@@ -41,7 +42,7 @@ class SM64_AnimPair:
         diffs = np.where(self.values != last_value)[0]
         if diffs.size > 0:
             i = diffs[-1]
-            self.values = self.values[: i + 1]
+            self.values = self.values[: i + 2] # TODO: this is still broken :( 2 is not correct
         else:  # all values are the same
             self.values = self.values[:1]
 
@@ -516,10 +517,6 @@ class AnimationTable:
     def get_seperate_anims_dma(self) -> list[Animation]:
         print("Getting seperate DMA animations from table.")
 
-        def num_to_padded_hex(num: int):
-            hex_str = hex(num)[2:].upper()  # remove the '0x' prefix
-            return hex_str.zfill(2)
-
         anims = []
         header_nums = []
         included_headers = []
@@ -537,7 +534,7 @@ class AnimationTable:
             if header in headers_already_added:
                 print(f"Made duplicate of header {i}.")
                 header = copy.copy(header)
-            header.reference = f"anim_{num_to_padded_hex(i)}"
+            header.reference = get_dma_anim_name(i)
             headers_already_added.append(header)
 
             included_headers.append(header)
@@ -593,7 +590,9 @@ class AnimationTable:
         headers_set, data_set = self.get_sets()
 
         # Pre calculate offsets
-        table_length = len(self.elements) * 4 + 4
+        table_length = len(self.elements) * 4
+        if add_null_delimiter:
+            table_length += 4
         if data_address == -1:
             headers_offset = table_address + table_length
         else:
@@ -603,7 +602,7 @@ class AnimationTable:
             value_table, indice_tables = create_tables(data_set, self.values_reference)
             indice_tables_offset = headers_offset + headers_length
             values_table_offset = indice_tables_offset + sum(
-                [len(indice_table.data) * 2 for indice_table in indice_tables]
+                len(indice_table.data) * 2 for indice_table in indice_tables
             )
 
         # Add the animation table
@@ -678,13 +677,12 @@ class AnimationTable:
             range_size = min(range_size, table_index + 1)
         for i in range(range_size):
             ptr = reader.read_ptr()
-            if size is None and ptr == 0:
+            if size is None and ptr == 0: # If no specified size and ptr is NULL, break
                 break
-            if table_index is not None and i != table_index:
+            if table_index is not None and i != table_index: # Skip entries until table_index if specified
                 continue
 
             header_reader = reader.branch(ptr)
-            header = None
             if header_reader:
                 header = AnimationHeader.read_binary(
                     header_reader, read_headers, read_animations, False, assumed_bone_count, i
@@ -692,7 +690,7 @@ class AnimationTable:
             else:
                 header = None
             self.elements.append(AnimationTableElement(ptr, None, header))
-            if table_index is not None:
+            if table_index is not None: # Break if table_index is specified
                 break
         else:
             if table_index is not None:
@@ -778,9 +776,6 @@ class AnimationTable:
         if self.elements and header_name == "NULL":
             self.elements.pop()  # Remove table end identifier from import
         return self
-
-
-import numpy as np
 
 
 def create_tables(anims_data: list[AnimationData], values_name=""):

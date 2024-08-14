@@ -17,7 +17,7 @@ def addMaterialByName(obj, matName, preset):
         material.name = matName
 
 
-PROFILE_ENABLED = True
+PROFILE_ENABLED = False
 
 
 class OperatorBase(Operator):

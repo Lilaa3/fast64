@@ -17,23 +17,20 @@ from bpy.props import (
 from bpy.path import abspath
 
 from ...utility import (
-    customExportWarning,
     decompFolderMessage,
     directory_ui_warnings,
     directory_path_checks,
     path_ui_warnings,
     draw_and_check_tab,
     getExportDir,
-    makeWriteInfoBox,
     multilineLabel,
     prop_split,
     toAlnum,
-    writeBoxExportType,
     intToHex,
     upgrade_old_prop,
 )
 from ..sm64_utility import import_rom_ui_warnings, string_int_prop, string_int_warning
-from ..sm64_constants import MAX_U16, MIN_S16, MAX_S16, level_enums, enumLevelNames
+from ..sm64_constants import MAX_U16, MIN_S16, MAX_S16, level_enums
 
 from .operators import (
     SM64_ExportAnimTable,
@@ -56,9 +53,9 @@ from .constants import (
 from .utility import (
     get_anim_enum,
     get_anim_file_name,
-    get_table_name,
     get_max_frame,
     get_anim_name,
+    get_dma_anim_name,
     get_element_action,
     get_element_header,
     get_selected_action,
@@ -356,7 +353,9 @@ class SM64_ActionProperty(PropertyGroup):
         if not in_table:
             split = col.split()
             SM64_ExportAnim.draw_props(split)
-            draw_list_op(split, SM64_AnimTableOps, "ADD_ALL", text="Add All To Table", icon="LINKED", action_name=action.name)
+            draw_list_op(
+                split, SM64_AnimTableOps, "ADD_ALL", text="Add All To Table", icon="LINKED", action_name=action.name
+            )
             col.separator()
 
             if export_type == "Binary" and not dma:
@@ -378,7 +377,6 @@ class SM64_ActionProperty(PropertyGroup):
             self.headers[specific_variant].draw_props(col, action, in_table, dma, export_type, actor_name, gen_enums)
         else:
             col.separator()
-
             self.draw_variants(col, action, in_table, dma, export_type, actor_name, gen_enums)
 
 
@@ -414,6 +412,7 @@ class SM64_AnimTableElement(PropertyGroup):
         self,
         row: UILayout,  # left side of the row for table ops
         prop_layout: UILayout,
+        index: int,
         dma: bool,
         can_reference: bool,
         export_seperately: bool,
@@ -442,7 +441,10 @@ class SM64_AnimTableElement(PropertyGroup):
         variant = self.variant
         if 0 <= variant < len(headers):
             header_props = get_element_header(self, can_reference)
-            name = get_anim_name(actor_name, action, header_props)
+            if dma:
+                name = get_dma_anim_name(index)
+            else:
+                name = get_anim_name(actor_name, action, header_props)
             if not draw_and_check_tab(col, self, "expand_tab", f"{name} (Variant {variant + 1})"):
                 return
         row = col.row()
@@ -505,6 +507,11 @@ class SM64_AnimTableProperties(PropertyGroup):
     def override_files(self):
         return not self.export_seperately or self.override_files_prop
 
+    def get_name(self, actor_name: str) -> str:
+        if self.use_custom_table_name:
+            return self.custom_table_name
+        return f"{actor_name}_anims"
+
     def get_table_actions(self, can_reference: bool) -> list[Action]:
         actions = []
         for element_props in self.elements:
@@ -534,6 +541,7 @@ class SM64_AnimTableProperties(PropertyGroup):
         table_element.draw_props(
             left_row,
             col,
+            index,
             dma,
             can_reference,
             self.export_seperately,
@@ -544,9 +552,9 @@ class SM64_AnimTableProperties(PropertyGroup):
 
     def draw_non_exclusive_settings(self, layout: UILayout, dma: bool, export_type, actor_name: str):
         col = layout.column()
-        if export_type == "C":
+        if export_type == "C" and not dma:
             col.prop(self, "gen_enums")
-            draw_custom_or_auto(self, col, "table_name", get_table_name(self, actor_name))
+            draw_custom_or_auto(self, col, "table_name", self.get_name(actor_name))
         elif export_type == "Binary":
             if dma:
                 string_int_prop(col, self, "dma_address", "DMA Table Address")
@@ -568,7 +576,8 @@ class SM64_AnimTableProperties(PropertyGroup):
                 if self.behaviour == "Custom":
                     prop_split(box, self, "behavior_address_prop", "Behavior Address")
                 prop_split(box, self, "begining_animation", "Beginning Animation")
-        col.prop(self, "add_null_delimiter")
+        if not dma:
+            col.prop(self, "add_null_delimiter")
 
     def draw_props(self, layout: UILayout, dma: bool, non_exclusive: bool, export_type: str, actor_name: str):
         col = layout.column()
@@ -589,7 +598,8 @@ class SM64_AnimTableProperties(PropertyGroup):
             prop_split(col, self, "insertable_file_name", "File Name")
 
         export_col = col.column()
-        SM64_ExportAnimTable.draw_props(export_col)
+        # TODO:
+        # SM64_ExportAnimTable.draw_props(export_col)
         export_col.enabled = True if self.elements else False
         if dma and export_type == "C":
             multilineLabel(
@@ -607,7 +617,7 @@ class SM64_AnimTableProperties(PropertyGroup):
         draw_list_op(op_row, SM64_AnimTableOps, "CLEAR", collection=self.elements)
         if self.elements:
             box = col.box().column()
-        actions = []  # for checking for duplicates
+        actions = []  # for checking for dma duplicates
         element_props: SM64_AnimTableElement
         for i, element_props in enumerate(self.elements):
             if i != 0:
@@ -617,7 +627,7 @@ class SM64_AnimTableProperties(PropertyGroup):
             action = get_element_action(element_props, can_reference)
             if dma and action:
                 duplicate_indeces = [str(j) for j, a in enumerate(actions) if a == action and j < i - 1]
-                if duplicate_indeces:
+                if duplicate_indeces:  # TODO: Should this show up once at the top instead?
                     multilineLabel(
                         box.box(),
                         "In DMA tables, headers for each action must be \n"
@@ -626,7 +636,7 @@ class SM64_AnimTableProperties(PropertyGroup):
                         + ", ".join(duplicate_indeces),
                         "INFO",
                     )
-                actions.append(action)
+            actions.append(action)
 
 
 class SM64_AnimImportProperties(PropertyGroup):
@@ -846,41 +856,7 @@ class SM64_AnimProperties(PropertyGroup):
     played_header: IntProperty(min=0)
     played_action: PointerProperty(name="Action", type=Action)
 
-    table: PointerProperty(type=SM64_AnimTableProperties)
     importing: PointerProperty(type=SM64_AnimImportProperties)
-    selected_action: PointerProperty(name="Action", type=Action)
-
-    update_table: BoolProperty(
-        name="Update Table On Action Export",
-        description="Update table outside of table exports",
-        default=True,
-    )
-    quick_read: BoolProperty(
-        name="Quick Data Read",
-        default=False,
-        description="Read fcurves directly, should work with the majority of rigs",
-    )
-    directory_path: StringProperty(name="Directory Path", subtype="FILE_PATH")
-    dma_folder: StringProperty(name="DMA Folder", default="assets/anims/")
-    use_dma_structure: BoolProperty(
-        name="Use DMA Structure",
-        description="When enabled, the Mario animation converter order is used (headers, indicies, values)",
-    )
-    actor_name_prop: StringProperty(name="Name", default="mario")  # TODO: Does this need to be passed to a @property?
-    # TODO: Ideally, this pr will be merged after combined exports, so this should be updated to use the group enum there
-    group_name: StringProperty(name="Group Name", default="group0")
-    header_type: EnumProperty(items=enumAnimExportTypes, name="Export Type", default="Actor")
-    custom_level_name: StringProperty(name="Level", default="bob")
-    level_option: EnumProperty(items=enumLevelNames, name="Level", default="bob")
-    # Binary
-    binary_level: EnumProperty(items=level_enums, name="Level", default="IC")
-    is_binary_dma: BoolProperty(name="Is DMA", default=True)
-    assume_bone_count: BoolProperty(
-        name="Assume Bone Count",
-        description="When importing a DMA table for insertion, "
-        "assume the bone count based on the armature instead of the headers",
-    )
-    insertable_directory_path: StringProperty(name="Directory Path", subtype="FILE_PATH")  # Insertable
 
     def update_version_0(self, scene: Scene):
         importing: SM64_AnimImportProperties = self.importing
@@ -950,10 +926,6 @@ class SM64_AnimProperties(PropertyGroup):
     def updates_table(self, export_type: str):
         return self.update_table and export_type != "Insertable Binary"
 
-    @property
-    def level_name(self):
-        return self.custom_level_name if self.level_option == "Custom" else self.level_option
-
     def get_c_paths(self, decomp: PathLike) -> tuple[PathLike, PathLike, PathLike]:
         custom_export = self.header_type == "Custom"
         base_path = self.directory_path if custom_export else decomp
@@ -988,53 +960,6 @@ class SM64_AnimProperties(PropertyGroup):
             box.label(text="Table Settings:", icon="ANIM")
             self.table.draw_non_exclusive_settings(box, is_dma, export_type, self.actor_name)
 
-    def draw_binary_settings(self, layout: UILayout, export_type: str):
-        col = layout.column()
-        col.prop(self, "is_binary_dma")
-        if export_type == "Insertable Binary":
-            prop_split(col, self, "directory_path", "Directory")
-            directory_ui_warnings(col, abspath(self.directory_path))
-        else:
-            if self.is_binary_dma:
-                layout.prop(self, "assume_bone_count")
-            else:
-                layout.prop(self, "binary_level")
-
-    def draw_c_settings(self, layout: UILayout):
-        col = layout.column()
-        prop_split(col, self, "header_type", "Header Type")
-        if self.header_type == "DMA":
-            prop_split(col, self, "dma_folder", "Folder", icon="FILE_FOLDER")
-            decompFolderMessage(col)
-            return
-
-        prop_split(col, self, "actor_name_prop", "Name")
-        if self.header_type == "Custom":
-            col.prop(self, "use_dma_structure")
-            col.prop(self, "directory_path")
-            col.separator()
-
-            if directory_ui_warnings(col, abspath(self.directory_path)):
-                customExportWarning(col)
-        else:
-            if self.header_type == "Actor":
-                prop_split(col, self, "group_name", "Group Name")
-            elif self.header_type == "Level":
-                prop_split(col, self, "level_option", "Level")
-                if self.level_option == "custom":
-                    prop_split(col, self, "custom_level_name", "Level Name")
-            col.separator()
-
-            decompFolderMessage(col)
-            write_box = makeWriteInfoBox(col).column()
-            writeBoxExportType(
-                write_box,
-                self.header_type,
-                self.actor_name,
-                self.custom_level_name,
-                self.level_option,
-            )
-
     def draw_table(self, layout: UILayout, export_type: str):
         dma = self.is_dma(export_type)
         draw_exclusive = not self.updates_table(export_type)
@@ -1051,7 +976,7 @@ class SM64_AnimProperties(PropertyGroup):
         split = col.split()
         split.prop(self, "selected_action")
         try:
-            action = get_selected_action(self, armature)
+            action = get_selected_action(armature)
             action_props: SM64_ActionProperty = action.fast64.sm64
             action_props.draw_props(
                 col, action, None, False, file_name, export_type, self.actor_name, gen_enums, is_dma
@@ -1059,20 +984,98 @@ class SM64_AnimProperties(PropertyGroup):
         except ValueError as exc:
             multilineLabel(col, str(exc), "ERROR")
 
-    def draw_export_settings(self, layout: UILayout, export_type: str):
-        col = layout.column()
-        if export_type in {"Binary", "Insertable Binary"}:
-            self.draw_binary_settings(col, export_type)
-        elif export_type == "C":
-            self.draw_c_settings(col)
-        col.prop(self, "quick_read")
-        col.separator()
 
-        self.draw_non_exclusive_settings(col, self.is_dma(export_type), export_type)
+class SM64_ArmatureAnimProperties(PropertyGroup):
+    version: IntProperty(name="SM64_AnimProperties Version", default=0)
+    cur_version = 1  # version after property migration
 
-    def draw_props(self, layout: UILayout, export_type: str):
+    # Revise locations of props
+    is_dma: BoolProperty(name="Is DMA Export")
+    dma_folder: StringProperty(name="DMA Folder", default="assets/anims/")
+    use_dma_structure: BoolProperty(name="Use DMA Structure")
+    update_table: BoolProperty(
+        name="Update Table On Action Export",
+        description="Update table outside of table exports",
+        default=True,
+    )
+    table: PointerProperty(type=SM64_AnimTableProperties)
+
+    def update_version_0(self, scene: Scene):
+        importing: SM64_AnimImportProperties = self.importing
+
+        upgrade_old_prop(importing, "animation_address", scene, "animStartImport", fix_forced_base_16=True)
+        upgrade_old_prop(importing, "is_segmented_address_prop", scene, "animIsSegPtr")
+        upgrade_old_prop(importing, "level", scene, "levelAnimImport")
+        upgrade_old_prop(importing, "table_index_prop", scene, "animListIndexImport")
+        if scene.pop("isDMAImport", False):
+            importing.binary_import_type = "DMA"
+        elif scene.pop("animIsAnimList", True):
+            importing.binary_import_type = "Table"
+        # Export
+        loop = scene.pop("loopAnimation", False)
+        for action in bpy.data.actions:
+            action_props: SM64_ActionProperty = action.fast64.sm64
+            action_props.header.no_loop = not loop
+            upgrade_old_prop(action_props, "start_address", scene, "animExportStart", fix_forced_base_16=True)
+            upgrade_old_prop(action_props, "start_address", scene, "animExportStart", fix_forced_base_16=True)
+            upgrade_old_prop(action_props, "end_address", scene, "animExportEnd", fix_forced_base_16=True)
+        custom_export = scene.pop("animCustomExport", False)
+        if custom_export:
+            self.header_type = "Custom"
+        else:
+            upgrade_old_prop(self, "header_type", scene, "animExportHeaderType")
+
+        self.directory_path = scene.get("animExportPath", self.directory_path)
+        upgrade_old_prop(self, "directory_path", scene, "animExportPath")
+        upgrade_old_prop(self, "actor_name_prop", scene, "animName")
+        upgrade_old_prop(self, "group_name", scene, "animGroupName")
+        upgrade_old_prop(self, "level_option", scene, "animLevelOption")
+        upgrade_old_prop(self, "custom_level_name", scene, "animLevelName")
+        upgrade_old_prop(self, "is_dma", scene, "isDMAExport")
+        upgrade_old_prop(self, "binary_level", scene, "levelAnimExport")
+
+        insertable_directory_path = scene.pop("animInsertableBinaryPath", "")
+        if insertable_directory_path:
+            # Ignores file name
+            self.insertable_directory_path = os.path.split(insertable_directory_path)[0]
+
+        upgrade_old_prop(self, "update_table", scene, "setAnimListIndex")
+        table: SM64_AnimTableProperties = self.table
+        # upgrade_old_prop(table, "", scene, "addr_0x27", fix_forced_base_16=True)
+        # upgrade_old_prop(table, "", scene, "addr_0x28", fix_forced_base_16=True)
+        upgrade_old_prop(table, "update_behavior", scene, "overwrite_0x28")
+        upgrade_old_prop(table, "begining_animation", scene, "animListIndexExport")
+
+        self.version = 1
+
+    def upgrade_changed_props(self, scene):
+        if self.version == 0:
+            self.update_version_0(scene)
+        self.version = SM64_AnimProperties.cur_version
+
+    def draw_c_settings(self, layout: UILayout, header_type: str):
         col = layout.column()
-        self.draw_export_settings(col, export_type)
+        if self.is_dma:
+            prop_split(col, self, "dma_folder", "Folder", icon="FILE_FOLDER")
+            if header_type == "Custom":
+                col.label(text="This folder will be relative to your custom path")
+            else:
+                decompFolderMessage(col)
+            return
+
+        if header_type == "Custom":
+            col.prop(self, "use_dma_structure")
+
+    def draw_table(self, layout: UILayout, export_type: str, actor_name: str):
+        # TODO:
+        draw_exclusive = True
+        self.table.draw_props(layout, self.is_dma, draw_exclusive, export_type, actor_name)
+
+    def draw_props(self, layout: UILayout, export_type: str, header_type: str):
+        col = layout.column()
+        col.prop(self, "is_dma")
+        if export_type == "C":  # TODO: pass in header type
+            self.draw_c_settings(col, header_type)
 
 
 classes = (
@@ -1082,6 +1085,7 @@ classes = (
     SM64_AnimTableProperties,
     SM64_AnimImportProperties,
     SM64_AnimProperties,
+    SM64_ArmatureAnimProperties,
 )
 
 

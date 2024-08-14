@@ -184,27 +184,29 @@ class SM64_AnimVariantOps(OperatorBase):
 
 class SM64_ExportAnimTable(OperatorBase):
     bl_idname = "scene.sm64_export_anim_table"
-    bl_label = "Export"
-    bl_description = "Exports the animation table found in the call context, scene or object"
+    bl_label = "Export Animation Table"
+    bl_description = "Exports the animation table of the selected armature"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
     context_mode = "OBJECT"
     icon = "EXPORT"
 
     def execute_operator(self, context: Context):
-        export_animation_table(context)
+        animation_operator_checks(context)
+        export_animation_table(context, context.object)
         self.report({"INFO"}, "Exported animation table successfully!")
 
 
 class SM64_ExportAnim(OperatorBase):
     bl_idname = "scene.sm64_export_anim"
-    bl_label = "Export"
-    bl_description = "Exports the select action found in the call context, scene or object"
+    bl_label = "Export Individual Animation"
+    bl_description = "Exports the select action of the selected armature"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
     context_mode = "OBJECT"
-    icon = "EXPORT"
+    icon = "ACTION"
 
     def execute_operator(self, context: Context):
-        export_animation(context)
+        animation_operator_checks(context)
+        export_animation(context, context.object)
         self.report({"INFO"}, "Exported animation successfully!")
 
 
