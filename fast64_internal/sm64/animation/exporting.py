@@ -801,7 +801,9 @@ def export_animation_c(
     table_props: SM64_AnimTableProperties = anim_props.table
     if combined_props.export_header_type != "Custom":
         applyBasicTweaks(decomp)
-    anim_directory, geo_directory, header_directory = create_and_get_paths(anim_props, combined_props, actor_name, decomp)
+    anim_directory, geo_directory, header_directory = create_and_get_paths(
+        anim_props, combined_props, actor_name, decomp
+    )
 
     anim_path = os.path.join(anim_directory, anim_file_name)
     with open(anim_path, "w", encoding="utf-8") as file:
