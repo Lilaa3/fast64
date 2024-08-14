@@ -3793,3 +3793,19 @@ ACTOR_PRESET_INFO = {
         models=ModelInfo(model_id=ModelIDInfo(55, "MODEL_CASTLE_GROUNDS_FLAG"), geolayout=234882656),
     ),
 }
+
+sm64_world_defaults = {
+    "geometryMode": {
+        "zBuffer": True,
+        "shade": True,
+        "cullBack": True,
+        "lighting": True,
+        "shadeSmooth": True,
+    },
+    "otherModeH": {
+        "textureFilter": "G_TF_BILERP",
+        "perspectiveCorrection": "G_TP_PERSP",
+        "textureConvert": "G_TC_FILT",
+        "pipelineMode": "G_PM_1PRIMITIVE",
+    },
+}
