@@ -20,6 +20,7 @@ from .utility import (
     get_animation_props,
     get_frame_range,
     update_header_variant_numbers,
+    get_anim_actor_name,
 )
 from .classes import (
     Animation,
@@ -666,7 +667,7 @@ def import_animations(context: Context):
 
     print("Importing animation table into properties.")
     from_anim_table_class(  # TODO: is the table address range including the null delimiter?
-        table_props, table, import_props.clear_table, import_props.use_custom_name, combined_props.obj_name_anim
+        table_props, table, import_props.clear_table, import_props.use_custom_name, get_anim_actor_name(context)
     )
 
 

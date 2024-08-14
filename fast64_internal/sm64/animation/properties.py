@@ -597,10 +597,6 @@ class SM64_AnimTableProperties(PropertyGroup):
         if export_type == "Insertable Binary":
             prop_split(col, self, "insertable_file_name", "File Name")
 
-        export_col = col.column()
-        # TODO:
-        # SM64_ExportAnimTable.draw_props(export_col)
-        export_col.enabled = True if self.elements else False
         if dma and export_type == "C":
             multilineLabel(
                 col,
@@ -608,7 +604,7 @@ class SM64_AnimTableProperties(PropertyGroup):
                 "conventions (anim_xx.inc.c, anim_xx, anim_xx_values, etc).",
                 icon="INFO",
             )
-        export_col.separator()
+        col.separator()
 
         can_reference = not dma
         op_row = col.row()
@@ -857,6 +853,7 @@ class SM64_AnimProperties(PropertyGroup):
     played_action: PointerProperty(name="Action", type=Action)
 
     importing: PointerProperty(type=SM64_AnimImportProperties)
+    selected_action: PointerProperty(name="Action", type=Action)
 
     def update_version_0(self, scene: Scene):
         importing: SM64_AnimImportProperties = self.importing
@@ -966,7 +963,7 @@ class SM64_AnimProperties(PropertyGroup):
         self.table.draw_props(layout, dma, draw_exclusive, export_type, self.actor_name)
 
     def draw_action(self, layout: UILayout, export_type: str, armature: Object):
-        is_dma = self.is_dma(export_type)
+        # is_dma = self.is_dma(export_type)
         file_name, gen_enums = export_type != "Binary", self.table.gen_enums
         col = layout.column()
 

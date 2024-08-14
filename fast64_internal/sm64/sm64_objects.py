@@ -2115,8 +2115,8 @@ class SM64_CombinedObjectProperties(bpy.types.PropertyGroup):
         return self.group_name
 
     # remove user prefixes/naming that I will be adding, such as _col, _geo etc.
-    def filter_name(self, name):
-        if self.use_name_filtering:
+    def filter_name(self, name, force_filtering=False):
+        if self.use_name_filtering or force_filtering:
             return sub("(_col)?(_geo)?(_bhv)?(lision)?", "", name)
         else:
             return name

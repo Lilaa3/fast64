@@ -178,3 +178,10 @@ def get_enum_list_name(table_props: "SM64_AnimTableProperties", actor_name: str)
 def get_enum_list_end(table_props: "SM64_AnimTableProperties", actor_name: str):
     table_name = table_props.get_name(actor_name)
     return f"{table_name.upper()}_END"
+
+
+def get_anim_actor_name(context: Context):
+    sm64_props = context.scene.fast64.sm64
+    if sm64_props.export_type == "C" and sm64_props.combined_export.export_anim:
+        return toAlnum(sm64_props.combined_export.obj_name_anim)
+    return sm64_props.combined_export.filter_name(toAlnum(context.object.name) if context.object else "", True)

@@ -33,7 +33,7 @@ class SM64_AnimPair:
     def __post_init__(self):
         assert isinstance(self.values, np.ndarray) and self.values.size > 0, "values cannot be empty"
 
-    def __eq__(self, other): # TODO: do i still need this
+    def __eq__(self, other):  # TODO: do i still need this
         return np.array_equal(self.values, other.values)
 
     def clean_frames(self):
@@ -42,7 +42,7 @@ class SM64_AnimPair:
         diffs = np.where(self.values != last_value)[0]
         if diffs.size > 0:
             i = diffs[-1]
-            self.values = self.values[: i + 2] # TODO: this is still broken :( 2 is not correct
+            self.values = self.values[: i + 2]  # TODO: this is still broken :( 2 is not correct
         else:  # all values are the same
             self.values = self.values[:1]
 
@@ -677,9 +677,9 @@ class AnimationTable:
             range_size = min(range_size, table_index + 1)
         for i in range(range_size):
             ptr = reader.read_ptr()
-            if size is None and ptr == 0: # If no specified size and ptr is NULL, break
+            if size is None and ptr == 0:  # If no specified size and ptr is NULL, break
                 break
-            if table_index is not None and i != table_index: # Skip entries until table_index if specified
+            if table_index is not None and i != table_index:  # Skip entries until table_index if specified
                 continue
 
             header_reader = reader.branch(ptr)
@@ -690,7 +690,7 @@ class AnimationTable:
             else:
                 header = None
             self.elements.append(AnimationTableElement(ptr, None, header))
-            if table_index is not None: # Break if table_index is specified
+            if table_index is not None:  # Break if table_index is specified
                 break
         else:
             if table_index is not None:

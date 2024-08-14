@@ -3,13 +3,13 @@ from bpy.types import Context
 
 from ...panels import SM64_Panel
 
-from .utility import get_animation_props
-from .operators import SM64_ExportAnimTable, SM64_ExportAnim
+from .utility import get_anim_actor_name, get_animation_props, get_selected_action
+from .operators import SM64_ExportAnimTable
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..settings.properties import SM64_Properties
+    from ..settings.properties import SM64_Properties, SM64_ActionProperty
     from ..sm64_objects import SM64_CombinedObjectProperties
 
 
@@ -51,7 +51,6 @@ class SceneAnimPanelMain(SceneAnimPanel):
         if sm64_props.export_type == "C":
             return
         combined_props.draw_anim_props(self.layout, sm64_props.export_type)
-        SM64_ExportAnim.draw_props(self.layout)
         SM64_ExportAnimTable.draw_props(self.layout)
 
 
@@ -71,13 +70,33 @@ class ObjAnimPanelMain(ObjAnimPanel):
 class AnimationPanelAction(AnimationPanel):
     bl_label = "Action"
 
-    def draw(self, context: Context):
+    def draw(self, context: Context):  # TODO: standard func for getting the action
         sm64_props: SM64_Properties = context.scene.fast64.sm64
+        scene_anim_props = sm64_props.animation
         if context.object and context.object.type == "ARMATURE":
-            armature = context.object
+            show_file_name, gen_enums = (
+                sm64_props.export_type != "Binary",
+                context.object.data.fast64.sm64.animation.table.gen_enums,
+            )
         else:
-            armature = None
-        get_animation_props(context).draw_action(self.layout, sm64_props.export_type, armature)
+            show_file_name, gen_enums = "", True
+        self.layout.prop(scene_anim_props, "selected_action")
+        action = scene_anim_props.selected_action or get_selected_action(context.object)
+        if action is None:
+            return
+
+        action_props: SM64_ActionProperty = action.fast64.sm64
+        action_props.draw_props(
+            self.layout,
+            action,
+            None,
+            False,
+            show_file_name,
+            sm64_props.export_type,
+            get_anim_actor_name(context),
+            gen_enums,
+            False,
+        )
 
 
 class SceneAnimPanelAction(AnimationPanelAction, SceneAnimPanel):
@@ -95,8 +114,8 @@ class ObjAnimPanelTable(ObjAnimPanel):
 
     def draw(self, context: Context):
         sm64_props: SM64_Properties = context.scene.fast64.sm64
-        get_animation_props(context).draw_table(
-            self.layout, sm64_props.export_type, sm64_props.combined_export.obj_name_anim
+        context.object.data.fast64.sm64.animation.draw_table(
+            self.layout, sm64_props.export_type, get_anim_actor_name(context)
         )
 
 

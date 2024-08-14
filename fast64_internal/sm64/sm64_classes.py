@@ -264,7 +264,7 @@ class IntArray:
     data: np.ndarray = None
 
     def to_binary(self):
-        return self.data.astype('>i2').tobytes()
+        return self.data.astype(">i2").tobytes()
 
     def to_c(self):
         assert self.name, "Array must have a name"
