@@ -222,14 +222,14 @@ class SM64_ImportAnim(OperatorBase):
         import_animations(context)
 
 
-class SM64_SearchAnimPresets(SearchEnumOperatorBase):
+class SM64_SearchAnimPresets(SearchEnumOperatorBase): # TODO broken
     bl_idname = "scene.search_mario_anim_enum_operator"
-    bl_property = "preset_animations"
+    bl_property = "preset_animation"
 
-    preset_animations: EnumProperty(items=get_enum_from_import_preset)
+    preset_animation: EnumProperty(items=get_enum_from_import_preset)
 
     def update_enum(self, context: Context):
-        get_animation_props(context).importing.mario_animation = self.preset_animations
+        get_animation_props(context).importing.preset_animation = self.preset_animation
 
 
 class SM64_SearchAnimTablePresets(SearchEnumOperatorBase):

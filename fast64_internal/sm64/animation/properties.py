@@ -918,18 +918,6 @@ class SM64_AnimProperties(PropertyGroup):
             self.update_version_0(scene)
         self.version = SM64_AnimProperties.cur_version
 
-    @property
-    def actor_name(self):
-        return self.actor_name_prop if self.header_type != "DMA" else None
-
-    @property
-    def is_c_dma(self):
-        return self.use_dma_structure if self.header_type == "Custom" else self.header_type == "DMA"
-
-    def is_dma(self, export_type: str):
-        is_binary = export_type in {"Binary", "Insertable Binary"}
-        return (is_binary and self.is_binary_dma) or (not is_binary and self.is_c_dma)
-
     def updates_table(self, export_type: str):
         return self.update_table and export_type != "Insertable Binary"
 
@@ -966,11 +954,6 @@ class SM64_AnimProperties(PropertyGroup):
             box = col.box().column()
             box.label(text="Table Settings:", icon="ANIM")
             self.table.draw_non_exclusive_settings(box, is_dma, export_type, self.actor_name)
-
-    def draw_table(self, layout: UILayout, export_type: str):
-        dma = self.is_dma(export_type)
-        draw_exclusive = not self.updates_table(export_type)
-        self.table.draw_props(layout, dma, draw_exclusive, export_type, self.actor_name)
 
     def draw_action(self, layout: UILayout, export_type: str, armature: Object):
         # is_dma = self.is_dma(export_type)
