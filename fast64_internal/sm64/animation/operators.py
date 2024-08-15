@@ -222,7 +222,7 @@ class SM64_ImportAnim(OperatorBase):
         import_animations(context)
 
 
-class SM64_SearchAnimPresets(SearchEnumOperatorBase):  # TODO broken
+class SM64_SearchAnimPresets(SearchEnumOperatorBase):
     bl_idname = "scene.search_mario_anim_enum_operator"
     bl_property = "preset_animation"
 
