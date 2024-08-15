@@ -72,7 +72,18 @@ def draw_custom_or_auto(holder, layout: UILayout, prop: str, default: str):
     else:
         box = name_split.box()
         box.scale_y = 0.5
-        box.label(text=default)
+        box.label(text=default, icon="LOCKED")
+
+
+def draw_forced(layout: UILayout, holder, prop: str, forced: bool):
+    row = layout.row(align=True) if forced else layout.column()
+    if forced:
+        box = row.box()
+        box.scale_y = 0.5
+        box.label(text="", icon="LOCKED")
+    row.alignment = "LEFT"
+    row.enabled = not forced
+    row.prop(holder, prop, invert_checkbox=not holder.get(prop) if forced else False)
 
 
 def draw_list_op(
@@ -118,9 +129,9 @@ class SM64_AnimHeaderProperties(PropertyGroup):
     expand_tab_in_action: BoolProperty(name="Header Properties", default=True)
     header_variant: IntProperty(name="Header Variant Number", min=0)
 
-    use_custom_name: BoolProperty(name="Custom Name")
+    use_custom_name: BoolProperty(name="Name")
     custom_name: StringProperty(name="Name", default="anim_00")
-    use_custom_enum: BoolProperty(name="Custom Enum")
+    use_custom_enum: BoolProperty(name="Enum")
     custom_enum: StringProperty(name="Enum", default="ANIM_00")
     manual_loop: BoolProperty(name="Manual Loop Points")
     start_frame: IntProperty(name="Start", min=0, max=MAX_S16)
@@ -273,9 +284,9 @@ class SM64_ActionProperty(PropertyGroup):
     header: PointerProperty(type=SM64_AnimHeaderProperties)
     variants_tab: BoolProperty(name="Header Variants")
     header_variants: CollectionProperty(type=SM64_AnimHeaderProperties)
-    use_custom_file_name: BoolProperty(name="Custom File Name")
+    use_custom_file_name: BoolProperty(name="File Name")
     custom_file_name: StringProperty(name="File Name", default="anim_00.inc.c")
-    use_custom_max_frame: BoolProperty(name="Custom Max Frame")
+    use_custom_max_frame: BoolProperty(name="Max Frame")
     custom_max_frame: IntProperty(name="Max Frame", min=1, max=MAX_U16, default=1)
     reference_tables: BoolProperty(name="Reference Tables")
     indices_table: StringProperty(name="Indices Table", default="anim_00_indices")
@@ -475,7 +486,7 @@ class SM64_AnimTableProperties(PropertyGroup):
     add_null_delimiter: BoolProperty(name="Add Null Delimiter")
     override_files_prop: BoolProperty(name="Override Table and Data Files", default=True)
     gen_enums: BoolProperty(name="Generate Enums", default=True)
-    use_custom_table_name: BoolProperty(name="Custom Table Name")
+    use_custom_table_name: BoolProperty(name="Table Name")
     custom_table_name: StringProperty(name="Table Name", default="mario_anims")
     # Binary
     data_address: StringProperty(
@@ -592,8 +603,7 @@ class SM64_AnimTableProperties(PropertyGroup):
                     string_int_prop(col, self, "data_end_address", "Data End")
             elif export_type == "C":
                 col.prop(self, "export_seperately")
-                if self.export_seperately:
-                    col.prop(self, "override_files_prop")
+                draw_forced(col, self, "override_files_prop", not self.export_seperately)
         if export_type == "Insertable Binary":
             prop_split(col, self, "insertable_file_name", "File Name")
 
