@@ -478,7 +478,7 @@ class SM64_AnimTableElement(PropertyGroup):
         )
 
 
-class SM64_AnimTableProperties(PropertyGroup):
+class SM64_AnimTableProperties(PropertyGroup): # TODO: Should this be moved to armature anim props?
     elements: CollectionProperty(type=SM64_AnimTableElement)
 
     export_seperately: BoolProperty(name="Export All Seperately")
@@ -561,59 +561,52 @@ class SM64_AnimTableProperties(PropertyGroup):
             actor_name,
         )
 
-    def draw_non_exclusive_settings(self, layout: UILayout, dma: bool, export_type, actor_name: str):
+    def draw_props(self, layout: UILayout, dma: bool, export_type: str, actor_name: str):
         col = layout.column()
-        if export_type == "C" and not dma:
-            col.prop(self, "gen_enums")
-            draw_custom_or_auto(self, col, "table_name", self.get_name(actor_name))
-        elif export_type == "Binary":
-            if dma:
+
+        if dma:
+            if export_type == "Binary":
                 string_int_prop(col, self, "dma_address", "DMA Table Address")
                 string_int_prop(col, self, "dma_end_address", "DMA Table End")
-                return
-            string_int_prop(col, self, "address", "Table Address")
-            string_int_prop(col, self, "end_address", "Table End")
-
-            box = col.box().column()
-            box.prop(self, "update_behavior")
-            if self.update_behavior:
+            elif export_type == "C":
                 multilineLabel(
-                    box,
-                    "Will update the LOAD_ANIMATIONS and ANIMATE commands.\n"
-                    "Does not raise an error if there is no ANIMATE command",
-                    "INFO",
+                    col,
+                    "The export will follow the vanilla DMA naming\n"
+                    "conventions (anim_xx.inc.c, anim_xx, anim_xx_values, etc).",
+                    icon="INFO",
                 )
-                SM64_SearchAnimatedBhvs.draw_props(box, self, "behaviour", "Behaviour")
-                if self.behaviour == "Custom":
-                    prop_split(box, self, "behavior_address_prop", "Behavior Address")
-                prop_split(box, self, "begining_animation", "Beginning Animation")
-        if not dma:
-            col.prop(self, "add_null_delimiter")
+        else:
+            if export_type == "C":
+                col.prop(self, "gen_enums")
+                draw_custom_or_auto(self, col, "table_name", self.get_name(actor_name))
+                col.prop(self, "export_seperately")
+                draw_forced(col, self, "override_files_prop", not self.export_seperately)
+            elif export_type == "Binary":
+                string_int_prop(col, self, "address", "Table Address")
+                string_int_prop(col, self, "end_address", "Table End")
 
-    def draw_props(self, layout: UILayout, dma: bool, non_exclusive: bool, export_type: str, actor_name: str):
-        col = layout.column()
-        if non_exclusive:
-            self.draw_non_exclusive_settings(col, dma, export_type, actor_name)
-
-        if not dma:
-            if export_type == "Binary":
+                box = col.box().column()
+                box.prop(self, "update_behavior")
+                if self.update_behavior:
+                    multilineLabel(
+                        box,
+                        "Will update the LOAD_ANIMATIONS and ANIMATE commands.\n"
+                        "Does not raise an error if there is no ANIMATE command",
+                        "INFO",
+                    )
+                    SM64_SearchAnimatedBhvs.draw_props(box, self, "behaviour", "Behaviour")
+                    if self.behaviour == "Custom":
+                        prop_split(box, self, "behavior_address_prop", "Behavior Address")
+                    prop_split(box, self, "begining_animation", "Beginning Animation")
+                
                 col.prop(self, "write_data_seperately")
                 if self.write_data_seperately:
                     string_int_prop(col, self, "data_address", "Data Address")
                     string_int_prop(col, self, "data_end_address", "Data End")
-            elif export_type == "C":
-                col.prop(self, "export_seperately")
-                draw_forced(col, self, "override_files_prop", not self.export_seperately)
+            col.prop(self, "add_null_delimiter")
         if export_type == "Insertable Binary":
             prop_split(col, self, "insertable_file_name", "File Name")
 
-        if dma and export_type == "C":
-            multilineLabel(
-                col,
-                "The export will follow the vanilla DMA naming\n"
-                "conventions (anim_xx.inc.c, anim_xx, anim_xx_values, etc).",
-                icon="INFO",
-            )
         col.separator()
 
         can_reference = not dma
@@ -1057,9 +1050,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
             col.prop(self, "use_dma_structure")
 
     def draw_table(self, layout: UILayout, export_type: str, actor_name: str):
-        # TODO:
-        draw_exclusive = True
-        self.table.draw_props(layout, self.is_dma, draw_exclusive, export_type, actor_name)
+        self.table.draw_props(layout, self.is_dma, export_type, actor_name)
 
     def draw_props(self, layout: UILayout, export_type: str, header_type: str):
         col = layout.column()
