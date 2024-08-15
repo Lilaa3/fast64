@@ -478,7 +478,7 @@ class SM64_AnimTableElement(PropertyGroup):
         )
 
 
-class SM64_AnimTableProperties(PropertyGroup): # TODO: Should this be moved to armature anim props?
+class SM64_AnimTableProperties(PropertyGroup):  # TODO: Should this be moved to armature anim props?
     elements: CollectionProperty(type=SM64_AnimTableElement)
 
     export_seperately: BoolProperty(name="Export All Seperately")
@@ -598,7 +598,7 @@ class SM64_AnimTableProperties(PropertyGroup): # TODO: Should this be moved to a
                     if self.behaviour == "Custom":
                         prop_split(box, self, "behavior_address_prop", "Behavior Address")
                     prop_split(box, self, "begining_animation", "Beginning Animation")
-                
+
                 col.prop(self, "write_data_seperately")
                 if self.write_data_seperately:
                     string_int_prop(col, self, "data_address", "Data Address")
@@ -910,62 +910,6 @@ class SM64_AnimProperties(PropertyGroup):
         if self.version == 0:
             self.update_version_0(scene)
         self.version = SM64_AnimProperties.cur_version
-
-    def updates_table(self, export_type: str):
-        return self.update_table and export_type != "Insertable Binary"
-
-    def get_c_paths(self, decomp: PathLike) -> tuple[PathLike, PathLike, PathLike]:
-        custom_export = self.header_type == "Custom"
-        base_path = self.directory_path if custom_export else decomp
-        if self.is_c_dma:  # DMA or Custom with DMA structure
-            return (abspath(os.path.join(base_path, self.dma_folder)), "", "")
-        dir_name = toAlnum(self.actor_name)
-        header_directory = abspath(
-            getExportDir(
-                custom_export,
-                base_path,
-                self.header_type,
-                self.level_name,
-                "",
-                dir_name,
-            )[0]
-        )
-        directory_path_checks(header_directory)
-        geo_directory = abspath(os.path.join(header_directory, dir_name))
-        anim_directory = abspath(os.path.join(geo_directory, "anims"))
-        return (anim_directory, geo_directory, header_directory)
-
-    def draw_non_exclusive_settings(self, layout: UILayout, is_dma: bool, export_type: str):
-        col = layout.column()
-        if is_dma and export_type == "C" or export_type == "Insertable Binary":
-            return
-
-        is_binary_dma = export_type == "Binary" and self.is_binary_dma
-        if not is_binary_dma:
-            col.prop(self, "update_table")
-        if self.update_table or is_binary_dma:
-            box = col.box().column()
-            box.label(text="Table Settings:", icon="ANIM")
-            self.table.draw_non_exclusive_settings(box, is_dma, export_type, self.actor_name)
-
-    def draw_action(self, layout: UILayout, export_type: str, armature: Object):
-        # is_dma = self.is_dma(export_type)
-        file_name, gen_enums = export_type != "Binary", self.table.gen_enums
-        col = layout.column()
-
-        if armature:
-            col.label(text=f'Uses "{armature.name}"\'s action by default', icon="INFO")
-
-        split = col.split()
-        split.prop(self, "selected_action")
-        try:
-            action = get_selected_action(armature)
-            action_props: SM64_ActionProperty = action.fast64.sm64
-            action_props.draw_props(
-                col, action, None, False, file_name, export_type, self.actor_name, gen_enums, is_dma
-            )
-        except ValueError as exc:
-            multilineLabel(col, str(exc), "ERROR")
 
 
 class SM64_ArmatureAnimProperties(PropertyGroup):
