@@ -242,7 +242,7 @@ class SM64_SearchAnimTablePresets(SearchEnumOperatorBase):
         get_animation_props(context).importing.preset = self.preset
 
 
-class SM64_SSearchAnimatedBhvs(SearchEnumOperatorBase):
+class SM64_SearchAnimatedBhvs(SearchEnumOperatorBase):
     bl_idname = "scene.search_animated_behavior_enum_operator"
     bl_property = "behaviour"
 
@@ -260,7 +260,7 @@ classes = (
     SM64_AnimVariantOps,
     SM64_ImportAnim,
     SM64_SearchAnimPresets,
-    SM64_SSearchAnimatedBhvs,
+    SM64_SearchAnimatedBhvs,
     SM64_SearchAnimTablePresets,
 )
 

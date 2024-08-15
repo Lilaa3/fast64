@@ -40,7 +40,7 @@ from .operators import (
     SM64_AnimVariantOps,
     SM64_ImportAnim,
     SM64_SearchAnimPresets,
-    SM64_SSearchAnimatedBhvs,
+    SM64_SearchAnimatedBhvs,
     SM64_SearchAnimTablePresets,
 )
 from .constants import (
@@ -583,7 +583,7 @@ class SM64_AnimTableProperties(PropertyGroup):
                     "Does not raise an error if there is no ANIMATE command",
                     "INFO",
                 )
-                SM64_SSearchAnimatedBhvs.draw_props(box, self, "behaviour", "Behaviour")
+                SM64_SearchAnimatedBhvs.draw_props(box, self, "behaviour", "Behaviour")
                 if self.behaviour == "Custom":
                     prop_split(box, self, "behavior_address_prop", "Behavior Address")
                 prop_split(box, self, "begining_animation", "Beginning Animation")
