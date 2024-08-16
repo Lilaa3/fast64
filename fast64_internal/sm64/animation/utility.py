@@ -38,10 +38,14 @@ def animation_operator_checks(context: Context, requires_animation=True, specifi
         raise PluginError(f'Armature "{obj.name}" has no animation data.')
 
 
-def get_animation_props(context: Context) -> "SM64_AnimProperties":
-    if context.space_data.type != "VIEW_3D" and context.object and context.object.type == "ARMATURE":
-        return context.object.data.fast64.sm64.animation
+def get_scene_anim_props(context: Context) -> "SM64_AnimProperties":
     return context.scene.fast64.sm64.animation
+
+
+def get_anim_props(context: Context) -> "SM64_ArmatureAnimProperties":
+    assert context.object
+    assert context.object.type == "ARMATURE"
+    return context.object.data.fast64.sm64.animation
 
 
 def get_action(name: str):
@@ -183,7 +187,7 @@ def dma_structure_context(context: Context):
     if not context.object or context.object.type != "ARMATURE":
         return False
     sm64_props = context.scene.fast64.sm64
-    anim_props = context.object.data.fast64.sm64.animation
+    anim_props = get_anim_props(context)
     header_type = sm64_props.combined_export.export_header_type
     if sm64_props.export_type == "C" and header_type == "Custom" and anim_props.use_dma_structure:
         return True

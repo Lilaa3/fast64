@@ -276,7 +276,7 @@ class SM64_AnimHeaderProperties(PropertyGroup):
         self.draw_flag_props(col, dma or binary)
 
 
-class SM64_ActionProperty(PropertyGroup):
+class SM64_ActionProperty(PropertyGroup):  # TODO:Should this be SM64_ActionAnimProperties
     header: PointerProperty(type=SM64_AnimHeaderProperties)
     variants_tab: BoolProperty(name="Header Variants")
     header_variants: CollectionProperty(type=SM64_AnimHeaderProperties)
@@ -297,7 +297,7 @@ class SM64_ActionProperty(PropertyGroup):
     def headers(self) -> list[SM64_AnimHeaderProperties]:
         return [self.header] + list(self.header_variants)
 
-    def get_anim_file_name(self, action: Action, export_type: str) -> str:
+    def get_file_name(self, action: Action, export_type: str) -> str:
         if not export_type in {"C", "Insertable Binary"}:
             return ""
         if self.use_custom_file_name:
@@ -387,7 +387,7 @@ class SM64_ActionProperty(PropertyGroup):
                 string_int_prop(col, self, "start_address", "Start Address")
                 string_int_prop(col, self, "end_address", "End Address")
         if draw_file_name:
-            draw_custom_or_auto(self, col, "file_name", self.get_anim_file_name(action, export_type))
+            draw_custom_or_auto(self, col, "file_name", self.get_file_name(action, export_type))
         if dma or not self.reference_tables:  # DMA tables don´t allow references
             draw_custom_or_auto(self, col, "max_frame", str(get_max_frame(action, self)))
         if not dma:

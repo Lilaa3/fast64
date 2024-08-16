@@ -224,8 +224,6 @@ def to_header_class(
 def to_data_class(
     action: Action,
     pairs: list[SM64_AnimPair],
-    blender_to_sm64_scale: float,
-    quick_read: bool,
     file_name: str = "anim_00.inc.c",
 ):
     data = AnimationData()
@@ -252,7 +250,7 @@ def to_animation_class(
     use_addresses_for_references: bool = False,
 ):
     animation = Animation()
-    animation.file_name = action_props.get_anim_file_name(action, export_type)
+    animation.file_name = action_props.get_file_name(action, export_type)
 
     if can_use_references and action_props.reference_tables:
         if use_addresses_for_references:
@@ -263,7 +261,7 @@ def to_animation_class(
             values_reference, indice_reference = action_props.values_table, action_props.indices_table
     else:
         pairs = get_animation_pairs(blender_to_sm64_scale, [action], armature_obj, quick_read)[0]
-        animation.data = to_data_class(action, pairs, blender_to_sm64_scale, quick_read, animation.file_name)
+        animation.data = to_data_class(action, pairs, animation.file_name)
         values_reference = animation.data.values_reference
         indice_reference = animation.data.indice_reference
     bone_count = len(get_anim_pose_bones(armature_obj))
@@ -346,7 +344,7 @@ def to_table_element_class(
             table_index,
             actor_name,
             gen_enums,
-            action_props.get_anim_file_name(action, export_type),
+            action_props.get_file_name(action, export_type),
         ),
     )
     element.reference = element.header.reference
@@ -380,7 +378,7 @@ def to_table_class(
     actions = table_props.get_table_actions(can_reference)
     action_pairs = get_animation_pairs(blender_to_sm64_scale, actions, armature_obj, quick_read)
     data_dict = {
-        action: to_data_class(action, action_pairs[i], blender_to_sm64_scale, quick_read)
+        action: to_data_class(action, action_pairs[i], action.fast64.sm64.get_file_name(action, export_type))
         for i, action in enumerate(actions)
     }
 

@@ -1,6 +1,6 @@
 import bpy
 from bpy.utils import register_class, unregister_class
-from bpy.types import Context, Object, Scene, Action
+from bpy.types import Context, Scene, Action
 from bpy.props import EnumProperty, StringProperty, IntProperty
 
 from ...operators import OperatorBase, SearchEnumOperatorBase
@@ -14,7 +14,9 @@ from .utility import (
     get_anim_name,
     get_frame_range,
     update_header_variant_numbers,
-    get_animation_props,
+    get_scene_anim_props,
+    get_anim_props,
+    get_anim_actor_name,
 )
 from .constants import enumAnimationTables, enumAnimatedBehaviours
 
@@ -99,22 +101,22 @@ class SM64_AnimTableOps(OperatorBase):
     header_variant: IntProperty()
 
     def execute_operator(self, context: Context):
-        table_elements = get_animation_props(context).table.elements
+        print("SM64_AnimTableOps", self.index, self.op_name, self.action_name, self.header_variant)
+        table_elements = get_anim_props(context).table.elements
 
-        if self.index != -1:
-            table_element = table_elements[self.index]
-        else:
-            table_element = None
         if self.op_name == "MOVE_UP":
             table_elements.move(self.index, self.index - 1)
         elif self.op_name == "MOVE_DOWN":
             table_elements.move(self.index, self.index + 1)
         elif self.op_name == "ADD":
+            if self.index != -1:
+                table_element = table_elements[self.index]
             table_elements.add()
-            if self.action_name and self.header_variant:
+            if self.action_name:  # set based on action variant
                 table_elements[-1].set_variant(bpy.data.actions[self.action_name], self.header_variant)
-            elif table_element:
+            elif self.index != -1:  # copy from table
                 copyPropertyGroup(table_element, table_elements[-1])
+            if self.index != -1:
                 table_elements.move(len(table_elements) - 1, self.index + 1)
         elif self.op_name == "ADD_ALL":
             action = bpy.data.actions[self.action_name]
@@ -166,15 +168,13 @@ class SM64_AnimVariantOps(OperatorBase):
             added_variant = variants[-1]
 
             copyPropertyGroup(action_props.headers[self.index], added_variant)
-            variants.move(len(variants) - 1, variant_position)
+            variants.move(len(variants) - 1, variant_position + 1)
             update_header_variant_numbers(action_props)
             added_variant.action = action
             added_variant.expand_tab = True
             added_variant.use_custom_name = False
             added_variant.use_custom_enum = False
-            added_variant.custom_name = get_anim_name(
-                context.scene.fast64.sm64.animation.actor_name, action, added_variant
-            )
+            added_variant.custom_name = get_anim_name(get_anim_actor_name(context), action, added_variant)
         elif self.op_name == "REMOVE":
             variants.remove(variant_position)
         if self.op_name == "CLEAR":
@@ -229,7 +229,7 @@ class SM64_SearchAnimPresets(SearchEnumOperatorBase):
     preset_animation: EnumProperty(items=get_enum_from_import_preset)
 
     def update_enum(self, context: Context):
-        get_animation_props(context).importing.preset_animation = self.preset_animation
+        get_scene_anim_props(context).importing.preset_animation = self.preset_animation
 
 
 class SM64_SearchAnimTablePresets(SearchEnumOperatorBase):
@@ -239,7 +239,7 @@ class SM64_SearchAnimTablePresets(SearchEnumOperatorBase):
     preset: EnumProperty(items=enumAnimationTables)
 
     def update_enum(self, context: Context):
-        get_animation_props(context).importing.preset = self.preset
+        get_scene_anim_props(context).importing.preset = self.preset
 
 
 class SM64_SearchAnimatedBhvs(SearchEnumOperatorBase):
@@ -249,7 +249,7 @@ class SM64_SearchAnimatedBhvs(SearchEnumOperatorBase):
     behaviour: EnumProperty(items=enumAnimatedBehaviours)
 
     def update_enum(self, context: Context):
-        get_animation_props(context).table.behaviour = self.behaviour
+        get_anim_props(context).table.behaviour = self.behaviour
 
 
 classes = (

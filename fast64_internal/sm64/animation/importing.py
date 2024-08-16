@@ -1,3 +1,4 @@
+from functools import cache
 import os, re, dataclasses, numpy as np
 
 import bpy
@@ -16,7 +17,7 @@ from .utility import (
     animation_operator_checks,
     get_anim_name,
     get_anim_pose_bones,
-    get_animation_props,
+    get_scene_anim_props,
     get_frame_range,
     update_header_variant_numbers,
     get_anim_actor_name,
@@ -42,6 +43,13 @@ if TYPE_CHECKING:
     )
     from ..settings.properties import SM64_Properties
     from ..sm64_objects import SM64_CombinedObjectProperties
+
+
+def get_preset_anim_name_list(preset: str):
+    assert preset in ACTOR_PRESET_INFO, "Selected preset not in actor presets"
+    preset_info = ACTOR_PRESET_INFO[preset]
+    assert preset_info.animation is not None, "Selected preset's actor has not animation information"
+    return preset_info.animation.names
 
 
 def flip_euler(euler: np.ndarray) -> np.ndarray:
@@ -267,12 +275,11 @@ def from_anim_class(
     action.name = action_name
     print(f'Populating action "{action_name}" properties.')
 
-    indice_reference = main_header.indice_reference
-    values_reference = main_header.values_reference
+    indice_reference, values_reference = main_header.indice_reference, main_header.values_reference
     if is_from_binary:
-        indice_reference = intToHex(indice_reference)
-        values_reference = intToHex(values_reference)
-        action_props.indices_address, action_props.values_address = indice_reference, values_reference
+        action_props.indices_address, action_props.values_address = intToHex(indice_reference), intToHex(
+            values_reference
+        )
     else:
         action_props.indices_table, action_props.values_table = indice_reference, values_reference
 
@@ -666,19 +673,17 @@ def import_animations(context: Context):
     )
 
 
-def get_preset_anim_name_list(preset: str):
-    assert preset in ACTOR_PRESET_INFO, "Selected preset not in actor presets"
-    preset_info = ACTOR_PRESET_INFO[preset]
-    assert preset_info.animation is not None, "Selected preset's actor has not animation information"
-    return preset_info.animation.names
+@cache
+def cached_enum_from_import_preset(preset: str):
+    animation_names = get_preset_anim_name_list(preset)
+    return [("Custom", "Custom", "Pick your own animation index", len(animation_names))] + [
+        (str(i), name, f'"{preset}" Animation {i}', i) for i, name in enumerate(animation_names)
+    ]
 
 
 def get_enum_from_import_preset(_self, context):
     try:
-        preset = get_animation_props(context).importing.preset
-        animation_names = get_preset_anim_name_list(preset)
-        return [("Custom", "Custom", "Pick your own animation index", len(animation_names))] + [
-            (str(i), name, f'"{preset}" Animation {i}', i) for i, name in enumerate(animation_names)
-        ]
-    except:
+        return cached_enum_from_import_preset(get_scene_anim_props(context).importing.preset)
+    except Exception as exc:
+        print(str(exc))
         return [("Custom", "Custom", "Pick your own animation index", 0)]
