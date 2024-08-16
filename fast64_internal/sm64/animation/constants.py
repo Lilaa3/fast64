@@ -52,7 +52,7 @@ enumAnimBinaryImportTypes = [
 enumAnimatedBehaviours = [("Custom", "Custom Behavior", "Custom")]
 enumAnimationTables = [("Custom", "Custom", "Custom")]
 for actor_name, preset_info in ACTOR_PRESET_INFO.items():
-    if preset_info.animation is None:
+    if not preset_info.animation:
         continue
     behaviours = ActorPresetInfo.get_member_as_dict(actor_name, preset_info.animation.behaviours)
     enumAnimatedBehaviours.extend(
