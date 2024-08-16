@@ -677,7 +677,7 @@ def import_animations(context: Context):
 def cached_enum_from_import_preset(preset: str):
     animation_names = get_preset_anim_name_list(preset)
     return [("Custom", "Custom", "Pick your own animation index", len(animation_names))] + [
-        (str(i), name, f'"{preset}" Animation {i}', i) for i, name in enumerate(animation_names)
+        (str(i), f"{i} - {name}", f'"{preset}" Animation {i}', i) for i, name in enumerate(animation_names)
     ]
 
 
