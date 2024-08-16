@@ -55,10 +55,10 @@ class AnimationData:
     pairs: list[SM64_AnimPair] = dataclasses.field(default_factory=list)
     indice_reference: str | int = ""
     values_reference: str | int = ""
-    indices_file_name: str | int = ""
-    values_file_name: str | int = ""
 
     # Importing
+    indices_file_name: str | int = ""
+    values_file_name: str | int = ""
     value_end_address: int = 0
     indice_end_address: int = 0
     start_address: int = 0
@@ -96,18 +96,17 @@ class AnimationData:
             f"Reading pairs from indices table at {intToHex(indices_reader.address)}",
             f"and values table at {intToHex(values_reader.address)}.",
         )
-        self.indice_reference = indices_reader.start_address
-        self.values_reference = values_reader.start_address
+        self.indice_reference, self.values_reference = indices_reader.start_address, values_reader.start_address
 
+        # 3 pairs per bone + 3 for root translation of 2, each 2 bytes
         indices_size = (((bone_count + 1) * 3) * 2) * 2
         indices_values = np.frombuffer(indices_reader.read_data(indices_size), dtype=">u2")
         for i in range(0, len(indices_values), 2):
             max_frame, offset = indices_values[i], indices_values[i + 1]
-            address = values_reader.start_address + (offset * 2)
-            size = max_frame * 2
+            address, size = values_reader.start_address + (offset * 2), max_frame * 2
+
             values = np.frombuffer(values_reader.read_data(size, address), dtype=">i2", count=max_frame)
-            pair = SM64_AnimPair(values, address, address + size, offset)
-            self.pairs.append(pair)
+            self.pairs.append(SM64_AnimPair(values, address, address + size, offset))
         self.indice_end_address = indices_reader.address
         self.value_end_address = max(pair.end_address for pair in self.pairs)
 
@@ -120,6 +119,7 @@ class AnimationData:
         self.indices_file_name, self.values_file_name = indice_decl.file_name, value_decl.file_name
         self.indice_reference, self.values_reference = indice_decl.name, value_decl.name
 
+        # TODO: Is numpy still faster here? This gave a 3x speed up before.
         indices_values = np.vectorize(lambda x: int(x, 0), otypes=[np.uint16])(indice_decl.values)
         values_array = np.vectorize(lambda x: int(x, 0), otypes=[np.int16])(value_decl.values)
 
@@ -144,8 +144,8 @@ class AnimationHeader:
     data: Optional[AnimationData] = None
 
     enum_name: str = ""
-    file_name: str = ""
     # Imports
+    file_name: str = ""
     end_address: int = 0
     header_variant: int = 0
     table_index: int = 0
@@ -245,7 +245,7 @@ class AnimationHeader:
         read_headers: dict[str, "AnimationHeader"],
         read_animations: dict[tuple[str, str], "Animation"],
         dma: bool = False,
-        assumed_bone_count: int | None = None,
+        bone_count: int | None = None,
         table_index: int | None = None,
     ):
         if str(reader.start_address) in read_headers:
@@ -261,7 +261,7 @@ class AnimationHeader:
         header.loop_start = reader.read_int(2, True)  # /*0x06*/ s16 loopStart;
         header.loop_end = reader.read_int(2, True)  # /*0x08*/ s16 loopEnd;
         bone_count = reader.read_int(2, True)  # /*0x0A*/ s16 unusedBoneCount; (Unused in engine)
-        header.bone_count = bone_count if assumed_bone_count is None else assumed_bone_count
+        header.bone_count = bone_count if bone_count is None else bone_count
         # /*0x0C*/ const s16 *values;
         # /*0x10*/ const u16 *index;
         if dma:
@@ -666,7 +666,7 @@ class AnimationTable:
         read_headers: dict[str, AnimationHeader],
         read_animations: dict[tuple[str, str], Animation],
         table_index: int | None = None,
-        assumed_bone_count: int | None = 0,
+        bone_count: int | None = 0,
         size: int | None = None,
     ) -> AnimationHeader | None:
         print(f"Reading table at address {reader.start_address}.")
@@ -684,12 +684,15 @@ class AnimationTable:
 
             header_reader = reader.branch(ptr)
             if header_reader:
-                header = AnimationHeader.read_binary(
-                    header_reader, read_headers, read_animations, False, assumed_bone_count, i
+                self.elements.append(
+                    AnimationTableElement(
+                        ptr,
+                        None,
+                        AnimationHeader.read_binary(header_reader, read_headers, read_animations, False, bone_count, i),
+                    ),
                 )
             else:
-                header = None
-            self.elements.append(AnimationTableElement(ptr, None, header))
+                self.elements.append(AnimationTableElement(ptr, None))
             if table_index is not None:  # Break if table_index is specified
                 break
         else:
@@ -706,7 +709,7 @@ class AnimationTable:
         read_headers: dict[str, AnimationHeader],
         read_animations: dict[tuple[str, str], Animation],
         table_index: int | None = None,
-        assumed_bone_count: int | None = None,
+        bone_count: int | None = None,
     ):
         dma_table = DMATable()
         dma_table.read_binary(reader)
@@ -721,7 +724,7 @@ class AnimationTable:
                 read_headers,
                 read_animations,
                 True,
-                assumed_bone_count,
+                bone_count,
                 table_index,
             )
 
@@ -731,7 +734,7 @@ class AnimationTable:
                 read_headers,
                 read_animations,
                 True,
-                assumed_bone_count,
+                bone_count,
                 i,
             )
             self.elements.append(AnimationTableElement(reader.start_address, None, header))

@@ -35,13 +35,11 @@ from .classes import (
 )
 from .utility import (
     get_anim_pose_bones,
-    animation_operator_checks,
     get_anim_actor_name,
     get_element_header,
     get_element_action,
     get_frame_range,
     get_max_frame,
-    get_anim_file_name,
     get_anim_name,
     get_anim_enum,
     get_int_flags,
@@ -246,6 +244,7 @@ def to_animation_class(
     armature_obj: Object,
     blender_to_sm64_scale: float,
     quick_read: bool,
+    export_type: str,
     can_use_references: bool,
     use_int_flags: bool,
     actor_name: str = "mario",
@@ -253,7 +252,7 @@ def to_animation_class(
     use_addresses_for_references: bool = False,
 ):
     animation = Animation()
-    animation.file_name = get_anim_file_name(action, action_props)
+    animation.file_name = action_props.get_anim_file_name(action, export_type)
 
     if can_use_references and action_props.reference_tables:
         if use_addresses_for_references:
@@ -294,6 +293,7 @@ def to_table_element_class(
     data_dict: dict[Action, AnimationData],
     bone_count: int,
     table_index: int,
+    export_type: str = "C",
     use_int_flags: bool = False,
     can_reference: bool = True,
     actor_name: str = "mario",
@@ -346,7 +346,7 @@ def to_table_element_class(
             table_index,
             actor_name,
             gen_enums,
-            get_anim_file_name(action, action_props),
+            action_props.get_anim_file_name(action, export_type),
         ),
     )
     element.reference = element.header.reference
@@ -359,6 +359,7 @@ def to_table_class(
     armature_obj: Object,
     blender_to_sm64_scale: float,
     quick_read: bool,
+    export_type: str = "C",
     use_int_flags: bool = False,
     can_reference: bool = True,
     actor_name: str = "mario",
@@ -393,6 +394,7 @@ def to_table_class(
                     data_dict,
                     bone_count,
                     i,
+                    export_type,
                     use_int_flags,
                     can_reference,
                     actor_name,
@@ -566,11 +568,11 @@ def export_animation_table_binary(
     binary_exporter: BinaryExporter,
     table_props: "SM64_AnimTableProperties",
     table: AnimationTable,
-    is_binary_dma: bool,
+    is_dma: bool,
     level_option: str,
     extend_bank_4: bool,
 ):
-    if is_binary_dma:
+    if is_dma:
         data = table.to_binary_dma()
         binary_exporter.write_to_range(int(table_props.dma_address, 0), int(table_props.dma_end_address, 0), data)
         return
@@ -606,12 +608,12 @@ def export_animation_table_insertable(
     combined_props: "SM64_CombinedObjectProperties",
     table_props: "SM64_AnimTableProperties",
     table: AnimationTable,
-    is_binary_dma: bool,
+    is_dma: bool,
 ):
     directory = abspath(combined_props.insertable_directory_path)
     directory_path_checks(directory, "Empty directory path.")
     path = os.path.join(directory, table_props.insertable_file_name)
-    if is_binary_dma:
+    if is_dma:
         data = table.to_binary_dma()
         InsertableBinaryData("Animation DMA Table", data).write(path)
     else:
@@ -726,7 +728,8 @@ def export_animation_binary(
     animation: Animation,
     action_props: "SM64_ActionProperty",
     table_props: "SM64_AnimTableProperties",
-    anim_props: "SM64_AnimProperties",
+    anim_props: "SM64_ArmatureAnimProperties",
+    combined_props: "SM64_CombinedObjectProperties",
     bone_count: int,
     level_option: str,
     extend_bank_4: bool,
@@ -735,17 +738,17 @@ def export_animation_binary(
         dma_address = int(table_props.dma_address, 0)
         print("Reading DMA table")
         table = AnimationTable().read_dma_binary(
-            RomReader(open(binary_exporter.export_rom, "rb").read(), dma_address),
-            {},
-            {},
-            None,
-            bone_count if anim_props.assume_bone_count else None,
+            reader=RomReader(rom_file=binary_exporter.rom_file_output, start_address=dma_address),
+            read_headers={},
+            read_animations={},
+            table_index=None,
+            bone_count=bone_count if combined_props.assume_bone_count else None,
         )
         empty_data = AnimationData()
         for header in animation.headers:
             while header.table_index >= len(table.elements):
-                table.elements.append(table.elements[-1])
-            table.elements[header.table_index] = AnimationTableElement(header=AnimationHeader(data=empty_data))
+                table.elements.append(AnimationTableElement(header=AnimationHeader(data=empty_data)))
+            table.elements[header.table_index] = AnimationTableElement(header=header)
         print("Converting to binary data")
         data = table.to_binary_dma()
         print("Writing to ROM")
@@ -784,9 +787,13 @@ def export_animation_binary(
         )
 
 
-def export_animation_insertable(animation: Animation, anim_props: "SM64_AnimProperties", anim_file_name: str):
-    data, ptrs = animation.to_binary(anim_props.is_binary_dma)
-    path = abspath(os.path.join(anim_props.insertable_directory_path, anim_file_name))
+def export_animation_insertable(
+    animation: Animation,
+    anim_props: "SM64_AnimProperties",
+    combined_props: "SM64_CombinedObjectProperties",
+):
+    data, ptrs = animation.to_binary(anim_props.is_dma)
+    path = abspath(os.path.join(combined_props.insertable_directory_path, animation.file_name))
     InsertableBinaryData("Animation", data, 0, ptrs).write(path)
 
 
@@ -795,7 +802,6 @@ def export_animation_c(
     anim_props: "SM64_ArmatureAnimProperties",
     combined_props: "SM64_CombinedObjectProperties",
     decomp: os.PathLike,
-    anim_file_name: str,
     actor_name: str,
 ):
     table_props: SM64_AnimTableProperties = anim_props.table
@@ -805,7 +811,7 @@ def export_animation_c(
         anim_props, combined_props, actor_name, decomp
     )
 
-    anim_path = os.path.join(anim_directory, anim_file_name)
+    anim_path = os.path.join(anim_directory, animation.file_name)
     with open(anim_path, "w", encoding="utf-8") as file:
         file.write(animation.to_c(anim_props.is_dma))
     if anim_props.is_dma:  # Don´t create an actual table and don´t update includes for dma exports
@@ -834,7 +840,7 @@ def export_animation_c(
                 get_enum_list_end(table_props, actor_name),
                 False,
             )
-    update_data_file(os.path.join(anim_directory, "data.inc.c"), [anim_file_name])
+    update_data_file(os.path.join(anim_directory, "data.inc.c"), [animation.file_name])
     if combined_props.export_header_type != "Custom":
         update_includes(
             combined_props.export_level_name,
@@ -865,19 +871,17 @@ def export_animation(context: Context, armature_obj: Object):
         armature_obj,
         sm64_props.blender_to_sm64_scale,
         combined_props.quick_anim_read,
+        sm64_props.export_type,
         sm64_props.binary_export or anim_props.is_dma,
         sm64_props.binary_export or anim_props.is_dma,
         actor_name,
         not sm64_props.binary_export and table_props.gen_enums,
         sm64_props.binary_export,
     )
-    anim_file_name = get_anim_file_name(action, action_props)
     if sm64_props.export_type == "C":
-        export_animation_c(
-            animation, anim_props, combined_props, abspath(sm64_props.decomp_path), anim_file_name, actor_name
-        )
+        export_animation_c(animation, anim_props, combined_props, abspath(sm64_props.decomp_path), actor_name)
     elif sm64_props.export_type == "Insertable Binary":
-        export_animation_insertable(animation, anim_props, anim_file_name)
+        export_animation_insertable(animation, anim_props, combined_props)
     elif sm64_props.export_type == "Binary":
         with BinaryExporter(abspath(sm64_props.export_rom), abspath(sm64_props.output_rom)) as binary_exporter:
             export_animation_binary(
@@ -886,6 +890,7 @@ def export_animation(context: Context, armature_obj: Object):
                 action_props,
                 table_props,
                 anim_props,
+                combined_props,
                 bone_count,
                 combined_props.binary_level,
                 sm64_props.extend_bank_4,
@@ -904,11 +909,8 @@ def export_animation_table(context: Context, armature_obj: Object):
     table_props: SM64_AnimTableProperties = anim_props.table
     actor_name = get_anim_actor_name(context)
 
-    is_binary_dma = sm64_props.binary_export and anim_props.is_dma
-    dma = anim_props.is_dma
-
     print("Stashing all actions in table")
-    for action in table_props.get_table_actions(not dma):
+    for action in table_props.get_table_actions(can_reference=not anim_props.is_dma):
         stashActionInArmature(armature_obj, action)
 
     print("Reading table data from fast64")
@@ -917,10 +919,11 @@ def export_animation_table(context: Context, armature_obj: Object):
         armature_obj,
         sm64_props.blender_to_sm64_scale,
         combined_props.quick_anim_read,
-        dma or sm64_props.binary_export,
-        not dma,
+        sm64_props.export_type,
+        anim_props.is_dma or sm64_props.binary_export,
+        not anim_props.is_dma,
         actor_name,
-        not dma and not sm64_props.binary_export and table_props.gen_enums,
+        not anim_props.is_dma and not sm64_props.binary_export and table_props.gen_enums,
         sm64_props.binary_export,
     )
 
@@ -928,14 +931,14 @@ def export_animation_table(context: Context, armature_obj: Object):
     if sm64_props.export_type == "C":
         export_animation_table_c(anim_props, combined_props, table, abspath(sm64_props.decomp_path), actor_name)
     elif sm64_props.export_type == "Insertable Binary":
-        export_animation_table_insertable(combined_props, table_props, table, is_binary_dma)
+        export_animation_table_insertable(combined_props, table_props, table, anim_props.is_dma)
     elif sm64_props.export_type == "Binary":
         with BinaryExporter(abspath(sm64_props.export_rom), abspath(sm64_props.output_rom)) as binary_exporter:
             export_animation_table_binary(
                 binary_exporter,
                 table_props,
                 table,
-                is_binary_dma,
+                anim_props.is_dma,
                 combined_props.binary_level,
                 sm64_props.extend_bank_4,
             )

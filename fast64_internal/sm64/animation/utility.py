@@ -135,14 +135,6 @@ def update_header_variant_numbers(action_props: "SM64_ActionProperty"):
         variant.header_variant = i
 
 
-def get_anim_file_name(action: Action, action_props: "SM64_ActionProperty") -> str:
-    name = action_props.custom_file_name if action_props.use_custom_file_name else f"anim_{action.name}.inc.c"
-    # Replace any invalid characters with an underscore
-    # TODO: Could this be an issue anywhere else in fast64?
-    name = re.sub(r'[/\\?%*:|"<>]', " ", name)
-    return name
-
-
 def get_max_frame(action: Action, action_props: "SM64_ActionProperty") -> int:
     if action_props.use_custom_max_frame:
         return action_props.custom_max_frame
@@ -185,3 +177,15 @@ def get_anim_actor_name(context: Context):
     if sm64_props.export_type == "C" and sm64_props.combined_export.export_anim:
         return toAlnum(sm64_props.combined_export.obj_name_anim)
     return sm64_props.combined_export.filter_name(toAlnum(context.object.name) if context.object else "", True)
+
+
+def dma_structure_context(context: Context):
+    if not context.object or context.object.type != "ARMATURE":
+        return False
+    sm64_props = context.scene.fast64.sm64
+    anim_props = context.object.data.fast64.sm64.animation
+    header_type = sm64_props.combined_export.export_header_type
+    if sm64_props.export_type == "C" and header_type == "Custom" and anim_props.use_dma_structure:
+        return True
+    else:
+        return anim_props.is_dma

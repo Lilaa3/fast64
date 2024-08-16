@@ -14,7 +14,6 @@ from ..sm64_classes import RomReader
 
 from .utility import (
     animation_operator_checks,
-    get_anim_file_name,
     get_anim_name,
     get_anim_pose_bones,
     get_animation_props,
@@ -250,9 +249,10 @@ def from_anim_class(
     animation: Animation,
     actor_name: str,
     use_custom_name: bool,
+    import_type: str,
 ):
     main_header = animation.headers[0]
-    is_from_binary = isinstance(main_header.reference, int)
+    is_from_binary = import_type in {"Binary", "Insertable Binary"}
 
     if animation.action_name:
         action_name = animation.action_name
@@ -273,27 +273,27 @@ def from_anim_class(
         indice_reference = intToHex(indice_reference)
         values_reference = intToHex(values_reference)
         action_props.indices_address, action_props.values_address = indice_reference, values_reference
-    action_props.indices_table = indice_reference
-    action_props.values_table = values_reference
+    else:
+        action_props.indices_table, action_props.values_table = indice_reference, values_reference
 
     if animation.data:
         file_name = animation.data.indices_file_name
         action_props.custom_max_frame = max([1] + [len(x.values) for x in animation.data.pairs])
+        # TODO: Set max frame to custom?
     else:
         file_name = main_header.file_name
         action_props.reference_tables = True
     if file_name:
         action_props.custom_file_name = file_name
-        if use_custom_name and get_anim_file_name(action, action_props) != action_props.custom_file_name:
+        if use_custom_name and action_props.get_anim_file_name(action, import_type) != action_props.custom_file_name:
             action_props.use_custom_file_name = True
     if is_from_binary:
         start_addresses = [x.reference for x in animation.headers]
         end_addresses = [x.end_address for x in animation.headers]
         if animation.data:
-            start_addresses.append(animation.data.indice_reference)
-            end_addresses.append(animation.data.indice_reference)
-            start_addresses.append(animation.data.values_reference)
-            end_addresses.append(animation.data.value_end_address)
+            start_addresses.append(animation.data.start_address)
+            end_addresses.append(animation.data.end_address)
+
         action_props.start_address = intToHex(min(start_addresses))
         action_props.end_address = intToHex(max(end_addresses))
 
@@ -365,6 +365,7 @@ def animation_import_to_blender(
     anim_import: Animation,
     actor_name: str,
     use_custom_name: bool,
+    import_type: str,
     force_quaternion: bool,
     continuity_filter: bool,
 ):
@@ -389,13 +390,7 @@ def animation_import_to_blender(
                     pose_bone.rotation_mode = "QUATERNION"
                 bone_data.populate_action(action, pose_bone)
 
-        from_anim_class(
-            action.fast64.sm64,
-            action,
-            anim_import,
-            actor_name,
-            use_custom_name,
-        )
+        from_anim_class(action.fast64.sm64, action, anim_import, actor_name, use_custom_name, import_type)
         stashActionInArmature(armature_obj, action)
         return action
     except PluginError as exc:
@@ -490,20 +485,20 @@ def import_binary_animations(
     read_animations: dict[tuple[str, str], Animation],
     table: AnimationTable,
     table_index: int | None = None,
-    assumed_bone_count: int | None = None,
+    bone_count: int | None = None,
     table_size: int | None = None,
 ):
     if import_type == "Table":
-        table.read_binary(data_reader, read_headers, read_animations, table_index, assumed_bone_count, table_size)
+        table.read_binary(data_reader, read_headers, read_animations, table_index, bone_count, table_size)
     elif import_type == "DMA":
-        table.read_dma_binary(data_reader, read_headers, read_animations, table_index, assumed_bone_count)
+        table.read_dma_binary(data_reader, read_headers, read_animations, table_index, bone_count)
     elif import_type == "Animation":
         AnimationHeader.read_binary(
             data_reader,
             read_headers,
             read_animations,
             False,
-            assumed_bone_count,
+            bone_count,
             table_size,
         )
     else:
@@ -516,7 +511,7 @@ def import_insertable_binary_animations(
     read_animations: dict[tuple[str, str], Animation],
     table: AnimationTable,
     table_index: int | None = None,
-    assumed_bone_count: int | None = None,
+    bone_count: int | None = None,
     table_size: int | None = None,
 ):
     if reader.insertable.data_type == "Animation":
@@ -525,12 +520,12 @@ def import_insertable_binary_animations(
             read_headers,
             read_animations,
             False,
-            assumed_bone_count,
+            bone_count,
         )
     elif reader.insertable.data_type == "Animation Table":
-        table.read_binary(reader, read_headers, read_animations, table_index, assumed_bone_count, table_size)
+        table.read_binary(reader, read_headers, read_animations, table_index, bone_count, table_size)
     elif reader.insertable.data_type == "Animation DMA Table":
-        table.read_dma_binary(reader, read_headers, read_animations, table_index, assumed_bone_count)
+        table.read_dma_binary(reader, read_headers, read_animations, table_index, bone_count)
 
 
 def import_animations(context: Context):
@@ -539,7 +534,6 @@ def import_animations(context: Context):
     scene = context.scene
     armature_obj: Object = context.object
     sm64_props: SM64_Properties = scene.fast64.sm64
-    combined_props: SM64_CombinedObjectProperties = sm64_props.combined_export
     import_props: SM64_AnimImportProperties = sm64_props.animation.importing
     anim_props: SM64_ArmatureAnimProperties = armature_obj.data.fast64.sm64.animation
     table_props: SM64_AnimTableProperties = anim_props.table
@@ -641,8 +635,9 @@ def import_animations(context: Context):
                 armature_obj,
                 sm64_props.blender_to_sm64_scale,
                 animation,
-                combined_props.obj_name_anim,  # TODO: is this fine?
+                get_anim_actor_name(context),
                 import_props.use_custom_name,
+                import_type,
                 import_props.force_quaternion,
                 import_props.continuity_filter if not import_props.force_quaternion else True,
             )

@@ -3,8 +3,8 @@ from bpy.types import Context
 
 from ...panels import SM64_Panel
 
-from .utility import get_anim_actor_name, get_animation_props, get_selected_action
-from .operators import SM64_ExportAnimTable
+from .utility import get_anim_actor_name, get_animation_props, get_selected_action, dma_structure_context
+from .operators import SM64_ExportAnim, SM64_ExportAnimTable
 
 from typing import TYPE_CHECKING
 
@@ -68,7 +68,7 @@ class ObjAnimPanelMain(ObjAnimPanel):
 
 
 class AnimationPanelAction(AnimationPanel):
-    bl_label = "Action"
+    bl_label = "Action Inspector"
 
     def draw(self, context: Context):  # TODO: standard func for getting the action
         sm64_props: SM64_Properties = context.scene.fast64.sm64
@@ -84,18 +84,19 @@ class AnimationPanelAction(AnimationPanel):
         action = scene_anim_props.selected_action or get_selected_action(context.object)
         if action is None:
             return
-
+        if sm64_props.export_type != "C":
+            SM64_ExportAnim.draw_props(self.layout)
         action_props: SM64_ActionProperty = action.fast64.sm64
         action_props.draw_props(
-            self.layout,
-            action,
-            None,
-            False,
-            show_file_name,
-            sm64_props.export_type,
-            get_anim_actor_name(context),
-            gen_enums,
-            False,
+            layout=self.layout,
+            action=action,
+            specific_variant=None,
+            in_table=False,
+            draw_file_name=show_file_name,
+            export_type=sm64_props.export_type,
+            actor_name=get_anim_actor_name(context),
+            gen_enums=gen_enums,
+            dma=dma_structure_context(context),
         )
 
 
@@ -107,15 +108,18 @@ class ObjAnimPanelAction(AnimationPanelAction, ObjAnimPanel):
     bl_idname = "OBJECT_PT_SM64_anim_action"
 
 
-# Table tab
 class ObjAnimPanelTable(ObjAnimPanel):
     bl_label = "Table"
     bl_idname = "OBJECT_PT_SM64_anim_table"
 
     def draw(self, context: Context):
         sm64_props: SM64_Properties = context.scene.fast64.sm64
-        context.object.data.fast64.sm64.animation.draw_table(
-            self.layout, sm64_props.export_type, get_anim_actor_name(context)
+        anim_props = context.object.data.fast64.sm64.animation
+        anim_props.table.draw_props(
+            self.layout,
+            dma_structure_context(context),
+            sm64_props.export_type,
+            get_anim_actor_name(context),
         )
 
 

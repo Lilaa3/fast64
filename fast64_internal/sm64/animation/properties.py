@@ -1,5 +1,6 @@
 import os
 from os import PathLike
+import re
 from typing import Iterable, Optional
 
 import bpy
@@ -33,8 +34,6 @@ from ..sm64_utility import import_rom_ui_warnings, string_int_prop, string_int_w
 from ..sm64_constants import MAX_U16, MIN_S16, MAX_S16, level_enums
 
 from .operators import (
-    SM64_ExportAnimTable,
-    SM64_ExportAnim,
     SM64_PreviewAnim,
     SM64_AnimTableOps,
     SM64_AnimVariantOps,
@@ -46,19 +45,16 @@ from .operators import (
 from .constants import (
     enumAnimImportTypes,
     enumAnimBinaryImportTypes,
-    enumAnimExportTypes,
     enumAnimatedBehaviours,
     enumAnimationTables,
 )
 from .utility import (
     get_anim_enum,
-    get_anim_file_name,
     get_max_frame,
     get_anim_name,
     get_dma_anim_name,
     get_element_action,
     get_element_header,
-    get_selected_action,
 )
 from .importing import get_enum_from_import_preset
 
@@ -301,6 +297,21 @@ class SM64_ActionProperty(PropertyGroup):
     def headers(self) -> list[SM64_AnimHeaderProperties]:
         return [self.header] + list(self.header_variants)
 
+    def get_anim_file_name(self, action: Action, export_type: str) -> str:
+        if not export_type in {"C", "Insertable Binary"}:
+            return ""
+        if self.use_custom_file_name:
+            return self.custom_file_name
+        else:
+            name = f"anim_{action.name}."
+            if export_type == "C":
+                name += "inc.c"
+            else:
+                name += "insertable"
+            # Replace any invalid characters with an underscore, TODO: Could this be an issue anywhere else in fast64?
+            name = re.sub(r'[/\\?%*:|"<>]', " ", name)
+            return name
+
     def draw_variants(
         self,
         layout: UILayout,
@@ -362,10 +373,13 @@ class SM64_ActionProperty(PropertyGroup):
         if specific_variant is not None:
             col.label(text="Action Properties", icon="ACTION")
         if not in_table:
-            split = col.split()
-            SM64_ExportAnim.draw_props(split)
             draw_list_op(
-                split, SM64_AnimTableOps, "ADD_ALL", text="Add All To Table", icon="LINKED", action_name=action.name
+                col,
+                SM64_AnimTableOps,
+                "ADD_ALL",
+                text="Add All Variants To Table",
+                icon="LINKED",
+                action_name=action.name,
             )
             col.separator()
 
@@ -373,8 +387,8 @@ class SM64_ActionProperty(PropertyGroup):
                 string_int_prop(col, self, "start_address", "Start Address")
                 string_int_prop(col, self, "end_address", "End Address")
         if draw_file_name:
-            draw_custom_or_auto(self, col, "file_name", get_anim_file_name(action, self))
-        if dma or not self.reference_tables:
+            draw_custom_or_auto(self, col, "file_name", self.get_anim_file_name(action, export_type))
+        if dma or not self.reference_tables:  # DMA tables don´t allow references
             draw_custom_or_auto(self, col, "max_frame", str(get_max_frame(action, self)))
         if not dma:
             self.draw_references(col, export_type in {"Binary", "Insertable Binary"})
@@ -889,7 +903,7 @@ class SM64_AnimProperties(PropertyGroup):
         upgrade_old_prop(self, "group_name", scene, "animGroupName")
         upgrade_old_prop(self, "level_option", scene, "animLevelOption")
         upgrade_old_prop(self, "custom_level_name", scene, "animLevelName")
-        upgrade_old_prop(self, "is_binary_dma", scene, "isDMAExport")
+        upgrade_old_prop(self, "is_dma", scene, "isDMAExport")
         upgrade_old_prop(self, "binary_level", scene, "levelAnimExport")
 
         insertable_directory_path = scene.pop("animInsertableBinaryPath", "")
@@ -919,7 +933,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
     # Revise locations of props
     is_dma: BoolProperty(name="Is DMA Export")
     dma_folder: StringProperty(name="DMA Folder", default="assets/anims/")
-    use_dma_structure: BoolProperty(name="Use DMA Structure")
+    use_dma_structure: BoolProperty(name="Use DMA Structure")  # TODO: Use this property in exporting
     update_table: BoolProperty(
         name="Update Table On Action Export",
         description="Update table outside of table exports",
@@ -993,13 +1007,10 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
         if header_type == "Custom":
             col.prop(self, "use_dma_structure")
 
-    def draw_table(self, layout: UILayout, export_type: str, actor_name: str):
-        self.table.draw_props(layout, self.is_dma, export_type, actor_name)
-
     def draw_props(self, layout: UILayout, export_type: str, header_type: str):
         col = layout.column()
         col.prop(self, "is_dma")
-        if export_type == "C":  # TODO: pass in header type
+        if export_type == "C":
             self.draw_c_settings(col, header_type)
 
 
