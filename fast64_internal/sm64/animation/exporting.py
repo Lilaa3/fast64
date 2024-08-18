@@ -89,18 +89,17 @@ def get_animation_pairs(
 ) -> list[list[SM64_AnimPair]]:
     if not actions:
         return  # TODO: error out?
+
     anim_bones = get_anim_pose_bones(armature_obj)
-    anim_bones_len = len(anim_bones)
-    if anim_bones_len == 0:
+    if len(anim_bones) == 0:
         raise PluginError(f'No animation bones in armature "{armature_obj.name}"')
 
     max_frames = [get_max_frame(action, action.fast64.sm64) for action in actions]
     highest_max_frame = max(max_frames)
 
     trans_values = np.zeros((len(actions), 3, highest_max_frame), dtype=np.float32)
-    rot_values = np.zeros((len(actions), anim_bones_len * 3, highest_max_frame), dtype=np.float32)
+    rot_values = np.zeros((len(actions), len(anim_bones) * 3, highest_max_frame), dtype=np.float32)
 
-    action_pairs = []
     if quick_read:
         quats = np.empty((4, highest_max_frame), dtype=np.float32)
 
@@ -148,7 +147,7 @@ def get_animation_pairs(
             for action, action_trans, action_rot, max_frame in zip(actions, trans_values, rot_values, max_frames):
                 print(f'Reading animation data from action "{action.name}".')
                 armature_obj.animation_data.action = action
-                for frame in range(get_max_frame(action, action.fast64.sm64)):
+                for frame in range(max_frame):
                     bpy.context.scene.frame_set(frame)
                     pose_bone = anim_bones[0]  # Root bone
                     local_matrix = armature_obj.convert_space(
@@ -171,7 +170,7 @@ def get_animation_pairs(
     trans_values *= sm64_scale
     trans_values = np.round(trans_values).astype(np.int16)
 
-    rot_values = (np.degrees(rot_values) * (2**16 / 360.0)).astype(np.int16)
+    rot_values = np.round(np.degrees(rot_values) * (2**16 / 360.0)).astype(np.int16)
 
     action_pairs = []
     for action_trans, action_rot, max_frame in zip(trans_values, rot_values, max_frames):
@@ -471,7 +470,7 @@ def update_enum_file(path: os.PathLike, list_name: str, names: list[str], end: s
         file.write(text)
 
 
-def update_table_file(path: os.PathLike, name: str, names: list[str], add_null_delimiter: bool, override_files: bool):
+def update_table_file(path: os.PathLike, name: str, names: list[str], null_delimiter: bool, override_files: bool):
     print(f"Updating table file at {path}.")
     if override_files or not os.path.exists(path):
         text = ""
@@ -492,7 +491,7 @@ def update_table_file(path: os.PathLike, name: str, names: list[str], add_null_d
     if table_end == -1:
         raise IndexError("Could not find end of table.")
 
-    if add_null_delimiter:
+    if null_delimiter:
         delimiter_index = text.find("NULL", table_start, table_end)
         if delimiter_index == -1:
             delimiter_index = table_end + 1
@@ -506,7 +505,7 @@ def update_table_file(path: os.PathLike, name: str, names: list[str], add_null_d
         if not override_files and text.find(header_reference, table_start, table_end) != -1:
             continue
         header_lines += f"\t{header_reference},\n"
-    if add_null_delimiter and header_lines:
+    if null_delimiter and header_lines:
         header_lines = header_lines[1:] + "\t"
     text = text[:delimiter_index] + header_lines + text[delimiter_index:]
 
@@ -582,16 +581,15 @@ def export_animation_table_binary(
 
     address = get64bitAlignedAddr(int(table_props.address, 0))
     end_address = int(table_props.end_address, 0)
-    null_delimiter = table_props.add_null_delimiter
 
     if table_props.write_data_seperately:  # Write the data and the table into seperate address range
         data_address = get64bitAlignedAddr(int(table_props.data_address, 0))
         data_end_address = int(table_props.data_end_address, 0)
-        table_data, data = table.to_combined_binary(address, data_address, segment_data, null_delimiter)[:2]
+        table_data, data = table.to_combined_binary(address, data_address, segment_data, table_props.null_delimiter)[:2]
         binary_exporter.write_to_range(address, end_address, table_data)
         binary_exporter.write_to_range(data_address, data_end_address, data)
     else:  # Write table then the data in one address range
-        table_data, data = table.to_combined_binary(address, -1, segment_data, null_delimiter)[:2]
+        table_data, data = table.to_combined_binary(address, -1, segment_data, table_props.null_delimiter)[:2]
         binary_exporter.write_to_range(address, end_address, table_data + data)
     if table_props.update_behavior:
         update_behaviour_binary(
@@ -615,7 +613,7 @@ def export_animation_table_insertable(
         data = table.to_binary_dma()
         InsertableBinaryData("Animation DMA Table", data).write(path)
     else:
-        table_data, data, ptrs = table.to_combined_binary(add_null_delimiter=table_props.add_null_delimiter)
+        table_data, data, ptrs = table.to_combined_binary(null_delimiter=table_props.null_delimiter)
         InsertableBinaryData("Animation Table", table_data + data, 0, ptrs).write(path)
 
 
@@ -698,7 +696,7 @@ def export_animation_table_c(
         os.path.join(anim_directory, "table.inc.c"),
         table.reference,
         table.header_names,
-        table_props.add_null_delimiter,
+        table_props.null_delimiter,
         table_props.override_files,
     )
     if table_props.gen_enums:
@@ -827,7 +825,7 @@ def export_animation_c(
             os.path.join(anim_directory, "table.inc.c"),
             table_name,
             animation.header_names,
-            table_props.add_null_delimiter,
+            table_props.null_delimiter,
             False,
         )
         if table_props.gen_enums:

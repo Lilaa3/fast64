@@ -582,7 +582,7 @@ class AnimationTable:
         return dma_table.to_binary()
 
     def to_combined_binary(
-        self, table_address=0, data_address=-1, segment_data: SegmentData = None, add_null_delimiter=True
+        self, table_address=0, data_address=-1, segment_data: SegmentData = None, null_delimiter=True
     ):
         table_data: bytearray = bytearray()
         data: bytearray = bytearray()
@@ -591,7 +591,7 @@ class AnimationTable:
 
         # Pre calculate offsets
         table_length = len(self.elements) * 4
-        if add_null_delimiter:
+        if null_delimiter:
             table_length += 4
         if data_address == -1:
             headers_offset = table_address + table_length
@@ -617,7 +617,7 @@ class AnimationTable:
             else:
                 assert isinstance(element.reference, int), f"Reference at element {i} is not an int."
                 table_data.extend(element.reference.to_bytes(4, byteorder="big"))
-        if add_null_delimiter:
+        if null_delimiter:
             table_data.extend(bytearray([0x00] * 4))  # NULL delimiter
 
         for anim_header in headers_set:  # Add the headers

@@ -88,7 +88,7 @@ class AnimationPanelAction(AnimationPanel):
         else:
             draw_file_name, gen_enums, updates_table = "", True, False
         self.layout.prop(scene_anim_props, "selected_action")
-        action = scene_anim_props.selected_action or get_selected_action(context.object)
+        action = scene_anim_props.selected_action or get_selected_action(context.object, False)
         if action is None:
             return
         if sm64_props.export_type != "C":

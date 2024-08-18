@@ -490,7 +490,7 @@ class SM64_AnimTableProperties(PropertyGroup):  # TODO: Should this be moved to 
 
     export_seperately: BoolProperty(name="Export All Seperately")
     write_data_seperately: BoolProperty(name="Write Data Seperately")
-    add_null_delimiter: BoolProperty(name="Add Null Delimiter")
+    null_delimiter: BoolProperty(name="Add Null Delimiter")
     override_files_prop: BoolProperty(name="Override Table and Data Files", default=True)
     gen_enums: BoolProperty(name="Generate Enums", default=True)
     use_custom_table_name: BoolProperty(name="Table Name")
@@ -612,7 +612,7 @@ class SM64_AnimTableProperties(PropertyGroup):  # TODO: Should this be moved to 
                 if self.write_data_seperately:
                     string_int_prop(col, self, "data_address", "Data Address")
                     string_int_prop(col, self, "data_end_address", "Data End")
-            col.prop(self, "add_null_delimiter")
+            col.prop(self, "null_delimiter")
         if export_type == "Insertable Binary":
             prop_split(col, self, "insertable_file_name", "File Name")
 

@@ -57,10 +57,12 @@ def get_action(name: str):
     return bpy.data.actions[name]
 
 
-def get_selected_action(armature: Object) -> Action:
-    if armature.animation_data and armature.animation_data.action:
+def get_selected_action(armature: Object, raise_exc=True) -> Action:
+    assert armature is not None
+    if armature.type == "ARMATURE" and armature.animation_data and armature.animation_data.action:
         return armature.animation_data.action
-    raise ValueError(f'No action selected in armature "{armature.name}".')
+    if raise_exc:
+        raise ValueError(f'No action selected in armature "{armature.name}".')
 
 
 # TODO: MOVE THESE

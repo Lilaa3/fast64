@@ -164,7 +164,9 @@ class BinaryExporter:
     def write_to_range(self, start_address: int, end_address: int, data: bytes):
         if start_address + len(data) > end_address:
             raise IndexError(
-                f"Data does not fit in the bounds ({intToHex(start_address)} - {intToHex(end_address)}).",
+                f"Data ({len(data) / 1000.0} kb) does not fit in range "
+                f"[{intToHex(start_address)}, {intToHex(end_address)}] "
+                f"({(end_address - start_address) / 1000.0} kb).",
             )
         self.write(data, start_address)
 
