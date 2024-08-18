@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .properties import (
         SM64_AnimProperties,
+        SM64_ArmatureAnimProperties,
         SM64_AnimHeaderProperties,
         SM64_ActionProperty,
         SM64_AnimTableElement,

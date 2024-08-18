@@ -80,12 +80,13 @@ class AnimationPanelAction(AnimationPanel):
         sm64_props: SM64_Properties = context.scene.fast64.sm64
         scene_anim_props: SM64_AnimProperties = sm64_props.animation
         if context.object and context.object.type == "ARMATURE":
-            show_file_name, gen_enums = (
+            draw_file_name, gen_enums, updates_table = (
                 sm64_props.export_type != "Binary",
                 get_anim_props(context).table.gen_enums,
+                get_anim_props(context).update_table,
             )
         else:
-            show_file_name, gen_enums = "", True
+            draw_file_name, gen_enums, updates_table = "", True, False
         self.layout.prop(scene_anim_props, "selected_action")
         action = scene_anim_props.selected_action or get_selected_action(context.object)
         if action is None:
@@ -98,7 +99,8 @@ class AnimationPanelAction(AnimationPanel):
             action=action,
             specific_variant=None,
             in_table=False,
-            draw_file_name=show_file_name,
+            updates_table=updates_table,
+            draw_file_name=draw_file_name,
             export_type=sm64_props.export_type,
             actor_name=get_anim_actor_name(context),
             gen_enums=gen_enums,
@@ -123,6 +125,7 @@ class ObjAnimPanelTable(ObjAnimPanel):
         get_anim_props(context).table.draw_props(
             self.layout,
             dma_structure_context(context),
+            get_anim_props(context).update_table,
             sm64_props.export_type,
             get_anim_actor_name(context),
         )

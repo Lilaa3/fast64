@@ -190,6 +190,10 @@ class SM64_ExportAnimTable(OperatorBase):
     context_mode = "OBJECT"
     icon = "EXPORT"
 
+    @classmethod
+    def poll(cls, context: Context):
+        return context.mode == "OBJECT" and context.object and context.object.type == "ARMATURE"
+
     def execute_operator(self, context: Context):
         animation_operator_checks(context)
         export_animation_table(context, context.object)

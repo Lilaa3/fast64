@@ -1955,11 +1955,6 @@ class SM64_CombinedObjectProperties(bpy.types.PropertyGroup):
         name="Selected Action",
         description="Animation export will only export the armature's current action like in older versions of fast64",
     )
-    update_table: bpy.props.BoolProperty(
-        name="Update Table On Action Export",
-        description="Update table outside of table exports",
-        default=True,
-    )
     assume_bone_count: bpy.props.BoolProperty(
         name="Assume Bone Count",
         description="When importing a DMA table for insertion, "
@@ -2128,8 +2123,6 @@ class SM64_CombinedObjectProperties(bpy.types.PropertyGroup):
             col.label(text="May Break!", icon="INFO")
         if export_type == "C":
             col.prop(self, "export_single_action")
-        if export_type != "C" or self.export_single_action:
-            col.prop(self, "update_table")
         if export_type == "Binary":
             col.prop(self, "assume_bone_count")
             prop_split(col, self, "binary_level", "Level")

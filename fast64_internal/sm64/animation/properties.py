@@ -20,10 +20,8 @@ from bpy.path import abspath
 from ...utility import (
     decompFolderMessage,
     directory_ui_warnings,
-    directory_path_checks,
     path_ui_warnings,
     draw_and_check_tab,
-    getExportDir,
     multilineLabel,
     prop_split,
     toAlnum,
@@ -34,6 +32,7 @@ from ..sm64_utility import import_rom_ui_warnings, string_int_prop, string_int_w
 from ..sm64_constants import MAX_U16, MIN_S16, MAX_S16, level_enums
 
 from .operators import (
+    OperatorBase,
     SM64_PreviewAnim,
     SM64_AnimTableOps,
     SM64_AnimVariantOps,
@@ -84,7 +83,7 @@ def draw_forced(layout: UILayout, holder, prop: str, forced: bool):
 
 def draw_list_op(
     layout: UILayout,
-    op_cls: type,
+    op_cls: OperatorBase,
     op_name: str,
     index=-1,
     collection: Optional[Iterable] = None,
@@ -107,11 +106,7 @@ def draw_list_op(
         col.enabled = len(collection) > (1 if keep_first else 0)
     elif op_name == "REMOVE":
         col.enabled = len(collection) > index >= (1 if keep_first else 0)
-    op = col.operator(op_cls.bl_idname, text=text, icon=icon)
-    op.index, op.op_name = index, op_name
-    for attr, value in op_args.items():
-        setattr(op, attr, value)
-    return op
+    return op_cls.draw_props(col, icon, text, index=index, op_name=op_name, **op_args)
 
 
 def draw_list_ops(layout: UILayout, op_cls: type, index: int, collection: Optional[Iterable], **op_args):
@@ -244,18 +239,18 @@ class SM64_AnimHeaderProperties(PropertyGroup):
         layout: UILayout,
         action: Action,
         in_table: bool,
+        updates_table: bool,
         dma: bool,
         export_type: str,
         actor_name: str,
         gen_enums: bool,
     ):
         col = layout.column()
-        binary = export_type in {"Binary", "Insertable Binary"}
         split = col.split()
         preview_op = SM64_PreviewAnim.draw_props(split)
         preview_op.played_header = self.header_variant
         preview_op.played_action = action.name
-        if not in_table:
+        if not in_table:  # Don´t show index or name in table props
             draw_list_op(
                 split,
                 SM64_AnimTableOps,
@@ -265,15 +260,15 @@ class SM64_AnimHeaderProperties(PropertyGroup):
                 action_name=action.name,
                 header_variant=self.header_variant,
             )
-            if export_type == "Binary":
+            if export_type == "Binary" and updates_table:  # Only show table index if table will be updated
                 prop_split(col, self, "table_index", "Table Index")
-            if not binary:
+            elif export_type == "C":
                 self.draw_names(col, action, actor_name, gen_enums)
         col.separator()
 
         prop_split(col, self, "trans_divisor", "Translation Divisor")
         self.draw_frame_range(col)
-        self.draw_flag_props(col, dma or binary)
+        self.draw_flag_props(col, use_int_flags=dma or export_type in {"Binary", "Insertable Binary"})
 
 
 class SM64_ActionProperty(PropertyGroup):  # TODO:Should this be SM64_ActionAnimProperties
@@ -316,14 +311,10 @@ class SM64_ActionProperty(PropertyGroup):  # TODO:Should this be SM64_ActionAnim
         self,
         layout: UILayout,
         action: Action,
-        in_table: bool,
-        dma: bool,
-        export_type: str,
         actor_name: str,
-        gen_enums: bool = False,
+        header_args: list,
     ):
         col = layout.column()
-        args = (action, in_table, dma, export_type, actor_name, gen_enums)
         op_row = col.row()
         op_row.label(text=f"Header Variants ({len(self.headers)})", icon="NLA")
         draw_list_op(op_row, SM64_AnimVariantOps, "CLEAR", -1, self.headers, True, action_name=action.name)
@@ -339,7 +330,7 @@ class SM64_ActionProperty(PropertyGroup):  # TODO:Should this be SM64_ActionAnim
                 "expand_tab_in_action",
                 get_anim_name(actor_name, action, header),
             ):
-                header.draw_props(col, *args)
+                header.draw_props(col, *header_args)
             op_row = row.row()
             op_row.alignment = "RIGHT"
             draw_list_ops(op_row, SM64_AnimVariantOps, i, self.headers, keep_first=True, action_name=action.name)
@@ -362,14 +353,17 @@ class SM64_ActionProperty(PropertyGroup):  # TODO:Should this be SM64_ActionAnim
         action: Action,
         specific_variant: int | None,
         in_table: bool,
+        updates_table: bool,
         draw_file_name: bool,
         export_type: str,
         actor_name: str,
         gen_enums: bool,
         dma: bool,
     ):
-        col = layout.column()
+        # Args to pass to the headers
+        header_args = (action, in_table, updates_table, dma, export_type, actor_name, gen_enums)
 
+        col = layout.column()
         if specific_variant is not None:
             col.label(text="Action Properties", icon="ACTION")
         if not in_table:
@@ -392,17 +386,16 @@ class SM64_ActionProperty(PropertyGroup):  # TODO:Should this be SM64_ActionAnim
             draw_custom_or_auto(self, col, "max_frame", str(get_max_frame(action, self)))
         if not dma:
             self.draw_references(col, export_type in {"Binary", "Insertable Binary"})
+        col.separator()
 
         if specific_variant is not None:
-            col.separator()
             if specific_variant < 0 or specific_variant >= len(self.headers):
                 col.box().label(text="Header variant does not exist.", icon="ERROR")
-                return
-            col.label(text="Variant Properties", icon="NLA")
-            self.headers[specific_variant].draw_props(col, action, in_table, dma, export_type, actor_name, gen_enums)
+            else:
+                col.label(text="Variant Properties", icon="NLA")
+                self.headers[specific_variant].draw_props(col, *header_args)
         else:
-            col.separator()
-            self.draw_variants(col, action, in_table, dma, export_type, actor_name, gen_enums)
+            self.draw_variants(col, action, actor_name, header_args)
 
 
 class SM64_AnimTableElement(PropertyGroup):
@@ -439,6 +432,7 @@ class SM64_AnimTableElement(PropertyGroup):
         prop_layout: UILayout,
         index: int,
         dma: bool,
+        updates_table: bool,
         can_reference: bool,
         export_seperately: bool,
         export_type: str,
@@ -475,20 +469,19 @@ class SM64_AnimTableElement(PropertyGroup):
         row = col.row()
         row.alignment = "LEFT"
         row.prop(self, "variant")
-        action_name = action.name
-        draw_list_op(row, SM64_AnimVariantOps, "REMOVE", variant, headers, True, action_name=action_name)
-        draw_list_op(row, SM64_AnimVariantOps, "ADD", variant, action_name=action_name)
-        file_name = export_type == "C" and not dma and export_seperately
+        draw_list_op(row, SM64_AnimVariantOps, "REMOVE", variant, headers, True, action_name=action.name)
+        draw_list_op(row, SM64_AnimVariantOps, "ADD", variant, action_name=action.name)
         action_props.draw_props(
-            col,
-            action,
-            variant,
-            True,
-            file_name,
-            export_type,
-            actor_name,
-            gen_enums,
-            dma,
+            layout=col,
+            action=action,
+            specific_variant=variant,
+            in_table=True,
+            updates_table=True,
+            draw_file_name=export_type == "C" and not dma and export_seperately,
+            export_type=export_type,
+            actor_name=actor_name,
+            gen_enums=gen_enums,
+            dma=dma,
         )
 
 
@@ -551,6 +544,7 @@ class SM64_AnimTableProperties(PropertyGroup):  # TODO: Should this be moved to 
         index: int,
         table_element: SM64_AnimTableElement,
         dma: bool,
+        updates_table: bool,
         can_reference: bool,
         export_type: str,
         actor_name: str,
@@ -568,6 +562,7 @@ class SM64_AnimTableProperties(PropertyGroup):  # TODO: Should this be moved to 
             col,
             index,
             dma,
+            updates_table,
             can_reference,
             self.export_seperately,
             export_type,
@@ -575,7 +570,7 @@ class SM64_AnimTableProperties(PropertyGroup):  # TODO: Should this be moved to 
             actor_name,
         )
 
-    def draw_props(self, layout: UILayout, dma: bool, export_type: str, actor_name: str):
+    def draw_props(self, layout: UILayout, dma: bool, updates_table: bool, export_type: str, actor_name: str):
         col = layout.column()
 
         if dma:
@@ -636,7 +631,7 @@ class SM64_AnimTableProperties(PropertyGroup):  # TODO: Should this be moved to 
             if i != 0:
                 box.separator()
 
-            self.draw_element(box, i, element_props, dma, can_reference, export_type, actor_name)
+            self.draw_element(box, i, element_props, dma, updates_table, can_reference, export_type, actor_name)
             action = get_element_action(element_props, can_reference)
             if dma and action:
                 duplicate_indeces = [str(j) for j, a in enumerate(actions) if a == action and j < i - 1]
@@ -1012,6 +1007,8 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
         col.prop(self, "is_dma")
         if export_type == "C":
             self.draw_c_settings(col, header_type)
+        else:
+            col.prop(self, "update_table")
 
 
 classes = (
