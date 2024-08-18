@@ -6,7 +6,15 @@ from bpy.path import abspath
 from bpy.types import Object, Action, Context, PoseBone
 from mathutils import Quaternion
 
-from ...utility import PluginError, decodeSegmentedAddr, filepath_checks, is_bit_active, path_checks, intToHex
+from ...utility import (
+    PluginError,
+    decodeSegmentedAddr,
+    filepath_checks,
+    is_bit_active,
+    path_checks,
+    intToHex,
+    removeComments,
+)
 from ...utility_anim import stashActionInArmature
 from ..sm64_constants import level_pointers
 from ..sm64_level_parser import parseLevelAtPointer
@@ -405,20 +413,6 @@ def animation_import_to_blender(
         raise exc
 
 
-COMMENT_SUB_PATTERN = re.compile(r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"', re.DOTALL | re.MULTILINE)
-
-
-def comment_remover(text: str):
-    def replacer(match):
-        s = match.group(0)
-        if s.startswith("/"):
-            return " "  # note: a space and not an empty string
-        else:
-            return s
-
-    return re.sub(COMMENT_SUB_PATTERN, replacer, text)
-
-
 DECL_PATTERN = re.compile(
     r"(static\s+const\s+struct\s+Animation|static\s+const\s+u16|static\s+const\s+s16|const\s+struct Animation\s+\*const)\s+(\w+)\s*?(?:\[.*?\])?\s*?=\s*?\{(.*?)\};",
     re.DOTALL,
@@ -459,7 +453,7 @@ def import_c_animations(
     for file_path in file_paths:
         print(f"Reading from: {file_path}.")
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-            c_data = comment_remover(f.read())
+            c_data = removeComments(f.read())
         find_decls(c_data, file_path, decl_lists)
 
     header_decls = decl_lists["static const struct Animation"]
