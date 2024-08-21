@@ -82,11 +82,11 @@ class AnimationData:
         return text_data.getvalue()
 
     def to_binary(self) -> bytearray:
-        data: bytearray = bytearray()
-
         value_table, indice_tables = create_tables([self])
         indice_table = indice_tables[0]
         values_offset = len(indice_table.data) * 2
+
+        data: bytearray = bytearray()
         data.extend(indice_table.to_binary())
         data.extend(value_table.to_binary())
         return data, values_offset

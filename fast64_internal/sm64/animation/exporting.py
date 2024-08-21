@@ -50,7 +50,7 @@ if TYPE_CHECKING:
         SM64_ActionProperty,
         SM64_AnimHeaderProperties,
         SM64_ArmatureAnimProperties,
-        TableElementProps,
+        SM64_AnimTableElement,
     )
     from ..settings.properties import SM64_Properties
     from ..sm64_objects import SM64_CombinedObjectProperties
@@ -91,7 +91,7 @@ def get_entire_fcurve_data(action: Action, bone: PoseBone, prop: str, max_frame:
 
 def get_animation_pairs(
     sm64_scale: float, actions: list[Action], armature_obj: Object, quick_read: bool = True
-) -> list[list[SM64_AnimPair]]:
+) -> dict[Action, list[SM64_AnimPair]]:
     if not actions:
         return  # TODO: error out?
 
@@ -170,15 +170,14 @@ def get_animation_pairs(
             if was_playing != bpy.context.screen.is_animation_playing:
                 bpy.ops.screen.animation_play()
 
-    action_pairs = []
-
-    for action_trans, action_rot, max_frame in zip(trans_values, rot_values, max_frames):
+    action_pairs = {}
+    for action, action_trans, action_rot, max_frame in zip(actions, trans_values, rot_values, max_frames):
         action_trans = trim_duplicates_vectorized(np.round(action_trans * sm64_scale).astype(np.int16))
         action_rot = trim_duplicates_vectorized((np.degrees(action_rot) * (2**16 / 360.0)).astype(np.int16))
 
         pairs = [SM64_AnimPair(action_trans[i][:max_frame]) for i in range(3)]
         pairs.extend([SM64_AnimPair(action_rot[i][:max_frame]) for i in range(len(anim_bones) * 3)])
-        action_pairs.append(pairs)
+        action_pairs[action] = pairs
 
     return action_pairs
 
@@ -256,7 +255,7 @@ def to_animation_class(
         else:
             values_reference, indice_reference = action_props.values_table, action_props.indices_table
     else:
-        pairs = get_animation_pairs(blender_to_sm64_scale, [action], armature_obj, quick_read)[0]
+        pairs = get_animation_pairs(blender_to_sm64_scale, [action], armature_obj, quick_read)[action]
         animation.data = to_data_class(action, pairs, animation.file_name)
         values_reference = animation.data.values_reference
         indice_reference = animation.data.indice_reference
@@ -285,6 +284,7 @@ def to_table_element_class(
     element_props: "SM64_AnimTableElementProperties",
     header_dict: dict["SM64_AnimHeaderProperties", AnimationHeader],
     data_dict: dict[Action, AnimationData],
+    action_pairs: dict[Action, list[SM64_AnimPair]],
     bone_count: int,
     table_index: int,
     export_type: str = "C",
@@ -315,6 +315,7 @@ def to_table_element_class(
 
     action_props: SM64_ActionProperty = action.fast64.sm64
     if can_reference and action_props.reference_tables:
+        data = None
         if use_addresses:
             values_reference, indice_reference = (
                 int(action_props.values_address, 0),
@@ -322,8 +323,11 @@ def to_table_element_class(
             )
         else:
             values_reference, indice_reference = action_props.values_table, action_props.indices_table
-        data = None
     else:
+        if action in action_pairs and action not in data_dict:
+            data_dict[action] = to_data_class(
+                action, action_pairs[action], action.fast64.sm64.get_file_name(action, export_type)
+            )
         data = data_dict[action]
         values_reference, indice_reference = data.values_reference, data.indice_reference
 
@@ -371,14 +375,19 @@ def to_table_class(
     header_dict: dict[SM64_AnimHeaderProperties, AnimationHeader] = {}
 
     bone_count = len(get_anim_pose_bones(armature_obj))
-    actions = table_props.get_table_actions(can_reference)
-    action_pairs = get_animation_pairs(blender_to_sm64_scale, actions, armature_obj, quick_read)
-    data_dict = {
-        action: to_data_class(action, action_pairs[i], action.fast64.sm64.get_file_name(action, export_type))
-        for i, action in enumerate(actions)
-    }
+    action_pairs = get_animation_pairs(
+        blender_to_sm64_scale,
+        [
+            action
+            for action in table_props.get_table_actions(can_reference)
+            if not (can_reference and action.fast64.sm64.reference_tables)
+        ],
+        armature_obj,
+        quick_read,
+    )
+    data_dict = {}
 
-    element_props: TableElementProps
+    element_props: SM64_AnimTableElement
     for i, element_props in enumerate(table_props.elements):
         try:
             table.elements.append(
@@ -386,6 +395,7 @@ def to_table_class(
                     element_props,
                     header_dict,
                     data_dict,
+                    action_pairs,
                     bone_count,
                     i,
                     export_type,
@@ -397,7 +407,7 @@ def to_table_class(
                 )
             )
         except Exception as exc:
-            raise PluginError(f"Error in table element {i}: {exc}") from exc
+            raise PluginError(f"Table element {i}: {exc}") from exc
     return table
 
 
@@ -684,7 +694,7 @@ def export_animation_table_c(
         with open(os.path.join(anim_directory, "data.inc.c"), "w", encoding="utf-8") as file:
             file.write(result)
     print("All animation data files exported.")
-    if anim_props.is_dma:  # Don´t create an actual table and don´t update includes for dma exports
+    if anim_props.is_dma:  # Don´t create an actual table and or update includes for dma exports
         return
 
     header_path = os.path.join(geo_directory, "anim_header.h")
@@ -858,19 +868,22 @@ def export_animation(context: Context, armature_obj: Object):
     stashActionInArmature(armature_obj, action)
     bone_count = len(get_anim_pose_bones(armature_obj))
 
-    animation: Animation = to_animation_class(
-        action_props,
-        action,
-        armature_obj,
-        sm64_props.blender_to_sm64_scale,
-        combined_props.quick_anim_read,
-        sm64_props.export_type,
-        sm64_props.binary_export or anim_props.is_dma,
-        sm64_props.binary_export or anim_props.is_dma,
-        actor_name,
-        not sm64_props.binary_export and table_props.gen_enums,
-        sm64_props.binary_export,
-    )
+    try:
+        animation: Animation = to_animation_class(
+            action_props,
+            action,
+            armature_obj,
+            sm64_props.blender_to_sm64_scale,
+            combined_props.quick_anim_read,
+            sm64_props.export_type,
+            sm64_props.binary_export or anim_props.is_dma,
+            sm64_props.binary_export or anim_props.is_dma,
+            actor_name,
+            not sm64_props.binary_export and table_props.gen_enums,
+            sm64_props.binary_export,
+        )
+    except Exception as exc:
+        raise PluginError(f"Failed to generate animation class. {exc}") from exc
     if sm64_props.export_type == "C":
         export_animation_c(animation, anim_props, combined_props, abspath(sm64_props.decomp_path), actor_name)
     elif sm64_props.export_type == "Insertable Binary":
@@ -907,18 +920,21 @@ def export_animation_table(context: Context, armature_obj: Object):
         stashActionInArmature(armature_obj, action)
 
     print("Reading table data from fast64")
-    table = to_table_class(
-        table_props,
-        armature_obj,
-        sm64_props.blender_to_sm64_scale,
-        combined_props.quick_anim_read,
-        sm64_props.export_type,
-        anim_props.is_dma or sm64_props.binary_export,
-        not anim_props.is_dma,
-        actor_name,
-        not anim_props.is_dma and not sm64_props.binary_export and table_props.gen_enums,
-        sm64_props.binary_export,
-    )
+    try:
+        table = to_table_class(
+            table_props,
+            armature_obj,
+            sm64_props.blender_to_sm64_scale,
+            combined_props.quick_anim_read,
+            sm64_props.export_type,
+            anim_props.is_dma or sm64_props.binary_export,
+            not anim_props.is_dma,
+            actor_name,
+            not anim_props.is_dma and not sm64_props.binary_export and table_props.gen_enums,
+            sm64_props.binary_export,
+        )
+    except Exception as exc:
+        raise PluginError(f"Failed to generate table class. {exc}") from exc
 
     print("Exporting table data")
     if sm64_props.export_type == "C":

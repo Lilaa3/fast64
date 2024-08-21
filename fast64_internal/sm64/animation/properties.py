@@ -4,7 +4,7 @@ import re
 from typing import Iterable, Optional
 
 import bpy
-from bpy.types import PropertyGroup, Action, UILayout, Scene, Object
+from bpy.types import PropertyGroup, Action, UILayout, Scene
 from bpy.utils import register_class, unregister_class
 from bpy.props import (
     BoolProperty,
@@ -191,7 +191,10 @@ class SM64_AnimHeaderProperties(PropertyGroup):
     @property
     def int_flags(self):
         if self.use_custom_flags:
-            return int_from_str(self.custom_int_flags)
+            try:
+                return int_from_str(self.custom_int_flags)
+            except ValueError as exc:
+                raise ValueError(f"In custom flag: {exc}") from exc
         flags = 0
         for i, flag in enumerate(FLAG_PROPS):
             flags |= int(getattr(self, flag)) << i
@@ -234,7 +237,8 @@ class SM64_AnimHeaderProperties(PropertyGroup):
         custom_split.prop(self, "use_custom_flags")
         if self.use_custom_flags:
             if use_int_flags:
-                string_int_prop(custom_split, self, "custom_int_flags", name="", split=False)
+                custom_split.prop(self, "custom_int_flags", text="")
+                string_int_warning(col, self.custom_int_flags)  # draw outside the split
             else:
                 custom_split.prop(self, "custom_flags", text="")
             return
@@ -457,15 +461,15 @@ class SM64_AnimTableElement(PropertyGroup):
     header_address: StringProperty(name="Header Reference", default=intToHex(0x0600B75C))  # Toad animation 0
     enum_name: StringProperty(name="Enum Name")
 
-    def get_action(self, use_reference: bool) -> Action:
-        if use_reference and self.reference:
+    def get_action(self, can_reference: bool) -> Action | None:
+        if can_reference and self.reference:
             return None
         return self.action_prop
 
-    def get_header(self, use_reference: bool) -> SM64_AnimHeaderProperties:
-        if use_reference and self.reference:
+    def get_header(self, can_reference: bool) -> SM64_AnimHeaderProperties | None:
+        if can_reference and self.reference:
             return None
-        action = self.get_action(use_reference)
+        action = self.get_action(can_reference)
         if not action:
             return None
         return action.fast64.sm64.headers[self.variant]

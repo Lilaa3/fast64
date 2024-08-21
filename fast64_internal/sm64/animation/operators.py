@@ -98,9 +98,7 @@ class SM64_AnimTableOps(OperatorBase):
     header_variant: IntProperty()
 
     def execute_operator(self, context: Context):
-        print("SM64_AnimTableOps", self.index, self.op_name, self.action_name, self.header_variant)
         table_elements = get_anim_props(context).table.elements
-
         if self.op_name == "MOVE_UP":
             table_elements.move(self.index, self.index - 1)
         elif self.op_name == "MOVE_DOWN":
@@ -122,8 +120,10 @@ class SM64_AnimTableOps(OperatorBase):
                 table_elements[-1].set_variant(action, header_variant)
         elif self.op_name == "REMOVE":
             table_elements.remove(self.index)
-        if self.op_name == "CLEAR":
+        elif self.op_name == "CLEAR":
             table_elements.clear()
+        else:
+            raise NotImplementedError(f"Unimplemented table op {self.op_name}")
 
 
 class SM64_AnimVariantOps(OperatorBase):
@@ -174,8 +174,10 @@ class SM64_AnimVariantOps(OperatorBase):
             added_variant.custom_name = added_variant.get_name(get_anim_actor_name(context), action)
         elif self.op_name == "REMOVE":
             variants.remove(variant_position)
-        if self.op_name == "CLEAR":
+        elif self.op_name == "CLEAR":
             variants.clear()
+        else:
+            raise NotImplementedError(f"Unimplemented table op {self.op_name}")
         action_props.update_variant_numbers()
 
 
