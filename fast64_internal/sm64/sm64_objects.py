@@ -2116,16 +2116,17 @@ class SM64_CombinedObjectProperties(bpy.types.PropertyGroup):
         else:
             return name
 
-    def draw_anim_props(self, layout: UILayout, export_type: str = "C"):
+    def draw_anim_props(self, layout: UILayout, export_type="C", is_dma=False):
         col = layout.column()
         col.prop(self, "quick_anim_read")
         if self.quick_anim_read:
             col.label(text="May Break!", icon="INFO")
-        if export_type == "C":
+        if not is_dma and export_type == "C":
             col.prop(self, "export_single_action")
         if export_type == "Binary":
             col.prop(self, "assume_bone_count")
-            prop_split(col, self, "binary_level", "Level")
+            if not is_dma:
+                prop_split(col, self, "binary_level", "Level")
         elif export_type == "Insertable Binary":
             prop_split(col, self, "insertable_directory_path", "Directory")
 

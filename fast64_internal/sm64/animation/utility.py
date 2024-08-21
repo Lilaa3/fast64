@@ -192,7 +192,4 @@ def dma_structure_context(context: Context):
     sm64_props = context.scene.fast64.sm64
     anim_props = get_anim_props(context)
     header_type = sm64_props.combined_export.export_header_type
-    if sm64_props.export_type == "C" and header_type == "Custom" and anim_props.use_dma_structure:
-        return True
-    else:
-        return anim_props.is_dma
+    return anim_props.is_dma

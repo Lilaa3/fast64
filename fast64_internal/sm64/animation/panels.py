@@ -56,7 +56,7 @@ class SceneAnimPanelMain(SceneAnimPanel):
         combined_props: SM64_CombinedObjectProperties = sm64_props.combined_export
         if sm64_props.export_type == "C":
             return
-        combined_props.draw_anim_props(self.layout, sm64_props.export_type)
+        combined_props.draw_anim_props(self.layout, sm64_props.export_type, dma_structure_context(context))
         SM64_ExportAnimTable.draw_props(self.layout)
 
 

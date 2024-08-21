@@ -208,6 +208,10 @@ class SM64_ExportAnim(OperatorBase):
     context_mode = "OBJECT"
     icon = "ACTION"
 
+    @classmethod
+    def poll(cls, context: Context):
+        return context.mode == "OBJECT" and context.object and context.object.type == "ARMATURE"
+
     def execute_operator(self, context: Context):
         animation_operator_checks(context)
         export_animation(context, context.object)

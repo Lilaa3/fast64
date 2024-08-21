@@ -928,7 +928,6 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
     # Revise locations of props
     is_dma: BoolProperty(name="Is DMA Export")
     dma_folder: StringProperty(name="DMA Folder", default="assets/anims/")
-    use_dma_structure: BoolProperty(name="Use DMA Structure")  # TODO: Use this property in exporting
     update_table: BoolProperty(
         name="Update Table On Action Export",
         description="Update table outside of table exports",
@@ -998,9 +997,6 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
             else:
                 decompFolderMessage(col)
             return
-
-        if header_type == "Custom":
-            col.prop(self, "use_dma_structure")
 
     def draw_props(self, layout: UILayout, export_type: str, header_type: str):
         col = layout.column()

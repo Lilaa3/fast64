@@ -64,6 +64,19 @@ if TYPE_CHECKING:
     from ..sm64_objects import SM64_CombinedObjectProperties
 
 
+def trim_duplicates_vectorized(arr2d: np.ndarray) -> list:
+    """
+    Similar to the old removeTrailingFrames(), but using numpy vectorization.
+    Remove trailing duplicate elements along the last axis of a 2D array.
+    """
+    # Get the last element of each sub-array along the last axis
+    last_elements = arr2d[:, -1]
+    mask = arr2d != last_elements[:, None]
+    #  Reverse the order, find the last element with the same value
+    trim_indices = np.argmax(mask[:, ::-1], axis=1)
+    return [sub_array[: 1 if index == 0 else -index] for sub_array, index in zip(arr2d, trim_indices)]
+
+
 def get_entire_fcurve_data(action: Action, bone: PoseBone, prop: str, max_frame: int, values: np.ndarray) -> list:
     data_path = bone.path_from_id(prop)
 
@@ -95,19 +108,17 @@ def get_animation_pairs(
         raise PluginError(f'No animation bones in armature "{armature_obj.name}"')
 
     max_frames = [get_max_frame(action, action.fast64.sm64) for action in actions]
-    highest_max_frame = max(max_frames)
-
-    trans_values = np.zeros((len(actions), 3, highest_max_frame), dtype=np.float32)
-    rot_values = np.zeros((len(actions), len(anim_bones) * 3, highest_max_frame), dtype=np.float32)
+    trans_values = [np.zeros((3, max_frame), dtype=np.float32) for max_frame in max_frames]
+    rot_values = [np.zeros((len(anim_bones) * 3, max_frame), dtype=np.float32) for max_frame in max_frames]
 
     if quick_read:
-        quats = np.empty((4, highest_max_frame), dtype=np.float32)
 
         def to_xyz(row):
             euler = Euler(row, mode)
             return [euler.x, euler.y, euler.z]
 
         for action, max_frame, action_trans, action_rot in zip(actions, max_frames, trans_values, rot_values):
+            quats = np.empty((4, max_frame), dtype=np.float32)
             max_frame = get_max_frame(action, action.fast64.sm64)
             root_bone = anim_bones[0]
             get_entire_fcurve_data(action, root_bone, "location", max_frame, action_trans)
@@ -167,17 +178,14 @@ def get_animation_pairs(
             if was_playing != bpy.context.screen.is_animation_playing:
                 bpy.ops.screen.animation_play()
 
-    trans_values *= sm64_scale
-    trans_values = np.round(trans_values).astype(np.int16)
-
-    rot_values = np.round(np.degrees(rot_values) * (2**16 / 360.0)).astype(np.int16)
-
     action_pairs = []
+
     for action_trans, action_rot, max_frame in zip(trans_values, rot_values, max_frames):
-        pairs = [SM64_AnimPair(action_trans[i, :max_frame]) for i in range(3)]
-        pairs.extend([SM64_AnimPair(action_rot[i, :max_frame]) for i in range(len(anim_bones) * 3)])
-        for pair in pairs:
-            pair.clean_frames()
+        action_trans = trim_duplicates_vectorized(np.round(action_trans * sm64_scale).astype(np.int16))
+        action_rot = trim_duplicates_vectorized((np.degrees(action_rot) * (2**16 / 360.0)).astype(np.int16))
+
+        pairs = [SM64_AnimPair(action_trans[i][:max_frame]) for i in range(3)]
+        pairs.extend([SM64_AnimPair(action_rot[i][:max_frame]) for i in range(len(anim_bones) * 3)])
         action_pairs.append(pairs)
 
     return action_pairs
