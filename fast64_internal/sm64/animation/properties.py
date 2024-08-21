@@ -64,20 +64,23 @@ def draw_custom_or_auto(holder, layout: UILayout, prop: str, default: str):
     if getattr(holder, use_custom_prop):
         name_split.prop(holder, "custom_" + prop, text="")
     else:
-        box = name_split.box()
-        box.scale_y = 0.5
-        box.label(text=default, icon="LOCKED")
+        prop_size_label(name_split, text=default, icon="LOCKED")
 
 
 def draw_forced(layout: UILayout, holder, prop: str, forced: bool):
     row = layout.row(align=True) if forced else layout.column()
     if forced:
-        box = row.box()
-        box.scale_y = 0.5
-        box.label(text="", icon="LOCKED")
+        prop_size_label(row, text="", icon="LOCKED")
     row.alignment = "LEFT"
     row.enabled = not forced
     row.prop(holder, prop, invert_checkbox=not holder.get(prop) if forced else False)
+
+
+def prop_size_label(layout: UILayout, **label_args):
+    box = layout.box()
+    box.scale_y = 0.5
+    box.label(**label_args)
+    return box
 
 
 def draw_list_op(
@@ -236,9 +239,7 @@ class SM64_AnimHeaderProperties(PropertyGroup):
                 custom_split.prop(self, "custom_flags", text="")
             return
         else:
-            box = custom_split.box()
-            box.scale_y = 0.5 # TODO; prop_size_box util?
-            box.label(text=intToHex(self.int_flags, 2), icon="LOCKED")
+            prop_size_label(custom_split, text=intToHex(self.int_flags, 2), icon="LOCKED")
         # Draw flag toggles
         row = col.row(align=True)
         row.prop(self, "no_loop", invert_checkbox=True, text="Loop", toggle=1)
@@ -270,10 +271,8 @@ class SM64_AnimHeaderProperties(PropertyGroup):
             split.prop(self, "loop_start")
             split.prop(self, "loop_end")
         else:
-            box = split.box()
-            box.scale_y = 0.5
             start, loop_start, end = self.get_loop_points(action)
-            box.label(text=f"Start {start}, Loop Start {loop_start}, End {end}", icon="LOCKED")
+            prop_size_label(split, text=f"Start {start}, Loop Start {loop_start}, End {end}", icon="LOCKED")
 
     def draw_names(self, layout: UILayout, action: Action, actor_name: str, gen_enums: bool):
         col = layout.column()

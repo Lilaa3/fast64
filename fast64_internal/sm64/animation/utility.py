@@ -1,14 +1,9 @@
-import dataclasses, math, re, numpy as np
-
 import bpy
-from mathutils import Euler, Quaternion, Vector
 from bpy.types import Context, Object, Action, PoseBone
 
 from ...utility_anim import getFrameInterval
 from ...utility import findStartBones, PluginError, toAlnum
 from ..sm64_geolayout_bone import animatableBoneTypes
-
-from .constants import FLAG_PROPS
 
 from typing import TYPE_CHECKING
 
@@ -18,8 +13,6 @@ if TYPE_CHECKING:
         SM64_ArmatureAnimProperties,
         SM64_AnimHeaderProperties,
         SM64_ActionProperty,
-        SM64_AnimTableElement,
-        SM64_AnimTableProperties,
     )
 
 
@@ -55,7 +48,6 @@ def get_selected_action(armature: Object, raise_exc=True) -> Action:
         raise ValueError(f'No action selected in armature "{armature.name}".')
 
 
-# TODO: MOVE THESE
 def get_anim_pose_bones(armature: Object) -> list[PoseBone]:
     bones_to_process: list[str] = findStartBones(armature)
     current_bone = armature.data.bones[bones_to_process[0]]
