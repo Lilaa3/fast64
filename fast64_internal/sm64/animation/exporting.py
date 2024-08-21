@@ -36,15 +36,7 @@ from .classes import (
 from .utility import (
     get_anim_pose_bones,
     get_anim_actor_name,
-    get_element_header,
-    get_element_action,
-    get_frame_range,
     get_max_frame,
-    get_anim_name,
-    get_anim_enum,
-    get_int_flags,
-    get_enum_list_name,
-    get_enum_list_end,
     get_selected_action,
 )
 from .constants import HEADER_SIZE
@@ -205,20 +197,17 @@ def to_header_class(
     file_name: str | None = "anim_00.inc.c",
 ):
     header = AnimationHeader()
-    header.reference = get_anim_name(actor_name, action, header_props)
+    header.reference = header_props.get_name(actor_name, action)
     if gen_enums:
-        header.enum_name = get_anim_enum(actor_name, action, header_props)
+        header.enum_name = header_props.get_enum(actor_name, action)
 
-    if header_props.set_custom_flags:
-        if use_int_flags:
-            header.flags = int(header_props.custom_int_flags, 0)
-        else:
-            header.flags = header_props.custom_flags
+    if header_props.use_custom_flags and not use_int_flags:
+        header.flags = header_props.custom_flags
     else:
-        header.flags = get_int_flags(header_props)
+        header.flags = header_props.int_flags
 
     header.trans_divisor = header_props.trans_divisor
-    header.start_frame, header.loop_start, header.loop_end = get_frame_range(action, header_props)
+    header.start_frame, header.loop_start, header.loop_end = header_props.get_loop_points(action)
     header.values_reference = values_reference
     header.indice_reference = indice_reference
     header.bone_count = bone_count
@@ -318,7 +307,7 @@ def to_table_element_class(
         return element
 
     # Not reference
-    header, action = get_element_header(element_props, can_reference), get_element_action(element_props, can_reference)
+    header, action = element_props.get_header(can_reference), element_props.get_action(can_reference)
     if not header:
         raise PluginError("Header is not set.")
     if not action:
@@ -373,8 +362,8 @@ def to_table_class(
 ) -> AnimationTable:
     table = AnimationTable(
         table_props.get_name(actor_name),
-        get_enum_list_name(table_props, actor_name),
-        get_enum_list_end(table_props, actor_name),
+        table_props.get_enum_name(actor_name),
+        table_props.get_enum_end(actor_name),
         "table.inc.c",
         toAlnum(f"anim_{actor_name}_values"),
     )
@@ -841,7 +830,7 @@ def export_animation_c(
                 os.path.join(anim_directory, "table_enum.h"),
                 table_name,
                 animation.enum_names,
-                get_enum_list_end(table_props, actor_name),
+                table_props.get_enum_end(actor_name),
                 False,
             )
     update_data_file(os.path.join(anim_directory, "data.inc.c"), [animation.file_name])

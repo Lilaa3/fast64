@@ -24,11 +24,13 @@ from ...utility import (
     draw_and_check_tab,
     multilineLabel,
     prop_split,
-    toAlnum,
     intToHex,
     upgrade_old_prop,
+    toAlnum,
 )
-from ..sm64_utility import import_rom_ui_warnings, string_int_prop, string_int_warning
+from ...utility_anim import getFrameInterval
+
+from ..sm64_utility import import_rom_ui_warnings, int_from_str, string_int_prop, string_int_warning
 from ..sm64_constants import MAX_U16, MIN_S16, MAX_S16, level_enums
 
 from .operators import (
@@ -46,14 +48,11 @@ from .constants import (
     enumAnimBinaryImportTypes,
     enumAnimatedBehaviours,
     enumAnimationTables,
+    FLAG_PROPS,
 )
 from .utility import (
-    get_anim_enum,
     get_max_frame,
-    get_anim_name,
     get_dma_anim_name,
-    get_element_action,
-    get_element_header,
 )
 from .importing import get_enum_from_import_preset
 
@@ -124,7 +123,7 @@ class SM64_AnimHeaderProperties(PropertyGroup):
     custom_name: StringProperty(name="Name", default="anim_00")
     use_custom_enum: BoolProperty(name="Enum")
     custom_enum: StringProperty(name="Enum", default="ANIM_00")
-    manual_loop: BoolProperty(name="Manual Loop Points")
+    use_manual_loop: BoolProperty(name="Manual Loop Points")
     start_frame: IntProperty(name="Start", min=0, max=MAX_S16)
     loop_start: IntProperty(name="Loop Start", min=0, max=MAX_S16)
     loop_end: IntProperty(name="End", min=0, max=MAX_S16)
@@ -137,7 +136,7 @@ class SM64_AnimHeaderProperties(PropertyGroup):
         min=MIN_S16,
         max=MAX_S16,
     )
-    set_custom_flags: BoolProperty(name="Set Custom Flags")
+    use_custom_flags: BoolProperty(name="Set Custom Flags")
     custom_flags: StringProperty(name="Flags", default="ANIM_NO_LOOP")
     # Some flags are inverted in the ui for readability, descriptions match ui behavior
     no_loop: BoolProperty(
@@ -186,17 +185,60 @@ class SM64_AnimHeaderProperties(PropertyGroup):
     table_index: IntProperty(name="Table Index", min=0)
     custom_int_flags: StringProperty(name="Flags", default="0x01")
 
+    @property
+    def int_flags(self):
+        if self.use_custom_flags:
+            return int_from_str(self.custom_int_flags)
+        flags = 0
+        for i, flag in enumerate(FLAG_PROPS):
+            flags |= int(getattr(self, flag)) << i
+        return flags
+
+    @property
+    def manual_loop_range(self) -> tuple[int, int, int]:
+        if self.use_manual_loop:
+            return (self.start_frame, self.loop_start, self.loop_end)
+
+    def get_loop_points(self, action: Action):
+        return self.manual_loop_range or (0, *getFrameInterval(action))
+
+    def get_name(self, actor_name: str, action: Action) -> str:
+        if self.use_custom_name:
+            return self.custom_name
+        if self.header_variant == 0:
+            if actor_name:
+                name = f"{actor_name}_anim_{action.name}"
+            else:
+                name = f"anim_{action.name}"
+            return toAlnum(name)
+        main_header_name = action.fast64.sm64.headers[0].get_name(actor_name, action)
+        name = f"{main_header_name}_{self.header_variant}"
+
+        return toAlnum(name)
+
+    def get_enum(self, actor_name: str, action: Action) -> str:
+        if self.use_custom_enum:
+            return self.custom_enum
+        anim_name = self.get_name(actor_name, action)
+        enum_name = anim_name.upper()
+        if anim_name == enum_name:
+            enum_name = f"_{enum_name}"
+        return enum_name
+
     def draw_flag_props(self, layout: UILayout, use_int_flags: bool = False):
         col = layout.column()
         custom_split = col.split()
-        custom_split.prop(self, "set_custom_flags")
-        if self.set_custom_flags:
+        custom_split.prop(self, "use_custom_flags")
+        if self.use_custom_flags:
             if use_int_flags:
-                custom_split.prop(self, "custom_int_flags", text="")
-                string_int_warning(col, self.custom_int_flags)
+                string_int_prop(custom_split, self, "custom_int_flags", name="", split=False)
             else:
                 custom_split.prop(self, "custom_flags", text="")
             return
+        else:
+            box = custom_split.box()
+            box.scale_y = 0.5 # TODO; prop_size_box util?
+            box.label(text=intToHex(self.int_flags, 2), icon="LOCKED")
         # Draw flag toggles
         row = col.row(align=True)
         row.prop(self, "no_loop", invert_checkbox=True, text="Loop", toggle=1)
@@ -219,20 +261,25 @@ class SM64_AnimHeaderProperties(PropertyGroup):
         disabled_row.enabled = not self.only_vertical_trans and not self.no_trans
         disabled_row.prop(self, "disabled", invert_checkbox=True, text="Shadow", toggle=1)
 
-    def draw_frame_range(self, layout: UILayout):
-        col = layout.column()
-        col.prop(self, "manual_loop")
-        if self.manual_loop:
-            split = col.split()
+    def draw_frame_range(self, layout: UILayout, action: Action):
+        split = layout.split()
+        split.prop(self, "use_manual_loop")
+        if self.use_manual_loop:
+            split = layout.split()
             split.prop(self, "start_frame")
             split.prop(self, "loop_start")
             split.prop(self, "loop_end")
+        else:
+            box = split.box()
+            box.scale_y = 0.5
+            start, loop_start, end = self.get_loop_points(action)
+            box.label(text=f"Start {start}, Loop Start {loop_start}, End {end}", icon="LOCKED")
 
     def draw_names(self, layout: UILayout, action: Action, actor_name: str, gen_enums: bool):
         col = layout.column()
         if gen_enums:
-            draw_custom_or_auto(self, col, "enum", get_anim_enum(actor_name, action, self))
-        draw_custom_or_auto(self, col, "name", get_anim_name(actor_name, action, self))
+            draw_custom_or_auto(self, col, "enum", self.get_enum(actor_name, action))
+        draw_custom_or_auto(self, col, "name", self.get_name(actor_name, action))
 
     def draw_props(
         self,
@@ -267,7 +314,7 @@ class SM64_AnimHeaderProperties(PropertyGroup):
         col.separator()
 
         prop_split(col, self, "trans_divisor", "Translation Divisor")
-        self.draw_frame_range(col)
+        self.draw_frame_range(col, action)
         self.draw_flag_props(col, use_int_flags=dma or export_type in {"Binary", "Insertable Binary"})
 
 
@@ -307,6 +354,10 @@ class SM64_ActionProperty(PropertyGroup):  # TODO:Should this be SM64_ActionAnim
             name = re.sub(r'[/\\?%*:|"<>]', " ", name)
             return name
 
+    def update_variant_numbers(self):
+        for i, variant in enumerate(self.headers):
+            variant.header_variant = i
+
     def draw_variants(
         self,
         layout: UILayout,
@@ -319,18 +370,18 @@ class SM64_ActionProperty(PropertyGroup):  # TODO:Should this be SM64_ActionAnim
         op_row.label(text=f"Header Variants ({len(self.headers)})", icon="NLA")
         draw_list_op(op_row, SM64_AnimVariantOps, "CLEAR", -1, self.headers, True, action_name=action.name)
 
-        for i, header in enumerate(self.headers):
+        for i, header_props in enumerate(self.headers):
             if i != 0:
                 col.separator()
 
             row = col.row()
             if draw_and_check_tab(
                 row,
-                header,
+                header_props,
                 "expand_tab_in_action",
-                get_anim_name(actor_name, action, header),
+                header_props.get_name(actor_name, action),
             ):
-                header.draw_props(col, *header_args)
+                header_props.draw_props(col, *header_args)
             op_row = row.row()
             op_row.alignment = "RIGHT"
             draw_list_ops(op_row, SM64_AnimVariantOps, i, self.headers, keep_first=True, action_name=action.name)
@@ -407,6 +458,19 @@ class SM64_AnimTableElement(PropertyGroup):
     header_address: StringProperty(name="Header Reference", default=intToHex(0x0600B75C))  # Toad animation 0
     enum_name: StringProperty(name="Enum Name")
 
+    def get_action(self, use_reference: bool) -> Action:
+        if use_reference and self.reference:
+            return None
+        return self.action_prop
+
+    def get_header(self, use_reference: bool) -> SM64_AnimHeaderProperties:
+        if use_reference and self.reference:
+            return None
+        action = self.get_action(use_reference)
+        if not action:
+            return None
+        return action.fast64.sm64.headers[self.variant]
+
     def set_variant(self, action: Action, variant: int):
         self.action_prop = action
         self.variant = variant
@@ -459,11 +523,11 @@ class SM64_AnimTableElement(PropertyGroup):
         headers = action_props.headers
         variant = self.variant
         if 0 <= variant < len(headers):
-            header_props = get_element_header(self, can_reference)
+            header_props = self.get_header(can_reference)
             if dma:
                 name = get_dma_anim_name(index)
             else:
-                name = get_anim_name(actor_name, action, header_props)
+                name = header_props.get_name(actor_name, action)
             if not draw_and_check_tab(col, self, "expand_tab", f"{name} (Variant {variant + 1})"):
                 return
         row = col.row()
@@ -518,11 +582,11 @@ class SM64_AnimTableProperties(PropertyGroup):  # TODO: Should this be moved to 
     insertable_file_name: StringProperty(name="Insertable File Name", default="toad.insertable")
 
     @property
-    def behavior_address(self):
-        return int(self.behavior_address_prop if self.behaviour == "Custom" else self.behaviour, 0)
+    def behavior_address(self) -> int:
+        return int_from_str(self.behavior_address_prop if self.behaviour == "Custom" else self.behaviour)
 
     @property
-    def override_files(self):
+    def override_files(self) -> bool:
         return not self.export_seperately or self.override_files_prop
 
     def get_name(self, actor_name: str) -> str:
@@ -530,10 +594,18 @@ class SM64_AnimTableProperties(PropertyGroup):  # TODO: Should this be moved to 
             return self.custom_table_name
         return f"{actor_name}_anims"
 
+    def get_enum_name(self, actor_name: str):
+        table_name = self.get_name(actor_name)
+        return table_name.title().replace("_", "")
+
+    def get_enum_end(self, actor_name: str):
+        table_name = self.get_name(actor_name)
+        return f"{table_name.upper()}_END"
+
     def get_table_actions(self, can_reference: bool) -> list[Action]:
         actions = []
         for element_props in self.elements:
-            action = get_element_action(element_props, can_reference)
+            action = element_props.get_action(can_reference)
             if action and action not in actions:
                 actions.append(action)
         return actions
@@ -587,6 +659,12 @@ class SM64_AnimTableProperties(PropertyGroup):  # TODO: Should this be moved to 
         else:
             if export_type == "C":
                 col.prop(self, "gen_enums")
+                if self.gen_enums:
+                    multilineLabel(
+                        col.box(),
+                        f"List name: {self.get_enum_name(actor_name)}\nEnd name: {self.get_enum_end(actor_name)}",
+                    )
+                    col.separator()
                 draw_custom_or_auto(self, col, "table_name", self.get_name(actor_name))
                 col.prop(self, "export_seperately")
                 draw_forced(col, self, "override_files_prop", not self.export_seperately)
@@ -632,7 +710,7 @@ class SM64_AnimTableProperties(PropertyGroup):  # TODO: Should this be moved to 
                 box.separator()
 
             self.draw_element(box, i, element_props, dma, updates_table, can_reference, export_type, actor_name)
-            action = get_element_action(element_props, can_reference)
+            action = element_props.get_action(can_reference)
             if dma and action:
                 duplicate_indeces = [str(j) for j, a in enumerate(actions) if a == action and j < i - 1]
                 if duplicate_indeces:  # TODO: Should this show up once at the top instead?

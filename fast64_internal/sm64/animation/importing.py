@@ -23,11 +23,8 @@ from ..sm64_classes import RomReader
 
 from .utility import (
     animation_operator_checks,
-    get_anim_name,
     get_anim_pose_bones,
     get_scene_anim_props,
-    get_frame_range,
-    update_header_variant_numbers,
     get_anim_actor_name,
 )
 from .classes import (
@@ -217,17 +214,16 @@ def from_header_class(
 ):
     if (
         isinstance(header.reference, str)
-        and header.reference != get_anim_name(actor_name, action, header_props)
+        and header.reference != header_props.get_name(actor_name, action)
         and use_custom_name
     ):
         header_props.custom_name = header.reference
         header_props.use_custom_name = True
 
-    correct_frame_range = header.start_frame, header.loop_start, header.loop_end
-    header_props.start_frame, header_props.loop_start, header_props.loop_end = correct_frame_range
-    auto_frame_range = get_frame_range(action, header_props)
-    if correct_frame_range != auto_frame_range:
-        header_props.manual_loop = True
+    correct_loop_points = header.start_frame, header.loop_start, header.loop_end
+    header_props.start_frame, header_props.loop_start, header_props.loop_end = correct_loop_points
+    if correct_loop_points != header_props.get_loop_points(action):  # check if auto loop points don´t match
+        header_props.use_manual_loop = True
 
     header_props.trans_divisor = header.trans_divisor
 
@@ -236,7 +232,7 @@ def from_header_class(
         int_flags = header.flags
         header_props.custom_flags = intToHex(header.flags, 2)
         if int_flags >> 6:  # If any non supported bit is active
-            header_props.set_custom_flags = True
+            header_props.use_custom_flags = True
     else:
         header_props.custom_flags = header.flags
         int_flags = 0
@@ -251,7 +247,7 @@ def from_header_class(
                 if index is not None:
                     int_flags |= 1 << index
                 else:
-                    header_props.set_custom_flags = True  # Unknown flag
+                    header_props.use_custom_flags = True  # Unknown flag
     header_props.custom_int_flags = intToHex(int_flags, 2)
     for index, prop in enumerate(FLAG_PROPS):
         setattr(header_props, prop, is_bit_active(int_flags, index))
@@ -300,7 +296,7 @@ def from_anim_class(
         action_props.reference_tables = True
     if file_name:
         action_props.custom_file_name = file_name
-        if use_custom_name and action_props.get_anim_file_name(action, import_type) != action_props.custom_file_name:
+        if use_custom_name and action_props.get_file_name(action, import_type) != action_props.custom_file_name:
             action_props.use_custom_file_name = True
     if is_from_binary:
         start_addresses = [x.reference for x in animation.headers]
@@ -320,7 +316,7 @@ def from_anim_class(
         header.action = action  # Used in table class to prop
         from_header_class(header_props, header, action, actor_name, use_custom_name)
 
-    update_header_variant_numbers(action_props)
+    action_props.update_variant_numbers()
 
 
 def from_table_element_class(element_props: "SM64_AnimTableElement", element: AnimationTableElement):

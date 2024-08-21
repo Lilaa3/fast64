@@ -11,9 +11,6 @@ from .exporting import export_animation, export_animation_table
 from .utility import (
     get_action,
     animation_operator_checks,
-    get_anim_name,
-    get_frame_range,
-    update_header_variant_numbers,
     get_scene_anim_props,
     get_anim_props,
     get_anim_actor_name,
@@ -23,7 +20,7 @@ from .constants import enumAnimationTables, enumAnimatedBehaviours
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .properties import SM64_AnimProperties, SM64_ActionProperty
+    from .properties import SM64_AnimProperties, SM64_AnimHeaderProperties, SM64_ActionProperty
 
 
 def emulate_no_loop(scene: Scene):
@@ -40,19 +37,19 @@ def emulate_no_loop(scene: Scene):
         return
 
     frame = scene.frame_current
-    header_props = played_action.fast64.sm64.headers[anim_props.played_header]
-    start, end = get_frame_range(played_action, header_props)[1:]
+    header_props: SM64_AnimHeaderProperties = played_action.fast64.sm64.headers[anim_props.played_header]
+    _start, loop_start, end = header_props.get_loop_points(played_action)
     if header_props.backwards:
-        if frame < start:
+        if frame < loop_start:
             if header_props.no_loop:
-                scene.frame_set(start)
+                scene.frame_set(loop_start)
             else:
                 scene.frame_set(end - 1)
     elif frame >= end:
         if header_props.no_loop:
             scene.frame_set(end - 1)
         else:
-            scene.frame_set(start)
+            scene.frame_set(loop_start)
 
 
 class SM64_PreviewAnim(OperatorBase):
@@ -76,8 +73,8 @@ class SM64_PreviewAnim(OperatorBase):
 
         if self.played_header >= len(action_props.headers):
             raise ValueError("Invalid Header Index")
-        header_props = action_props.headers[self.played_header]
-        start_frame = get_frame_range(played_action, header_props)[0]
+        header_props: SM64_AnimHeaderProperties = action_props.headers[self.played_header]
+        start_frame = header_props.get_loop_points(played_action)[0]
         scene.frame_set(start_frame)
         scene.render.fps = 30
 
@@ -169,17 +166,17 @@ class SM64_AnimVariantOps(OperatorBase):
 
             copyPropertyGroup(action_props.headers[self.index], added_variant)
             variants.move(len(variants) - 1, variant_position + 1)
-            update_header_variant_numbers(action_props)
+            action_props.update_variant_numbers()
             added_variant.action = action
             added_variant.expand_tab = True
             added_variant.use_custom_name = False
             added_variant.use_custom_enum = False
-            added_variant.custom_name = get_anim_name(get_anim_actor_name(context), action, added_variant)
+            added_variant.custom_name = added_variant.get_name(get_anim_actor_name(context), action)
         elif self.op_name == "REMOVE":
             variants.remove(variant_position)
         if self.op_name == "CLEAR":
             variants.clear()
-        update_header_variant_numbers(action_props)
+        action_props.update_variant_numbers()
 
 
 class SM64_ExportAnimTable(OperatorBase):
