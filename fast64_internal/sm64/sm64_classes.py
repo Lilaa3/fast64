@@ -2,7 +2,7 @@ from io import BufferedReader, StringIO
 from typing import BinaryIO
 import dataclasses, os, shutil, struct, numpy as np
 
-from ..utility import intToHex, tempName, decodeSegmentedAddr
+from ..utility import intToHex, tempName, decodeSegmentedAddr, PluginError
 from .sm64_constants import insertableBinaryTypes, SegmentData
 from .sm64_utility import export_rom_checks
 
@@ -119,12 +119,10 @@ class RomReader:
         return ptr
 
     def read_int(self, size=4, signed=False, specific_address=-1):
-        in_bytes = self.read_data(size, specific_address)
-        return int.from_bytes(in_bytes, "big", signed=signed)
+        return int.from_bytes(self.read_data(size, specific_address), "big", signed=signed)
 
     def read_float(self, size=4, specific_address=-1):
-        in_bytes = self.read_data(size, specific_address)
-        return struct.unpack(">f", in_bytes)[0]
+        return struct.unpack(">f", self.read_data(size, specific_address))[0]
 
     def read_str(self, specific_address=-1):
         ptr = self.read_ptr() if specific_address == -1 else specific_address
@@ -162,10 +160,12 @@ class BinaryExporter:
         return self
 
     def write_to_range(self, start_address: int, end_address: int, data: bytes):
+        address_range_str = f"[{intToHex(start_address)}, {intToHex(end_address)}] "
+        if end_address < start_address:
+            raise PluginError(f"Start address is higher than the end address: {address_range_str}")
         if start_address + len(data) > end_address:
-            raise IndexError(
-                f"Data ({len(data) / 1000.0} kb) does not fit in range "
-                f"[{intToHex(start_address)}, {intToHex(end_address)}] "
+            raise PluginError(
+                f"Data ({len(data) / 1000.0} kb) does not fit in range {address_range_str} "
                 f"({(end_address - start_address) / 1000.0} kb).",
             )
         self.write(data, start_address)
