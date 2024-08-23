@@ -1,9 +1,12 @@
-from functools import cache
-import os, re, dataclasses, numpy as np
+import functools
+import os
+import re
+import dataclasses
+import numpy as np
 
 import bpy
 from bpy.path import abspath
-from bpy.types import Object, Action, Context, PoseBone
+from bpy.types import Object, Action, Context, PoseBone, EnumPropertyItem
 from mathutils import Quaternion
 
 from ...utility import (
@@ -117,7 +120,7 @@ def euler_to_quaternion(euler_angles: np.ndarray):
 class RotationFramesHolder(FramesHolder):
     @property
     def quaternion(self):
-        return euler_to_quaternion(self.frames)
+        return euler_to_quaternion(self.frames)  # We make this code path as optiomal as it can be
 
     def get_euler(self, order: str):
         if order == "XYZ":
@@ -641,15 +644,15 @@ def import_animations(context: Context):
     )
 
 
-@cache
-def cached_enum_from_import_preset(preset: str):
+@functools.cache
+def cached_enum_from_import_preset(preset: str) -> list[EnumPropertyItem]:
     animation_names = get_preset_anim_name_list(preset)
     return [("Custom", "Custom", "Pick your own animation index", len(animation_names))] + [
         (str(i), f"{i} - {name}", f'"{preset}" Animation {i}', i) for i, name in enumerate(animation_names)
     ]
 
 
-def get_enum_from_import_preset(_self, context):
+def get_enum_from_import_preset(_import_props: "SM64_AnimImportProperties", context):
     try:
         return cached_enum_from_import_preset(get_scene_anim_props(context).importing.preset)
     except Exception as exc:
@@ -657,33 +660,33 @@ def get_enum_from_import_preset(_self, context):
         return [("Custom", "Custom", "Pick your own animation index", 0)]
 
 
-def update_table_preset(self: "SM64_AnimImportProperties", context):
-    if self.preset == "Custom":
+def update_table_preset(import_props: "SM64_AnimImportProperties", context):
+    if import_props.preset == "Custom":
         return
 
-    preset = ACTOR_PRESET_INFO[self.preset]
+    preset = ACTOR_PRESET_INFO[import_props.preset]
 
-    if self.preset_animation == "":  # If the preset animation isn't in this prest, select the animation at 0
-        self.preset_animation = "0"
+    if import_props.preset_animation == "":  # If the preset animation isn't in this prest, select the animation at 0
+        import_props.preset_animation = "0"
 
     # C
-    decomp_path = self.decomp_path if self.decomp_path else context.scene.fast64.sm64.decomp_path
+    decomp_path = import_props.decomp_path if import_props.decomp_path else context.scene.fast64.sm64.decomp_path
     directory = preset.animation.directory if preset.animation.directory else f"{preset.decomp_path}/anims"
-    self.path = os.path.join(decomp_path, directory)
+    import_props.path = os.path.join(decomp_path, directory)
 
     # Binary
-    self.level = preset.level
+    import_props.level = preset.level
     if preset.animation.dma:
-        self.dma_table_address = intToHex(preset.animation.address)
-        self.binary_import_type = "DMA"
-        self.is_segmented_address_prop = False
+        import_props.dma_table_address = intToHex(preset.animation.address)
+        import_props.binary_import_type = "DMA"
+        import_props.is_segmented_address_prop = False
     else:
-        self.table_address = intToHex(preset.animation.address)
-        self.binary_import_type = "Table"
-        self.is_segmented_address_prop = True
+        import_props.table_address = intToHex(preset.animation.address)
+        import_props.binary_import_type = "Table"
+        import_props.is_segmented_address_prop = True
 
     if preset.animation.size is None:
-        self.check_null = True
+        import_props.check_null = True
     else:
-        self.check_null = False
-        self.table_size_prop = preset.animation.size
+        import_props.check_null = False
+        import_props.table_size_prop = preset.animation.size

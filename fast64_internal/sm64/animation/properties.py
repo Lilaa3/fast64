@@ -1,5 +1,4 @@
 import os
-from os import PathLike
 import re
 from typing import Iterable, Optional
 
@@ -830,7 +829,7 @@ class SM64_AnimImportProperties(PropertyGroup):
         prop_split(layout, self, "path", "Directory or File Path")
         path_ui_warnings(layout, abspath(self.path))
 
-    def draw_c(self, layout: UILayout, decomp_path: PathLike = ""):
+    def draw_c(self, layout: UILayout, decomp_path: os.PathLike = ""):
         col = layout.column()
         if self.preset == "Custom":
             self.draw_path(col)
@@ -841,7 +840,7 @@ class SM64_AnimImportProperties(PropertyGroup):
             directory_ui_warnings(col, picked_decomp_path)
         col.prop(self, "use_custom_name")
 
-    def draw_import_rom(self, layout: UILayout, import_rom: PathLike = ""):
+    def draw_import_rom(self, layout: UILayout, import_rom: os.PathLike = ""):
         col = layout.column()
         col.label(text="Uses scene import ROM by default", icon="INFO")
         prop_split(col, self, "rom", "Import ROM")
@@ -861,7 +860,7 @@ class SM64_AnimImportProperties(PropertyGroup):
         elif not self.check_null:
             right_row.prop(self, "table_size_prop")
 
-    def draw_binary(self, layout: UILayout, import_rom: PathLike):
+    def draw_binary(self, layout: UILayout, import_rom: os.PathLike):
         col = layout.column()
         self.draw_import_rom(col, import_rom)
         col.separator()
@@ -895,7 +894,7 @@ class SM64_AnimImportProperties(PropertyGroup):
         if self.binary_import_type == "Table":  # Draw settings after level
             self.draw_table_settings(col)
 
-    def draw_insertable_binary(self, layout: UILayout, import_rom: PathLike):
+    def draw_insertable_binary(self, layout: UILayout, import_rom: os.PathLike):
         col = layout.column()
         self.draw_path(col)
         col.separator()
@@ -912,7 +911,7 @@ class SM64_AnimImportProperties(PropertyGroup):
             self.draw_import_rom(col, import_rom)
             prop_split(col, self, "level", "Level")
 
-    def draw_props(self, layout: UILayout, import_rom: PathLike = None, decomp_path: PathLike = None):
+    def draw_props(self, layout: UILayout, import_rom: os.PathLike = "", decomp_path: os.PathLike = ""):
         col = layout.column()
 
         prop_split(col, self, "import_type", "Type")
@@ -1082,7 +1081,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
         col.prop(self, "is_dma")
         if export_type == "C":
             self.draw_c_settings(col, header_type)
-        else:
+        elif export_type == "Binary" and not self.is_dma:
             col.prop(self, "update_table")
 
 

@@ -1,4 +1,7 @@
-import dataclasses, os, copy, numpy as np
+import dataclasses
+import os
+import numpy as np
+from copy import copy
 from io import StringIO
 from typing import Optional
 
@@ -27,24 +30,18 @@ class SM64_AnimPair:
     # Importing
     address: int = 0
     end_address: int = 0
-    # For compressing
-    offset: int = 0
+
+    offset: int = 0  # For compressing
 
     def __post_init__(self):
         assert isinstance(self.values, np.ndarray) and self.values.size > 0, "values cannot be empty"
 
-    def __eq__(self, other):  # TODO: do i still need this
-        return np.array_equal(self.values, other.values)
-
     def clean_frames(self):
-        # Find the index of the last occurrence of a different value
-        last_value = self.values[-1]
-        diffs = np.where(self.values != last_value)[0]
-        if diffs.size > 0:
-            i = diffs[-1]
-            self.values = self.values[: i + 2]  # TODO: this is still broken :( 2 is not correct
-        else:  # all values are the same
-            self.values = self.values[:1]
+        mask = self.values != self.values[-1]
+        #  Reverse the order, find the last element with the same value
+        index = np.argmax(mask[::-1])
+        self.values = self.values[: 1 if index == 0 else -index]
+        return self
 
     def get_frame(self, frame: int):
         return self.values[min(frame, len(self.values) - 1)]
@@ -106,7 +103,7 @@ class AnimationData:
             address, size = values_reader.start_address + (offset * 2), max_frame * 2
 
             values = np.frombuffer(values_reader.read_data(size, address), dtype=">i2", count=max_frame)
-            self.pairs.append(SM64_AnimPair(values, address, address + size, offset))
+            self.pairs.append(SM64_AnimPair(values, address, address + size, offset).clean_frames())
         self.indice_end_address = indices_reader.address
         self.value_end_address = max(pair.end_address for pair in self.pairs)
 
@@ -125,7 +122,9 @@ class AnimationData:
 
         for i in range(0, len(indices_values), 2):
             max_frame, offset = indices_values[i], indices_values[i + 1]
-            self.pairs.append(SM64_AnimPair(values_array[offset : offset + max_frame], None, None, offset))
+            self.pairs.append(
+                SM64_AnimPair(values_array[offset : offset + max_frame], None, None, offset).clean_frames()
+            )
         return self
 
 
@@ -536,7 +535,7 @@ class AnimationTable:
             header, data = element.header, element.data
             if header in headers_already_added:
                 print(f"Made duplicate of header {i}.")
-                header = copy.copy(header)
+                header = copy(header)
             header.reference = get_dma_anim_name(i)
             headers_already_added.append(header)
 
@@ -550,7 +549,7 @@ class AnimationTable:
             file_name = f"{name}.inc.c"
             if data in data_already_added:
                 print(f"Made duplicate of header {i}'s data.")
-                data = copy.copy(data)
+                data = copy(data)
             data_already_added.append(data)
 
             data.indice_reference, data.values_reference, data.file_name = (
@@ -785,8 +784,8 @@ class AnimationTable:
 
 
 def create_tables(anims_data: list[AnimationData], values_name=""):
-    """Can generate multiple indices table with only one value table, which improves compression"""
-    """This feature is used in table exports"""
+    """Can generate multiple indices table with only one value table, which improves compression
+    This feature is used in table exports"""
 
     name = values_name if values_name else anims_data[0].values_reference
     data = np.array([], np.int16)

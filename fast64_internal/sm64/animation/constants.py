@@ -1,4 +1,5 @@
 import struct
+
 from ...utility import intToHex
 from ..sm64_constants import ACTOR_PRESET_INFO, ActorPresetInfo
 
