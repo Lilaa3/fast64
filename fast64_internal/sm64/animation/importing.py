@@ -672,7 +672,7 @@ def update_table_preset(self: "SM64_AnimImportProperties", context):
     self.path = os.path.join(decomp_path, directory)
 
     # Binary
-    preset.level = preset.level
+    self.level = preset.level
     if preset.animation.dma:
         self.dma_table_address = intToHex(preset.animation.address)
         self.binary_import_type = "DMA"
