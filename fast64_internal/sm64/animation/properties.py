@@ -543,7 +543,7 @@ class SM64_AnimTableElement(PropertyGroup):
             action=action,
             specific_variant=variant,
             in_table=True,
-            updates_table=True,
+            updates_table=updates_table,
             draw_file_name=export_type == "C" and not dma and export_seperately,
             export_type=export_type,
             actor_name=actor_name,
