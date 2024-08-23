@@ -739,7 +739,7 @@ def export_animation_binary(
 ):
     if anim_props.is_dma:
         dma_address = int(table_props.dma_address, 0)
-        print("Reading DMA table")
+        print("Reading DMA table from ROM")
         table = AnimationTable().read_dma_binary(
             reader=RomReader(rom_file=binary_exporter.rom_file_output, start_address=dma_address),
             read_headers={},
@@ -754,7 +754,6 @@ def export_animation_binary(
             table.elements[header.table_index] = AnimationTableElement(header=header)
         print("Converting to binary data")
         data = table.to_binary_dma()
-        print("Writing to ROM")
         binary_exporter.write_to_range(
             dma_address,
             int(table_props.dma_end_address, 0),
@@ -792,11 +791,11 @@ def export_animation_binary(
 
 def export_animation_insertable(
     animation: Animation,
-    anim_props: "SM64_AnimProperties",
-    combined_props: "SM64_CombinedObjectProperties",
+    is_dma: bool,
+    insertable_directory: os.PathLike,
 ):
-    data, ptrs = animation.to_binary(anim_props.is_dma)
-    path = abspath(os.path.join(combined_props.insertable_directory_path, animation.file_name))
+    data, ptrs = animation.to_binary(is_dma)
+    path = abspath(os.path.join(insertable_directory, animation.file_name))
     InsertableBinaryData("Animation", data, 0, ptrs).write(path)
 
 
@@ -887,7 +886,7 @@ def export_animation(context: Context, armature_obj: Object):
     if sm64_props.export_type == "C":
         export_animation_c(animation, anim_props, combined_props, abspath(sm64_props.decomp_path), actor_name)
     elif sm64_props.export_type == "Insertable Binary":
-        export_animation_insertable(animation, anim_props, combined_props)
+        export_animation_insertable(animation, anim_props.is_dma, combined_props.insertable_directory_path)
     elif sm64_props.export_type == "Binary":
         with BinaryExporter(abspath(sm64_props.export_rom), abspath(sm64_props.output_rom)) as binary_exporter:
             export_animation_binary(

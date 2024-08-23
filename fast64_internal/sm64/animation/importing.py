@@ -6,7 +6,7 @@ import numpy as np
 
 import bpy
 from bpy.path import abspath
-from bpy.types import Object, Action, Context, PoseBone, EnumPropertyItem
+from bpy.types import Object, Action, Context, PoseBone
 from mathutils import Quaternion
 
 from ...utility import (
@@ -645,7 +645,7 @@ def import_animations(context: Context):
 
 
 @functools.cache
-def cached_enum_from_import_preset(preset: str) -> list[EnumPropertyItem]:
+def cached_enum_from_import_preset(preset: str) -> list[str, str, str, int]:
     animation_names = get_preset_anim_name_list(preset)
     return [("Custom", "Custom", "Pick your own animation index", len(animation_names))] + [
         (str(i), f"{i} - {name}", f'"{preset}" Animation {i}', i) for i, name in enumerate(animation_names)
