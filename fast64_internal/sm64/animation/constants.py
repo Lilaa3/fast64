@@ -1,8 +1,10 @@
+import struct
 from ...utility import intToHex
 from ..sm64_constants import ACTOR_PRESET_INFO, ActorPresetInfo
 
+HEADER_STRUCT = struct.Struct(">h h h h h h I I I")
+HEADER_SIZE = HEADER_STRUCT.size
 
-HEADER_SIZE = 0x18
 C_FLAGS = [
     ("ANIM_FLAG_NOLOOP",),
     ("ANIM_FLAG_FORWARD", "ANIM_FLAG_BACKWARD"),
@@ -36,43 +38,29 @@ enumAnimExportTypes = [
     ("Custom", "Custom Path", "Exports to a specific path"),
 ]
 
-enumAnimImportTypes = [
+enum_anim_import_types = [
     ("C", "C", "Import a decomp folder or a specific animation"),
     ("Binary", "Binary", "Import from ROM"),
     ("Insertable Binary", "Insertable Binary", "Import from an insertable binary file"),
 ]
 
-enumAnimBinaryImportTypes = [
+enum_anim_binary_import_types = [
     ("DMA", "DMA (Mario)", "Import a DMA animation from a DMA table from a ROM"),
     ("Table", "Table", "Import animations from an animation table from a ROM"),
     ("Animation", "Animation", "Import one animation from a ROM"),
 ]
 
 
-enumAnimatedBehaviours = [("Custom", "Custom Behavior", "Custom")]
-enumAnimationTables = [("Custom", "Custom", "Custom")]
+enum_animated_behaviours = [("Custom", "Custom Behavior", "Custom")]
+enum_anim_tables = [("Custom", "Custom", "Custom")]
 for actor_name, preset_info in ACTOR_PRESET_INFO.items():
     if not preset_info.animation:
         continue
     behaviours = ActorPresetInfo.get_member_as_dict(actor_name, preset_info.animation.behaviours)
-    enumAnimatedBehaviours.extend(
-        [
-            (
-                intToHex(address),
-                name,
-                intToHex(address),
-            )
-            for name, address in behaviours.items()
-        ]
+    enum_animated_behaviours.extend(
+        [(intToHex(address), name, intToHex(address)) for name, address in behaviours.items()]
     )
     tables = ActorPresetInfo.get_member_as_dict(actor_name, preset_info.animation.address)
-    enumAnimationTables.extend(
-        [
-            (
-                name,
-                name,
-                f"{intToHex(address)}, {preset_info.level}",
-            )
-            for name, address in tables.items()
-        ]
+    enum_anim_tables.extend(
+        [(name, name, f"{intToHex(address)}, {preset_info.level}") for name, address in tables.items()]
     )

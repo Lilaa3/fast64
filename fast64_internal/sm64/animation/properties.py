@@ -44,17 +44,17 @@ from .operators import (
     SM64_SearchAnimTablePresets,
 )
 from .constants import (
-    enumAnimImportTypes,
-    enumAnimBinaryImportTypes,
-    enumAnimatedBehaviours,
-    enumAnimationTables,
+    enum_anim_import_types,
+    enum_anim_binary_import_types,
+    enum_animated_behaviours,
+    enum_anim_tables,
     FLAG_PROPS,
 )
 from .utility import (
     get_max_frame,
     get_dma_anim_name,
 )
-from .importing import get_enum_from_import_preset
+from .importing import get_enum_from_import_preset, update_table_preset
 
 
 def draw_custom_or_auto(holder, layout: UILayout, prop: str, default: str):
@@ -571,15 +571,12 @@ class SM64_AnimTableProperties(PropertyGroup):  # TODO: Should this be moved to 
         name="Data End",
         default=intToHex(0x00A466C0),
     )
-    address: StringProperty(
-        name="Table Address",
-        default=intToHex(0x00A46738),  # Toad animation table
-    )
+    address: StringProperty(name="Table Address", default=intToHex(0x00A46738))  # Toad animation table
     end_address: StringProperty(name="Table End", default=intToHex(0x00A4675C))
     dma_address: StringProperty(name="DMA Table Address", default=intToHex(0x4EC000))
     dma_end_address: StringProperty(name="DMA Table End", default=intToHex(0x4EC000 + 0x8DC20))
     update_behavior: BoolProperty(name="Update Behavior", default=True)
-    behaviour: bpy.props.EnumProperty(items=enumAnimatedBehaviours, default=intToHex(0x13002EF8))
+    behaviour: bpy.props.EnumProperty(items=enum_animated_behaviours, default=intToHex(0x13002EF8))
     behavior_address_prop: StringProperty(name="Behavior Address", default=intToHex(0x13002EF8))
     begining_animation: StringProperty(name="Begining Animation", default="0x00")
     insertable_file_name: StringProperty(name="Insertable File Name", default="toad.insertable")
@@ -735,7 +732,8 @@ class SM64_AnimImportProperties(PropertyGroup):
         default=0.025,
         min=0.0,
         max=0.025,
-        description="Use blender's builtin decimate (allowed change) operator to clean up all the keyframes, generally the better option compared to clean keyframes but can be slow",
+        description="Use blender's builtin decimate (allowed change) operator to clean up all the keyframes, "
+        "generally the better option compared to clean keyframes but can be slow",
     )
 
     continuity_filter: BoolProperty(name="Continuity Filter", default=True)
@@ -744,10 +742,10 @@ class SM64_AnimImportProperties(PropertyGroup):
     )
 
     clear_table: BoolProperty(name="Clear Table On Import", default=True)
-    import_type: EnumProperty(items=enumAnimImportTypes, name="Type", default="C")
-    preset: bpy.props.EnumProperty(items=enumAnimationTables, name="Preset", default="Mario")
+    import_type: EnumProperty(items=enum_anim_import_types, name="Import Type", default="C")
+    preset: bpy.props.EnumProperty(items=enum_anim_tables, name="Preset", update=update_table_preset, default="Mario")
     decomp_path: StringProperty(name="Decomp Path", subtype="FILE_PATH", default="")
-    binary_import_type: EnumProperty(items=enumAnimBinaryImportTypes, name="Type", default="Table")
+    binary_import_type: EnumProperty(items=enum_anim_binary_import_types, name="Binary Import Type", default="Table")
     assume_bone_count: BoolProperty(
         name="Assume Bone Count",
         description="When enabled, the selected armature's bone count will be used instead of "
@@ -757,7 +755,7 @@ class SM64_AnimImportProperties(PropertyGroup):
     check_null: BoolProperty(name="Check NULL Delimiter", default=True)
     table_size_prop: IntProperty(name="Size", min=1)
     table_index_prop: IntProperty(name="Index", min=0)
-    preset_animation: EnumProperty(name="Selected Preset Animation", items=get_enum_from_import_preset)
+    preset_animation: EnumProperty(name="Preset Animation", items=get_enum_from_import_preset)
 
     rom: StringProperty(name="Import ROM", subtype="FILE_PATH")
     table_address: StringProperty(name="Address", default=intToHex(0x0600FC48))  # Toad

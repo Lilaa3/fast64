@@ -1,5 +1,4 @@
 import dataclasses, os, copy, numpy as np
-import struct
 from io import StringIO
 from typing import Optional
 
@@ -9,7 +8,7 @@ from ...utility import PluginError, encodeSegmentedAddr, is_bit_active, intToHex
 from ..sm64_constants import MAX_U16, SegmentData
 from ..sm64_classes import RomReader, DMATable, DMATableElement, IntArray
 
-from .constants import HEADER_SIZE, C_FLAGS
+from .constants import HEADER_STRUCT, HEADER_SIZE, C_FLAGS
 from .utility import num_to_padded_hex, get_dma_anim_name
 
 
@@ -128,9 +127,6 @@ class AnimationData:
             max_frame, offset = indices_values[i], indices_values[i + 1]
             self.pairs.append(SM64_AnimPair(values_array[offset : offset + max_frame], None, None, offset))
         return self
-
-
-HEADER_STRUCT = struct.Struct(">h h h h h h I I I")
 
 
 @dataclasses.dataclass

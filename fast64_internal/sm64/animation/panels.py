@@ -11,12 +11,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..settings.properties import SM64_Properties
     from ..sm64_objects import SM64_CombinedObjectProperties
-    from properties import (
-        SM64_AnimProperties,
-        SM64_ActionProperty,
-        SM64_AnimTableProperties,
-        SM64_ArmatureAnimProperties,
-    )
+    from properties import SM64_AnimProperties, SM64_ActionProperty
 
 
 # Base

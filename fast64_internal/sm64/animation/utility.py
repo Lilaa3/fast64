@@ -16,15 +16,15 @@ if TYPE_CHECKING:
     )
 
 
-def animation_operator_checks(context: Context, requires_animation=True, specific_obj: Object = None):
-    if specific_obj:
-        obj = specific_obj
-    else:
+def animation_operator_checks(context: Context, requires_animation=True, specific_obj: Object | None = None):
+    if specific_obj is None:
         if len(context.selected_objects) == 0 and context.object is None:
             raise PluginError("No armature selected.")
         if len(context.selected_objects) > 1:
             raise PluginError("Multiple objects selected at once.")
         obj = context.object
+    else:
+        obj = specific_obj
 
     if obj.type != "ARMATURE":
         raise PluginError(f'Selected object "{obj.name}" is not an armature.')
@@ -48,10 +48,10 @@ def get_selected_action(armature: Object, raise_exc=True) -> Action:
         raise ValueError(f'No action selected in armature "{armature.name}".')
 
 
-def get_anim_pose_bones(armature: Object) -> list[PoseBone]:
+def get_anim_pose_bones(armature: Object):
     bones_to_process: list[str] = findStartBones(armature)
     current_bone = armature.data.bones[bones_to_process[0]]
-    anim_bones = []
+    anim_bones: list[PoseBone] = []
 
     # Get animation bones in order
     while len(bones_to_process) > 0:
@@ -101,14 +101,14 @@ def get_anim_props(context: Context) -> "SM64_ArmatureAnimProperties":
     return context.object.data.fast64.sm64.animation
 
 
-def get_anim_actor_name(context: Context):
+def get_anim_actor_name(context: Context) -> str | None:
     sm64_props = context.scene.fast64.sm64
     if sm64_props.export_type == "C" and sm64_props.combined_export.export_anim:
         return toAlnum(sm64_props.combined_export.obj_name_anim)
     return sm64_props.combined_export.filter_name(toAlnum(context.object.name) if context.object else "", True)
 
 
-def dma_structure_context(context: Context):
+def dma_structure_context(context: Context) -> bool:
     if not context.object or context.object.type != "ARMATURE":
         return False
     return get_anim_props(context).is_dma

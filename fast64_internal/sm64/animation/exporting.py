@@ -646,7 +646,7 @@ def create_and_get_paths(
                 custom_export,
                 base_path,
                 combined_props.export_header_type,
-                combined_props.level_name,
+                combined_props.export_level_name,
                 "",
                 dir_name,
             )[0]

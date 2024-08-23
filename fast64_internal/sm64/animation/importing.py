@@ -535,65 +535,41 @@ def import_animations(context: Context):
     anim_props: SM64_ArmatureAnimProperties = armature_obj.data.fast64.sm64.animation
     table_props: SM64_AnimTableProperties = anim_props.table
 
+    update_table_preset(import_props, context)
+
     read_animations: dict[tuple[str, str], Animation] = {}
     read_headers: dict[str, AnimationHeader] = {}
     table = AnimationTable()
 
-    import_type = import_props.import_type
-    if import_type == "Insertable Binary" or import_props.preset == "Custom":
-        preset = None
-        level = import_props.level
-        table_size = import_props.table_size
-        if import_type == "C":
-            c_path = abspath(import_props.path)
-        else:
-            if import_type == "Binary":
-                is_segmented_address = import_props.is_segmented_address
-                address = import_props.address
-                binary_type = import_props.binary_import_type
-            table_index = import_props.table_index
-    else:  # Preset
-        preset = ACTOR_PRESET_INFO[import_props.preset]
-        if import_type == "C":
-            decomp_path = import_props.decomp_path
-            decomp_path = decomp_path if decomp_path else sm64_props.decomp_path
-            directory = preset.animation.directory
-            directory = directory if directory else f"{preset.decomp_path}/anims"
-            c_path = abspath(os.path.join(decomp_path, directory))
-        else:
-            level = preset.level
-            address = preset.animation.address
-            table_size = preset.animation.size
-            binary_type = "DMA" if preset.animation.dma else "Table"
-            is_segmented_address = False if preset.animation.dma else True
-            table_index = import_props.table_index
+    print("Reading animation data.")
 
-    if import_type in {"Binary", "Insertable Binary"}:
+    if import_props.import_type in {"Binary", "Insertable Binary"}:
         bone_count = len(get_anim_pose_bones(armature_obj)) if import_props.assume_bone_count else None
         binary_args = (
             read_headers,
             read_animations,
             table,
-            table_index,
+            import_props.table_index,
             bone_count,
-            table_size,
+            import_props.table_size,
         )
-
-    print("Reading animation data.")
-    if import_type == "Binary":
+    if import_props.import_type == "Binary":
         rom_path = abspath(import_props.rom if import_props.rom else sm64_props.import_rom)
         import_rom_checks(rom_path)
+        address = import_props.address
         with open(rom_path, "rb") as rom_file:
-            if binary_type == "DMA":
+            if import_props.binary_import_type == "DMA":
                 segment_data = None
             else:
-                segment_data = parseLevelAtPointer(rom_file, level_pointers[level]).segmentData
-                if is_segmented_address:
+                segment_data = parseLevelAtPointer(rom_file, level_pointers[import_props.level]).segmentData
+                if import_props.is_segmented_address:
                     address = decodeSegmentedAddr(address.to_bytes(4, "big"), segment_data)
             import_binary_animations(
-                RomReader(rom_file, start_address=address, segment_data=segment_data), binary_type, *binary_args
+                RomReader(rom_file, start_address=address, segment_data=segment_data),
+                import_props.binary_import_type,
+                *binary_args,
             )
-    elif import_type == "Insertable Binary":
+    elif import_props.import_type == "Insertable Binary":
         path = abspath(import_props.path)
         filepath_checks(path)
         with open(path, "rb") as insertable_file:
@@ -601,12 +577,13 @@ def import_animations(context: Context):
                 import_insertable_binary_animations(RomReader(insertable_file=insertable_file), *binary_args)
             else:
                 with open(rom_path, "rb") as rom_file:
-                    segment_data = parseLevelAtPointer(rom_file, level_pointers[level]).segmentData
+                    segment_data = parseLevelAtPointer(rom_file, level_pointers[import_props.level]).segmentData
                     import_insertable_binary_animations(
                         RomReader(rom_file, insertable_file=insertable_file, segment_data=segment_data),
                         *binary_args,
                     )
-    elif import_type == "C":
+    elif import_props.import_type == "C":
+        c_path = abspath(import_props.path)
         path_checks(c_path)
         import_c_animations(c_path, read_headers, read_animations, table)
 
@@ -614,7 +591,7 @@ def import_animations(context: Context):
         print("No table was read. Automatically creating table.")
         table.elements = [AnimationTableElement(header=header) for header in read_headers.values()]
 
-    if preset:
+    if import_props.preset in ACTOR_PRESET_INFO:
         preset_animation_names = get_preset_anim_name_list(import_props.preset)
         for animation in read_animations.values():
             animation_names = []
@@ -634,13 +611,14 @@ def import_animations(context: Context):
                 animation,
                 get_anim_actor_name(context),
                 import_props.use_custom_name,
-                import_type,
+                import_props.import_type,
                 import_props.force_quaternion,
                 import_props.continuity_filter if not import_props.force_quaternion else True,
             )
         )
 
     if import_props.run_decimate:
+        print("Decimating imported actions's fcurves")
         old_area = bpy.context.area.type
         old_action = armature_obj.animation_data.action
         try:
@@ -677,3 +655,35 @@ def get_enum_from_import_preset(_self, context):
     except Exception as exc:
         print(str(exc))
         return [("Custom", "Custom", "Pick your own animation index", 0)]
+
+
+def update_table_preset(self: "SM64_AnimImportProperties", context):
+    if self.preset == "Custom":
+        return
+
+    preset = ACTOR_PRESET_INFO[self.preset]
+
+    if self.preset_animation == "":  # If the preset animation isn't in this prest, select the animation at 0
+        self.preset_animation = "0"
+
+    # C
+    decomp_path = self.decomp_path if self.decomp_path else context.scene.fast64.sm64.decomp_path
+    directory = preset.animation.directory if preset.animation.directory else f"{preset.decomp_path}/anims"
+    self.path = os.path.join(decomp_path, directory)
+
+    # Binary
+    preset.level = preset.level
+    if preset.animation.dma:
+        self.dma_table_address = intToHex(preset.animation.address)
+        self.binary_import_type = "DMA"
+        self.is_segmented_address_prop = False
+    else:
+        self.table_address = intToHex(preset.animation.address)
+        self.binary_import_type = "Table"
+        self.is_segmented_address_prop = True
+
+    if preset.animation.size is None:
+        self.check_null = True
+    else:
+        self.check_null = False
+        self.table_size_prop = preset.animation.size

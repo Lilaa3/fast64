@@ -15,7 +15,7 @@ from .utility import (
     get_anim_props,
     get_anim_actor_name,
 )
-from .constants import enumAnimationTables, enumAnimatedBehaviours
+from .constants import enum_anim_tables, enum_animated_behaviours
 
 from typing import TYPE_CHECKING
 
@@ -243,7 +243,7 @@ class SM64_SearchAnimTablePresets(SearchEnumOperatorBase):
     bl_idname = "scene.search_anim_table_enum_operator"
     bl_property = "preset"
 
-    preset: EnumProperty(items=enumAnimationTables)
+    preset: EnumProperty(items=enum_anim_tables)
 
     def update_enum(self, context: Context):
         get_scene_anim_props(context).importing.preset = self.preset
@@ -253,7 +253,7 @@ class SM64_SearchAnimatedBhvs(SearchEnumOperatorBase):
     bl_idname = "scene.search_animated_behavior_enum_operator"
     bl_property = "behaviour"
 
-    behaviour: EnumProperty(items=enumAnimatedBehaviours)
+    behaviour: EnumProperty(items=enum_animated_behaviours)
 
     def update_enum(self, context: Context):
         get_anim_props(context).table.behaviour = self.behaviour
