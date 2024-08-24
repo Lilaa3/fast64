@@ -1948,8 +1948,7 @@ class SM64_CombinedObjectProperties(bpy.types.PropertyGroup):
 
     # anim export options
     quick_anim_read: bpy.props.BoolProperty(
-        name="Quick Data Read",
-        description="Read fcurves directly, should work with the majority of rigs",
+        name="Quick Data Read", description="Read fcurves directly, should work with the majority of rigs", default=True
     )
     export_single_action: bpy.props.BoolProperty(
         name="Selected Action",
@@ -2198,7 +2197,7 @@ class SM64_CombinedObjectProperties(bpy.types.PropertyGroup):
                 layout.label(text=f"Animation path: /actors/{toAlnum(self.obj_name_anim)}/(.c, .h)")
         else:
             self.draw_level_path(layout)
-        layout.label(text=f"Animation table name: {anim_props.table.get_name(self.obj_name_anim)}")
+        layout.label(text=f"Animation table name: {anim_props.get_table_name(self.obj_name_anim)}")
 
     def draw_obj_name(self, layout):
         split_1 = layout.split(factor=0.45)

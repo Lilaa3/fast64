@@ -40,7 +40,7 @@ class SM64_AnimPair:
         mask = self.values != self.values[-1]
         #  Reverse the order, find the last element with the same value
         index = np.argmax(mask[::-1])
-        self.values = self.values[: 1 if index == 0 else -index]
+        self.values = self.values if index == 1 else self.values[: 1 if index == 0 else (-index + 1)]
         return self
 
     def get_frame(self, frame: int):

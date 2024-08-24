@@ -101,7 +101,7 @@ class AnimationPanelAction(AnimationPanel):
             draw_file_name=sm64_props.export_type != "Binary",
             export_type=sm64_props.export_type,
             actor_name=get_anim_actor_name(context),
-            gen_enums=get_anim_props(context).table.gen_enums,
+            gen_enums=get_anim_props(context).gen_enums,
             dma=dma_structure_context(context),
         )
 
@@ -124,7 +124,7 @@ class ObjAnimPanelTable(ObjAnimPanel):
 
     def draw(self, context: Context):
         sm64_props: SM64_Properties = context.scene.fast64.sm64
-        get_anim_props(context).table.draw_props(
+        get_anim_props(context).draw_table(
             self.layout,
             dma_structure_context(context),
             get_anim_props(context).update_table,

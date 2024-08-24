@@ -93,7 +93,7 @@ class SM64_AnimTableOps(OperatorBase):
     header_variant: IntProperty()
 
     def execute_operator(self, context):
-        table_elements = get_anim_props(context).table.elements
+        table_elements = get_anim_props(context).elements
         if self.op_name == "MOVE_UP":
             table_elements.move(self.index, self.index - 1)
         elif self.op_name == "MOVE_DOWN":
@@ -251,7 +251,7 @@ class SM64_SearchAnimatedBhvs(SearchEnumOperatorBase):
     behaviour: EnumProperty(items=enum_animated_behaviours)
 
     def update_enum(self, context: Context):
-        get_anim_props(context).table.behaviour = self.behaviour
+        get_anim_props(context).behaviour = self.behaviour
 
 
 classes = (

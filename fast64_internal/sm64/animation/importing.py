@@ -337,23 +337,23 @@ def from_table_element_class(element_props: "SM64_AnimTableElement", element: An
 
 
 def from_anim_table_class(
-    table_props: "SM64_AnimTableProperties",
+    anim_props: "SM64_ArmatureAnimProperties",
     table: AnimationTable,
     clear_table: bool,
     use_custom_name: bool,
     actor_name: str,
 ):
     if clear_table:
-        table_props.elements.clear()
+        anim_props.elements.clear()
     for element in table.elements:
-        table_props.elements.add()
-        from_table_element_class(table_props.elements[-1], element)
+        anim_props.elements.add()
+        from_table_element_class(anim_props.elements[-1], element)
 
     if isinstance(table.reference, int):  # Binary
-        table_props.dma_address = intToHex(table.reference)
-        table_props.dma_end_address = intToHex(table.end_address)
-        table_props.address = intToHex(table.reference)
-        table_props.end_address = intToHex(table.end_address)
+        anim_props.dma_address = intToHex(table.reference)
+        anim_props.dma_end_address = intToHex(table.end_address)
+        anim_props.address = intToHex(table.reference)
+        anim_props.end_address = intToHex(table.end_address)
 
         # Data
         start_addresses = []
@@ -363,14 +363,14 @@ def from_anim_table_class(
                 start_addresses.append(element.header.data.start_address)
                 end_addresses.append(element.header.data.end_address)
         if start_addresses and end_addresses:
-            table_props.write_data_seperately = True
-            table_props.data_address = intToHex(min(start_addresses))
-            table_props.data_end_address = intToHex(max(end_addresses))
+            anim_props.write_data_seperately = True
+            anim_props.data_address = intToHex(min(start_addresses))
+            anim_props.data_end_address = intToHex(max(end_addresses))
     elif table.reference:
         if use_custom_name:
-            table_props.custom_table_name = table.reference
-            if table_props.get_name(actor_name) != table_props.custom_table_name:
-                table_props.use_custom_table_name = True
+            anim_props.custom_table_name = table.reference
+            if anim_props.get_table_name(actor_name) != anim_props.custom_table_name:
+                anim_props.use_custom_table_name = True
 
 
 def animation_import_to_blender(
@@ -534,7 +534,6 @@ def import_animations(context: Context):
     sm64_props: SM64_Properties = scene.fast64.sm64
     import_props: SM64_AnimImportProperties = sm64_props.animation.importing
     anim_props: SM64_ArmatureAnimProperties = armature_obj.data.fast64.sm64.animation
-    table_props: SM64_AnimTableProperties = anim_props.table
 
     update_table_preset(import_props, context)
 
@@ -640,7 +639,7 @@ def import_animations(context: Context):
 
     print("Importing animation table into properties.")
     from_anim_table_class(  # TODO: is the table address range including the null delimiter?
-        table_props, table, import_props.clear_table, import_props.use_custom_name, get_anim_actor_name(context)
+        anim_props, table, import_props.clear_table, import_props.use_custom_name, get_anim_actor_name(context)
     )
 
 
