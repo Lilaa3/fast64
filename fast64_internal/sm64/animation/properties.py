@@ -502,14 +502,13 @@ class SM64_AnimTableElement(PropertyGroup):
         index: int,
         dma: bool,
         updates_table: bool,
-        can_reference: bool,
         export_seperately: bool,
         export_type: str,
         gen_enums: bool,
         actor_name: str,
     ):
         col = prop_layout.column()
-        if can_reference:
+        if not dma:
             reference_row = row.row()
             reference_row.alignment = "LEFT"
             reference_row.prop(self, "reference")
@@ -528,7 +527,7 @@ class SM64_AnimTableElement(PropertyGroup):
         headers = action_props.headers
         variant = self.variant
         if 0 <= variant < len(headers):
-            header_props = self.get_header(can_reference)
+            header_props = self.get_header(not dma)
             if dma:
                 name = get_dma_anim_name(index)
             else:
@@ -877,6 +876,15 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
     def override_files(self) -> bool:
         return not self.export_seperately or self.override_files_prop
 
+    @property
+    def actions(self) -> list[Action]:
+        actions = []
+        for element_props in self.elements:
+            action = element_props.get_action(not self.is_dma)
+            if action and action not in actions:
+                actions.append(action)
+        return actions
+
     def get_table_name(self, actor_name: str) -> str:
         if self.use_custom_table_name:
             return self.custom_table_name
@@ -890,22 +898,11 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
         table_name = self.get_table_name(actor_name)
         return f"{table_name.upper()}_END"
 
-    def get_table_actions(self, can_reference: bool) -> list[Action]:
-        actions = []
-        for element_props in self.elements:
-            action = element_props.get_action(can_reference)
-            if action and action not in actions:
-                actions.append(action)
-        return actions
-
     def draw_element(
         self,
         layout: UILayout,
         index: int,
         table_element: SM64_AnimTableElement,
-        dma: bool,
-        updates_table: bool,
-        can_reference: bool,
         export_type: str,
         actor_name: str,
     ):
@@ -921,19 +918,18 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
             left_row,
             col,
             index,
-            dma,
-            updates_table,
-            can_reference,
+            self.is_dma,
+            self.update_table,
             self.export_seperately,
             export_type,
             self.gen_enums,
             actor_name,
         )
 
-    def draw_table(self, layout: UILayout, dma: bool, updates_table: bool, export_type: str, actor_name: str):
+    def draw_table(self, layout: UILayout, export_type: str, actor_name: str):
         col = layout.column()
 
-        if dma:
+        if self.is_dma:
             if export_type == "Binary":
                 string_int_prop(col, self, "dma_address", "DMA Table Address")
                 string_int_prop(col, self, "dma_end_address", "DMA Table End")
@@ -984,7 +980,6 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
 
         col.separator()
 
-        can_reference = not dma
         op_row = col.row()
         op_row.label(text="Headers" + (f" ({len(self.elements)})" if self.elements else ""), icon="NLA")
         draw_list_op(op_row, SM64_AnimTableOps, "ADD")
@@ -997,9 +992,9 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
             if i != 0:
                 box.separator()
 
-            self.draw_element(box, i, element_props, dma, updates_table, can_reference, export_type, actor_name)
-            action = element_props.get_action(can_reference)
-            if dma and action:
+            self.draw_element(box, i, element_props, export_type, actor_name)
+            action = element_props.get_action(can_reference=not self.is_dma)
+            if self.is_dma and action:
                 duplicate_indeces = [str(j) for j, a in enumerate(actions) if a == action and j < i - 1]
                 if duplicate_indeces:  # TODO: Should this show up once at the top instead?
                     multilineLabel(

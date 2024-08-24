@@ -379,11 +379,7 @@ def to_table_class(
     bone_count = len(get_anim_pose_bones(armature_obj))
     action_pairs = get_animation_pairs(
         blender_to_sm64_scale,
-        [
-            action
-            for action in anim_props.get_table_actions(can_reference)
-            if not (can_reference and action.fast64.sm64.reference_tables)
-        ],
+        [action for action in anim_props.actions if not (can_reference and action.fast64.sm64.reference_tables)],
         armature_obj,
         quick_read,
     )
@@ -911,7 +907,7 @@ def export_animation_table(context: Context, armature_obj: Object):
     actor_name = get_anim_actor_name(context)
 
     print("Stashing all actions in table")
-    for action in anim_props.get_table_actions(can_reference=not anim_props.is_dma):
+    for action in anim_props.actions:
         stashActionInArmature(armature_obj, action)
 
     print("Reading table data from fast64")

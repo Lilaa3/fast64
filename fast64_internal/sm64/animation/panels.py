@@ -126,8 +126,6 @@ class ObjAnimPanelTable(ObjAnimPanel):
         sm64_props: SM64_Properties = context.scene.fast64.sm64
         get_anim_props(context).draw_table(
             self.layout,
-            dma_structure_context(context),
-            get_anim_props(context).update_table,
             sm64_props.export_type,
             get_anim_actor_name(context),
         )
