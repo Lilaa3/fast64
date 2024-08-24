@@ -984,28 +984,48 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
         op_row.label(text="Headers" + (f" ({len(self.elements)})" if self.elements else ""), icon="NLA")
         draw_list_op(op_row, SM64_AnimTableOps, "ADD")
         draw_list_op(op_row, SM64_AnimTableOps, "CLEAR", collection=self.elements)
+
         if self.elements:
             box = col.box().column()
-        actions = []  # for checking for dma duplicates
+
+        actions_dups: dict[Action, list[int]] = {}
+        if self.is_dma:
+            actions_repeats: dict[Action, list[int]] = {}  # possible dups
+            last_action = None
+            for i, element_props in enumerate(self.elements):
+                action = element_props.get_action(can_reference=not self.is_dma)
+                if action != last_action:
+                    if action in actions_repeats:
+                        actions_repeats[action].append(i)
+                        if action not in actions_dups:
+                            actions_dups[action] = actions_repeats[action]
+                    else:
+                        actions_repeats[action] = [i]
+                last_action = action
+
+        if actions_dups:
+            text = "\n".join(f'Action "{action.name}", Headers: {indexes}' for action, indexes in actions_dups.items())
+            warn_box = box.box()
+            warn_box.alert = True
+            multilineLabel(
+                warn_box,
+                "In DMA tables, headers for each action must be \n"
+                "in one sequence or the data will be duplicated.\n"
+                "This will be handeled automatically but is undesirable.\n"
+                f'Data duplicate{"s" if len(actions_dups) > 1 else ""} in:\n' + text,
+                "INFO",
+            )
+
         element_props: SM64_AnimTableElement
         for i, element_props in enumerate(self.elements):
             if i != 0:
                 box.separator()
-
-            self.draw_element(box, i, element_props, export_type, actor_name)
-            action = element_props.get_action(can_reference=not self.is_dma)
-            if self.is_dma and action:
-                duplicate_indeces = [str(j) for j, a in enumerate(actions) if a == action and j < i - 1]
-                if duplicate_indeces:  # TODO: Should this show up once at the top instead?
-                    multilineLabel(
-                        box.box(),
-                        "In DMA tables, headers for each action must be \n"
-                        "in one sequence or the data will be duplicated.\n"
-                        f'Data duplicate{"s in elements" if len(duplicate_indeces) > 1 else " in element"} '
-                        + ", ".join(duplicate_indeces),
-                        "INFO",
-                    )
-            actions.append(action)
+            element_box = box.column()
+            action = element_props.get_action(not self.is_dma)
+            if action in actions_dups:
+                element_box.alert = True
+                element_box.box().label(text=f"Action duplicates at {[j for j in actions_dups[action] if j != i]}")
+            self.draw_element(element_box, i, element_props, export_type, actor_name)
 
     def draw_c_settings(self, layout: UILayout, header_type: str):
         col = layout.column()
