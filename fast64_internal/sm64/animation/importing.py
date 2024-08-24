@@ -18,7 +18,7 @@ from ...utility import (
     intToHex,
     removeComments,
 )
-from ...utility_anim import stashActionInArmature
+from ...utility_anim import create_basic_action, stashActionInArmature
 from ..sm64_constants import level_pointers
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_utility import import_rom_checks
@@ -383,9 +383,7 @@ def animation_import_to_blender(
     force_quaternion: bool,
     continuity_filter: bool,
 ):
-    if armature_obj.animation_data is None:
-        armature_obj.animation_data_create()
-    action = bpy.data.actions.new("")
+    action = create_basic_action(armature_obj, "")
     try:
         if anim_import.data:
             print("Converting pairs to intermidiate data.")

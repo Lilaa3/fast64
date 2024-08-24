@@ -4,17 +4,12 @@ from bpy.types import Context, Scene, Action
 from bpy.props import EnumProperty, StringProperty, IntProperty
 
 from ...operators import OperatorBase, SearchEnumOperatorBase
-from ...utility import copyPropertyGroup
+from ...utility import PluginError, copyPropertyGroup
+from ...utility_anim import create_basic_action, stashActionInArmature, get_action
 
 from .importing import import_animations, get_enum_from_import_preset
 from .exporting import export_animation, export_animation_table
-from .utility import (
-    get_action,
-    animation_operator_checks,
-    get_scene_anim_props,
-    get_anim_props,
-    get_anim_actor_name,
-)
+from .utility import animation_operator_checks, get_scene_anim_props, get_anim_props, get_anim_actor_name
 from .constants import enum_anim_tables, enum_animated_behaviours
 
 from typing import TYPE_CHECKING
@@ -62,7 +57,7 @@ class SM64_PreviewAnim(OperatorBase):
     played_header: IntProperty(name="Header", min=0, default=0)
     played_action: StringProperty(name="Action")
 
-    def execute_operator(self, context: Context):
+    def execute_operator(self, context):
         animation_operator_checks(context)
         played_action = get_action(self.played_action)
         scene = context.scene
@@ -97,7 +92,7 @@ class SM64_AnimTableOps(OperatorBase):
     action_name: StringProperty()
     header_variant: IntProperty()
 
-    def execute_operator(self, context: Context):
+    def execute_operator(self, context):
         table_elements = get_anim_props(context).table.elements
         if self.op_name == "MOVE_UP":
             table_elements.move(self.index, self.index - 1)
@@ -190,10 +185,10 @@ class SM64_ExportAnimTable(OperatorBase):
     icon = "EXPORT"
 
     @classmethod
-    def poll(cls, context: Context):
+    def poll(cls, context):
         return context.mode == "OBJECT" and context.object and context.object.type == "ARMATURE"
 
-    def execute_operator(self, context: Context):
+    def execute_operator(self, context):
         animation_operator_checks(context)
         export_animation_table(context, context.object)
         self.report({"INFO"}, "Exported animation table successfully!")
@@ -208,10 +203,10 @@ class SM64_ExportAnim(OperatorBase):
     icon = "ACTION"
 
     @classmethod
-    def poll(cls, context: Context):
+    def poll(cls, context):
         return context.mode == "OBJECT" and context.object and context.object.type == "ARMATURE"
 
-    def execute_operator(self, context: Context):
+    def execute_operator(self, context):
         animation_operator_checks(context)
         export_animation(context, context.object)
         self.report({"INFO"}, "Exported animation successfully!")

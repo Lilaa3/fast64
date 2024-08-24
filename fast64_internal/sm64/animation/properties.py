@@ -943,7 +943,6 @@ class SM64_AnimProperties(PropertyGroup):
     played_action: PointerProperty(name="Action", type=Action)
 
     importing: PointerProperty(type=SM64_AnimImportProperties)
-    selected_action: PointerProperty(name="Action", type=Action)
 
     def update_version_0(self, scene: Scene):
         importing: SM64_AnimImportProperties = self.importing

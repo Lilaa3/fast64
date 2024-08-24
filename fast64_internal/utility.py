@@ -1,7 +1,7 @@
 import bpy, random, string, os, math, traceback, re, os, mathutils, ast, operator
 from math import pi, ceil, degrees, radians, copysign
 from mathutils import *
-from .utility_anim import *
+
 from typing import Callable, Iterable, Any, Optional, Tuple, TypeVar, Union
 from bpy.types import UILayout, Scene, World
 
@@ -815,6 +815,13 @@ def translation_rotation_from_mtx(mtx: mathutils.Matrix):
 
 def scale_mtx_from_vector(scale: mathutils.Vector):
     return mathutils.Matrix.Diagonal(scale[0:3]).to_4x4()
+
+
+def attemptModifierApply(modifier):
+    try:
+        bpy.ops.object.modifier_apply(modifier=modifier.name)
+    except Exception as e:
+        print("Skipping modifier " + str(modifier.name))
 
 
 def copy_object_and_apply(obj: bpy.types.Object, apply_scale=False, apply_modifiers=False):

@@ -1,11 +1,20 @@
 from cProfile import Profile
 from pstats import SortKey, Stats
+from typing import Optional
 
 import bpy, mathutils
 from bpy.types import Operator, Context, UILayout, EnumProperty
 from bpy.utils import register_class, unregister_class
-from .utility import *
-from .f3d.f3d_material import *
+
+from .utility import (
+    cleanupTempMeshes,
+    get_mode_set_from_context_mode,
+    raisePluginError,
+    parentObject,
+    store_original_meshes,
+    store_original_mtx,
+)
+from .f3d.f3d_material import createF3DMat
 
 
 def addMaterialByName(obj, matName, preset):

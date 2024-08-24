@@ -32,14 +32,6 @@ def animation_operator_checks(context: Context, requires_animation=True, specifi
         raise PluginError(f'Armature "{obj.name}" has no animation data.')
 
 
-def get_action(name: str):
-    if name == "":
-        raise ValueError("Empty action name.")
-    if not name in bpy.data.actions:
-        raise IndexError(f"Action ({name}) is not in this file´s action data.")
-    return bpy.data.actions[name]
-
-
 def get_selected_action(armature: Object, raise_exc=True) -> Action:
     assert armature is not None
     if armature.type == "ARMATURE" and armature.animation_data and armature.animation_data.action:
