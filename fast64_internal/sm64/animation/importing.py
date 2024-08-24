@@ -595,12 +595,14 @@ def import_animations(context: Context):
     if import_props.preset in ACTOR_PRESET_INFO:
         preset_animation_names = get_preset_anim_name_list(import_props.preset)
         for animation in read_animations.values():
-            animation_names = []
+            if len(animation.headers) == 0:
+                continue
+            names, indexes = [], []
             for header in animation.headers:
                 if header.table_index < len(preset_animation_names):
-                    animation_names.append(preset_animation_names[header.table_index])
-            if animation_names:
-                animation.action_name = " ".join(animation_names)
+                    names.append(preset_animation_names[header.table_index])
+                    indexes.append(str(header.table_index))
+            animation.action_name = f"{'/'.join(indexes)} - {'/'.join(names)}"
 
     print("Importing animations into blender.")
     actions = []
@@ -645,7 +647,7 @@ def import_animations(context: Context):
 @functools.cache
 def cached_enum_from_import_preset(preset: str) -> list[str, str, str, int]:
     animation_names = get_preset_anim_name_list(preset)
-    return [("Custom", "Custom", "Pick your own animation index", len(animation_names))] + [
+    return [("Custom", "Custom", "Pick your own animation index", len(animation_names)), ("", "Presets", "")] + [
         (str(i), f"{i} - {name}", f'"{preset}" Animation {i}', i) for i, name in enumerate(animation_names)
     ]
 

@@ -4,8 +4,8 @@ from bpy.types import Context, Scene, Action
 from bpy.props import EnumProperty, StringProperty, IntProperty
 
 from ...operators import OperatorBase, SearchEnumOperatorBase
-from ...utility import PluginError, copyPropertyGroup
-from ...utility_anim import create_basic_action, stashActionInArmature, get_action
+from ...utility import copyPropertyGroup
+from ...utility_anim import get_action
 
 from .importing import import_animations, get_enum_from_import_preset
 from .exporting import export_animation, export_animation_table

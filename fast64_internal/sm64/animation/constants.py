@@ -52,8 +52,8 @@ enum_anim_binary_import_types = [
 ]
 
 
-enum_animated_behaviours = [("Custom", "Custom Behavior", "Custom")]
-enum_anim_tables = [("Custom", "Custom", "Custom")]
+enum_animated_behaviours = [("Custom", "Custom Behavior", "Custom"), ("", "Presets", "")]
+enum_anim_tables = [("Custom", "Custom", "Custom"), ("", "Presets", "")]
 for actor_name, preset_info in ACTOR_PRESET_INFO.items():
     if not preset_info.animation:
         continue

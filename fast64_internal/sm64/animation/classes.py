@@ -374,7 +374,7 @@ class Animation:
     file_name: str = ""
 
     # Imports
-    action_name: str = ""
+    action_name: str = ""  # Used for the blender action's name
     action: Action | None = None  # Used in the table class to prop function
 
     @property
