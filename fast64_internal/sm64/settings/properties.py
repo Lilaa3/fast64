@@ -6,7 +6,7 @@ from bpy.path import abspath
 from bpy.utils import register_class, unregister_class
 
 from ...render_settings import on_update_render_settings
-from ...utility import directory_path_checks, directory_ui_warnings, prop_split, upgrade_old_prop
+from ...utility import directory_path_checks, directory_ui_warnings, prop_split, upgrade_old_prop, get_first_set_prop
 from ..sm64_constants import defaultExtendSegment4
 from ..sm64_objects import SM64_CombinedObjectProperties
 from ..sm64_utility import export_rom_ui_warnings, import_rom_ui_warnings
@@ -33,7 +33,7 @@ class SM64_Properties(PropertyGroup):
     """Global SM64 Scene Properties found under scene.fast64.sm64"""
 
     version: IntProperty(name="SM64_Properties Version", default=0)
-    cur_version = 3  # version after property migration
+    cur_version = 4  # version after property migration
 
     # UI Selection
     show_importing_menus: BoolProperty(name="Show Importing Menus", default=False)
@@ -108,6 +108,8 @@ class SM64_Properties(PropertyGroup):
             "group_name": {"geoGroupName", "colGroupName", "animGroupName"},
             "level_name": {"levelOption", "geoLevelOption", "colLevelOption", "animLevelOption"},
             "export_header_type": {"geoExportHeaderType", "colExportHeaderType", "animExportHeaderType"},
+            "binary_level": {"levelAnimExport"},
+            # as the others binary props get carried over to here we need to update the cur_version again
         }
         for scene in bpy.data.scenes:
             sm64_props: SM64_Properties = scene.fast64.sm64
@@ -133,6 +135,12 @@ class SM64_Properties(PropertyGroup):
             combined_props = scene.fast64.sm64.combined_export
             for new, old in old_export_props_to_new.items():
                 upgrade_old_prop(combined_props, new, scene, old)
+
+            insertable_directory_path = get_first_set_prop(scene, "animInsertableBinaryPath")
+            if insertable_directory_path:
+                # Ignores file name
+                combined_props.insertable_directory_path = os.path.split(insertable_directory_path)[0]
+
             sm64_props.version = SM64_Properties.cur_version
 
     def draw_props(self, layout: UILayout, show_repo_settings: bool = True):

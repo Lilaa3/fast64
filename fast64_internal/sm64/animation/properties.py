@@ -635,6 +635,16 @@ class SM64_AnimImportProperties(PropertyGroup):
     def table_size(self):
         return None if self.check_null else self.table_size_prop
 
+    def upgrade_old_props(self, scene: Scene):
+        upgrade_old_prop(self, "animation_address", scene, "animStartImport", fix_forced_base_16=True)
+        upgrade_old_prop(self, "is_segmented_address_prop", scene, "animIsSegPtr")
+        upgrade_old_prop(self, "level", scene, "levelAnimImport")
+        upgrade_old_prop(self, "table_index_prop", scene, "animListIndexImport")
+        if scene.pop("isDMAImport", False):
+            self.binary_import_type = "DMA"
+        elif scene.pop("animIsAnimList", True):
+            self.binary_import_type = "Table"
+
     def draw_clean_up(self, layout: UILayout):
         col = layout.column()
         col.prop(self, "run_decimate")
@@ -773,58 +783,54 @@ class SM64_AnimProperties(PropertyGroup):
 
     importing: PointerProperty(type=SM64_AnimImportProperties)
 
-    def update_version_0(self, scene: Scene):
-        importing: SM64_AnimImportProperties = self.importing
+    def upgrade_old_props(self, scene: Scene):
+        self.importing.upgrade_old_props(scene)
 
-        upgrade_old_prop(importing, "animation_address", scene, "animStartImport", fix_forced_base_16=True)
-        upgrade_old_prop(importing, "is_segmented_address_prop", scene, "animIsSegPtr")
-        upgrade_old_prop(importing, "level", scene, "levelAnimImport")
-        upgrade_old_prop(importing, "table_index_prop", scene, "animListIndexImport")
-        if scene.pop("isDMAImport", False):
-            importing.binary_import_type = "DMA"
-        elif scene.pop("animIsAnimList", True):
-            importing.binary_import_type = "Table"
         # Export
-        loop = scene.pop("loopAnimation", False)
+        loop = scene.pop("loopAnimation", None)
+        start_address = scene.pop("animExportStart", None)
+        end_address = scene.pop("animExportEnd", None)
+
         for action in bpy.data.actions:
             action_props: SM64_ActionProperty = action.fast64.sm64
-            action_props.header.no_loop = not loop
-            upgrade_old_prop(action_props, "start_address", scene, "animExportStart", fix_forced_base_16=True)
-            upgrade_old_prop(action_props, "start_address", scene, "animExportStart", fix_forced_base_16=True)
-            upgrade_old_prop(action_props, "end_address", scene, "animExportEnd", fix_forced_base_16=True)
-        custom_export = scene.pop("animCustomExport", False)
-        if custom_export:
-            self.header_type = "Custom"
-        else:
-            upgrade_old_prop(self, "header_type", scene, "animExportHeaderType")
+            if loop is not None:
+                action_props.header.no_loop = not loop
+            if start_address is not None:
+                action_props.start_address = intToHex(int(start_address, 16))
+            if end_address is not None:
+                action_props.end_address = intToHex(int(end_address, 16))
 
-        self.directory_path = scene.get("animExportPath", self.directory_path)
-        upgrade_old_prop(self, "directory_path", scene, "animExportPath")
-        upgrade_old_prop(self, "actor_name_prop", scene, "animName")
-        upgrade_old_prop(self, "group_name", scene, "animGroupName")
-        upgrade_old_prop(self, "level_option", scene, "animLevelOption")
-        upgrade_old_prop(self, "custom_level_name", scene, "animLevelName")
-        upgrade_old_prop(self, "is_dma", scene, "isDMAExport")
-        upgrade_old_prop(self, "binary_level", scene, "levelAnimExport")
+        is_dma = scene.pop("loopAnimation", None)
+        update_table = scene.pop("animExportStart", None)
+        update_behavior = scene.pop("animExportEnd", None)
+        begining_animation = scene.pop("animExportEnd", None)
+        for obj in bpy.data.objects:
+            if obj.type != "ARMATURE":  # TODO: update if i end up adding object support
+                continue
+            anim_props: SM64_ArmatureAnimProperties = obj.data.fast64.sm64.animation
+            if is_dma is not None:
+                anim_props.is_dma = is_dma
+            if update_table is not None:
+                anim_props.update_table = update_table
+            if update_behavior is not None:
+                anim_props.update_behavior = update_behavior
+            if begining_animation is not None:
+                anim_props.begining_animation = begining_animation
 
-        insertable_directory_path = scene.pop("animInsertableBinaryPath", "")
-        if insertable_directory_path:
-            # Ignores file name
-            self.insertable_directory_path = os.path.split(insertable_directory_path)[0]
-
-        upgrade_old_prop(self, "update_table", scene, "setAnimListIndex")
-        table: SM64_AnimTableProperties = self.table
+        # Deprecated:
+        # addr 0x27 was a pointer to a load anim cmd that would be used to update table pointers
+        # the actual table pointer is used instead
+        # addr 0x28 was a pointer to a animate cmd that would be updated to the beggining animation
+        # a behavior script pointer is used instead so both load an animate can be updated easily without much thought
         # upgrade_old_prop(table, "", scene, "addr_0x27", fix_forced_base_16=True)
         # upgrade_old_prop(table, "", scene, "addr_0x28", fix_forced_base_16=True)
-        upgrade_old_prop(table, "update_behavior", scene, "overwrite_0x28")
-        upgrade_old_prop(table, "begining_animation", scene, "animListIndexExport")
 
         self.version = 1
 
     def upgrade_changed_props(self, scene):
-        if self.version == 0:
-            self.update_version_0(scene)
-        self.version = SM64_AnimProperties.cur_version
+        if self.version != self.cur_version:
+            self.upgrade_old_props(scene)
+            self.version = SM64_AnimProperties.cur_version
 
 
 class SM64_ArmatureAnimProperties(PropertyGroup):
