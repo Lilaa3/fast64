@@ -66,6 +66,8 @@ from .sm64_geolayout_classes import (
 )
 
 from .animation.exporting import export_animation, export_animation_table
+from .animation.utility import get_anim_obj, is_obj_animatable
+from .animation import SM64_ArmatureAnimProperties
 
 enumTerrain = [
     ("Custom", "Custom", "Custom"),
@@ -1505,7 +1507,9 @@ class BehaviorScriptProperty(bpy.types.PropertyGroup):
         if self.macro == "LOAD_ANIMATIONS":
             if not props.export_anim:
                 raise PluginError("Can't inherit animation table without exporting animation data")
-            return props.anims_name
+            if not props.anims_name:
+                raise PluginError("No animation name to inherit in behavior script")
+            return f"oAnimations, {props.anims_name}"
         return self.macro_args
 
     def get_args(self, context, props):
@@ -1857,7 +1861,7 @@ class SM64_ExportCombinedObject(ObjectDataExporter):
     # var name is: static const struct Animation *const <props.anim_obj>_anims[] (or custom name)
     def execute_anim(self, props, context, obj):
         try:
-            if props.export_anim and props.obj_name_anim and obj is props.anim_object:
+            if props.export_anim and obj is props.anim_object:
                 if props.export_single_action:
                     export_animation(context, obj)
                 else:
@@ -1997,7 +2001,7 @@ class SM64_CombinedObjectProperties(bpy.types.PropertyGroup):
 
     collision_object: bpy.props.PointerProperty(type=bpy.types.Object)
     graphics_object: bpy.props.PointerProperty(type=bpy.types.Object)
-    animation_object: bpy.props.PointerProperty(type=bpy.types.Object, poll=lambda self, obj: obj.type == "ARMATURE")
+    animation_object: bpy.props.PointerProperty(type=bpy.types.Object, poll=lambda self, obj: is_obj_animatable(obj))
 
     # is this abuse of properties?
     @property
@@ -2022,11 +2026,13 @@ class SM64_CombinedObjectProperties(bpy.types.PropertyGroup):
     def anim_object(self):
         if not self.export_anim:
             return None
-        obj = bpy.context.active_object if bpy.context.active_object.type == "ARMATURE" else None
+        obj = get_anim_obj(bpy.context)
+        context_obj = self.context_obj if self.context_obj and is_obj_animatable(self.context_obj) else None
         if self.export_all_selected:
-            return self.context_obj or obj
+            return context_obj or obj
         else:
-            return self.animation_object or self.context_obj or obj
+            assert not self.animation_object or is_obj_animatable(self.animation_object)
+            return self.animation_object or context_obj or obj
 
     @property
     def bhv_object(self):
@@ -2098,7 +2104,9 @@ class SM64_CombinedObjectProperties(bpy.types.PropertyGroup):
 
     @property
     def anims_name(self):
-        return self.anim_object.data.fast64.sm64.animation.get_table_name(self.obj_name_anim)
+        if not self.anim_object:
+            return ""
+        return self.anim_object.fast64.sm64.animation.get_table_name(self.obj_name_anim)
 
     @property
     def export_level_name(self):
@@ -2193,7 +2201,7 @@ class SM64_CombinedObjectProperties(bpy.types.PropertyGroup):
             layout.label(text=f"Model ID: {self.model_id_define}")
 
     def draw_anim_names(self, layout):
-        anim_props = self.anim_object.data.fast64.sm64.animation
+        anim_props = self.anim_object.fast64.sm64.animation
         if self.export_header_type == "Actor":
             if anim_props.is_dma:
                 layout.label(text=f"Animation path: {anim_props.dma_folder}(.c)")
@@ -2794,6 +2802,8 @@ class SM64_ObjectProperties(bpy.types.PropertyGroup):
     area: bpy.props.PointerProperty(type=SM64_AreaProperties)
     game_object: bpy.props.PointerProperty(type=SM64_GameObjectProperties)
     segment_loads: bpy.props.PointerProperty(type=SM64_SegmentProperties)
+
+    animation: bpy.props.PointerProperty(type=SM64_ArmatureAnimProperties)
 
     @staticmethod
     def upgrade_changed_props():

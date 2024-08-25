@@ -186,7 +186,7 @@ class SM64_ExportAnimTable(OperatorBase):
 
     @classmethod
     def poll(cls, context):
-        return context.mode == "OBJECT" and context.object and context.object.type == "ARMATURE"
+        return get_anim_obj(context) is not None
 
     def execute_operator(self, context):
         animation_operator_checks(context)
@@ -204,7 +204,7 @@ class SM64_ExportAnim(OperatorBase):
 
     @classmethod
     def poll(cls, context):
-        return context.mode == "OBJECT" and context.object and context.object.type == "ARMATURE"
+        return get_anim_obj(context) is not None
 
     def execute_operator(self, context):
         animation_operator_checks(context)

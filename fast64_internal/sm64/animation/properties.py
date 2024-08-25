@@ -49,10 +49,7 @@ from .constants import (
     enum_anim_tables,
     FLAG_PROPS,
 )
-from .utility import (
-    get_max_frame,
-    get_dma_anim_name,
-)
+from .utility import get_max_frame, get_dma_anim_name, is_obj_animatable
 from .importing import get_enum_from_import_preset, update_table_preset
 
 
@@ -805,9 +802,9 @@ class SM64_AnimProperties(PropertyGroup):
         update_behavior = scene.pop("animExportEnd", None)
         begining_animation = scene.pop("animExportEnd", None)
         for obj in bpy.data.objects:
-            if obj.type != "ARMATURE":  # TODO: update if i end up adding object support
+            if not is_obj_animatable(obj):  # TODO: update if i end up adding object support
                 continue
-            anim_props: SM64_ArmatureAnimProperties = obj.data.fast64.sm64.animation
+            anim_props: SM64_ArmatureAnimProperties = obj.fast64.sm64.animation
             if is_dma is not None:
                 anim_props.is_dma = is_dma
             if update_table is not None:

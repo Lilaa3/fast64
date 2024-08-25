@@ -4,7 +4,7 @@ from bpy.types import Context
 from ...utility_anim import is_action_stashed, CreateAnimData, AddBasicAction, StashAction
 from ...panels import SM64_Panel
 
-from .utility import get_anim_actor_name, get_anim_props, get_selected_action, dma_structure_context
+from .utility import get_anim_actor_name, get_anim_props, get_selected_action, dma_structure_context, get_anim_obj
 from .operators import SM64_ExportAnim, SM64_ExportAnimTable
 
 from typing import TYPE_CHECKING
@@ -32,7 +32,6 @@ class ObjAnimPanel(AnimationPanel):
     bl_context = "object"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
-    object_type = {"ARMATURE"}
     bl_parent_id = bl_idname
 
 
@@ -47,14 +46,18 @@ class SceneAnimPanelMain(SceneAnimPanel):
         if sm64_props.export_type != "C":
             combined_props.draw_anim_props(self.layout, sm64_props.export_type, dma_structure_context(context))
             SM64_ExportAnimTable.draw_props(self.layout)
-        if not (context.object and context.object.type == "ARMATURE"):
-            self.layout.box().label(text="No selected armature")
+        if get_anim_obj(context) is None:
+            self.layout.box().label(text="No selected armature/animated object")
         else:
             self.layout.box().label(text=f'Armature "{context.object.name}"')
 
 
 class ObjAnimPanelMain(ObjAnimPanel):
     bl_parent_id = "OBJECT_PT_context_object"
+
+    @classmethod
+    def poll(cls, context: Context):
+        return get_anim_obj(context) is not None
 
     def draw(self, context: Context):
         sm64_props: SM64_Properties = context.scene.fast64.sm64
@@ -111,7 +114,7 @@ class SceneAnimPanelAction(AnimationPanelAction, SceneAnimPanel):
 
     @classmethod
     def poll(cls, context: Context):
-        return context.object and context.object.type == "ARMATURE" and SceneAnimPanel.poll(context)
+        return get_anim_obj(context) is not None and SceneAnimPanel.poll(context)
 
 
 class ObjAnimPanelAction(AnimationPanelAction, ObjAnimPanel):
@@ -148,7 +151,7 @@ class SceneAnimPanelImport(SceneAnimPanel, AnimationPanelImport):
 
     @classmethod
     def poll(cls, context: Context):
-        return context.object and context.object.type == "ARMATURE" and AnimationPanelImport.poll(context)
+        return get_anim_obj(context) is not None and AnimationPanelImport.poll(context)
 
 
 class ObjAnimPanelImport(ObjAnimPanel, AnimationPanelImport):

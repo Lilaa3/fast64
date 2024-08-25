@@ -33,12 +33,7 @@ from .classes import (
     AnimationTable,
     AnimationTableElement,
 )
-from .utility import (
-    get_anim_pose_bones,
-    get_anim_actor_name,
-    get_max_frame,
-    get_selected_action,
-)
+from .utility import get_anim_owners, get_anim_actor_name, get_max_frame, get_selected_action
 from .constants import HEADER_SIZE
 
 from typing import TYPE_CHECKING
@@ -71,10 +66,12 @@ def trim_duplicates_vectorized(arr2d: np.ndarray) -> list:
     ]
 
 
-def get_entire_fcurve_data(action: Action, bone: PoseBone, prop: str, max_frame: int, values: np.ndarray) -> list:
-    data_path = bone.path_from_id(prop)
+def get_entire_fcurve_data(
+    action: Action, anim_owner: PoseBone | Object, prop: str, max_frame: int, values: np.ndarray
+) -> list:
+    data_path = anim_owner.path_from_id(prop)
 
-    default_values = list(getattr(bone, prop))
+    default_values = list(getattr(anim_owner, prop))
     populated = [False] * len(default_values)
 
     for fcurve in action.fcurves:
@@ -92,18 +89,15 @@ def get_entire_fcurve_data(action: Action, bone: PoseBone, prop: str, max_frame:
 
 
 def get_animation_pairs(
-    sm64_scale: float, actions: list[Action], armature_obj: Object, quick_read: bool = True
+    sm64_scale: float, actions: list[Action], obj: Object, quick_read=False
 ) -> dict[Action, list[SM64_AnimPair]]:
-    if not actions:
-        return  # TODO: error out?
-
-    anim_bones = get_anim_pose_bones(armature_obj)
-    if len(anim_bones) == 0:
-        raise PluginError(f'No animation bones in armature "{armature_obj.name}"')
+    anim_owners = get_anim_owners(obj)
+    if len(anim_owners) == 0:
+        raise PluginError(f'No animation bones in armature "{obj.name}"')
 
     max_frames = [get_max_frame(action, action.fast64.sm64) for action in actions]
     trans_values = [np.zeros((3, max_frame), dtype=np.float32) for max_frame in max_frames]
-    rot_values = [np.zeros((len(anim_bones) * 3, max_frame), dtype=np.float32) for max_frame in max_frames]
+    rot_values = [np.zeros((len(anim_owners) * 3, max_frame), dtype=np.float32) for max_frame in max_frames]
 
     if quick_read:
 
@@ -114,28 +108,28 @@ def get_animation_pairs(
         for action, max_frame, action_trans, action_rot in zip(actions, max_frames, trans_values, rot_values):
             quats = np.empty((4, max_frame), dtype=np.float32)
             max_frame = get_max_frame(action, action.fast64.sm64)
-            root_bone = anim_bones[0]
-            get_entire_fcurve_data(action, root_bone, "location", max_frame, action_trans)
 
-            for bone_index, pose_bone in enumerate(anim_bones):
-                mode = pose_bone.rotation_mode
+            get_entire_fcurve_data(action, anim_owners[0], "location", max_frame, action_trans)
+
+            for bone_index, anim_owner in enumerate(anim_owners):
+                mode = anim_owner.rotation_mode
                 prop = {"QUATERNION": "rotation_quaternion", "AXIS_ANGLE": "rotation_axis_angle"}.get(
                     mode, "rotation_euler"
                 )
 
                 index = bone_index * 3
                 if mode == "QUATERNION":
-                    get_entire_fcurve_data(action, pose_bone, prop, max_frame, quats)
+                    get_entire_fcurve_data(action, anim_owner, prop, max_frame, quats)
                     action_rot[index : index + 3] = np.apply_along_axis(
                         lambda row: Quaternion(row).to_euler(), 1, quats.T
                     ).T
                 elif mode == "AXIS_ANGLE":
-                    get_entire_fcurve_data(action, pose_bone, prop, max_frame, quats)
+                    get_entire_fcurve_data(action, anim_owner, prop, max_frame, quats)
                     action_rot[index : index + 3] = np.apply_along_axis(
                         lambda row: list(Quaternion(row[1:], row[0]).to_euler()), 1, quats.T
                     ).T
                 else:
-                    get_entire_fcurve_data(action, pose_bone, prop, max_frame, action_rot[index : index + 3])
+                    get_entire_fcurve_data(action, anim_owner, prop, max_frame, action_rot[index : index + 3])
                     if mode != "XYZ":
                         action_rot[index : index + 3] = np.apply_along_axis(
                             to_xyz, -1, action_rot[index : index + 3].T
@@ -143,7 +137,7 @@ def get_animation_pairs(
     else:
         # Alternative to quick_read, read the actual matrix data
         pre_export_frame = bpy.context.scene.frame_current
-        pre_export_action = armature_obj.animation_data.action
+        pre_export_action = obj.animation_data.action
         was_playing = bpy.context.screen.is_animation_playing
 
         try:
@@ -151,23 +145,23 @@ def get_animation_pairs(
                 bpy.ops.screen.animation_play()  # if an animation is being played, stop it
             for action, action_trans, action_rot, max_frame in zip(actions, trans_values, rot_values, max_frames):
                 print(f'Reading animation data from action "{action.name}".')
-                armature_obj.animation_data.action = action
+                obj.animation_data.action = action
                 for frame in range(max_frame):
                     bpy.context.scene.frame_set(frame)
-                    pose_bone = anim_bones[0]  # Root bone
-                    local_matrix = armature_obj.convert_space(
-                        pose_bone=pose_bone, matrix=pose_bone.matrix, from_space="POSE", to_space="LOCAL"
-                    )
-                    action_trans[0:3, frame] = list(local_matrix.to_translation())
 
-                    for bone_index, pose_bone in enumerate(anim_bones):
-                        local_matrix = armature_obj.convert_space(
-                            pose_bone=pose_bone, matrix=pose_bone.matrix, from_space="POSE", to_space="LOCAL"
-                        )
+                    for bone_index, anim_owner in enumerate(anim_owners):
+                        if isinstance(anim_owner, Object):
+                            local_matrix = anim_owner.matrix_local
+                        else:
+                            local_matrix = obj.convert_space(
+                                pose_bone=anim_owner, matrix=anim_owner.matrix, from_space="POSE", to_space="LOCAL"
+                            )
+                        if bone_index == 0:
+                            action_trans[0:3, frame] = list(local_matrix.to_translation())
                         index = bone_index * 3
                         action_rot[index : index + 3, frame] = list(local_matrix.to_euler())
         finally:
-            armature_obj.animation_data.action = pre_export_action
+            obj.animation_data.action = pre_export_action
             bpy.context.scene.frame_set(pre_export_frame)
             if was_playing != bpy.context.screen.is_animation_playing:
                 bpy.ops.screen.animation_play()
@@ -177,8 +171,8 @@ def get_animation_pairs(
         action_trans = trim_duplicates_vectorized(np.round(action_trans * sm64_scale).astype(np.int16))
         action_rot = trim_duplicates_vectorized((np.degrees(action_rot) * (2**16 / 360.0)).astype(np.int16))
 
-        pairs = [SM64_AnimPair(action_trans[i][:max_frame]) for i in range(3)]
-        pairs.extend([SM64_AnimPair(action_rot[i][:max_frame]) for i in range(len(anim_bones) * 3)])
+        pairs = [SM64_AnimPair(action_trans[i][:max_frame]) for i in range(3)]  # TODO: dont use range
+        pairs.extend([SM64_AnimPair(action_rot[i][:max_frame]) for i in range(len(anim_owners) * 3)])
         action_pairs[action] = pairs
 
     return action_pairs
@@ -236,7 +230,7 @@ def to_data_class(
 def to_animation_class(
     action_props: "SM64_ActionProperty",
     action: Action,
-    armature_obj: Object,
+    obj: Object,
     blender_to_sm64_scale: float,
     quick_read: bool,
     export_type: str,
@@ -257,11 +251,11 @@ def to_animation_class(
         else:
             values_reference, indice_reference = action_props.values_table, action_props.indices_table
     else:
-        pairs = get_animation_pairs(blender_to_sm64_scale, [action], armature_obj, quick_read)[action]
+        pairs = get_animation_pairs(blender_to_sm64_scale, [action], obj, quick_read)[action]
         animation.data = to_data_class(action, pairs, animation.file_name)
         values_reference = animation.data.values_reference
         indice_reference = animation.data.indice_reference
-    bone_count = len(get_anim_pose_bones(armature_obj))
+    bone_count = len(get_anim_owners(obj))
     for header_props in action_props.headers:
         animation.headers.append(
             to_header_class(
@@ -356,7 +350,7 @@ def to_table_element_class(
 
 def to_table_class(
     anim_props: "SM64_ArmatureAnimProperties",
-    armature_obj: Object,
+    obj: Object,
     blender_to_sm64_scale: float,
     quick_read: bool,
     export_type: str = "C",
@@ -376,11 +370,11 @@ def to_table_class(
 
     header_dict: dict[SM64_AnimHeaderProperties, AnimationHeader] = {}
 
-    bone_count = len(get_anim_pose_bones(armature_obj))
+    bone_count = len(get_anim_owners(obj))
     action_pairs = get_animation_pairs(
         blender_to_sm64_scale,
         [action for action in anim_props.actions if not (can_reference and action.fast64.sm64.reference_tables)],
-        armature_obj,
+        obj,
         quick_read,
     )
     data_dict = {}
@@ -849,23 +843,23 @@ def export_animation_c(
         )
 
 
-def export_animation(context: Context, armature_obj: Object):
+def export_animation(context: Context, obj: Object):
     scene = context.scene
     sm64_props: SM64_Properties = scene.fast64.sm64
     combined_props: SM64_CombinedObjectProperties = sm64_props.combined_export
-    anim_props: SM64_ArmatureAnimProperties = armature_obj.data.fast64.sm64.animation
+    anim_props: SM64_ArmatureAnimProperties = obj.fast64.sm64.animation
     actor_name = get_anim_actor_name(context)
 
-    action = get_selected_action(armature_obj)
+    action = get_selected_action(obj)
     action_props: SM64_ActionProperty = action.fast64.sm64
-    stashActionInArmature(armature_obj, action)
-    bone_count = len(get_anim_pose_bones(armature_obj))
+    stashActionInArmature(obj, action)
+    bone_count = len(get_anim_owners(obj))
 
     try:
         animation: Animation = to_animation_class(
             action_props,
             action,
-            armature_obj,
+            obj,
             sm64_props.blender_to_sm64_scale,
             combined_props.quick_anim_read,
             sm64_props.export_type,
@@ -897,24 +891,27 @@ def export_animation(context: Context, armature_obj: Object):
         raise NotImplementedError(f"Export type {sm64_props.export_type} is not implemented")
 
 
-def export_animation_table(context: Context, armature_obj: Object):
+def export_animation_table(context: Context, obj: Object):
     bpy.ops.object.mode_set(mode="OBJECT")
 
     scene = context.scene
     sm64_props: SM64_Properties = scene.fast64.sm64
     combined_props: SM64_CombinedObjectProperties = sm64_props.combined_export
-    anim_props: SM64_ArmatureAnimProperties = armature_obj.data.fast64.sm64.animation
+    anim_props: SM64_ArmatureAnimProperties = obj.fast64.sm64.animation
     actor_name = get_anim_actor_name(context)
 
     print("Stashing all actions in table")
     for action in anim_props.actions:
-        stashActionInArmature(armature_obj, action)
+        stashActionInArmature(obj, action)
 
-    print("Reading table data from fast64")
+    if len(anim_props.elements) == 0:
+        raise PluginError("Empty animation table")
+
     try:
+        print("Reading table data from fast64")
         table = to_table_class(
             anim_props,
-            armature_obj,
+            obj,
             sm64_props.blender_to_sm64_scale,
             combined_props.quick_anim_read,
             sm64_props.export_type,

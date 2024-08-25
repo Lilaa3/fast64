@@ -24,12 +24,7 @@ from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_utility import import_rom_checks
 from ..sm64_classes import RomReader
 
-from .utility import (
-    animation_operator_checks,
-    get_anim_pose_bones,
-    get_scene_anim_props,
-    get_anim_actor_name,
-)
+from .utility import animation_operator_checks, get_anim_owners, get_scene_anim_props, get_anim_actor_name
 from .classes import (
     Animation,
     CArrayDeclaration,
@@ -374,7 +369,7 @@ def from_anim_table_class(
 
 
 def animation_import_to_blender(
-    armature_obj: Object,
+    obj: Object,
     blender_to_sm64_scale: float,
     anim_import: Animation,
     actor_name: str,
@@ -383,11 +378,11 @@ def animation_import_to_blender(
     force_quaternion: bool,
     continuity_filter: bool,
 ):
-    action = create_basic_action(armature_obj, "")
+    action = create_basic_action(obj, "")
     try:
         if anim_import.data:
             print("Converting pairs to intermidiate data.")
-            bones = get_anim_pose_bones(armature_obj)
+            bones = get_anim_owners(obj)
             bones_data: list[IntermidiateAnimationBone] = []
             pairs = anim_import.data.pairs
             for pair_num in range(3, len(pairs), 3):
@@ -403,7 +398,7 @@ def animation_import_to_blender(
                 bone_data.populate_action(action, pose_bone)
 
         from_anim_class(action.fast64.sm64, action, anim_import, actor_name, use_custom_name, import_type)
-        stashActionInArmature(armature_obj, action)
+        stashActionInArmature(obj, action)
         return action
     except PluginError as exc:
         bpy.data.actions.remove(action)
@@ -530,10 +525,10 @@ def import_animations(context: Context):
     animation_operator_checks(context, False)
 
     scene = context.scene
-    armature_obj: Object = context.object
+    obj: Object = context.object
     sm64_props: SM64_Properties = scene.fast64.sm64
     import_props: SM64_AnimImportProperties = sm64_props.animation.importing
-    anim_props: SM64_ArmatureAnimProperties = armature_obj.data.fast64.sm64.animation
+    anim_props: SM64_ArmatureAnimProperties = obj.fast64.sm64.animation
 
     update_table_preset(import_props, context)
 
@@ -544,7 +539,7 @@ def import_animations(context: Context):
     print("Reading animation data.")
 
     if import_props.import_type in {"Binary", "Insertable Binary"}:
-        bone_count = len(get_anim_pose_bones(armature_obj)) if import_props.assume_bone_count else None
+        bone_count = len(get_anim_owners(obj)) if import_props.assume_bone_count else None
         binary_args = (
             read_headers,
             read_animations,
@@ -608,7 +603,7 @@ def import_animations(context: Context):
     for animation in read_animations.values():
         actions.append(
             animation_import_to_blender(
-                armature_obj,
+                obj,
                 sm64_props.blender_to_sm64_scale,
                 animation,
                 get_anim_actor_name(context),
@@ -622,20 +617,21 @@ def import_animations(context: Context):
     if import_props.run_decimate:
         print("Decimating imported actions's fcurves")
         old_area = bpy.context.area.type
-        old_action = armature_obj.animation_data.action
+        old_action = obj.animation_data.action
         try:
-            bpy.ops.object.posemode_toggle()  # Select all bones
-            bpy.ops.pose.select_all(action="SELECT")
+            if obj.type == "ARMATURE":
+                bpy.ops.object.posemode_toggle()  # Select all bones
+                bpy.ops.pose.select_all(action="SELECT")
 
             bpy.context.area.type = "GRAPH_EDITOR"
             for action in actions:
                 print(f"Decimating {action.name}.")
-                armature_obj.animation_data.action = action
+                obj.animation_data.action = action
                 bpy.ops.graph.select_all(action="SELECT")
                 bpy.ops.graph.decimate(mode="ERROR", factor=1, remove_error_margin=import_props.decimate_margin)
         finally:
             bpy.context.area.type = old_area
-            armature_obj.animation_data.action = old_action
+            obj.animation_data.action = old_action
 
     print("Importing animation table into properties.")
     from_anim_table_class(  # TODO: is the table address range including the null delimiter?

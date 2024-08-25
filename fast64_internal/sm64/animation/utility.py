@@ -16,40 +16,73 @@ if TYPE_CHECKING:
     )
 
 
+def is_obj_animatable(obj: Object) -> bool:
+    if obj.type == "ARMATURE" or (obj.type == "MESH" and obj.geo_cmd_static in animatableBoneTypes):
+        return True
+    return False
+
+
+def get_anim_obj(context: Context) -> Object | None:
+    obj = context.object
+    if obj is None and len(context.selected_objects) > 0:
+        obj = context.selected_objects[0]
+    if obj is not None and is_obj_animatable(obj):
+        return obj
+
+
 def animation_operator_checks(context: Context, requires_animation=True, specific_obj: Object | None = None):
     if specific_obj is None:
-        if len(context.selected_objects) == 0 and context.object is None:
-            raise PluginError("No armature selected.")
         if len(context.selected_objects) > 1:
             raise PluginError("Multiple objects selected at once.")
-        obj = context.object
+        obj = get_anim_obj(context)
     else:
         obj = specific_obj
-
-    if obj.type != "ARMATURE":
-        raise PluginError(f'Selected object "{obj.name}" is not an armature.')
+        if is_obj_animatable(obj):
+            raise PluginError(f'Selected object "{obj.name}" is not an armature.')
     if requires_animation and obj.animation_data is None:
         raise PluginError(f'Armature "{obj.name}" has no animation data.')
 
 
-def get_selected_action(armature: Object, raise_exc=True) -> Action:
-    assert armature is not None
-    if armature.type == "ARMATURE" and armature.animation_data and armature.animation_data.action:
-        return armature.animation_data.action
+def get_selected_action(obj: Object, raise_exc=True) -> Action:
+    assert obj is not None
+    if not is_obj_animatable(obj):
+        if raise_exc:
+            raise ValueError(f'Object "{obj.name}" is not animatable in SM64.')
+    elif obj.animation_data is not None and obj.animation_data.action is not None:
+        return obj.animation_data.action
     if raise_exc:
-        raise ValueError(f'No action selected in armature "{armature.name}".')
+        raise ValueError(f'No action selected in object "{obj.name}".')
 
 
-def get_anim_pose_bones(armature: Object):
-    bones_to_process: list[str] = findStartBones(armature)
-    current_bone = armature.data.bones[bones_to_process[0]]
+def get_anim_owners(obj: Object):
+    """Get SM64 animation bones from an armature or return the obj if it's an animated cmd mesh"""
+
+    def check_children(children: list[Object] | None):
+        if children is None:
+            return
+        for child in children:
+            if child.geo_cmd_static in animatableBoneTypes:
+                raise PluginError("Cannot have child mesh with animation, use an armature")
+            check_children(child.children)
+
+    if obj.type == "MESH":  # Object will be treated as a bone
+        if obj.geo_cmd_static in animatableBoneTypes:
+            check_children(obj.children)
+            return [obj]
+        else:
+            raise PluginError("Mesh is not animatable")
+
+    assert obj.type == "ARMATURE", "Obj is neither mesh or armature"
+
+    bones_to_process: list[str] = findStartBones(obj)
+    current_bone = obj.data.bones[bones_to_process[0]]
     anim_bones: list[PoseBone] = []
 
     # Get animation bones in order
     while len(bones_to_process) > 0:
         bone_name = bones_to_process[0]
-        current_bone = armature.data.bones[bone_name]
-        current_pose_bone = armature.pose.bones[bone_name]
+        current_bone = obj.data.bones[bone_name]
+        current_pose_bone = obj.pose.bones[bone_name]
         bones_to_process = bones_to_process[1:]
 
         # Only handle 0x13 bones for animation
@@ -88,9 +121,9 @@ def get_scene_anim_props(context: Context) -> "SM64_AnimProperties":
 
 
 def get_anim_props(context: Context) -> "SM64_ArmatureAnimProperties":
-    assert context.object
-    assert context.object.type == "ARMATURE"
-    return context.object.data.fast64.sm64.animation
+    obj = get_anim_obj(context)
+    assert obj is not None
+    return obj.fast64.sm64.animation
 
 
 def get_anim_actor_name(context: Context) -> str | None:
@@ -101,6 +134,6 @@ def get_anim_actor_name(context: Context) -> str | None:
 
 
 def dma_structure_context(context: Context) -> bool:
-    if not context.object or context.object.type != "ARMATURE":
+    if get_anim_obj(context) is None:
         return False
     return get_anim_props(context).is_dma
