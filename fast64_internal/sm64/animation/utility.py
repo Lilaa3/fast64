@@ -8,12 +8,7 @@ from ..sm64_geolayout_bone import animatableBoneTypes
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .properties import (
-        SM64_AnimProperties,
-        SM64_ArmatureAnimProperties,
-        SM64_AnimHeaderProperties,
-        SM64_ActionProperty,
-    )
+    from .properties import SM64_ActionAnimProperty, SM64_AnimProperties, SM64_ArmatureAnimProperties
 
 
 def is_obj_animatable(obj: Object) -> bool:
@@ -103,6 +98,10 @@ def num_to_padded_hex(num: int):
 
 def get_dma_anim_name(index: int):
     return f"anim_{num_to_padded_hex(index)}"
+
+
+def get_action_props(action: Action) -> "SM64_ActionAnimProperty":
+    return action.fast64.sm64.animation
 
 
 def get_scene_anim_props(context: Context) -> "SM64_AnimProperties":

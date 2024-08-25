@@ -49,7 +49,7 @@ from .constants import (
     enum_anim_tables,
     FLAG_PROPS,
 )
-from .utility import get_dma_anim_name, is_obj_animatable
+from .utility import get_action_props, get_dma_anim_name, is_obj_animatable
 from .importing import get_enum_from_import_preset, update_table_preset
 
 
@@ -216,7 +216,7 @@ class SM64_AnimHeaderProperties(PropertyGroup):
             else:
                 name = f"anim_{action.name}"
             return toAlnum(name)
-        main_header_name = action.fast64.sm64.headers[0].get_name(actor_name, action)
+        main_header_name = get_action_props(action).headers[0].get_name(actor_name, action)
         name = f"{main_header_name}_{self.header_variant}"
 
         return toAlnum(name)
@@ -320,7 +320,9 @@ class SM64_AnimHeaderProperties(PropertyGroup):
         self.draw_flag_props(col, use_int_flags=dma or export_type in {"Binary", "Insertable Binary"})
 
 
-class SM64_ActionProperty(PropertyGroup):  # TODO:Should this be SM64_ActionAnimProperties
+class SM64_ActionAnimProperty(PropertyGroup):
+    """Properties in Action.fast64.sm64.animation"""
+
     header: PointerProperty(type=SM64_AnimHeaderProperties)
     variants_tab: BoolProperty(name="Header Variants")
     header_variants: CollectionProperty(type=SM64_AnimHeaderProperties)
@@ -481,7 +483,7 @@ class SM64_AnimTableElement(PropertyGroup):
         action = self.get_action(can_reference)
         if not action:
             return None
-        return action.fast64.sm64.headers[self.variant]
+        return get_action_props(action).headers[self.variant]
 
     def set_variant(self, action: Action, variant: int):
         self.action_prop = action
@@ -530,10 +532,9 @@ class SM64_AnimTableElement(PropertyGroup):
             col.box().label(text="Header´s action does not exist.", icon="ERROR")
             return
         action = self.action_prop
-        action_props: SM64_ActionProperty = action.fast64.sm64
-        headers = action_props.headers
+        action_props = get_action_props(action)
         variant = self.variant
-        if 0 <= variant < len(headers):
+        if 0 <= variant < len(action_props.headers):
             header_props = self.get_header(not dma)
             if dma:
                 name = get_dma_anim_name(index)
@@ -544,7 +545,7 @@ class SM64_AnimTableElement(PropertyGroup):
         row = col.row()
         row.alignment = "LEFT"
         row.prop(self, "variant")
-        draw_list_op(row, SM64_AnimVariantOps, "REMOVE", variant, headers, True, action_name=action.name)
+        draw_list_op(row, SM64_AnimVariantOps, "REMOVE", variant, action_props.headers, True, action_name=action.name)
         draw_list_op(row, SM64_AnimVariantOps, "ADD", variant, action_name=action.name)
         action_props.draw_props(
             layout=col,
@@ -803,7 +804,7 @@ class SM64_AnimProperties(PropertyGroup):
         end_address = scene.pop("animExportEnd", None)
 
         for action in bpy.data.actions:
-            action_props: SM64_ActionProperty = action.fast64.sm64
+            action_props = get_action_props(action)
             if loop is not None:
                 action_props.header.no_loop = not loop
             if start_address is not None:
@@ -1066,7 +1067,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
 classes = (
     SM64_AnimHeaderProperties,
     SM64_AnimTableElement,
-    SM64_ActionProperty,
+    SM64_ActionAnimProperty,
     SM64_AnimImportProperties,
     SM64_AnimProperties,
     SM64_ArmatureAnimProperties,

@@ -4,7 +4,14 @@ from bpy.types import Context
 from ...utility_anim import is_action_stashed, CreateAnimData, AddBasicAction, StashAction
 from ...panels import SM64_Panel
 
-from .utility import get_anim_actor_name, get_anim_props, get_selected_action, dma_structure_context, get_anim_obj
+from .utility import (
+    get_action_props,
+    get_anim_actor_name,
+    get_anim_props,
+    get_selected_action,
+    dma_structure_context,
+    get_anim_obj,
+)
 from .operators import SM64_ExportAnim, SM64_ExportAnimTable
 
 from typing import TYPE_CHECKING
@@ -12,7 +19,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..settings.properties import SM64_Properties
     from ..sm64_objects import SM64_CombinedObjectProperties
-    from properties import SM64_ActionProperty
 
 
 # Base
@@ -94,8 +100,8 @@ class AnimationPanelAction(AnimationPanel):
         sm64_props: SM64_Properties = context.scene.fast64.sm64
         if sm64_props.export_type != "C":
             SM64_ExportAnim.draw_props(col)
-        action_props: SM64_ActionProperty = action.fast64.sm64
-        action_props.draw_props(
+
+        get_action_props(action).draw_props(
             layout=col,
             action=action,
             specific_variant=None,

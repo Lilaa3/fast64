@@ -65,9 +65,13 @@ from .sm64_geolayout_classes import (
     ScaleNode,
 )
 
-from .animation.exporting import export_animation, export_animation_table
-from .animation.utility import get_anim_obj, is_obj_animatable
-from .animation import SM64_ArmatureAnimProperties
+from .animation import (
+    export_animation,
+    export_animation_table,
+    get_anim_obj,
+    is_obj_animatable,
+    SM64_ArmatureAnimProperties,
+)
 
 enumTerrain = [
     ("Custom", "Custom", "Custom"),

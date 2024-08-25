@@ -92,7 +92,16 @@ from .animation import (
     anim_panel_unregister,
     anim_register,
     anim_unregister,
+    SM64_ActionAnimProperty,
 )
+
+
+class SM64_ActionProperty(PropertyGroup):
+    """
+    Properties in Action.fast64.sm64.
+    """
+
+    animation: PointerProperty(type=SM64_ActionAnimProperty, name="SM64 Properties")
 
 
 def sm64_panel_register():
@@ -140,6 +149,7 @@ def sm64_register(register_panels: bool):
     sm64_dl_writer_register()
     sm64_dl_parser_register()
     settings_props_register()
+    register_class(SM64_ActionProperty)
 
     if register_panels:
         sm64_panel_register()
@@ -160,6 +170,7 @@ def sm64_unregister(unregister_panels: bool):
     sm64_dl_writer_unregister()
     sm64_dl_parser_unregister()
     settings_props_unregister()
+    unregister_class(SM64_ActionProperty)
 
     if unregister_panels:
         sm64_panel_unregister()

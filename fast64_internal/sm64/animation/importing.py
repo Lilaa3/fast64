@@ -24,7 +24,13 @@ from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_utility import import_rom_checks
 from ..sm64_classes import RomReader
 
-from .utility import animation_operator_checks, get_anim_owners, get_scene_anim_props, get_anim_actor_name
+from .utility import (
+    animation_operator_checks,
+    get_action_props,
+    get_anim_owners,
+    get_scene_anim_props,
+    get_anim_actor_name,
+)
 from .classes import (
     Animation,
     CArrayDeclaration,
@@ -41,8 +47,7 @@ if TYPE_CHECKING:
         SM64_AnimImportProperties,
         SM64_ArmatureAnimProperties,
         SM64_AnimHeaderProperties,
-        SM64_AnimTableProperties,
-        SM64_ActionProperty,
+        SM64_ActionAnimProperty,
     )
     from ..settings.properties import SM64_Properties
     from ..sm64_objects import SM64_CombinedObjectProperties
@@ -254,7 +259,7 @@ def from_header_class(
 
 
 def from_anim_class(
-    action_props: "SM64_ActionProperty",
+    action_props: "SM64_ActionAnimProperty",
     action: Action,
     animation: Animation,
     actor_name: str,
@@ -398,7 +403,7 @@ def animation_import_to_blender(
                     pose_bone.rotation_mode = "QUATERNION"
                 bone_data.populate_action(action, pose_bone)
 
-        from_anim_class(action.fast64.sm64, action, anim_import, actor_name, use_custom_name, import_type)
+        from_anim_class(get_action_props(action), action, anim_import, actor_name, use_custom_name, import_type)
         stashActionInArmature(obj, action)
         return action
     except PluginError as exc:
@@ -635,7 +640,7 @@ def import_animations(context: Context):
             obj.animation_data.action = old_action
 
     print("Importing animation table into properties.")
-    from_anim_table_class(  # TODO: is the table address range including the null delimiter?
+    from_anim_table_class(
         anim_props, table, import_props.clear_table, import_props.use_custom_name, get_anim_actor_name(context)
     )
     if import_props.binary and import_props.check_null:

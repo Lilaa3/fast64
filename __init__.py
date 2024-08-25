@@ -13,12 +13,11 @@ from .fast64_internal.repo_settings import (
     repo_settings_operators_unregister,
 )
 
-from .fast64_internal.sm64 import sm64_register, sm64_unregister
+from .fast64_internal.sm64 import sm64_register, sm64_unregister, SM64_ActionProperty
 from .fast64_internal.sm64.sm64_constants import sm64_world_defaults
 from .fast64_internal.sm64.settings.properties import SM64_Properties
 from .fast64_internal.sm64.sm64_geolayout_bone import SM64_BoneProperties
 from .fast64_internal.sm64.sm64_objects import SM64_ObjectProperties
-from .fast64_internal.sm64.animation.properties import SM64_ActionProperty
 
 from .fast64_internal.oot import OOT_Properties, oot_register, oot_unregister
 from .fast64_internal.oot.oot_constants import oot_world_defaults
@@ -229,7 +228,7 @@ class Fast64_Properties(bpy.types.PropertyGroup):
 
 class Fast64_ActionProperties(bpy.types.PropertyGroup):
     """
-    Properties in action.fast64.
+    Properties in Action.fast64.
     """
 
     sm64: bpy.props.PointerProperty(type=SM64_ActionProperty, name="SM64 Properties")

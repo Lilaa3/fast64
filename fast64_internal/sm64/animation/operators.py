@@ -9,13 +9,20 @@ from ...utility_anim import get_action
 
 from .importing import import_animations, get_enum_from_import_preset
 from .exporting import export_animation, export_animation_table
-from .utility import animation_operator_checks, get_anim_obj, get_scene_anim_props, get_anim_props, get_anim_actor_name
+from .utility import (
+    animation_operator_checks,
+    get_action_props,
+    get_anim_obj,
+    get_scene_anim_props,
+    get_anim_props,
+    get_anim_actor_name,
+)
 from .constants import enum_anim_tables, enum_animated_behaviours
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .properties import SM64_AnimProperties, SM64_AnimHeaderProperties, SM64_ActionProperty
+    from .properties import SM64_AnimProperties, SM64_AnimHeaderProperties
 
 
 def emulate_no_loop(scene: Scene):
@@ -26,13 +33,13 @@ def emulate_no_loop(scene: Scene):
     if not played_action:
         return
     if not bpy.context.screen.is_animation_playing or anim_props.played_header >= len(
-        played_action.fast64.sm64.headers
+        get_action_props(played_action).headers
     ):
         anim_props.played_action = None
         return
 
     frame = scene.frame_current
-    header_props: SM64_AnimHeaderProperties = played_action.fast64.sm64.headers[anim_props.played_header]
+    header_props = get_action_props(played_action).headers[anim_props.played_header]
     _start, loop_start, end = header_props.get_loop_points(played_action)
     if header_props.backwards:
         if frame < loop_start:
@@ -64,7 +71,7 @@ class SM64_PreviewAnim(OperatorBase):
         anim_props = scene.fast64.sm64.animation
 
         context.object.animation_data.action = played_action
-        action_props: SM64_ActionProperty = played_action.fast64.sm64
+        action_props = get_action_props(played_action)
 
         if self.played_header >= len(action_props.headers):
             raise ValueError("Invalid Header Index")
@@ -110,7 +117,7 @@ class SM64_AnimTableOps(OperatorBase):
                 table_elements.move(len(table_elements) - 1, self.index + 1)
         elif self.op_name == "ADD_ALL":
             action = bpy.data.actions[self.action_name]
-            for header_variant in range(len(action.fast64.sm64.headers)):
+            for header_variant in range(len(get_action_props(action).headers)):
                 table_elements.add()
                 table_elements[-1].set_variant(action, header_variant)
         elif self.op_name == "REMOVE":
@@ -133,7 +140,7 @@ class SM64_AnimVariantOps(OperatorBase):
 
     def execute_operator(self, context):
         action = bpy.data.actions[self.action_name]
-        action_props: SM64_ActionProperty = action.fast64.sm64
+        action_props = get_action_props(action)
         headers = action_props.headers
         variants = action_props.header_variants
         variant_position = self.index - 1

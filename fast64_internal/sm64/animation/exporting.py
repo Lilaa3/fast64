@@ -33,15 +33,14 @@ from .classes import (
     AnimationTable,
     AnimationTableElement,
 )
-from .utility import get_anim_owners, get_anim_actor_name, get_selected_action
+from .utility import get_anim_owners, get_anim_actor_name, get_selected_action, get_action_props
 from .constants import HEADER_SIZE
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .properties import (
-        SM64_AnimProperties,
-        SM64_ActionProperty,
+        SM64_ActionAnimProperty,
         SM64_AnimHeaderProperties,
         SM64_ArmatureAnimProperties,
         SM64_AnimTableElement,
@@ -95,7 +94,7 @@ def get_animation_pairs(
     if len(anim_owners) == 0:
         raise PluginError(f'No animation bones in armature "{obj.name}"')
 
-    max_frames = [action.fast64.sm64.get_max_frame(action) for action in actions]
+    max_frames = [get_action_props(action).get_max_frame(action) for action in actions]
     trans_values = [np.zeros((3, max_frame), dtype=np.float32) for max_frame in max_frames]
     rot_values = [np.zeros((len(anim_owners) * 3, max_frame), dtype=np.float32) for max_frame in max_frames]
 
@@ -227,7 +226,7 @@ def to_data_class(
 
 
 def to_animation_class(
-    action_props: "SM64_ActionProperty",
+    action_props: "SM64_ActionAnimProperty",
     action: Action,
     obj: Object,
     blender_to_sm64_scale: float,
@@ -308,7 +307,7 @@ def to_table_element_class(
     if not header:
         raise PluginError("Header is not set.")
 
-    action_props: SM64_ActionProperty = action.fast64.sm64
+    action_props = get_action_props(action)
     if can_reference and action_props.reference_tables:
         data = None
         if use_addresses:
@@ -321,7 +320,7 @@ def to_table_element_class(
     else:
         if action in action_pairs and action not in data_dict:
             data_dict[action] = to_data_class(
-                action, action_pairs[action], action.fast64.sm64.get_file_name(action, export_type)
+                action, action_pairs[action], action_props.get_file_name(action, export_type)
             )
         data = data_dict[action]
         values_reference, indice_reference = data.values_reference, data.indice_reference
@@ -372,7 +371,7 @@ def to_table_class(
     bone_count = len(get_anim_owners(obj))
     action_pairs = get_animation_pairs(
         blender_to_sm64_scale,
-        [action for action in anim_props.actions if not (can_reference and action.fast64.sm64.reference_tables)],
+        [action for action in anim_props.actions if not (can_reference and get_action_props(action).reference_tables)],
         obj,
         quick_read,
     )
@@ -719,7 +718,7 @@ def export_animation_table_c(
 def export_animation_binary(
     binary_exporter: BinaryExporter,
     animation: Animation,
-    action_props: "SM64_ActionProperty",
+    action_props: "SM64_ActionAnimProperty",
     anim_props: "SM64_ArmatureAnimProperties",
     combined_props: "SM64_CombinedObjectProperties",
     bone_count: int,
@@ -850,7 +849,7 @@ def export_animation(context: Context, obj: Object):
     actor_name = get_anim_actor_name(context)
 
     action = get_selected_action(obj)
-    action_props: SM64_ActionProperty = action.fast64.sm64
+    action_props = get_action_props(action)
     stashActionInArmature(obj, action)
     bone_count = len(get_anim_owners(obj))
 
