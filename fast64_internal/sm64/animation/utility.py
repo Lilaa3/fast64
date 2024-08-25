@@ -105,17 +105,6 @@ def get_dma_anim_name(index: int):
     return f"anim_{num_to_padded_hex(index)}"
 
 
-def get_max_frame(action: Action, action_props: "SM64_ActionProperty") -> int:
-    if action_props.use_custom_max_frame:
-        return action_props.custom_max_frame
-    loop_ends: list[int] = [getFrameInterval(action)[1]]
-    header_props: SM64_AnimHeaderProperties
-    for header_props in action_props.headers:
-        loop_ends.append(header_props.get_loop_points(action)[2])
-
-    return max(loop_ends)
-
-
 def get_scene_anim_props(context: Context) -> "SM64_AnimProperties":
     return context.scene.fast64.sm64.animation
 

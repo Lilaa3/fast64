@@ -288,7 +288,8 @@ def from_anim_class(
     if animation.data:
         file_name = animation.data.indices_file_name
         action_props.custom_max_frame = max([1] + [len(x.values) for x in animation.data.pairs])
-        # TODO: Set max frame to custom?
+        if action_props.get_max_frame(action) != action_props.custom_max_frame:
+            action_props.use_custom_max_frame = True
     else:
         file_name = main_header.file_name
         action_props.reference_tables = True

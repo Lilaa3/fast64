@@ -33,7 +33,7 @@ from .classes import (
     AnimationTable,
     AnimationTableElement,
 )
-from .utility import get_anim_owners, get_anim_actor_name, get_max_frame, get_selected_action
+from .utility import get_anim_owners, get_anim_actor_name, get_selected_action
 from .constants import HEADER_SIZE
 
 from typing import TYPE_CHECKING
@@ -95,7 +95,7 @@ def get_animation_pairs(
     if len(anim_owners) == 0:
         raise PluginError(f'No animation bones in armature "{obj.name}"')
 
-    max_frames = [get_max_frame(action, action.fast64.sm64) for action in actions]
+    max_frames = [action.fast64.sm64.get_max_frame(action) for action in actions]
     trans_values = [np.zeros((3, max_frame), dtype=np.float32) for max_frame in max_frames]
     rot_values = [np.zeros((len(anim_owners) * 3, max_frame), dtype=np.float32) for max_frame in max_frames]
 
@@ -107,7 +107,6 @@ def get_animation_pairs(
 
         for action, max_frame, action_trans, action_rot in zip(actions, max_frames, trans_values, rot_values):
             quats = np.empty((4, max_frame), dtype=np.float32)
-            max_frame = get_max_frame(action, action.fast64.sm64)
 
             get_entire_fcurve_data(action, anim_owners[0], "location", max_frame, action_trans)
 
@@ -167,12 +166,12 @@ def get_animation_pairs(
                 bpy.ops.screen.animation_play()
 
     action_pairs = {}
-    for action, action_trans, action_rot, max_frame in zip(actions, trans_values, rot_values, max_frames):
+    for action, action_trans, action_rot in zip(actions, trans_values, rot_values):
         action_trans = trim_duplicates_vectorized(np.round(action_trans * sm64_scale).astype(np.int16))
         action_rot = trim_duplicates_vectorized((np.degrees(action_rot) * (2**16 / 360.0)).astype(np.int16))
 
-        pairs = [SM64_AnimPair(action_trans[i][:max_frame]) for i in range(3)]  # TODO: dont use range
-        pairs.extend([SM64_AnimPair(action_rot[i][:max_frame]) for i in range(len(anim_owners) * 3)])
+        pairs = [SM64_AnimPair(values) for values in action_trans]
+        pairs.extend([SM64_AnimPair(values) for values in action_rot])
         action_pairs[action] = pairs
 
     return action_pairs

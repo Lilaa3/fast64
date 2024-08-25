@@ -266,7 +266,7 @@ class AnimationHeader:
             header.values_reference = reader.start_address + reader.read_int(4)
             header.indice_reference = reader.start_address + reader.read_int(4)
         else:
-            header.values_reference = reader.read_ptr(), reader.read_ptr()
+            header.values_reference, header.indice_reference = reader.read_ptr(), reader.read_ptr()
         header.length = reader.read_int(4)
 
         header.end_address = reader.address + 1

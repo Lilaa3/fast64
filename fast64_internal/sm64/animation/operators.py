@@ -9,7 +9,7 @@ from ...utility_anim import get_action
 
 from .importing import import_animations, get_enum_from_import_preset
 from .exporting import export_animation, export_animation_table
-from .utility import animation_operator_checks, get_scene_anim_props, get_anim_props, get_anim_actor_name
+from .utility import animation_operator_checks, get_anim_obj, get_scene_anim_props, get_anim_props, get_anim_actor_name
 from .constants import enum_anim_tables, enum_animated_behaviours
 
 from typing import TYPE_CHECKING

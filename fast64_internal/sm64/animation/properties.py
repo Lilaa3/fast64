@@ -49,7 +49,7 @@ from .constants import (
     enum_anim_tables,
     FLAG_PROPS,
 )
-from .utility import get_max_frame, get_dma_anim_name, is_obj_animatable
+from .utility import get_dma_anim_name, is_obj_animatable
 from .importing import get_enum_from_import_preset, update_table_preset
 
 
@@ -331,11 +331,11 @@ class SM64_ActionProperty(PropertyGroup):  # TODO:Should this be SM64_ActionAnim
     reference_tables: BoolProperty(name="Reference Tables")
     indices_table: StringProperty(name="Indices Table", default="anim_00_indices")
     values_table: StringProperty(name="Value Table", default="anim_00_values")
-    # Binary
-    indices_address: StringProperty(name="Indices Table")  # TODO: Toad example
-    values_address: StringProperty(name="Value Table")
-    start_address: StringProperty(name="Start Address", default=intToHex(18712880))
-    end_address: StringProperty(name="End Address", default=intToHex(18874112))
+    # Binary, toad anim 0 for defaults
+    indices_address: StringProperty(name="Indices Table", default=intToHex(0x00A42150))
+    values_address: StringProperty(name="Value Table", default=intToHex(0x00A40CC8))
+    start_address: StringProperty(name="Start Address", default=intToHex(0x00A40CC8))
+    end_address: StringProperty(name="End Address", default=intToHex(0x00A42265))
 
     @property
     def headers(self) -> list[SM64_AnimHeaderProperties]:
@@ -355,6 +355,16 @@ class SM64_ActionProperty(PropertyGroup):  # TODO:Should this be SM64_ActionAnim
             # Replace any invalid characters with an underscore, TODO: Could this be an issue anywhere else in fast64?
             name = re.sub(r'[/\\?%*:|"<>]', " ", name)
             return name
+
+    def get_max_frame(self, action: Action) -> int:
+        if self.use_custom_max_frame:
+            return self.custom_max_frame
+        loop_ends: list[int] = [getFrameInterval(action)[1]]
+        header_props: SM64_AnimHeaderProperties
+        for header_props in self.headers:
+            loop_ends.append(header_props.get_loop_points(action)[2])
+
+        return max(loop_ends)
 
     def update_variant_numbers(self):
         for i, variant in enumerate(self.headers):
@@ -436,7 +446,7 @@ class SM64_ActionProperty(PropertyGroup):  # TODO:Should this be SM64_ActionAnim
         if draw_file_name:
             draw_custom_or_auto(self, col, "file_name", self.get_file_name(action, export_type))
         if dma or not self.reference_tables:  # DMA tables don´t allow references
-            draw_custom_or_auto(self, col, "max_frame", str(get_max_frame(action, self)))
+            draw_custom_or_auto(self, col, "max_frame", str(self.get_max_frame(action)))
         if not dma:
             self.draw_references(col, export_type in {"Binary", "Insertable Binary"})
         col.separator()
@@ -802,7 +812,7 @@ class SM64_AnimProperties(PropertyGroup):
         update_behavior = scene.pop("animExportEnd", None)
         begining_animation = scene.pop("animExportEnd", None)
         for obj in bpy.data.objects:
-            if not is_obj_animatable(obj):  # TODO: update if i end up adding object support
+            if not is_obj_animatable(obj):
                 continue
             anim_props: SM64_ArmatureAnimProperties = obj.fast64.sm64.animation
             if is_dma is not None:
