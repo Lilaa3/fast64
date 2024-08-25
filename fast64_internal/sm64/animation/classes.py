@@ -201,7 +201,7 @@ class AnimationHeader:
             f"\t{self.start_frame}, // startFrame\n"
             f"\t{self.loop_start}, // loopStart\n"
             f"\t{self.loop_end}, // loopEnd\n"
-            f"\tANIMINDEX_NUMPARTS({self.get_indice_reference(indice_override)}), // unusedBoneCount\n"
+            f"\tANIMINDEX_NUMPARTS({self.get_indice_reference(indice_override, str)}), // unusedBoneCount\n"
             f"\t{self.get_values_reference(values_override, str)}, // values\n"
             f"\t{self.get_indice_reference(indice_override, str)}, // index\n"
             "\t0 // length\n"
@@ -218,8 +218,8 @@ class AnimationHeader:
         indice_address = self.get_indice_reference(indice_override, int)
 
         if segment_data:
-            values_address = encodeSegmentedAddr(values_address, segment_data)
-            indice_address = encodeSegmentedAddr(indice_address, segment_data)
+            values_address = int.from_bytes(encodeSegmentedAddr(values_address, segment_data), "big")
+            indice_address = int.from_bytes(encodeSegmentedAddr(indice_address, segment_data), "big")
 
         return HEADER_STRUCT.pack(
             self.flags,
@@ -637,8 +637,8 @@ class AnimationTable:
 
         return table_data, data, ptrs
 
-    def data_and_headers_to_c(self, dma: bool) -> list[os.PathLike, str]:
-        files_data: dict[str, str] = {}
+    def data_and_headers_to_c(self, dma: bool):
+        files_data: dict[os.PathLike, str] = {}
         animation: Animation
         for animation in self.get_seperate_anims_dma() if dma else self.get_seperate_anims():
             files_data[animation.file_name] = animation.to_c(dma_structure=dma)
@@ -680,20 +680,28 @@ class AnimationTable:
             ptr = reader.read_ptr()
             if size is None and ptr == 0:  # If no specified size and ptr is NULL, break
                 break
-            if table_index is not None and i != table_index:  # Skip entries until table_index if specified
+            elif table_index is not None and i != table_index:  # Skip entries until table_index if specified
                 continue
 
             header_reader = reader.branch(ptr)
-            if header_reader:
+            if header_reader is None:
+                self.elements.append(AnimationTableElement(ptr, None))
+            else:
                 self.elements.append(
                     AnimationTableElement(
                         ptr,
                         None,
-                        AnimationHeader.read_binary(header_reader, read_headers, read_animations, False, bone_count, i),
+                        AnimationHeader.read_binary(
+                            header_reader,
+                            read_headers,
+                            read_animations,
+                            False,
+                            bone_count,
+                            i,
+                        ),
                     ),
                 )
-            else:
-                self.elements.append(AnimationTableElement(ptr, None))
+
             if table_index is not None:  # Break if table_index is specified
                 break
         else:
@@ -701,7 +709,7 @@ class AnimationTable:
                 raise PluginError(f"Table index {table_index} not found in table.")
             if size is None:
                 raise PluginError(f"Iterated through {range_size} elements and no NULL was found.")
-        self.end_address = reader.address + 1
+        self.end_address = reader.address
         return self
 
     def read_dma_binary(

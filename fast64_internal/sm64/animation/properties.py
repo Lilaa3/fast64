@@ -608,6 +608,10 @@ class SM64_AnimImportProperties(PropertyGroup):
     use_custom_name: BoolProperty(name="Use Custom Name", default=True)
 
     @property
+    def binary(self) -> bool:
+        return self.import_type in {"Binary", "Insertable Binary"}
+
+    @property
     def table_index(self):
         return (
             None
@@ -768,7 +772,7 @@ class SM64_AnimImportProperties(PropertyGroup):
 
         if self.import_type == "C":
             self.draw_c(col, decomp_path)
-        elif self.import_type in {"Binary", "Insertable Binary"}:
+        elif self.binary:
             if self.import_type == "Binary":
                 self.draw_binary(col, import_rom)
             elif self.import_type == "Insertable Binary":

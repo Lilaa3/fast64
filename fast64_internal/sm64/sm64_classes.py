@@ -160,7 +160,7 @@ class BinaryExporter:
         return self
 
     def write_to_range(self, start_address: int, end_address: int, data: bytes):
-        address_range_str = f"[{intToHex(start_address)}, {intToHex(end_address)}] "
+        address_range_str = f"[{intToHex(start_address)}, {intToHex(end_address)}]"
         if end_address < start_address:
             raise PluginError(f"Start address is higher than the end address: {address_range_str}")
         if start_address + len(data) > end_address:
@@ -168,6 +168,7 @@ class BinaryExporter:
                 f"Data ({len(data) / 1000.0} kb) does not fit in range {address_range_str} "
                 f"({(end_address - start_address) / 1000.0} kb).",
             )
+        print(f"Writing {len(data) / 1000.0} kb to {address_range_str} ({(end_address - start_address) / 1000.0} kb))")
         self.write(data, start_address)
 
     def seek(self, offset: int, whence: int = 0):

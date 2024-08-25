@@ -539,7 +539,7 @@ def import_animations(context: Context):
 
     print("Reading animation data.")
 
-    if import_props.import_type in {"Binary", "Insertable Binary"}:
+    if import_props.binary:
         bone_count = len(get_anim_owners(obj)) if import_props.assume_bone_count else None
         binary_args = (
             read_headers,
@@ -638,6 +638,8 @@ def import_animations(context: Context):
     from_anim_table_class(  # TODO: is the table address range including the null delimiter?
         anim_props, table, import_props.clear_table, import_props.use_custom_name, get_anim_actor_name(context)
     )
+    if import_props.binary and import_props.check_null:
+        anim_props.null_delimiter = True
 
 
 @functools.cache

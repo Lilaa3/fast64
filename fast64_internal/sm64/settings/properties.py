@@ -86,7 +86,7 @@ class SM64_Properties(PropertyGroup):
 
     @property
     def binary_export(self):
-        return self.export_type in ["Binary", "Insertable Binary"]
+        return self.export_type in {"Binary", "Insertable Binary"}
 
     @staticmethod
     def upgrade_changed_props():
