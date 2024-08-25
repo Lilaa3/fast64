@@ -310,10 +310,10 @@ def to_table_element_class(
 
     # Not reference
     header, action = element_props.get_header(can_reference), element_props.get_action(can_reference)
-    if not header:
-        raise PluginError("Header is not set.")
     if not action:
         raise PluginError("Action is not set.")
+    if not header:
+        raise PluginError("Header is not set.")
 
     action_props: SM64_ActionProperty = action.fast64.sm64
     if can_reference and action_props.reference_tables:
