@@ -196,8 +196,7 @@ class AnimationHeader:
         assert not dma_structure or isinstance(self.flags, int), "Flags must be int for C DMA"
         return (
             f"static const struct Animation {self.reference}{'[]' if dma_structure else ''} = {{\n"
-            + f"\t{self.c_flags}"
-            + f"// flags {self.get_flags_comment()}\n"
+            + f"\t{self.c_flags}, // flags {self.get_flags_comment()}\n"
             f"\t{self.trans_divisor}, // animYTransDivisor\n"
             f"\t{self.start_frame}, // startFrame\n"
             f"\t{self.loop_start}, // loopStart\n"

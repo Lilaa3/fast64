@@ -2095,7 +2095,7 @@ class SM64_CombinedObjectProperties(bpy.types.PropertyGroup):
     @property
     def model_id_define(self):
         return f"MODEL_{toAlnum(self.obj_name_gfx)}".upper()
-    
+
     @property
     def anims_name(self):
         return self.anim_object.data.fast64.sm64.animation.get_table_name(self.obj_name_anim)
