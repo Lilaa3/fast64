@@ -1505,7 +1505,7 @@ class BehaviorScriptProperty(bpy.types.PropertyGroup):
         if self.macro == "LOAD_ANIMATIONS":
             if not props.export_anim:
                 raise PluginError("Can't inherit animation table without exporting animation data")
-            return props.collision_name
+            return props.anims_name
         return self.macro_args
 
     def get_args(self, context, props):
@@ -2095,6 +2095,10 @@ class SM64_CombinedObjectProperties(bpy.types.PropertyGroup):
     @property
     def model_id_define(self):
         return f"MODEL_{toAlnum(self.obj_name_gfx)}".upper()
+    
+    @property
+    def anims_name(self):
+        return self.anim_object.data.fast64.sm64.animation.get_table_name(self.obj_name_anim)
 
     @property
     def export_level_name(self):
@@ -2197,7 +2201,7 @@ class SM64_CombinedObjectProperties(bpy.types.PropertyGroup):
                 layout.label(text=f"Animation path: /actors/{toAlnum(self.obj_name_anim)}/(.c, .h)")
         else:
             self.draw_level_path(layout)
-        layout.label(text=f"Animation table name: {anim_props.get_table_name(self.obj_name_anim)}")
+        layout.label(text=f"Animation table name: {self.anims_name}")
 
     def draw_obj_name(self, layout):
         split_1 = layout.split(factor=0.45)
