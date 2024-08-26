@@ -20,16 +20,11 @@ class InsertableBinaryData:
 
     def to_binary(self):
         data = bytearray()
-        # 0-4
-        data.extend(insertableBinaryTypes[self.data_type].to_bytes(4, "big"))
-        # 4-8
-        data.extend(len(self.data).to_bytes(4, "big"))
-        # 8-12
-        data.extend(self.start_address.to_bytes(4, "big"))
-        # 12-16
-        data.extend(len(self.ptrs).to_bytes(4, "big"))
-        # 16-?
-        for ptr in self.ptrs:
+        data.extend(insertableBinaryTypes[self.data_type].to_bytes(4, "big"))  # 0-4
+        data.extend(len(self.data).to_bytes(4, "big"))  #                        4-8
+        data.extend(self.start_address.to_bytes(4, "big"))  #                    8-12
+        data.extend(len(self.ptrs).to_bytes(4, "big"))  #                        12-16
+        for ptr in self.ptrs:  #                                                 16-(16 + len(ptr) * 4)
             data.extend(ptr.to_bytes(4, "big"))
         data.extend(self.data)
         return data
