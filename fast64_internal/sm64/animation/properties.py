@@ -25,6 +25,7 @@ from ...utility import (
     prop_split,
     intToHex,
     upgrade_old_prop,
+    to_valid_file_name,
     toAlnum,
 )
 from ...utility_anim import getFrameInterval
@@ -49,7 +50,7 @@ from .constants import (
     enum_anim_tables,
     FLAG_PROPS,
 )
-from .utility import get_action_props, get_dma_anim_name, is_obj_animatable
+from .utility import get_action_props, get_dma_anim_name, get_dma_header_name, is_obj_animatable
 from .importing import get_enum_from_import_preset, update_table_preset
 
 
@@ -207,7 +208,9 @@ class SM64_AnimHeaderProperties(PropertyGroup):
         loop_start, loop_end = getFrameInterval(action)
         return (0, loop_start, loop_end + 1)
 
-    def get_name(self, actor_name: str, action: Action) -> str:
+    def get_name(self, actor_name: str, action: Action, dma=False) -> str:
+        if dma:
+            return get_dma_header_name(self.table_index)
         if self.use_custom_name:
             return self.custom_name
         if self.header_variant == 0:
@@ -277,11 +280,11 @@ class SM64_AnimHeaderProperties(PropertyGroup):
             start, loop_start, end = self.get_loop_points(action)
             prop_size_label(split, text=f"Start {start}, Loop Start {loop_start}, End {end}", icon="LOCKED")
 
-    def draw_names(self, layout: UILayout, action: Action, actor_name: str, gen_enums: bool):
+    def draw_names(self, layout: UILayout, action: Action, actor_name: str, gen_enums: bool, dma: bool):
         col = layout.column()
         if gen_enums:
             draw_custom_or_auto(self, col, "enum", self.get_enum(actor_name, action))
-        draw_custom_or_auto(self, col, "name", self.get_name(actor_name, action))
+        draw_custom_or_auto(self, col, "name", self.get_name(actor_name, action, dma))
 
     def draw_props(
         self,
@@ -309,10 +312,10 @@ class SM64_AnimHeaderProperties(PropertyGroup):
                 action_name=action.name,
                 header_variant=self.header_variant,
             )
-            if export_type == "Binary" and updates_table:  # Only show table index if table will be updated
+            if (export_type == "C" and dma) or (export_type == "Binary" and updates_table):
                 prop_split(col, self, "table_index", "Table Index")
-            elif export_type == "C":
-                self.draw_names(col, action, actor_name, gen_enums)
+        if not dma and export_type == "C":
+            self.draw_names(col, action, actor_name, gen_enums, dma)
         col.separator()
 
         prop_split(col, self, "trans_divisor", "Translation Divisor")
@@ -343,20 +346,26 @@ class SM64_ActionAnimProperty(PropertyGroup):
     def headers(self) -> list[SM64_AnimHeaderProperties]:
         return [self.header] + list(self.header_variants)
 
-    def get_file_name(self, action: Action, export_type: str) -> str:
+    @property
+    def dma_name(self):
+        return get_dma_anim_name([header.table_index for header in self.headers])
+
+    def get_name(self, action: Action, dma=False):
+        if dma:
+            return self.dma_name
+        return toAlnum(f"anim_{action.name}")
+
+    def get_file_name(self, action: Action, export_type: str, dma=False) -> str:
         if not export_type in {"C", "Insertable Binary"}:
             return ""
-        if self.use_custom_file_name:
+        if export_type == "C" and dma:
+            return f"{self.dma_name}.inc.c"
+        elif self.use_custom_file_name:
             return self.custom_file_name
         else:
             name = f"anim_{action.name}."
-            if export_type == "C":
-                name += "inc.c"
-            else:
-                name += "insertable"
-            # Replace any invalid characters with an underscore, TODO: Could this be an issue anywhere else in fast64?
-            name = re.sub(r'[/\\?%*:|"<>]', " ", name)
-            return name
+            name += "inc.c" if export_type == "C" else "insertable"
+            return to_valid_file_name(name)
 
     def get_max_frame(self, action: Action) -> int:
         if self.use_custom_max_frame:
@@ -376,6 +385,7 @@ class SM64_ActionAnimProperty(PropertyGroup):
         self,
         layout: UILayout,
         action: Action,
+        dma: bool,
         actor_name: str,
         header_args: list,
     ):
@@ -393,7 +403,7 @@ class SM64_ActionAnimProperty(PropertyGroup):
                 row,
                 header_props,
                 "expand_tab_in_action",
-                header_props.get_name(actor_name, action),
+                header_props.get_name(actor_name, action, dma),
             ):
                 header_props.draw_props(col, *header_args)
             op_row = row.row()
@@ -419,7 +429,7 @@ class SM64_ActionAnimProperty(PropertyGroup):
         specific_variant: int | None,
         in_table: bool,
         updates_table: bool,
-        draw_file_name: bool,
+        export_seperately: bool,
         export_type: str,
         actor_name: str,
         gen_enums: bool,
@@ -445,12 +455,17 @@ class SM64_ActionAnimProperty(PropertyGroup):
             if export_type == "Binary" and not dma:
                 string_int_prop(col, self, "start_address", "Start Address")
                 string_int_prop(col, self, "end_address", "End Address")
-        if draw_file_name:
-            draw_custom_or_auto(self, col, "file_name", self.get_file_name(action, export_type))
+        if export_type != "Binary" and export_seperately:
+            if not dma or export_type == "Insertable Binary":
+                draw_custom_or_auto(self, col, "file_name", self.get_file_name(action, export_type))
+            elif not in_table:
+                split = col.split(factor=0.5)
+                split.label(text="File Name")
+                prop_size_label(split, text=self.get_file_name(action, export_type, dma), icon="LOCKED")
         if dma or not self.reference_tables:  # DMA tables don´t allow references
             draw_custom_or_auto(self, col, "max_frame", str(self.get_max_frame(action)))
         if not dma:
-            self.draw_references(col, export_type in {"Binary", "Insertable Binary"})
+            self.draw_references(col, is_binary=export_type in {"Binary", "Insertable Binary"})
         col.separator()
 
         if specific_variant is not None:
@@ -460,10 +475,10 @@ class SM64_ActionAnimProperty(PropertyGroup):
                 col.label(text="Variant Properties", icon="NLA")
                 self.headers[specific_variant].draw_props(col, *header_args)
         else:
-            self.draw_variants(col, action, actor_name, header_args)
+            self.draw_variants(col, action, dma, actor_name, header_args)
 
 
-class SM64_AnimTableElement(PropertyGroup):
+class SM64_AnimTableElementProperties(PropertyGroup):
     expand_tab: BoolProperty()
     action_prop: PointerProperty(name="Action", type=Action)
     variant: IntProperty(name="Variant", min=0)
@@ -537,7 +552,7 @@ class SM64_AnimTableElement(PropertyGroup):
         if 0 <= variant < len(action_props.headers):
             header_props = self.get_header(not dma)
             if dma:
-                name = get_dma_anim_name(index)
+                name = get_dma_header_name(index)
             else:
                 name = header_props.get_name(actor_name, action)
             if not draw_and_check_tab(col, self, "expand_tab", f"{name} (Variant {variant + 1})"):
@@ -553,7 +568,7 @@ class SM64_AnimTableElement(PropertyGroup):
             specific_variant=variant,
             in_table=True,
             updates_table=updates_table,
-            draw_file_name=export_type == "C" and not dma and export_seperately,
+            export_seperately=export_seperately,
             export_type=export_type,
             actor_name=actor_name,
             gen_enums=gen_enums,
@@ -858,9 +873,9 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
     )
 
     # Table
-    elements: CollectionProperty(type=SM64_AnimTableElement)
+    elements: CollectionProperty(type=SM64_AnimTableElementProperties)
 
-    export_seperately: BoolProperty(name="Export All Seperately")
+    export_seperately_prop: BoolProperty(name="Export All Seperately")
     write_data_seperately: BoolProperty(name="Write Data Seperately")
     null_delimiter: BoolProperty(name="Add Null Delimiter")
     override_files_prop: BoolProperty(name="Override Table and Data Files", default=True)
@@ -889,6 +904,10 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
     @property
     def behavior_address(self) -> int:
         return int_from_str(self.behavior_address_prop if self.behaviour == "Custom" else self.behaviour)
+
+    @property
+    def export_seperately(self):
+        return self.is_dma or self.export_seperately_prop
 
     @property
     def override_files(self) -> bool:
@@ -920,7 +939,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
         self,
         layout: UILayout,
         index: int,
-        table_element: SM64_AnimTableElement,
+        table_element: SM64_AnimTableElementProperties,
         export_type: str,
         actor_name: str,
     ):
@@ -960,15 +979,15 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
                 )
         else:
             if export_type == "C":
+                draw_custom_or_auto(self, col, "table_name", self.get_table_name(actor_name))
                 col.prop(self, "gen_enums")
                 if self.gen_enums:
                     multilineLabel(
                         col.box(),
                         f"List name: {self.get_enum_name(actor_name)}\nEnd name: {self.get_enum_end(actor_name)}",
                     )
-                    col.separator()
-                draw_custom_or_auto(self, col, "table_name", self.get_table_name(actor_name))
-                col.prop(self, "export_seperately")
+                col.separator()
+                col.prop(self, "export_seperately_prop")
                 draw_forced(col, self, "override_files_prop", not self.export_seperately)
             elif export_type == "Binary":
                 string_int_prop(col, self, "address", "Table Address")
@@ -1034,7 +1053,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
                 "INFO",
             )
 
-        element_props: SM64_AnimTableElement
+        element_props: SM64_AnimTableElementProperties
         for i, element_props in enumerate(self.elements):
             if i != 0:
                 box.separator()
@@ -1066,7 +1085,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
 
 classes = (
     SM64_AnimHeaderProperties,
-    SM64_AnimTableElement,
+    SM64_AnimTableElementProperties,
     SM64_ActionAnimProperty,
     SM64_AnimImportProperties,
     SM64_AnimProperties,

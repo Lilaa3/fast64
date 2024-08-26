@@ -12,7 +12,7 @@ from ..sm64_constants import MAX_U16, SegmentData
 from ..sm64_classes import RomReader, DMATable, DMATableElement, IntArray
 
 from .constants import HEADER_STRUCT, HEADER_SIZE, C_FLAGS
-from .utility import num_to_padded_hex, get_dma_anim_name
+from .utility import get_dma_header_name, get_dma_anim_name
 
 
 @dataclasses.dataclass
@@ -151,7 +151,7 @@ class AnimationHeader:
 
     def get_flags_comment(self):
         if isinstance(self.flags, str):
-            return self.flags
+            return ""
         flags_list: list[str] = []
         for index, flags in enumerate(C_FLAGS):
             if is_bit_active(self.flags, index):
@@ -535,7 +535,7 @@ class AnimationTable:
             if header in headers_already_added:
                 print(f"Made duplicate of header {i}.")
                 header = copy(header)
-            header.reference = get_dma_anim_name(i)
+            header.reference = get_dma_header_name(i)
             headers_already_added.append(header)
 
             included_headers.append(header)
@@ -544,7 +544,7 @@ class AnimationTable:
             if (i < len(self.elements) - 1) and self.elements[i + 1].data is data:
                 continue
 
-            name = f'anim_{"_".join([f"{num_to_padded_hex(num)}" for num in header_nums])}'
+            name = get_dma_anim_name(header_nums)
             file_name = f"{name}.inc.c"
             if data in data_already_added:
                 print(f"Made duplicate of header {i}'s data.")

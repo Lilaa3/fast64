@@ -96,8 +96,12 @@ def num_to_padded_hex(num: int):
     return hex_str.zfill(2)
 
 
-def get_dma_anim_name(index: int):
+def get_dma_header_name(index: int):
     return f"anim_{num_to_padded_hex(index)}"
+
+
+def get_dma_anim_name(header_indices: list[int]):
+    return f'anim_{"_".join([f"{num_to_padded_hex(num)}" for num in header_indices])}'
 
 
 def get_action_props(action: Action) -> "SM64_ActionAnimProperty":

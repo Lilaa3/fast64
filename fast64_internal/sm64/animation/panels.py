@@ -98,16 +98,22 @@ class AnimationPanelAction(AnimationPanel):
             warn_col.alert = True
 
         sm64_props: SM64_Properties = context.scene.fast64.sm64
+        combined_props: SM64_CombinedObjectProperties = sm64_props.combined_export
         if sm64_props.export_type != "C":
             SM64_ExportAnim.draw_props(col)
 
+        export_seperately = get_anim_props(context).export_seperately
+        if sm64_props.export_type == "C" and not combined_props.export_single_action:
+            export_seperately = False
+        elif sm64_props.export_type == "Insertable Binary":
+            export_seperately = True
         get_action_props(action).draw_props(
             layout=col,
             action=action,
             specific_variant=None,
             in_table=False,
             updates_table=get_anim_props(context).update_table,
-            draw_file_name=sm64_props.export_type != "Binary",
+            export_seperately=export_seperately,
             export_type=sm64_props.export_type,
             actor_name=get_anim_actor_name(context),
             gen_enums=get_anim_props(context).gen_enums,

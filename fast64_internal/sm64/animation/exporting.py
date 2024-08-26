@@ -43,7 +43,7 @@ if TYPE_CHECKING:
         SM64_ActionAnimProperty,
         SM64_AnimHeaderProperties,
         SM64_ArmatureAnimProperties,
-        SM64_AnimTableElement,
+        SM64_AnimTableElementProperties,
     )
     from ..settings.properties import SM64_Properties
     from ..sm64_objects import SM64_CombinedObjectProperties
@@ -183,18 +183,19 @@ def to_header_class(
     action: Action,
     values_reference: int | str,
     indice_reference: int | str,
-    use_int_flags: bool = False,
+    dma: bool,
+    export_type: str,
+    actor_name="mario",
+    gen_enums=False,
+    file_name="anim_00.inc.c",
     table_index: int | None = None,
-    actor_name: str | None = "mario",
-    gen_enums: bool = False,
-    file_name: str | None = "anim_00.inc.c",
 ):
     header = AnimationHeader()
-    header.reference = header_props.get_name(actor_name, action)
+    header.reference = header_props.get_name(actor_name, action, dma)
     if gen_enums:
         header.enum_name = header_props.get_enum(actor_name, action)
 
-    if header_props.use_custom_flags and not use_int_flags:
+    if header_props.use_custom_flags and not (export_type in {"Binary", "Insertable Binary"} or dma):
         header.flags = header_props.custom_flags
     else:
         header.flags = header_props.int_flags
@@ -210,19 +211,8 @@ def to_header_class(
     return header
 
 
-def to_data_class(
-    action: Action,
-    pairs: list[SM64_AnimPair],
-    file_name: str = "anim_00.inc.c",
-):
-    data = AnimationData()
-    data_name: str = toAlnum(f"anim_{action.name}")
-    values_reference = f"{data_name}_values"
-    indice_reference = f"{data_name}_indices"
-    data.pairs = pairs
-    data.values_reference, data.indice_reference = values_reference, indice_reference
-    data.values_file_name, data.indices_file_name = file_name, file_name
-    return data
+def to_data_class(pairs: list[SM64_AnimPair], data_name="anim_00", file_name: str = "anim_00.inc.c"):
+    return AnimationData(pairs, f"{data_name}_indices", f"{data_name}_values", file_name, file_name)
 
 
 def to_animation_class(
@@ -232,17 +222,16 @@ def to_animation_class(
     blender_to_sm64_scale: float,
     quick_read: bool,
     export_type: str,
-    can_use_references: bool,
-    use_int_flags: bool,
-    actor_name: str = "mario",
-    gen_enums: bool = False,
-    use_addresses_for_references: bool = False,
-):
+    dma: bool,
+    actor_name="mario",
+    gen_enums=False,
+) -> Animation:
+    can_reference = not dma
     animation = Animation()
-    animation.file_name = action_props.get_file_name(action, export_type)
+    animation.file_name = action_props.get_file_name(action, export_type, dma)
 
-    if can_use_references and action_props.reference_tables:
-        if use_addresses_for_references:
+    if can_reference and action_props.reference_tables:
+        if export_type in {"Binary", "Insertable Binary"}:
             values_reference, indice_reference = int(action_props.values_address, 0), int(
                 action_props.indices_address, 0
             )
@@ -250,24 +239,25 @@ def to_animation_class(
             values_reference, indice_reference = action_props.values_table, action_props.indices_table
     else:
         pairs = get_animation_pairs(blender_to_sm64_scale, [action], obj, quick_read)[action]
-        animation.data = to_data_class(action, pairs, animation.file_name)
+        animation.data = to_data_class(pairs, action_props.get_name(action, dma), animation.file_name)
         values_reference = animation.data.values_reference
         indice_reference = animation.data.indice_reference
     bone_count = len(get_anim_owners(obj))
     for header_props in action_props.headers:
         animation.headers.append(
             to_header_class(
-                header_props,
-                bone_count,
-                animation.data,
-                action,
-                values_reference,
-                indice_reference,
-                use_int_flags,
-                None,
-                actor_name,
-                gen_enums,
-                animation.file_name,
+                header_props=header_props,
+                bone_count=bone_count,
+                data=animation.data,
+                action=action,
+                values_reference=values_reference,
+                indice_reference=indice_reference,
+                dma=dma,
+                export_type=export_type,
+                actor_name=actor_name,
+                gen_enums=gen_enums,
+                file_name=animation.file_name,
+                table_index=None,
             )
         )
 
@@ -281,13 +271,12 @@ def to_table_element_class(
     action_pairs: dict[Action, list[SM64_AnimPair]],
     bone_count: int,
     table_index: int,
-    export_type: str = "C",
-    use_int_flags: bool = False,
-    can_reference: bool = True,
-    actor_name: str = "mario",
-    gen_enums: bool = False,
-    use_addresses: bool = False,
+    dma: bool,
+    export_type: str,
+    actor_name="mario",
+    gen_enums=False,
 ):
+    use_addresses, can_reference = export_type in {"Binary", "Insertable Binary"}, not dma
     element = AnimationTableElement()
     if can_reference and element_props.reference:
         reference = int(element_props.header_address, 0) if use_addresses else element_props.header_name
@@ -301,10 +290,10 @@ def to_table_element_class(
         return element
 
     # Not reference
-    header, action = element_props.get_header(can_reference), element_props.get_action(can_reference)
+    header_props, action = element_props.get_header(can_reference), element_props.get_action(can_reference)
     if not action:
         raise PluginError("Action is not set.")
-    if not header:
+    if not header_props:
         raise PluginError("Header is not set.")
 
     action_props = get_action_props(action)
@@ -320,25 +309,28 @@ def to_table_element_class(
     else:
         if action in action_pairs and action not in data_dict:
             data_dict[action] = to_data_class(
-                action, action_pairs[action], action_props.get_file_name(action, export_type)
+                action_pairs[action],
+                action_props.get_name(action, dma),
+                action_props.get_file_name(action, export_type, dma),
             )
         data = data_dict[action]
         values_reference, indice_reference = data.values_reference, data.indice_reference
 
     element.header = header_dict.get(
-        header,
+        header_props,
         to_header_class(
-            header,
-            bone_count,
-            data,
-            action,
-            values_reference,
-            indice_reference,
-            use_int_flags,
-            table_index,
-            actor_name,
-            gen_enums,
-            action_props.get_file_name(action, export_type),
+            header_props=header_props,
+            bone_count=bone_count,
+            data=data,
+            action=action,
+            values_reference=values_reference,
+            indice_reference=indice_reference,
+            dma=dma,
+            export_type=export_type,
+            actor_name=actor_name,
+            gen_enums=gen_enums,
+            file_name=action_props.get_file_name(action, export_type),
+            table_index=table_index,
         ),
     )
     element.reference = element.header.reference
@@ -351,13 +343,12 @@ def to_table_class(
     obj: Object,
     blender_to_sm64_scale: float,
     quick_read: bool,
-    export_type: str = "C",
-    use_int_flags: bool = False,
-    can_reference: bool = True,
-    actor_name: str = "mario",
-    gen_enums: bool = False,
-    use_addresses: bool = False,
+    dma: bool,
+    export_type: str,
+    actor_name="mario",
+    gen_enums=False,
 ) -> AnimationTable:
+    can_reference = not dma
     table = AnimationTable(
         anim_props.get_table_name(actor_name),
         anim_props.get_enum_name(actor_name),
@@ -382,18 +373,16 @@ def to_table_class(
         try:
             table.elements.append(
                 to_table_element_class(
-                    element_props,
-                    header_dict,
-                    data_dict,
-                    action_pairs,
-                    bone_count,
-                    i,
-                    export_type,
-                    use_int_flags,
-                    can_reference,
-                    actor_name,
-                    gen_enums,
-                    use_addresses,
+                    element_props=element_props,
+                    header_dict=header_dict,
+                    data_dict=data_dict,
+                    action_pairs=action_pairs,
+                    bone_count=bone_count,
+                    table_index=i,
+                    dma=dma,
+                    export_type=export_type,
+                    actor_name=actor_name,
+                    gen_enums=gen_enums,
                 )
             )
         except Exception as exc:
@@ -854,18 +843,16 @@ def export_animation(context: Context, obj: Object):
     bone_count = len(get_anim_owners(obj))
 
     try:
-        animation: Animation = to_animation_class(
-            action_props,
-            action,
-            obj,
-            sm64_props.blender_to_sm64_scale,
-            combined_props.quick_anim_read,
-            sm64_props.export_type,
-            sm64_props.binary_export or anim_props.is_dma,
-            sm64_props.binary_export or anim_props.is_dma,
-            actor_name,
-            not sm64_props.binary_export and anim_props.gen_enums,
-            sm64_props.binary_export,
+        animation = to_animation_class(
+            action_props=action_props,
+            action=action,
+            obj=obj,
+            blender_to_sm64_scale=sm64_props.blender_to_sm64_scale,
+            quick_read=combined_props.quick_anim_read,
+            export_type=sm64_props.export_type,
+            dma=anim_props.is_dma,
+            actor_name=actor_name,
+            gen_enums=not sm64_props.binary_export and anim_props.gen_enums,
         )
     except Exception as exc:
         raise PluginError(f"Failed to generate animation class. {exc}") from exc
@@ -908,16 +895,14 @@ def export_animation_table(context: Context, obj: Object):
     try:
         print("Reading table data from fast64")
         table = to_table_class(
-            anim_props,
-            obj,
-            sm64_props.blender_to_sm64_scale,
-            combined_props.quick_anim_read,
-            sm64_props.export_type,
-            anim_props.is_dma or sm64_props.binary_export,
-            not anim_props.is_dma,
-            actor_name,
-            not anim_props.is_dma and not sm64_props.binary_export and anim_props.gen_enums,
-            sm64_props.binary_export,
+            anim_props=anim_props,
+            obj=obj,
+            blender_to_sm64_scale=sm64_props.blender_to_sm64_scale,
+            quick_read=combined_props.quick_anim_read,
+            dma=anim_props.is_dma,
+            export_type=sm64_props.export_type,
+            actor_name=actor_name,
+            gen_enums=not anim_props.is_dma and not sm64_props.binary_export and anim_props.gen_enums,
         )
     except Exception as exc:
         raise PluginError(f"Failed to generate table class. {exc}") from exc

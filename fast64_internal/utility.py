@@ -1315,6 +1315,11 @@ def toAlnum(name, exceptions=[]):
     return name
 
 
+def to_valid_file_name(name: str):
+    """Replace any invalid characters with an underscore"""
+    return re.sub(r'[/\\?%*:|"<>]', " ", name)
+
+
 def get64bitAlignedAddr(address):
     endNibble = hex(address)[-1]
     if endNibble != "0" and endNibble != "8":
