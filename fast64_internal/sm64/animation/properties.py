@@ -70,7 +70,7 @@ def draw_forced(layout: UILayout, holder, prop: str, forced: bool):
         prop_size_label(row, text="", icon="LOCKED")
     row.alignment = "LEFT"
     row.enabled = not forced
-    row.prop(holder, prop, invert_checkbox=not holder.get(prop) if forced else False)
+    row.prop(holder, prop, invert_checkbox=not getattr(holder, prop) if forced else False)
 
 
 def prop_size_label(layout: UILayout, **label_args):
