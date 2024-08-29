@@ -35,7 +35,14 @@ from .classes import (
     AnimationTable,
     AnimationTableElement,
 )
-from .utility import get_anim_owners, get_anim_actor_name, anim_name_to_enum_name, get_selected_action, get_action_props
+from .utility import (
+    get_anim_owners,
+    get_anim_actor_name,
+    anim_name_to_enum_name,
+    get_selected_action,
+    get_action_props,
+    duplicate_name,
+)
 from .constants import HEADER_SIZE, TABLE_PATTERN, TABLE_ELEMENT_PATTERN
 
 from typing import TYPE_CHECKING
@@ -277,18 +284,22 @@ def to_table_element_class(
     export_type: str,
     actor_name="mario",
     gen_enums=False,
+    prev_enums: list[str] = None,
 ):
     use_addresses, can_reference = export_type in {"Binary", "Insertable Binary"}, not dma
     element = AnimationTableElement()
+
+    if gen_enums:
+        enum = element_props.get_enum(can_reference, actor_name, prev_enums)
+        if not enum:
+            raise PluginError("Enum name is not set.")
+        element.enum_name = enum
+
     if can_reference and element_props.reference:
         reference = int(element_props.header_address, 0) if use_addresses else element_props.header_name
         if reference == "":
             raise PluginError("Header is not set.")
         element.reference = reference
-        if gen_enums:
-            if not element_props.enum_name:
-                raise PluginError("Enum name is not set.")
-            element.enum_name = element_props.enum_name
         return element
 
     # Not reference
@@ -336,7 +347,6 @@ def to_table_element_class(
         ),
     )
     element.reference = element.header.reference
-    element.enum_name = element.header.enum_name
     return element
 
 
@@ -370,7 +380,8 @@ def to_table_class(
     )
     data_dict = {}
 
-    element_props: SM64_AnimTableElement
+    prev_enums = []
+    element_props: SM64_AnimTableElementProperties
     for i, element_props in enumerate(anim_props.elements):
         try:
             table.elements.append(
@@ -385,6 +396,7 @@ def to_table_class(
                     export_type=export_type,
                     actor_name=actor_name,
                     gen_enums=gen_enums,
+                    prev_enums=prev_enums,
                 )
             )
         except Exception as exc:
@@ -432,7 +444,9 @@ def update_anim_header(header: os.PathLike, table_name: str, gen_enums: bool):
             f.write(extern + "\n")
 
 
-def update_enum_file(path: os.PathLike, list_name: str, elements: list[str], end: str, override_files: bool, existing_table: str):
+def update_enum_file(
+    path: os.PathLike, list_name: str, elements: list[str], end: str, override_files: bool, existing_table: str
+):
     if os.path.exists(path) and not override_files:
         with open(path, "r", encoding="utf-8") as f:
             text = f.read()
@@ -443,17 +457,13 @@ def update_enum_file(path: os.PathLike, list_name: str, elements: list[str], end
             for element_match in re.finditer(TABLE_ELEMENT_PATTERN, existing_table):
                 element = element_match.group("element")
                 if element is not None:
-                    enum = anim_name_to_enum_name(element)
-                else:
                     enum = element_match.group("enum")
-                if enum is not None:
-                    possible_enum, num = enum, 1
-                    while possible_enum in base_enum_elements:
-                        possible_enum = f"{enum}_{num}"
-                        num += 1
-                    base_enum_elements.append(possible_enum)
-                
-            elements = base_enum_elements + elements
+                    if enum is None:
+                        enum = anim_name_to_enum_name(element)
+                    base_enum_elements.append(duplicate_name(enum, base_enum_elements))
+            if base_enum_elements:
+                print(f"Creating enum list out of existing table: {base_enum_elements}")
+                elements = base_enum_elements + elements
 
     enum_list_index = text.find(list_name)
     if enum_list_index == -1:  # If there is no enum list, add one and find again
@@ -488,7 +498,7 @@ def update_table_file(
     print(f"Updating table file at {table_path}.")
     table_content = ""
     if os.path.exists(table_path) and not override_files:
-        with open(table_path) as f:
+        with open(table_path, encoding="utf-8") as f:
             text = f.read()
 
         for table_match in re.finditer(TABLE_PATTERN, removeComments(text)):

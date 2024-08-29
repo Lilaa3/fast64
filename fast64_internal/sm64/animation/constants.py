@@ -40,7 +40,7 @@ TABLE_PATTERN = re.compile(
     re.VERBOSE | re.MULTILINE,
 )
 
-TABLE_ELEMENT_PATTERN = re.compile( # strict but only in the sense that it requires valid c code
+TABLE_ELEMENT_PATTERN = re.compile(  # strict but only in the sense that it requires valid c code
     r"""
     (?:\s*? # Don´t capture anything except the optional enum and the element name
     (?:\[\s*?(?P<enum>\w+)\s*?\]\s*?=\s*?)? # Don´t capture brackets or equal, works with nums

@@ -50,13 +50,20 @@ from .constants import (
     enum_anim_tables,
     FLAG_PROPS,
 )
-from .utility import get_action_props, get_dma_anim_name, get_dma_header_name, is_obj_animatable, anim_name_to_enum_name
+from .utility import (
+    get_action_props,
+    get_dma_anim_name,
+    get_dma_header_name,
+    is_obj_animatable,
+    anim_name_to_enum_name,
+    duplicate_name,
+)
 from .importing import get_enum_from_import_preset, update_table_preset
 
 
-def draw_custom_or_auto(holder, layout: UILayout, prop: str, default: str):
+def draw_custom_or_auto(holder, layout: UILayout, prop: str, default: str, factor=0.5):
     use_custom_prop = "use_custom_" + prop
-    name_split = layout.split()
+    name_split = layout.split(factor=factor)
     name_split.prop(holder, use_custom_prop)
     if getattr(holder, use_custom_prop):
         name_split.prop(holder, "custom_" + prop, text="")
@@ -211,17 +218,14 @@ class SM64_AnimHeaderProperties(PropertyGroup):
     def get_name(self, actor_name: str, action: Action, dma=False) -> str:
         if dma:
             return get_dma_header_name(self.table_index)
-        if self.use_custom_name:
+        elif self.use_custom_name:
             return self.custom_name
-        if self.header_variant == 0:
-            if actor_name:
-                name = f"{actor_name}_anim_{action.name}"
-            else:
-                name = f"anim_{action.name}"
+        elif self.header_variant == 0:
+            name = f"{actor_name}_anim_{action.name}"
             return toAlnum(name)
-        main_header_name = get_action_props(action).headers[0].get_name(actor_name, action)
-        name = f"{main_header_name}_{self.header_variant}"
-
+        else:
+            main_header_name = get_action_props(action).headers[0].get_name(actor_name, action)
+            name = f"{main_header_name}_{self.header_variant}"
         return toAlnum(name)
 
     def get_enum(self, actor_name: str, action: Action) -> str:
@@ -481,39 +485,51 @@ class SM64_AnimTableElementProperties(PropertyGroup):
     reference: BoolProperty(name="Reference")
     header_name: StringProperty(name="Header Reference", default="toad_seg6_anim_0600B66C")
     header_address: StringProperty(name="Header Reference", default=intToHex(0x0600B75C))  # Toad animation 0
-    enum_name: StringProperty(name="Enum Name")
+    use_custom_enum: BoolProperty(name="Enum")
+    custom_enum: StringProperty(name="Enum Name")
+
+    def get_enum(self, can_reference: bool, actor_name: str, prev_enums: list[str]) -> str:
+        """Updates prev_enums"""
+        enum = ""
+        if self.use_custom_enum:
+            enum = self.custom_enum
+        elif can_reference and self.reference:
+            enum = duplicate_name(anim_name_to_enum_name(self.header_name), prev_enums)
+        else:
+            action, header = self.get_action_header(can_reference)
+            if header and action:
+                enum = duplicate_name(header.get_enum(actor_name, action), prev_enums)
+        if enum != "":
+            prev_enums.append(enum)
+        return enum
+
+    def get_action_header(self, can_reference: bool) -> tuple[Action, SM64_AnimHeaderProperties] | tuple[None, None]:
+        if (not can_reference or not self.reference) and self.action_prop:
+            headers = get_action_props(self.action_prop).headers
+            if self.variant < len(headers):
+                return (self.action_prop, headers[self.variant])
+        return (None, None)
 
     def get_action(self, can_reference: bool) -> Action | None:
-        if can_reference and self.reference:
-            return None
-        return self.action_prop
+        return self.get_action_header(can_reference)[0]
 
     def get_header(self, can_reference: bool) -> SM64_AnimHeaderProperties | None:
-        if can_reference and self.reference:
-            return None
-        action = self.get_action(can_reference)
-        if not action:
-            return None
-        return get_action_props(action).headers[self.variant]
+        return self.get_action_header(can_reference)[1]
 
     def set_variant(self, action: Action, variant: int):
         self.action_prop = action
         self.variant = variant
 
-    def draw_reference(self, layout: UILayout, export_type: str = "C", gen_enums: bool = False):
-        row = layout.row()
+    def draw_reference(
+        self, layout: UILayout, export_type: str = "C", gen_enums: bool = False, prev_enums: list[str] = None
+    ):
         if export_type in {"Binary", "Insertable Binary"}:
-            string_int_prop(row, self, "header_address", "Header Address")
+            string_int_prop(layout, self, "header_address", "Header Address")
             return
+        split = layout.split()
         if gen_enums:
-            text_row = row.row()
-            text_row.alignment = "LEFT"
-            text_row.label(text="Enum")
-        prop_row = row.row()
-        prop_row.alignment = "EXPAND"
-        if gen_enums:
-            prop_row.prop(self, "enum_name", text="")
-        row.prop(self, "header_name", text="")
+            draw_custom_or_auto(self, split, "enum", self.get_enum(True, "", prev_enums), factor=0.3)
+        split.prop(self, "header_name", text="")
 
     def draw_props(
         self,
@@ -526,14 +542,16 @@ class SM64_AnimTableElementProperties(PropertyGroup):
         export_type: str,
         gen_enums: bool,
         actor_name: str,
+        prev_enums: list,
     ):
+        can_reference = not dma
         col = prop_layout.column()
-        if not dma:
+        if can_reference:
             reference_row = row.row()
             reference_row.alignment = "LEFT"
             reference_row.prop(self, "reference")
             if self.reference:
-                self.draw_reference(col, export_type, gen_enums)
+                self.draw_reference(col, export_type, gen_enums, prev_enums)
                 return
         action_row = row.row()
         action_row.alignment = "EXPAND"
@@ -542,22 +560,28 @@ class SM64_AnimTableElementProperties(PropertyGroup):
         if not self.action_prop:
             col.box().label(text="Header´s action does not exist.", icon="ERROR")
             return
+
+        variant_split = col.split(factor=0.3)
+        variant_split.prop(self, "variant")
+
         action = self.action_prop
         action_props = get_action_props(action)
         variant = self.variant
         if 0 <= variant < len(action_props.headers):
-            header_props = self.get_header(not dma)
+            header_props = self.get_header(can_reference)
             if dma:
                 name = get_dma_header_name(index)
             else:
                 name = header_props.get_name(actor_name, action)
-            if not draw_and_check_tab(col, self, "expand_tab", f"{name} (Variant {variant + 1})"):
+            if gen_enums:
+                draw_custom_or_auto(
+                    self, variant_split, "enum", self.get_enum(can_reference, actor_name, prev_enums), factor=0.3
+                )
+            if not draw_and_check_tab(
+                col, self, "expand_tab", name + (f" (Variant {variant + 1})" if variant > 0 else "")
+            ):
                 return
-        row = col.row()
-        row.alignment = "LEFT"
-        row.prop(self, "variant")
-        draw_list_op(row, SM64_AnimVariantOps, "REMOVE", variant, action_props.headers, True, action_name=action.name)
-        draw_list_op(row, SM64_AnimVariantOps, "ADD", variant, action_name=action.name)
+
         action_props.draw_props(
             layout=col,
             action=action,
@@ -938,6 +962,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
         table_element: SM64_AnimTableElementProperties,
         export_type: str,
         actor_name: str,
+        prev_enums: list[str],
     ):
         col = layout.column()
         row = col.row()
@@ -957,6 +982,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
             export_type,
             self.gen_enums,
             actor_name,
+            prev_enums,
         )
 
     def draw_table(self, layout: UILayout, export_type: str, actor_name: str):
@@ -1049,6 +1075,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
                 "INFO",
             )
 
+        prev_enums = []
         element_props: SM64_AnimTableElementProperties
         for i, element_props in enumerate(self.elements):
             if i != 0:
@@ -1058,7 +1085,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
             if action in actions_dups:
                 element_box.alert = True
                 element_box.box().label(text=f"Action duplicates at {[j for j in actions_dups[action] if j != i]}")
-            self.draw_element(element_box, i, element_props, export_type, actor_name)
+            self.draw_element(element_box, i, element_props, export_type, actor_name, prev_enums)
 
     def draw_c_settings(self, layout: UILayout, header_type: str):
         col = layout.column()

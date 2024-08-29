@@ -48,9 +48,9 @@ if TYPE_CHECKING:
         SM64_ArmatureAnimProperties,
         SM64_AnimHeaderProperties,
         SM64_ActionAnimProperty,
+        SM64_AnimTableElementProperties,
     )
     from ..settings.properties import SM64_Properties
-    from ..sm64_objects import SM64_CombinedObjectProperties
 
 
 def get_preset_anim_name_list(preset: str):
@@ -323,7 +323,7 @@ def from_anim_class(
     action_props.update_variant_numbers()
 
 
-def from_table_element_class(element_props: "SM64_AnimTableElement", element: AnimationTableElement):
+def from_table_element_class(element_props: "SM64_AnimTableElementProperties", element: AnimationTableElement):
     if element.header:
         element_props.set_variant(element.header.action, element.header.header_variant)
     else:
@@ -334,7 +334,8 @@ def from_table_element_class(element_props: "SM64_AnimTableElement", element: An
         element_props.header_name = element.reference
         element_props.header_address = intToHex(0)
     if element.enum_name:
-        element_props.enum_name = element.enum_name
+        element_props.custom_enum = element.enum_name
+        element_props.use_custom_enum = True
 
 
 def from_anim_table_class(

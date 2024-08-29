@@ -110,6 +110,15 @@ def anim_name_to_enum_name(anim_name: str) -> str:
         enum_name = f"_{enum_name}"
     return enum_name
 
+
+def duplicate_name(name: str, existing_names: list[str]) -> str:
+    i, possible_name = 1, name
+    while possible_name in existing_names:
+        possible_name = f"{name}_{i}"
+        i += 1
+    return possible_name
+
+
 def get_action_props(action: Action) -> "SM64_ActionAnimProperty":
     return action.fast64.sm64.animation
 

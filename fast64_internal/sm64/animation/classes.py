@@ -786,7 +786,7 @@ class AnimationTable:
                 )
             else:
                 header = None
-            self.elements.append(AnimationTableElement(enum_name_split[-1], enum_name, header))
+            self.elements.append(AnimationTableElement(header_name, enum_name, header))
         if self.elements and header_name == "NULL":
             self.elements.pop()  # Remove table end identifier from import
         return self
