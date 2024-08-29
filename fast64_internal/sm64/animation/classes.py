@@ -468,20 +468,22 @@ class AnimationTable:
     end_address: int = 0
 
     @property
-    def header_names(self) -> list[str]:
-        names = []
+    def names(self) -> tuple[list[str], list[str]]:
+        names, enums = [], []
         for element in self.elements:
             assert isinstance(element.reference, str), "Reference is not a string."
             names.append(element.reference)
-        return names
+            assert isinstance(element.enum_name, str), "Enum name is not a string."
+            enums.append(element.enum_name)
+        return names, enums
+
+    @property
+    def header_names(self) -> list[str]:
+        return self.names[0]
 
     @property
     def enum_names(self) -> list[str]:
-        names = []
-        for element in self.elements:
-            assert isinstance(element.enum_name, str), "Enum name is not a string."
-            names.append(element.enum_name)
-        return names
+        return self.names[1]
 
     @property
     def header_data_sets(self) -> tuple[list[AnimationHeader], list[AnimationData]]:

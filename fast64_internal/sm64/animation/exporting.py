@@ -1,4 +1,5 @@
 import os
+import re
 import numpy as np
 
 import bpy
@@ -18,6 +19,7 @@ from ...utility import (
     applyBasicTweaks,
     toAlnum,
     directory_path_checks,
+    removeComments,
 )
 from ...utility_anim import stashActionInArmature
 from ..sm64_constants import BEHAVIOR_COMMANDS, BEHAVIOR_EXITS, defaultExtendSegment4, level_pointers
@@ -33,8 +35,8 @@ from .classes import (
     AnimationTable,
     AnimationTableElement,
 )
-from .utility import get_anim_owners, get_anim_actor_name, get_selected_action, get_action_props
-from .constants import HEADER_SIZE
+from .utility import get_anim_owners, get_anim_actor_name, anim_name_to_enum_name, get_selected_action, get_action_props
+from .constants import HEADER_SIZE, TABLE_PATTERN, TABLE_ELEMENT_PATTERN
 
 from typing import TYPE_CHECKING
 
@@ -416,27 +418,42 @@ def update_includes(
 def update_anim_header(header: os.PathLike, table_name: str, gen_enums: bool):
     print("Writing animation header")
     if os.path.exists(header):
-        with open(header, "r", encoding="utf-8") as file:
-            text = file.read()
+        with open(header, "r", encoding="utf-8") as f:
+            text = f.read()
     else:
         text = ""
-    with open(header, "a", encoding="utf-8") as file:
+    with open(header, "a", encoding="utf-8") as f:
         if gen_enums:
             include = '#include "anims/table_enum.h"'
             if include not in text:
-                file.write(include + "\n")
+                f.write(include + "\n")
         extern = f"extern const struct Animation *const {table_name}[];"
         if extern not in text:
-            file.write(extern + "\n")
+            f.write(extern + "\n")
 
 
-def update_enum_file(path: os.PathLike, list_name: str, names: list[str], end: str, override_files: bool):
-    # TODO: Figure out enum from existing tables
-    if override_files or not os.path.exists(path):
-        text = ""
+def update_enum_file(path: os.PathLike, list_name: str, elements: list[str], end: str, override_files: bool, existing_table: str):
+    if os.path.exists(path) and not override_files:
+        with open(path, "r", encoding="utf-8") as f:
+            text = f.read()
     else:
-        with open(path, "r", encoding="utf-8") as file:
-            text = file.read()
+        text = ""
+        if existing_table:
+            base_enum_elements = []
+            for element_match in re.finditer(TABLE_ELEMENT_PATTERN, existing_table):
+                element = element_match.group("element")
+                if element is not None:
+                    enum = anim_name_to_enum_name(element)
+                else:
+                    enum = element_match.group("enum")
+                if enum is not None:
+                    possible_enum, num = enum, 1
+                    while possible_enum in base_enum_elements:
+                        possible_enum = f"{enum}_{num}"
+                        num += 1
+                    base_enum_elements.append(possible_enum)
+                
+            elements = base_enum_elements + elements
 
     enum_list_index = text.find(list_name)
     if enum_list_index == -1:  # If there is no enum list, add one and find again
@@ -445,30 +462,51 @@ def update_enum_file(path: os.PathLike, list_name: str, names: list[str], end: s
         text += "};\n"
         enum_list_index = text.find(list_name)
 
-    for name in names:
+    for name in elements:
         if override_files or text.find(name, enum_list_index) == -1:
             enum_list_end = text.find(end, enum_list_index)
             if enum_list_end == -1:
                 enum_list_end = text.find("}", enum_list_index)
             text = text[:enum_list_end] + f"{name},\n\t" + text[enum_list_end:]
 
-    with open(path, "w", encoding="utf-8") as file:
-        file.write(text)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text)
 
 
-def update_table_file(path: os.PathLike, name: str, names: list[str], null_delimiter: bool, override_files: bool):
-    print(f"Updating table file at {path}.")
-    if override_files or not os.path.exists(path):
-        text = ""
+def update_table_file(
+    table_path: os.PathLike,
+    table_name: str,
+    null_delimiter: bool,
+    table_elements: list[str],
+    override_files: bool,
+    gen_enums: bool,
+    enum_list_path: os.PathLike = "",
+    enum_list_name: str = "",
+    enum_list_end: str = "",
+    enum_elements: list[str] = None,
+):
+    print(f"Updating table file at {table_path}.")
+    table_content = ""
+    if os.path.exists(table_path) and not override_files:
+        with open(table_path) as f:
+            text = f.read()
+
+        for table_match in re.finditer(TABLE_PATTERN, removeComments(text)):
+            found_name, content = table_match.group("name"), table_match.group("content")
+            if found_name is not None and content is not None and table_name == found_name.strip():
+                table_content = content
+                break
     else:
-        with open(path, "r", encoding="utf-8") as file:
-            text = file.read()
-    table_name_index = text.find(name)
+        text = ""
+    if gen_enums:
+        update_enum_file(enum_list_path, enum_list_name, enum_elements, enum_list_end, override_files, table_content)
+
+    table_name_index = text.find(table_name)
     if table_name_index == -1:  # If there is no table, add one and find again
         print("Created new table array.")
         text += "const struct Animation *const "
         table_name_index = len(text)
-        text += f"{name}[] = {{\n}};\n"
+        text += f"{table_name}[] = {{\n}};\n"
 
     table_start = text.find("{", table_name_index)
     if table_start == -1:
@@ -486,7 +524,7 @@ def update_table_file(path: os.PathLike, name: str, names: list[str], null_delim
         delimiter_index = table_end
 
     header_lines = ""
-    for header_name in names:
+    for header_name in table_elements:
         header_reference = f"&{header_name}"
         if not override_files and text.find(header_reference, table_start, table_end) != -1:
             continue
@@ -495,8 +533,8 @@ def update_table_file(path: os.PathLike, name: str, names: list[str], null_delim
         header_lines = header_lines[1:] + "\t"
     text = text[:delimiter_index] + header_lines + text[delimiter_index:]
 
-    with open(path, "w", encoding="utf-8") as file:
-        file.write(text)
+    with open(table_path, "w", encoding="utf-8") as f:
+        f.write(text)
 
 
 def update_data_file(data_file_path: os.PathLike, anim_file_names: list, override_files: bool = False):
@@ -657,8 +695,8 @@ def export_animation_table_c(
         files_data = table.data_and_headers_to_c(anim_props.is_dma)
         print("Saving all generated data files")
         for file_name, file_data in files_data.items():
-            with open(os.path.join(anim_directory, file_name), "w", encoding="utf-8") as file:
-                file.write(file_data)
+            with open(os.path.join(anim_directory, file_name), "w", encoding="utf-8") as f:
+                f.write(file_data)
             print(file_name)
         if not anim_props.is_dma:
             update_data_file(
@@ -669,8 +707,8 @@ def export_animation_table_c(
     else:
         result = table.data_and_headers_to_c_combined()
         print("Saving generated data file")
-        with open(os.path.join(anim_directory, "data.inc.c"), "w", encoding="utf-8") as file:
-            file.write(result)
+        with open(os.path.join(anim_directory, "data.inc.c"), "w", encoding="utf-8") as f:
+            f.write(result)
     print("All animation data files exported.")
     if anim_props.is_dma:  # Don´t create an actual table and or update includes for dma exports
         return
@@ -678,20 +716,17 @@ def export_animation_table_c(
     header_path = os.path.join(geo_directory, "anim_header.h")
     update_anim_header(header_path, table.reference, anim_props.gen_enums)
     update_table_file(
-        os.path.join(anim_directory, "table.inc.c"),
-        table.reference,
-        table.header_names,
-        anim_props.null_delimiter,
-        anim_props.override_files,
+        table_path=os.path.join(anim_directory, "table.inc.c"),
+        table_name=table.reference,
+        table_elements=table.header_names,
+        null_delimiter=anim_props.null_delimiter,
+        gen_enums=anim_props.gen_enums,
+        enum_list_path=os.path.join(anim_directory, "table_enum.h"),
+        enum_list_name=table.enum_list_reference,
+        enum_list_end=table.enum_list_end,
+        enum_elements=table.enum_names,
+        override_files=anim_props.override_files,
     )
-    if anim_props.gen_enums:
-        update_enum_file(
-            os.path.join(anim_directory, "table_enum.h"),
-            table.enum_list_reference,
-            table.enum_names,
-            table.enum_list_end,
-            anim_props.override_files,
-        )
 
     if combined_props.export_header_type != "Custom":
         update_includes(
@@ -790,8 +825,8 @@ def export_animation_c(
     )
 
     anim_path = os.path.join(anim_directory, animation.file_name)
-    with open(anim_path, "w", encoding="utf-8") as file:
-        file.write(animation.to_c(anim_props.is_dma))
+    with open(anim_path, "w", encoding="utf-8") as f:
+        f.write(animation.to_c(anim_props.is_dma))
     if anim_props.is_dma:  # Don´t create an actual table and don´t update includes for dma exports
         return
 
@@ -804,20 +839,17 @@ def export_animation_c(
             anim_props.gen_enums,
         )
         update_table_file(
-            os.path.join(anim_directory, "table.inc.c"),
-            table_name,
-            animation.header_names,
-            anim_props.null_delimiter,
-            False,
+            table_path=os.path.join(anim_directory, "table.inc.c"),
+            table_name=table_name,
+            table_elements=animation.header_names,
+            null_delimiter=anim_props.null_delimiter,
+            gen_enums=anim_props.gen_enums,
+            enum_list_path=os.path.join(anim_directory, "table_enum.h"),
+            enum_list_name=anim_props.get_enum_name(actor_name),
+            enum_list_end=anim_props.get_enum_end(actor_name),
+            enum_elements=animation.enum_names,
+            override_files=False,
         )
-        if anim_props.gen_enums:
-            update_enum_file(
-                os.path.join(anim_directory, "table_enum.h"),
-                table_name,
-                animation.enum_names,
-                anim_props.get_enum_end(actor_name),
-                False,
-            )
     update_data_file(os.path.join(anim_directory, "data.inc.c"), [animation.file_name])
     if combined_props.export_header_type != "Custom":
         update_includes(

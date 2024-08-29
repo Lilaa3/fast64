@@ -103,8 +103,8 @@ class AnimationPanelAction(AnimationPanel):
             SM64_ExportAnim.draw_props(col)
 
         export_seperately = get_anim_props(context).export_seperately
-        if sm64_props.export_type == "C" and not combined_props.export_single_action:
-            export_seperately = False
+        if sm64_props.export_type == "C":
+            export_seperately = export_seperately or combined_props.export_single_action
         elif sm64_props.export_type == "Insertable Binary":
             export_seperately = True
         get_action_props(action).draw_props(

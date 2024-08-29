@@ -50,7 +50,7 @@ from .constants import (
     enum_anim_tables,
     FLAG_PROPS,
 )
-from .utility import get_action_props, get_dma_anim_name, get_dma_header_name, is_obj_animatable
+from .utility import get_action_props, get_dma_anim_name, get_dma_header_name, is_obj_animatable, anim_name_to_enum_name
 from .importing import get_enum_from_import_preset, update_table_preset
 
 
@@ -227,11 +227,7 @@ class SM64_AnimHeaderProperties(PropertyGroup):
     def get_enum(self, actor_name: str, action: Action) -> str:
         if self.use_custom_enum:
             return self.custom_enum
-        anim_name = self.get_name(actor_name, action)
-        enum_name = anim_name.upper()
-        if anim_name == enum_name:
-            enum_name = f"_{enum_name}"
-        return enum_name
+        return anim_name_to_enum_name(self.get_name(actor_name, action))
 
     def draw_flag_props(self, layout: UILayout, use_int_flags: bool = False):
         col = layout.column()

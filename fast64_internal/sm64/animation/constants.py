@@ -1,3 +1,4 @@
+import re
 import struct
 
 from ...utility import intToHex
@@ -27,6 +28,27 @@ FLAG_PROPS = [
     "disabled",
     "no_trans",
 ]
+
+TABLE_PATTERN = re.compile(
+    r"""
+    const\s+struct\s*Animation\s*\*const\s*(?P<name>\w+)
+    (?:\[.*?\])? # Optional size, don´t capture
+    \s*=\s*\{
+        (?P<content>[\s\S]*?) # Capture any character including new lines, lazy
+    \s*\};
+    """,
+    re.VERBOSE | re.MULTILINE,
+)
+
+TABLE_ELEMENT_PATTERN = re.compile( # strict but only in the sense that it requires valid c code
+    r"""
+    (?:\s*? # Don´t capture anything except the optional enum and the element name
+    (?:\[\s*?(?P<enum>\w+)\s*?\]\s*?=\s*?)? # Don´t capture brackets or equal, works with nums
+    (?:(?:&\s*?(?P<element>\w+))|(?P<null>NULL))\s*? # Capture element or null, element requires &
+    (?:,|\Z)) # allow no comma if at the end
+    """,
+    re.VERBOSE | re.MULTILINE,
+)
 
 enumAnimExportTypes = [
     ("Actor", "Actor Data", "Includes are added to a group in actors/"),

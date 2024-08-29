@@ -104,6 +104,12 @@ def get_dma_anim_name(header_indices: list[int]):
     return f'anim_{"_".join([f"{num_to_padded_hex(num)}" for num in header_indices])}'
 
 
+def anim_name_to_enum_name(anim_name: str) -> str:
+    enum_name = anim_name.upper()
+    if anim_name == enum_name:
+        enum_name = f"_{enum_name}"
+    return enum_name
+
 def get_action_props(action: Action) -> "SM64_ActionAnimProperty":
     return action.fast64.sm64.animation
 
