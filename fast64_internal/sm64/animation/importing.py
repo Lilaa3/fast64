@@ -32,11 +32,11 @@ from .utility import (
     get_anim_actor_name,
 )
 from .classes import (
-    Animation,
+    SM64_Anim,
     CArrayDeclaration,
-    AnimationHeader,
-    AnimationTable,
-    AnimationTableElement,
+    SM64_AnimHeader,
+    SM64_AnimTable,
+    SM64_AnimTableElement,
 )
 from .constants import FLAG_PROPS, ACTOR_PRESET_INFO, C_FLAGS
 
@@ -210,7 +210,7 @@ class IntermidiateAnimationBone:
 
 def from_header_class(
     header_props: "SM64_AnimHeaderProperties",
-    header: AnimationHeader,
+    header: SM64_AnimHeader,
     action: Action,
     actor_name: str,
     use_custom_name: bool,
@@ -261,7 +261,7 @@ def from_header_class(
 def from_anim_class(
     action_props: "SM64_ActionAnimProperty",
     action: Action,
-    animation: Animation,
+    animation: SM64_Anim,
     actor_name: str,
     use_custom_name: bool,
     import_type: str,
@@ -323,7 +323,7 @@ def from_anim_class(
     action_props.update_variant_numbers()
 
 
-def from_table_element_class(element_props: "SM64_AnimTableElementProperties", element: AnimationTableElement):
+def from_table_element_class(element_props: "SM64_AnimTableElementProperties", element: SM64_AnimTableElement):
     if element.header:
         element_props.set_variant(element.header.action, element.header.header_variant)
     else:
@@ -340,7 +340,7 @@ def from_table_element_class(element_props: "SM64_AnimTableElementProperties", e
 
 def from_anim_table_class(
     anim_props: "SM64_ArmatureAnimProperties",
-    table: AnimationTable,
+    table: SM64_AnimTable,
     clear_table: bool,
     use_custom_name: bool,
     actor_name: str,
@@ -378,7 +378,7 @@ def from_anim_table_class(
 def animation_import_to_blender(
     obj: Object,
     blender_to_sm64_scale: float,
-    anim_import: Animation,
+    anim_import: SM64_Anim,
     actor_name: str,
     use_custom_name: bool,
     import_type: str,
@@ -429,9 +429,9 @@ def find_decls(c_data: str, f: os.PathLike, decl_list: dict[str, list[CArrayDecl
 
 def import_c_animations(
     path: os.PathLike,
-    read_headers: dict[str, AnimationHeader],
-    read_animations: dict[tuple[str, str], Animation],
-    table: AnimationTable,
+    read_headers: dict[str, SM64_AnimHeader],
+    read_animations: dict[tuple[str, str], SM64_Anim],
+    table: SM64_AnimTable,
 ):
     path_checks(path)
     if os.path.isfile(path):
@@ -473,7 +473,7 @@ def import_c_animations(
         )
     else:
         for table_index, header_decl in enumerate(sorted(header_decls, key=lambda h: h.name)):
-            AnimationHeader().read_c(
+            SM64_AnimHeader().read_c(
                 header_decl, value_decls, indices_decls, read_headers, read_animations, table_index
             )
 
@@ -481,19 +481,19 @@ def import_c_animations(
 def import_binary_animations(
     data_reader: RomReader,
     import_type: str,
-    read_headers: dict[str, AnimationHeader],
-    read_animations: dict[tuple[str, str], Animation],
-    table: AnimationTable,
-    table_index: int | None = None,
-    bone_count: int | None = None,
-    table_size: int | None = None,
+    read_headers: dict[str, SM64_AnimHeader],
+    read_animations: dict[tuple[str, str], SM64_Anim],
+    table: SM64_AnimTable,
+    table_index: Optional[int] = None,
+    bone_count: Optional[int] = None,
+    table_size: Optional[int] = None,
 ):
     if import_type == "Table":
         table.read_binary(data_reader, read_headers, read_animations, table_index, bone_count, table_size)
     elif import_type == "DMA":
         table.read_dma_binary(data_reader, read_headers, read_animations, table_index, bone_count)
     elif import_type == "Animation":
-        AnimationHeader.read_binary(
+        SM64_AnimHeader.read_binary(
             data_reader,
             read_headers,
             read_animations,
@@ -507,15 +507,15 @@ def import_binary_animations(
 
 def import_insertable_binary_animations(
     reader: RomReader,
-    read_headers: dict[str, AnimationHeader],
-    read_animations: dict[tuple[str, str], Animation],
-    table: AnimationTable,
-    table_index: int | None = None,
-    bone_count: int | None = None,
-    table_size: int | None = None,
+    read_headers: dict[str, SM64_AnimHeader],
+    read_animations: dict[tuple[str, str], SM64_Anim],
+    table: SM64_AnimTable,
+    table_index: Optional[int] = None,
+    bone_count: Optional[int] = None,
+    table_size: Optional[int] = None,
 ):
     if reader.insertable.data_type == "Animation":
-        AnimationHeader.read_binary(
+        SM64_AnimHeader.read_binary(
             reader,
             read_headers,
             read_animations,
@@ -539,9 +539,9 @@ def import_animations(context: Context):
 
     update_table_preset(import_props, context)
 
-    read_animations: dict[tuple[str, str], Animation] = {}
-    read_headers: dict[str, AnimationHeader] = {}
-    table = AnimationTable()
+    read_animations: dict[tuple[str, str], SM64_Anim] = {}
+    read_headers: dict[str, SM64_AnimHeader] = {}
+    table = SM64_AnimTable()
 
     print("Reading animation data.")
 
@@ -591,7 +591,7 @@ def import_animations(context: Context):
 
     if not table.elements:
         print("No table was read. Automatically creating table.")
-        table.elements = [AnimationTableElement(header=header) for header in read_headers.values()]
+        table.elements = [SM64_AnimTableElement(header=header) for header in read_headers.values()]
 
     if import_props.preset in ACTOR_PRESET_INFO:
         preset_animation_names = get_preset_anim_name_list(import_props.preset)

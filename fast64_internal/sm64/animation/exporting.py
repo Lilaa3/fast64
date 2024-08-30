@@ -28,12 +28,12 @@ from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_rom_tweaks import ExtendBank0x04
 
 from .classes import (
-    Animation,
-    AnimationHeader,
-    AnimationData,
+    SM64_Anim,
+    SM64_AnimHeader,
+    SM64_AnimData,
     SM64_AnimPair,
-    AnimationTable,
-    AnimationTableElement,
+    SM64_AnimTable,
+    SM64_AnimTableElement,
 )
 from .utility import (
     get_anim_owners,
@@ -45,7 +45,7 @@ from .utility import (
 )
 from .constants import HEADER_SIZE, TABLE_PATTERN, TABLE_ELEMENT_PATTERN
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from .properties import (
@@ -188,18 +188,18 @@ def get_animation_pairs(
 def to_header_class(
     header_props: "SM64_AnimHeaderProperties",
     bone_count: int,
-    data: AnimationData,
+    data: SM64_AnimData,
     action: Action,
     values_reference: int | str,
     indice_reference: int | str,
     dma: bool,
     export_type: str,
+    table_index: Optional[int] = None,
     actor_name="mario",
     gen_enums=False,
     file_name="anim_00.inc.c",
-    table_index: int | None = None,
 ):
-    header = AnimationHeader()
+    header = SM64_AnimHeader()
     header.reference = header_props.get_name(actor_name, action, dma)
     if gen_enums:
         header.enum_name = header_props.get_enum(actor_name, action)
@@ -221,7 +221,7 @@ def to_header_class(
 
 
 def to_data_class(pairs: list[SM64_AnimPair], data_name="anim_00", file_name: str = "anim_00.inc.c"):
-    return AnimationData(pairs, f"{data_name}_indices", f"{data_name}_values", file_name, file_name)
+    return SM64_AnimData(pairs, f"{data_name}_indices", f"{data_name}_values", file_name, file_name)
 
 
 def to_animation_class(
@@ -234,9 +234,9 @@ def to_animation_class(
     dma: bool,
     actor_name="mario",
     gen_enums=False,
-) -> Animation:
+) -> SM64_Anim:
     can_reference = not dma
-    animation = Animation()
+    animation = SM64_Anim()
     animation.file_name = action_props.get_file_name(action, export_type, dma)
 
     if can_reference and action_props.reference_tables:
@@ -275,8 +275,8 @@ def to_animation_class(
 
 def to_table_element_class(
     element_props: "SM64_AnimTableElementProperties",
-    header_dict: dict["SM64_AnimHeaderProperties", AnimationHeader],
-    data_dict: dict[Action, AnimationData],
+    header_dict: dict["SM64_AnimHeaderProperties", SM64_AnimHeader],
+    data_dict: dict[Action, SM64_AnimData],
     action_pairs: dict[Action, list[SM64_AnimPair]],
     bone_count: int,
     table_index: int,
@@ -287,19 +287,19 @@ def to_table_element_class(
     prev_enums: list[str] = None,
 ):
     use_addresses, can_reference = export_type in {"Binary", "Insertable Binary"}, not dma
-    element = AnimationTableElement()
+    element = SM64_AnimTableElement()
 
     if gen_enums:
         enum = element_props.get_enum(can_reference, actor_name, prev_enums)
-        if not enum:
-            raise PluginError("Enum name is not set.")
         element.enum_name = enum
 
     if can_reference and element_props.reference:
         reference = int(element_props.header_address, 0) if use_addresses else element_props.header_name
+        element.reference = reference
         if reference == "":
             raise PluginError("Header is not set.")
-        element.reference = reference
+        if gen_enums and enum == "":
+            raise PluginError("Enum name is not set.")
         return element
 
     # Not reference
@@ -308,6 +308,8 @@ def to_table_element_class(
         raise PluginError("Action is not set.")
     if not header_props:
         raise PluginError("Header is not set.")
+    if gen_enums and enum == "":
+        raise PluginError("Enum name is not set.")
 
     action_props = get_action_props(action)
     if can_reference and action_props.reference_tables:
@@ -359,9 +361,9 @@ def to_table_class(
     export_type: str,
     actor_name="mario",
     gen_enums=False,
-) -> AnimationTable:
+) -> SM64_AnimTable:
     can_reference = not dma
-    table = AnimationTable(
+    table = SM64_AnimTable(
         anim_props.get_table_name(actor_name),
         anim_props.get_enum_name(actor_name),
         anim_props.get_enum_end(actor_name),
@@ -369,7 +371,7 @@ def to_table_class(
         toAlnum(f"anim_{actor_name}_values"),
     )
 
-    header_dict: dict[SM64_AnimHeaderProperties, AnimationHeader] = {}
+    header_dict: dict[SM64_AnimHeaderProperties, SM64_AnimHeader] = {}
 
     bone_count = len(get_anim_owners(obj))
     action_pairs = get_animation_pairs(
@@ -598,7 +600,7 @@ def update_behaviour_binary(
 def export_animation_table_binary(
     binary_exporter: BinaryExporter,
     anim_props: "SM64_ArmatureAnimProperties",
-    table: AnimationTable,
+    table: SM64_AnimTable,
     is_dma: bool,
     level_option: str,
     extend_bank_4: bool,
@@ -637,7 +639,7 @@ def export_animation_table_binary(
 def export_animation_table_insertable(
     combined_props: "SM64_CombinedObjectProperties",
     anim_props: "SM64_ArmatureAnimProperties",
-    table: AnimationTable,
+    table: SM64_AnimTable,
     is_dma: bool,
 ):
     directory = abspath(combined_props.insertable_directory_path)
@@ -690,7 +692,7 @@ def create_and_get_paths(
 def export_animation_table_c(
     anim_props: "SM64_ArmatureAnimProperties",
     combined_props: "SM64_CombinedObjectProperties",
-    table: AnimationTable,
+    table: SM64_AnimTable,
     decomp: os.PathLike,
     actor_name: str,
 ):
@@ -751,7 +753,7 @@ def export_animation_table_c(
 
 def export_animation_binary(
     binary_exporter: BinaryExporter,
-    animation: Animation,
+    animation: SM64_Anim,
     action_props: "SM64_ActionAnimProperty",
     anim_props: "SM64_ArmatureAnimProperties",
     combined_props: "SM64_CombinedObjectProperties",
@@ -762,18 +764,18 @@ def export_animation_binary(
     if anim_props.is_dma:
         dma_address = int(anim_props.dma_address, 0)
         print("Reading DMA table from ROM")
-        table = AnimationTable().read_dma_binary(
+        table = SM64_AnimTable().read_dma_binary(
             reader=RomReader(rom_file=binary_exporter.rom_file_output, start_address=dma_address),
             read_headers={},
             read_animations={},
             table_index=None,
             bone_count=bone_count if combined_props.assume_bone_count else None,
         )
-        empty_data = AnimationData()
+        empty_data = SM64_AnimData()
         for header in animation.headers:
             while header.table_index >= len(table.elements):
-                table.elements.append(AnimationTableElement(header=AnimationHeader(data=empty_data)))
-            table.elements[header.table_index] = AnimationTableElement(header=header)
+                table.elements.append(SM64_AnimTableElement(header=SM64_AnimHeader(data=empty_data)))
+            table.elements[header.table_index] = SM64_AnimTableElement(header=header)
         print("Converting to binary data")
         data = table.to_binary_dma()
         binary_exporter.write_to_range(
@@ -812,7 +814,7 @@ def export_animation_binary(
 
 
 def export_animation_insertable(
-    animation: Animation,
+    animation: SM64_Anim,
     is_dma: bool,
     insertable_directory: os.PathLike,
 ):
@@ -822,7 +824,7 @@ def export_animation_insertable(
 
 
 def export_animation_c(
-    animation: Animation,
+    animation: SM64_Anim,
     anim_props: "SM64_ArmatureAnimProperties",
     combined_props: "SM64_CombinedObjectProperties",
     decomp: os.PathLike,
