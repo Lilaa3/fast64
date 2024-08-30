@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from bpy.utils import register_class, unregister_class
 from bpy.types import Context
 
@@ -13,8 +15,6 @@ from .utility import (
     get_anim_obj,
 )
 from .operators import SM64_ExportAnim, SM64_ExportAnimTable
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..settings.properties import SM64_Properties

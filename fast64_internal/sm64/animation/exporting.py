@@ -1,6 +1,7 @@
 import os
 import re
 import numpy as np
+from typing import TYPE_CHECKING, Optional
 
 import bpy
 from bpy.types import Object, Action, PoseBone, Context
@@ -44,8 +45,6 @@ from .utility import (
     duplicate_name,
 )
 from .constants import HEADER_SIZE, TABLE_PATTERN, TABLE_ELEMENT_PATTERN
-
-from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from .properties import (

@@ -1,11 +1,9 @@
-import bpy
+from typing import TYPE_CHECKING
+
 from bpy.types import Context, Object, Action, PoseBone
 
-from ...utility_anim import getFrameInterval
 from ...utility import findStartBones, PluginError, toAlnum
 from ..sm64_geolayout_bone import animatableBoneTypes
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .properties import SM64_ActionAnimProperty, SM64_AnimProperties, SM64_ArmatureAnimProperties

@@ -3,6 +3,7 @@ import os
 import re
 import dataclasses
 import numpy as np
+from typing import TYPE_CHECKING, Optional
 
 import bpy
 from bpy.path import abspath
@@ -39,8 +40,6 @@ from .classes import (
     SM64_AnimTableElement,
 )
 from .constants import FLAG_PROPS, ACTOR_PRESET_INFO, C_FLAGS
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .properties import (

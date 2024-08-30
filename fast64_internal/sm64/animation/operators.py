@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 import bpy
 from bpy.utils import register_class, unregister_class
 from bpy.types import Context, Scene, Action
@@ -18,8 +20,6 @@ from .utility import (
     get_anim_actor_name,
 )
 from .constants import enum_anim_tables, enum_animated_behaviours
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .properties import SM64_AnimProperties, SM64_AnimHeaderProperties
