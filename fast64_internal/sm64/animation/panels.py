@@ -46,16 +46,19 @@ class SceneAnimPanelMain(SceneAnimPanel):
     bl_parent_id = ""
 
     def draw(self, context: Context):
+        col = self.layout.column()
         sm64_props: SM64_Properties = context.scene.fast64.sm64
         combined_props: SM64_CombinedObjectProperties = sm64_props.combined_export
 
-        if sm64_props.export_type != "C":
-            combined_props.draw_anim_props(self.layout, sm64_props.export_type, dma_structure_context(context))
-            SM64_ExportAnimTable.draw_props(self.layout)
-        if get_anim_obj(context) is None:
-            self.layout.box().label(text="No selected armature/animated object")
+        if sm64_props.export_type == "C":
+            col.prop(sm64_props, "designated", text="Designated Initialization for Tables")
         else:
-            self.layout.box().label(text=f'Armature "{context.object.name}"')
+            combined_props.draw_anim_props(col, sm64_props.export_type, dma_structure_context(context))
+            SM64_ExportAnimTable.draw_props(col)
+        if get_anim_obj(context) is None:
+            col.box().label(text="No selected armature/animated object")
+        else:
+            col.box().label(text=f'Armature "{context.object.name}"')
 
 
 class ObjAnimPanelMain(ObjAnimPanel):

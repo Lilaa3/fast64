@@ -377,20 +377,20 @@ class SM64_Anim:
     action: Action | None = None  # Used in the table class to prop function
 
     @property
-    def header_names(self) -> list[str]:
-        names = []
+    def names(self) -> tuple[list[str], list[str]]:
+        names, enums = [], []
         for header in self.headers:
-            assert isinstance(header.reference, str), "Reference is not a string."
             names.append(header.reference)
-        return names
+            enums.append(header.enum_name)
+        return names, enums
+
+    @property
+    def header_names(self) -> list[str]:
+        return self.names[0]
 
     @property
     def enum_names(self) -> list[str]:
-        names = []
-        for header in self.headers:
-            assert isinstance(header.enum_name, str), "Enum name is not a string."
-            names.append(header.enum_name)
-        return names
+        return self.names[1]
 
     def to_binary_dma(self):
         assert self.data
@@ -446,9 +446,34 @@ class SM64_Anim:
 
 @dataclasses.dataclass
 class SM64_AnimTableElement:
-    reference: str | int = ""
-    enum_name: str | None = None
+    reference: str | int | None = ""
     header: SM64_AnimHeader | None = None
+
+    # C exporting
+    enum_name: str = ""
+    reference_start: int = -1
+    reference_end: int = -1
+    enum_start: int = -1
+    enum_end: int = -1
+    enum_val: str = ""
+
+    @property
+    def c_reference(self):
+        if self.reference:
+            return f"&{self.reference}"
+        return "NULL"
+
+    def to_c(self, designated: bool):
+        if designated and self.enum_name:
+            return f"[{self.enum_name}] = {self.c_reference},"
+        else:
+            return f"{self.c_reference},"
+
+    @property
+    def enum_c(self):
+        if self.enum_val:
+            return f"{self.enum_name} = {self.enum_val},"
+        return f"{self.enum_name},"
 
     @property
     def data(self):
@@ -473,7 +498,6 @@ class SM64_AnimTable:
         for element in self.elements:
             assert isinstance(element.reference, str), "Reference is not a string."
             names.append(element.reference)
-            assert isinstance(element.enum_name, str), "Enum name is not a string."
             enums.append(element.enum_name)
         return names, enums
 
@@ -687,12 +711,11 @@ class SM64_AnimTable:
 
             header_reader = reader.branch(ptr)
             if header_reader is None:
-                self.elements.append(SM64_AnimTableElement(ptr, None))
+                self.elements.append(SM64_AnimTableElement(ptr))
             else:
                 self.elements.append(
                     SM64_AnimTableElement(
                         ptr,
-                        None,
                         SM64_AnimHeader.read_binary(
                             header_reader,
                             read_headers,
@@ -748,7 +771,7 @@ class SM64_AnimTable:
                 bone_count,
                 i,
             )
-            self.elements.append(SM64_AnimTableElement(reader.start_address, None, header))
+            self.elements.append(SM64_AnimTableElement(reader.start_address, header))
         self.end_address = dma_table.end_address
         return self
 
@@ -786,7 +809,7 @@ class SM64_AnimTable:
                 )
             else:
                 header = None
-            self.elements.append(SM64_AnimTableElement(header_name, enum_name, header))
+            self.elements.append(SM64_AnimTableElement(header_name, header, enum_name))
         if self.elements and header_name == "NULL":
             self.elements.pop()  # Remove table end identifier from import
         return self

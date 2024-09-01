@@ -81,6 +81,11 @@ class SM64_Properties(PropertyGroup):
         name="Matstack Fix",
         description="Exports account for matstack fix requirements",
     )
+    # could be used for other properties outside animation
+    designated: BoolProperty(
+        name="Designated Initialization for Animation Tables",
+        description="Extremely recommended but must be off when compiling with IDO.",
+    )
 
     animation: PointerProperty(type=SM64_AnimProperties)
 

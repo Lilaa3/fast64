@@ -110,10 +110,13 @@ def anim_name_to_enum_name(anim_name: str) -> str:
 
 
 def duplicate_name(name: str, existing_names: list[str]) -> str:
+    """Updates existing_names"""
     i, possible_name = 1, name
     while possible_name in existing_names:
         possible_name = f"{name}_{i}"
         i += 1
+    if name != "":
+        existing_names.append(name)
     return possible_name
 
 

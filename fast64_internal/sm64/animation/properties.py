@@ -499,8 +499,6 @@ class SM64_AnimTableElementProperties(PropertyGroup):
             action, header = self.get_action_header(can_reference)
             if header and action:
                 enum = duplicate_name(header.get_enum(actor_name, action), prev_enums)
-        if enum != "":
-            prev_enums.append(enum)
         return enum
 
     def get_action_header(self, can_reference: bool) -> tuple[Action, SM64_AnimHeaderProperties] | tuple[None, None]:

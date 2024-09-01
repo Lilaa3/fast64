@@ -1738,6 +1738,9 @@ def getTextureSuffixFromFormat(texFmt):
     return texFmt.lower()
 
 
+COMMENT_PATTERN = r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"'
+
+
 def removeComments(text: str):
     # https://stackoverflow.com/a/241506
 
@@ -1748,7 +1751,7 @@ def removeComments(text: str):
         else:
             return s
 
-    pattern = re.compile(r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"', re.DOTALL | re.MULTILINE)
+    pattern = re.compile(COMMENT_PATTERN, re.DOTALL | re.MULTILINE)
 
     return re.sub(pattern, replacer, text)
 
