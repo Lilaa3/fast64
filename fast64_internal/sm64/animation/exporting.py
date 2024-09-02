@@ -616,7 +616,6 @@ def update_table_file(
 
         # update existing region instead
         old_text = content[element.reference_start : element.reference_end]
-        content = content[: element.reference_start] + element_text + content[element.reference_end :]
         if old_text != element_text:
             content = content[: element.reference_start] + element_text + content[element.reference_end :]
             if existing_file:

@@ -471,6 +471,7 @@ class SM64_AnimTableElement:
 
     @property
     def enum_c(self):
+        assert self.enum_name
         if self.enum_val:
             return f"{self.enum_name} = {self.enum_val},"
         return f"{self.enum_name},"
@@ -790,28 +791,28 @@ class SM64_AnimTable:
         self.elements.clear()
         for table_index, value in enumerate(table_decl.values):
             enum_name_split: list[str] = value.split("=")
-            header_name = enum_name_split[-1].replace("&", "").strip()
+            header_reference = enum_name_split[-1].replace("&", "").strip()
             enum_name = (
                 enum_name_split[0].replace("[", "", 1).replace("]", "", 1).strip()
                 if len(enum_name_split) == 2
                 else None
             )
-
-            header_decl = next((header for header in header_decls if header.name == header_name), None)
-            if header_decl:
-                header = SM64_AnimHeader.read_c(
-                    header_decl,
-                    values_decls,
-                    indices_decls,
-                    read_headers,
-                    read_animations,
-                    table_index,
-                )
+            header = None
+            if header_reference == "NULL":
+                header_reference = None
             else:
-                header = None
-            self.elements.append(SM64_AnimTableElement(header_name, header, enum_name))
-        if self.elements and header_name == "NULL":
-            self.elements.pop()  # Remove table end identifier from import
+                header_decl = next((header for header in header_decls if header.name == header_reference), None)
+                if header_decl:
+                    header = SM64_AnimHeader.read_c(
+                        header_decl,
+                        values_decls,
+                        indices_decls,
+                        read_headers,
+                        read_animations,
+                        table_index,
+                    )
+
+            self.elements.append(SM64_AnimTableElement(header_reference, header, enum_name))
         return self
 
 

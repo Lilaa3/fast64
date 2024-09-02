@@ -322,19 +322,28 @@ def from_anim_class(
     action_props.update_variant_numbers()
 
 
-def from_table_element_class(element_props: "SM64_AnimTableElementProperties", element: SM64_AnimTableElement):
+def from_table_element_class(
+    element_props: "SM64_AnimTableElementProperties",
+    element: SM64_AnimTableElement,
+    use_custom_name: bool,
+    actor_name: str,
+    prev_enums: list[str],
+):
     if element.header:
         element_props.set_variant(element.header.action, element.header.header_variant)
     else:
         element_props.reference = True
+
     if isinstance(element.reference, int):
         element_props.header_address = intToHex(element.reference)
     else:
         element_props.header_name = element.reference
         element_props.header_address = intToHex(0)
+
     if element.enum_name:
         element_props.custom_enum = element.enum_name
-        element_props.use_custom_enum = True
+        if use_custom_name and element.enum_name != element_props.get_enum(True, actor_name, prev_enums):
+            element_props.use_custom_enum = True
 
 
 def from_anim_table_class(
@@ -346,9 +355,10 @@ def from_anim_table_class(
 ):
     if clear_table:
         anim_props.elements.clear()
+    prev_enums: list[str] = []
     for element in table.elements:
         anim_props.elements.add()
-        from_table_element_class(anim_props.elements[-1], element)
+        from_table_element_class(anim_props.elements[-1], element, use_custom_name, actor_name, prev_enums)
 
     if isinstance(table.reference, int):  # Binary
         anim_props.dma_address = intToHex(table.reference)
@@ -367,7 +377,7 @@ def from_anim_table_class(
             anim_props.write_data_seperately = True
             anim_props.data_address = intToHex(min(start_addresses))
             anim_props.data_end_address = intToHex(max(end_addresses))
-    elif table.reference:
+    else:  # C
         if use_custom_name:
             anim_props.custom_table_name = table.reference
             if anim_props.get_table_name(actor_name) != anim_props.custom_table_name:
