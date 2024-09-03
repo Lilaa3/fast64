@@ -215,13 +215,10 @@ def from_header_class(
     actor_name: str,
     use_custom_name: bool,
 ):
-    if (
-        isinstance(header.reference, str)
-        and header.reference != header_props.get_name(actor_name, action)
-        and use_custom_name
-    ):
+    if isinstance(header.reference, str) and header.reference != header_props.get_name(actor_name, action):
         header_props.custom_name = header.reference
-        header_props.use_custom_name = True
+        if use_custom_name:
+            header_props.use_custom_name = True
     if header.enum_name and header.enum_name != header_props.get_enum(actor_name, action):
         header_props.custom_enum = header.enum_name
         header_props.use_custom_enum = True
@@ -270,20 +267,17 @@ def from_anim_class(
     import_type: str,
 ):
     main_header = animation.headers[0]
-    is_from_binary = import_type in {"Binary", "Insertable Binary"}
+    is_from_binary = import_type.endswith("Binary")
 
     if animation.action_name:
         action_name = animation.action_name
     elif main_header.file_name:
-        action_name = main_header.file_name.rstrip(".c").rstrip(".inc")
+        action_name = main_header.file_name.removesuffix(".c").removesuffix(".inc")
     elif is_from_binary:
         action_name = intToHex(main_header.reference)
 
-    index = action_name.find("anim_")
-    if index != -1:
-        action_name = action_name.lstrip("anim_")
-    action.name = action_name
-    print(f'Populating action "{action_name}" properties.')
+    action.name = action_name.removeprefix("anim_")
+    print(f'Populating action "{action.name}" properties.')
 
     indice_reference, values_reference = main_header.indice_reference, main_header.values_reference
     if is_from_binary:

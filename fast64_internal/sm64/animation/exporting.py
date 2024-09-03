@@ -208,7 +208,7 @@ def to_header_class(
     if gen_enums:
         header.enum_name = header_props.get_enum(actor_name, action)
 
-    if header_props.use_custom_flags and not (export_type in {"Binary", "Insertable Binary"} or dma):
+    if header_props.use_custom_flags and not (export_type.endswith("Binary") or dma):
         header.flags = header_props.custom_flags
     else:
         header.flags = header_props.int_flags
@@ -244,7 +244,7 @@ def to_animation_class(
     animation.file_name = action_props.get_file_name(action, export_type, dma)
 
     if can_reference and action_props.reference_tables:
-        if export_type in {"Binary", "Insertable Binary"}:
+        if export_type.endswith("Binary"):
             values_reference, indice_reference = int(action_props.values_address, 0), int(
                 action_props.indices_address, 0
             )
@@ -290,7 +290,7 @@ def to_table_element_class(
     gen_enums=False,
     prev_enums: dict[str, int] = None,
 ):
-    use_addresses, can_reference = export_type in {"Binary", "Insertable Binary"}, not dma
+    use_addresses, can_reference = export_type.endswith("Binary"), not dma
     element = SM64_AnimTableElement()
 
     if gen_enums:
