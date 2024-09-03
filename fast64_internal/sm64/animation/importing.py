@@ -382,7 +382,7 @@ def from_anim_table_class(
             anim_props.write_data_seperately = True
             anim_props.data_address = intToHex(min(start_addresses))
             anim_props.data_end_address = intToHex(max(end_addresses))
-    else:  # C
+    elif isinstance(table.reference, str):  # C
         if use_custom_name:
             anim_props.custom_table_name = table.reference
             if anim_props.get_table_name(actor_name) != anim_props.custom_table_name:
@@ -419,7 +419,6 @@ def animation_import_to_blender(
                 bone_data.populate_action(action, pose_bone)
 
         from_anim_class(get_action_props(action), action, anim_import, actor_name, use_custom_name, import_type)
-        stashActionInArmature(obj, action)
         return action
     except PluginError as exc:
         bpy.data.actions.remove(action)
@@ -434,7 +433,7 @@ def import_tables(
     values_decls: list[CArrayDeclaration] = None,
     indices_decls: list[CArrayDeclaration] = None,
 ):
-    read_headers, read_animations = {}, {}
+    read_headers = {}
     header_decls, values_decls, indices_decls = (
         header_decls or [],
         values_decls or [],
@@ -451,9 +450,7 @@ def import_tables(
         table = SM64_AnimTable(
             name, file_name=os.path.basename(path), elements=table_elements, start=table_start, end=table_end
         )
-        table.read_c(
-            c_data[table_start:table_end], read_headers, read_animations, header_decls, values_decls, indices_decls
-        )
+        table.read_c(c_data[table_start:table_end], read_headers, header_decls, values_decls, indices_decls)
         tables.append(table)
     return tables
 
@@ -513,40 +510,35 @@ def import_c_animations(path: os.PathLike):
         )
         if len(tables) > 1:
             raise ValueError("More than 1 table declaration")
-    
+
     if tables:
         table: SM64_AnimTable = tables[0]
         read_headers = {header.reference: header for header in table.header_set}
-        read_animations = {anim.headers[0].data_key: anim for anim in table.get_seperate_anims()}
-        return table, read_animations, read_headers
+        return table, read_headers
     else:
-        read_headers, read_animations = {}, {}
+        read_headers = {}
         for table_index, header_decl in enumerate(sorted(header_decls, key=lambda h: h.name)):
-            SM64_AnimHeader().read_c(
-                header_decl, value_decls, indices_decls, read_headers, read_animations, table_index
-            )
-        return None, read_animations, read_headers
+            SM64_AnimHeader().read_c(header_decl, value_decls, indices_decls, read_headers, table_index)
+        return None, read_headers
 
 
 def import_binary_animations(
     data_reader: RomReader,
     import_type: str,
     read_headers: dict[str, SM64_AnimHeader],
-    read_animations: dict[tuple[str, str], SM64_Anim],
     table: SM64_AnimTable,
     table_index: Optional[int] = None,
     bone_count: Optional[int] = None,
     table_size: Optional[int] = None,
 ):
     if import_type == "Table":
-        table.read_binary(data_reader, read_headers, read_animations, table_index, bone_count, table_size)
+        table.read_binary(data_reader, read_headers, table_index, bone_count, table_size)
     elif import_type == "DMA":
-        table.read_dma_binary(data_reader, read_headers, read_animations, table_index, bone_count)
+        table.read_dma_binary(data_reader, read_headers, table_index, bone_count)
     elif import_type == "Animation":
         SM64_AnimHeader.read_binary(
             data_reader,
             read_headers,
-            read_animations,
             False,
             bone_count,
             table_size,
@@ -558,7 +550,6 @@ def import_binary_animations(
 def import_insertable_binary_animations(
     reader: RomReader,
     read_headers: dict[str, SM64_AnimHeader],
-    read_animations: dict[tuple[str, str], SM64_Anim],
     table: SM64_AnimTable,
     table_index: Optional[int] = None,
     bone_count: Optional[int] = None,
@@ -568,14 +559,13 @@ def import_insertable_binary_animations(
         SM64_AnimHeader.read_binary(
             reader,
             read_headers,
-            read_animations,
             False,
             bone_count,
         )
     elif reader.insertable.data_type == "Animation Table":
-        table.read_binary(reader, read_headers, read_animations, table_index, bone_count, table_size)
+        table.read_binary(reader, read_headers, table_index, bone_count, table_size)
     elif reader.insertable.data_type == "Animation DMA Table":
-        table.read_dma_binary(reader, read_headers, read_animations, table_index, bone_count)
+        table.read_dma_binary(reader, read_headers, table_index, bone_count)
 
 
 def import_animations(context: Context):
@@ -589,7 +579,6 @@ def import_animations(context: Context):
 
     update_table_preset(import_props, context)
 
-    read_animations: dict[tuple[str, str], SM64_Anim] = {}
     read_headers: dict[str, SM64_AnimHeader] = {}
     table = SM64_AnimTable()
 
@@ -599,7 +588,6 @@ def import_animations(context: Context):
         bone_count = len(get_anim_owners(obj)) if import_props.assume_bone_count else None
         binary_args = (
             read_headers,
-            read_animations,
             table,
             import_props.table_index,
             bone_count,
@@ -637,17 +625,19 @@ def import_animations(context: Context):
     elif import_props.import_type == "C":
         c_path = abspath(import_props.path)
         path_checks(c_path)
-        table, read_animations, read_headers = import_c_animations(c_path)
+        table, read_headers = import_c_animations(c_path)
+        table = table or SM64_AnimTable()
     else:
         raise NotImplementedError(f"Unimplemented animation import type {import_props.import_type}")
 
-    if not table or not table.elements:
+    if not table.elements:
         print("No table was read. Automatically creating table.")
         table.elements = [SM64_AnimTableElement(header=header) for header in read_headers.values()]
 
+    seperate_anims = table.get_seperate_anims()
     if import_props.preset in ACTOR_PRESET_INFO:
         preset_animation_names = get_preset_anim_name_list(import_props.preset)
-        for animation in read_animations.values():
+        for animation in seperate_anims:
             if len(animation.headers) == 0:
                 continue
             names, indexes = [], []
@@ -659,7 +649,7 @@ def import_animations(context: Context):
 
     print("Importing animations into blender.")
     actions = []
-    for animation in read_animations.values():
+    for animation in seperate_anims:
         actions.append(
             animation_import_to_blender(
                 obj,
@@ -718,7 +708,7 @@ def get_enum_from_import_preset(_import_props: "SM64_AnimImportProperties", cont
 
 
 def update_table_preset(import_props: "SM64_AnimImportProperties", context):
-    if import_props.preset == "Custom":
+    if import_props.import_type == "Insertable Binary" or import_props.preset == "Custom":
         return
 
     preset = ACTOR_PRESET_INFO[import_props.preset]

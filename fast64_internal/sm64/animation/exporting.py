@@ -368,7 +368,7 @@ def to_table_class(
         anim_props.get_enum_name(actor_name),
         anim_props.get_enum_end(actor_name),
         "table.inc.c",
-        toAlnum(f"anim_{actor_name}_values"),
+        values_reference=toAlnum(f"anim_{actor_name}_values"),
     )
 
     header_dict: dict[SM64_AnimHeaderProperties, SM64_AnimHeader] = {}

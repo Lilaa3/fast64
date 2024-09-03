@@ -153,7 +153,7 @@ class SM64_AnimHeader:
     end_address: int = 0
     header_variant: int = 0
     table_index: int = 0
-    action:Action = None
+    action: Action = None
 
     @property
     def data_key(self):
@@ -250,7 +250,6 @@ class SM64_AnimHeader:
     def read_binary(
         reader: RomReader,
         read_headers: dict[str, "SM64_AnimHeader"],
-        read_animations: dict[tuple[str, str], "SM64_Anim"],
         dma: bool = False,
         bone_count: Optional[int] = None,
         table_index: Optional[int] = None,
@@ -282,21 +281,20 @@ class SM64_AnimHeader:
         header.end_address = reader.address + 1
         header.table_index = len(read_headers) if table_index is None else table_index
 
-        if not header.data_key in read_animations:
-            animation = SM64_Anim()
+        data = next(
+            (other_header.data for other_header in read_headers.values() if header.data_key == other_header.data_key),
+            None,
+        )
+        if not data:
             indices_reader = reader.branch(header.indice_reference)
             values_reader = reader.branch(header.values_reference)
             if indices_reader and values_reader:
-                animation.data = SM64_AnimData().read_binary(
+                data = SM64_AnimData().read_binary(
                     indices_reader,
                     values_reader,
                     header.bone_count,
                 )
-            read_animations[header.data_key] = animation
-        animation = read_animations[header.data_key]
-        header.data = animation.data
-        header.header_variant = len(animation.headers)
-        animation.headers.append(header)
+        header.data = data
 
         return header
 
@@ -306,7 +304,6 @@ class SM64_AnimHeader:
         value_decls,
         indices_decls,
         read_headers: dict[str, "SM64_AnimHeader"],
-        read_animations: dict[tuple[str, str], "SM64_Anim"],
         table_index: Optional[int] = None,
     ):
         if header_decl.name in read_headers:
@@ -353,23 +350,16 @@ class SM64_AnimHeader:
 
         header.table_index = len(read_headers) if table_index is None else table_index
 
-        if not header.data_key in read_animations:
-            indices_decl = next(
-                (indice for indice in indices_decls if indice.name == header.indice_reference),
-                None,
-            )
-            value_decl = next(
-                (value for value in value_decls if value.name == header.values_reference),
-                None,
-            )
-            animation = SM64_Anim()
+        data = next(
+            (other_header.data for other_header in read_headers.values() if header.data_key == other_header.data_key),
+            None,
+        )
+        if not data:
+            indices_decl = next((indice for indice in indices_decls if indice.name == header.indice_reference), None)
+            value_decl = next((value for value in value_decls if value.name == header.values_reference), None)
             if indices_decl and value_decl:
-                animation.data = SM64_AnimData().read_c(indices_decl, value_decl)
-            read_animations[header.data_key] = animation
-        animation = read_animations[header.data_key]
-        header.data = animation.data
-        header.header_variant = len(animation.headers)
-        animation.headers.append(header)
+                data = SM64_AnimData().read_c(indices_decl, value_decl)
+        header.data = data
 
         return header
 
@@ -476,7 +466,7 @@ class SM64_AnimTableElement:
         if self.reference:
             return f"&{self.reference}"
         return "NULL"
-    
+
     @property
     def enum_c(self):
         assert self.enum_name
@@ -493,6 +483,7 @@ class SM64_AnimTableElement:
             return f"[{self.enum_name}] = {self.c_reference},"
         else:
             return f"{self.c_reference},"
+
 
 @dataclasses.dataclass
 class SM64_AnimTable:
@@ -541,7 +532,7 @@ class SM64_AnimTable:
     def header_set(self) -> list[SM64_AnimHeader]:
         return self.header_data_sets[0]
 
-    def get_seperate_anims(self):
+    def get_seperate_anims(self):  # TODO: should this be merged with the dma variant?
         print("Getting seperate animations from table.")
         anims: list[SM64_Anim] = []
         headers_set, headers_added = self.header_set, []
@@ -549,10 +540,13 @@ class SM64_AnimTable:
             if header in headers_added:
                 continue
             ordered_headers: list[SM64_AnimHeader] = []
+            variant = 0
             for other_header in headers_set:
                 if other_header.data == header.data:
+                    other_header.header_variant = variant
                     ordered_headers.append(other_header)
                     headers_added.append(other_header)
+                    variant += 1
 
             anims.append(SM64_Anim(header.data, ordered_headers, header.file_name))
         return anims
@@ -562,7 +556,7 @@ class SM64_AnimTable:
 
         anims = []
         header_nums = []
-        included_headers = []
+        included_headers: list[SM64_AnimHeader] = []
         data = None
         # For creating duplicates
         data_already_added = []
@@ -599,11 +593,12 @@ class SM64_AnimTable:
                 file_name,
             )
             # Normal names are possible (order goes by line and file) but would break convention
-            for included_header in included_headers:
+            for i, included_header in enumerate(included_headers):
                 included_header.file_name = file_name
                 included_header.indice_reference = data.indice_reference
                 included_header.values_reference = data.values_reference
                 included_header.data = data
+                included_header.header_variant = i
             anims.append(SM64_Anim(data, included_headers, file_name))
 
             header_nums.clear()
@@ -707,7 +702,6 @@ class SM64_AnimTable:
         self,
         reader: RomReader,
         read_headers: dict[str, SM64_AnimHeader],
-        read_animations: dict[tuple[str, str], SM64_Anim],
         table_index: Optional[int] = None,
         bone_count: Optional[int] = 0,
         size: Optional[int] = None,
@@ -736,7 +730,6 @@ class SM64_AnimTable:
                         SM64_AnimHeader.read_binary(
                             header_reader,
                             read_headers,
-                            read_animations,
                             False,
                             bone_count,
                             i,
@@ -758,7 +751,6 @@ class SM64_AnimTable:
         self,
         reader: RomReader,
         read_headers: dict[str, SM64_AnimHeader],
-        read_animations: dict[tuple[str, str], SM64_Anim],
         table_index: Optional[int] = None,
         bone_count: Optional[int] = None,
     ):
@@ -773,7 +765,6 @@ class SM64_AnimTable:
             return SM64_AnimHeader.read_binary(
                 reader.branch(entrie.address),
                 read_headers,
-                read_animations,
                 True,
                 bone_count,
                 table_index,
@@ -783,7 +774,6 @@ class SM64_AnimTable:
             header = SM64_AnimHeader.read_binary(
                 reader.branch(entrie.address),
                 read_headers,
-                read_animations,
                 True,
                 bone_count,
                 i,
@@ -796,7 +786,6 @@ class SM64_AnimTable:
         self,
         c_data: str,
         read_headers: dict[str, SM64_AnimHeader],
-        read_animations: dict[tuple[str, str], SM64_Anim],
         header_decls: list[CArrayDeclaration],
         values_decls: list[CArrayDeclaration],
         indices_decls: list[CArrayDeclaration],
@@ -812,7 +801,6 @@ class SM64_AnimTable:
                         values_decls,
                         indices_decls,
                         read_headers,
-                        read_animations,
                         i,
                     )
             self.elements.append(
