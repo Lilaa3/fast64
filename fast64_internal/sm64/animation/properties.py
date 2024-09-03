@@ -93,40 +93,20 @@ def draw_list_op(
     op_cls: OperatorBase,
     op_name: str,
     index=-1,
-    collection: Optional[Iterable] = None,
-    keep_first=False,
     text="",
     icon="",
     **op_args,
 ):
     col = layout.column()
-    collection = [] if collection is None else collection
-    icon = icon if icon else op_name
-    if op_name == "MOVE_UP":
-        icon = "TRIA_UP"
-        col.enabled = index > 0
-    elif op_name == "MOVE_DOWN":
-        icon = "TRIA_DOWN"
-        col.enabled = index + 1 < len(collection)
-    elif op_name == "CLEAR":
-        icon = "TRASH"
-        col.enabled = len(collection) > (1 if keep_first else 0)
-    elif op_name == "REMOVE":
-        col.enabled = len(collection) > index >= (1 if keep_first else 0)
+    icon = icon or {"MOVE_UP": "TRIA_UP", "MOVE_DOWN": "TRIA_DOWN", "CLEAR": "TRASH"}.get(op_name) or op_name
     return op_cls.draw_props(col, icon, text, index=index, op_name=op_name, **op_args)
 
 
-def draw_list_ops(
-    layout: UILayout,
-    op_cls: type,
-    index: int,
-    collection: Optional[Iterable],
-    **op_args,
-):
+def draw_list_ops(layout: UILayout, op_cls: type, index: int, **op_args):
     layout.label(text=str(index))
     ops = ("MOVE_UP", "MOVE_DOWN", "ADD", "REMOVE")
     for op_name in ops:
-        draw_list_op(layout, op_cls, op_name, index, collection, **op_args)
+        draw_list_op(layout, op_cls, op_name, index, **op_args)
 
 
 class SM64_AnimHeaderProperties(PropertyGroup):
@@ -404,7 +384,7 @@ class SM64_ActionAnimProperty(PropertyGroup):
         col = layout.column()
         op_row = col.row()
         op_row.label(text=f"Header Variants ({len(self.headers)})", icon="NLA")
-        draw_list_op(op_row, SM64_AnimVariantOps, "CLEAR", -1, self.headers, True, action_name=action.name)
+        draw_list_op(op_row, SM64_AnimVariantOps, "CLEAR", action_name=action.name)
 
         for i, header_props in enumerate(self.headers):
             if i != 0:
@@ -420,14 +400,7 @@ class SM64_ActionAnimProperty(PropertyGroup):
                 header_props.draw_props(col, *header_args)
             op_row = row.row()
             op_row.alignment = "RIGHT"
-            draw_list_ops(
-                op_row,
-                SM64_AnimVariantOps,
-                i,
-                self.headers,
-                keep_first=True,
-                action_name=action.name,
-            )
+            draw_list_ops(op_row, SM64_AnimVariantOps, i, action_name=action.name)
 
     def draw_references(self, layout: UILayout, is_binary: bool = False):
         col = layout.column()
@@ -1012,7 +985,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
         left_row.alignment = "EXPAND"
         op_row = row.row()
         op_row.alignment = "RIGHT"
-        draw_list_ops(op_row, SM64_AnimTableOps, index, self.elements)
+        draw_list_ops(op_row, SM64_AnimTableOps, index)
 
         table_element.draw_props(
             left_row,
@@ -1088,7 +1061,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
             icon="NLA",
         )
         draw_list_op(op_row, SM64_AnimTableOps, "ADD")
-        draw_list_op(op_row, SM64_AnimTableOps, "CLEAR", collection=self.elements)
+        draw_list_op(op_row, SM64_AnimTableOps, "CLEAR")
 
         if self.elements:
             box = col.box().column()

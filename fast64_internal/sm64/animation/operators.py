@@ -99,6 +99,17 @@ class SM64_AnimTableOps(OperatorBase):
     action_name: StringProperty()
     header_variant: IntProperty()
 
+    @classmethod
+    def is_enabled(cls, context: Context, op_name: str, index: int, **op_values):
+        table_elements = get_anim_props(context).elements
+        if op_name == "MOVE_UP" and index == 0:
+            return False
+        elif op_name == "MOVE_DOWN" and index >= len(table_elements) - 1:
+            return False
+        elif op_name == "CLEAR" and len(table_elements) == 0:
+            return False
+        return True
+
     def execute_operator(self, context):
         table_elements = get_anim_props(context).elements
         if self.op_name == "MOVE_UP":
@@ -138,8 +149,22 @@ class SM64_AnimVariantOps(OperatorBase):
     op_name: StringProperty()
     action_name: StringProperty()
 
+    @classmethod
+    def is_enabled(cls, context: Context, action_name: str, op_name: str, index: int, **op_values):
+        action_props = get_action_props(get_action(action_name))
+        headers = action_props.headers
+        if op_name == "REMOVE" and index == 0:
+            return False
+        elif op_name == "MOVE_UP" and index <= 0:
+            return False
+        elif op_name == "MOVE_DOWN" and index >= len(headers) - 1:
+            return False
+        elif op_name == "CLEAR" and len(headers) <= 1:
+            return False
+        return True
+
     def execute_operator(self, context):
-        action = bpy.data.actions[self.action_name]
+        action = get_action(self.action_name)
         action_props = get_action_props(action)
         headers = action_props.headers
         variants = action_props.header_variants

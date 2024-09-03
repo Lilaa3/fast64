@@ -37,12 +37,18 @@ class OperatorBase(Operator):
     icon = "NONE"
 
     @classmethod
+    def is_enabled(cls, context: Context, **op_values):
+        return True
+
+    @classmethod
     def draw_props(cls, layout: UILayout, icon="", text: Optional[str] = None, **op_values):
         """Op args are passed to the operator via setattr()"""
         icon = icon if icon else cls.icon
+        layout = layout.column()
         op = layout.operator(cls.bl_idname, icon=icon, text=text)
         for key, value in op_values.items():
             setattr(op, key, value)
+        layout.enabled = cls.is_enabled(bpy.context, **op_values)
         return op
 
     def execute_operator(self, context: Context):
