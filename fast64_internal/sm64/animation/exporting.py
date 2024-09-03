@@ -284,7 +284,7 @@ def to_table_element_class(
     export_type: str,
     actor_name="mario",
     gen_enums=False,
-    prev_enums: list[str] = None,
+    prev_enums: dict[str, int] = None,
 ):
     use_addresses, can_reference = export_type in {"Binary", "Insertable Binary"}, not dma
     element = SM64_AnimTableElement()
@@ -382,7 +382,7 @@ def to_table_class(
     )
     data_dict = {}
 
-    prev_enums = []
+    prev_enums = {}
     element_props: SM64_AnimTableElementProperties
     for i, element_props in enumerate(anim_props.elements):
         try:
@@ -548,14 +548,14 @@ def update_table_file(
     elif len(tables) == 1:
         table = tables[0]
     else:  # create new table
-        table = SM64_AnimTable(name)
+        table = SM64_AnimTable(table_name)
         table.start = len(text)
         text += f"const struct Animation *const {table_name}[] = {{\n"
         table.end = len(text)
         text += "};\n"
 
     if gen_enums:  # Figure out enums on existing enum-less elements
-        prev_enums = []
+        prev_enums = {}
         for i, element in enumerate(table.elements):
             if not element.reference:
                 if i == len(table.elements) - 1:

@@ -488,7 +488,7 @@ class SM64_AnimTableElementProperties(PropertyGroup):
     use_custom_enum: BoolProperty(name="Enum")
     custom_enum: StringProperty(name="Enum Name")
 
-    def get_enum(self, can_reference: bool, actor_name: str, prev_enums: list[str]) -> str:
+    def get_enum(self, can_reference: bool, actor_name: str, prev_enums: dict[str, int]) -> str:
         """Updates prev_enums"""
         enum = ""
         if self.use_custom_enum:
@@ -519,7 +519,7 @@ class SM64_AnimTableElementProperties(PropertyGroup):
         self.variant = variant
 
     def draw_reference(
-        self, layout: UILayout, export_type: str = "C", gen_enums: bool = False, prev_enums: list[str] = None
+        self, layout: UILayout, export_type: str = "C", gen_enums: bool = False, prev_enums: dict[str, int] = None
     ):
         if export_type in {"Binary", "Insertable Binary"}:
             string_int_prop(layout, self, "header_address", "Header Address")
@@ -540,7 +540,7 @@ class SM64_AnimTableElementProperties(PropertyGroup):
         export_type: str,
         gen_enums: bool,
         actor_name: str,
-        prev_enums: list,
+        prev_enums: dict[str, int],
     ):
         can_reference = not dma
         col = prop_layout.column()
@@ -958,7 +958,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
         table_element: SM64_AnimTableElementProperties,
         export_type: str,
         actor_name: str,
-        prev_enums: list[str],
+        prev_enums: dict[str, int],
     ):
         col = layout.column()
         row = col.row()
@@ -976,7 +976,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
             self.update_table,
             self.export_seperately,
             export_type,
-            self.gen_enums,
+            export_type == "C" and self.gen_enums and not self.is_dma,
             actor_name,
             prev_enums,
         )
@@ -1071,7 +1071,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
                 "INFO",
             )
 
-        prev_enums = []
+        prev_enums = {}
         element_props: SM64_AnimTableElementProperties
         for i, element_props in enumerate(self.elements):
             if i != 0:

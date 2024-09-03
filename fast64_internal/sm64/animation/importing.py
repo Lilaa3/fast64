@@ -327,7 +327,7 @@ def from_table_element_class(
     element: SM64_AnimTableElement,
     use_custom_name: bool,
     actor_name: str,
-    prev_enums: list[str],
+    prev_enums: dict[str, int],
 ):
     if element.header:
         assert element.header.action
@@ -358,7 +358,7 @@ def from_anim_table_class(
         anim_props.elements.clear()
     anim_props.null_delimiter = table.elements and not table.elements[-1].reference
 
-    prev_enums: list[str] = []
+    prev_enums: dict[str, int] = []
     for i, element in enumerate(table.elements):
         if anim_props.null_delimiter and i == len(table.elements) - 1:
             break

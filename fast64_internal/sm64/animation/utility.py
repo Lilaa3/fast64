@@ -114,15 +114,16 @@ def anim_name_to_enum_name(anim_name: str) -> str:
     return enum_name
 
 
-def duplicate_name(name: str, existing_names: list[str]) -> str:
+def duplicate_name(name: str, existing_names: dict[str, int]) -> str:
     """Updates existing_names"""
-    i, possible_name = 1, name
-    while possible_name in existing_names:
-        possible_name = f"{name}_{i}"
-        i += 1
-    if name != "":
-        existing_names.append(name)
-    return possible_name
+    current_num = existing_names.get(name)
+    if current_num is None:
+        existing_names[name] = 0
+    elif name != "":
+        current_num += 1
+        existing_names[name] = current_num
+        return f"{name}_{current_num}"
+    return name
 
 
 def get_action_props(action: Action) -> "SM64_ActionAnimProperty":
