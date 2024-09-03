@@ -39,7 +39,7 @@ from .classes import (
     SM64_AnimTable,
     SM64_AnimTableElement,
 )
-from .constants import FLAG_PROPS, ACTOR_PRESET_INFO, C_FLAGS
+from .constants import FLAG_PROPS, ACTOR_PRESET_INFO, C_FLAGS, TABLE_PATTERN
 
 if TYPE_CHECKING:
     from .properties import (
@@ -330,6 +330,7 @@ def from_table_element_class(
     prev_enums: list[str],
 ):
     if element.header:
+        assert element.header.action
         element_props.set_variant(element.header.action, element.header.header_variant)
     else:
         element_props.reference = True
@@ -337,7 +338,7 @@ def from_table_element_class(
     if isinstance(element.reference, int):
         element_props.header_address = intToHex(element.reference)
     else:
-        element_props.header_name = element.reference
+        element_props.header_name = element.c_name
         element_props.header_address = intToHex(0)
 
     if element.enum_name:
@@ -355,8 +356,12 @@ def from_anim_table_class(
 ):
     if clear_table:
         anim_props.elements.clear()
+    anim_props.null_delimiter = table.elements and not table.elements[-1].reference
+
     prev_enums: list[str] = []
-    for element in table.elements:
+    for i, element in enumerate(table.elements):
+        if anim_props.null_delimiter and i == len(table.elements) - 1:
+            break
         anim_props.elements.add()
         from_table_element_class(anim_props.elements[-1], element, use_custom_name, actor_name, prev_enums)
 
@@ -421,27 +426,54 @@ def animation_import_to_blender(
         raise exc
 
 
+def import_tables(
+    c_data: str,
+    path: os.PathLike,
+    specific_name="",
+    header_decls: list[CArrayDeclaration] = None,
+    values_decls: list[CArrayDeclaration] = None,
+    indices_decls: list[CArrayDeclaration] = None,
+):
+    read_headers, read_animations = {}, {}
+    header_decls, values_decls, indices_decls = (
+        header_decls or [],
+        values_decls or [],
+        indices_decls or [],
+    )
+    tables: list[SM64_AnimTable] = []
+    for table_match in re.finditer(TABLE_PATTERN, c_data):
+        table_elements = []
+        name, content = table_match.group("name").strip(), table_match.group("content")
+        if specific_name and name != specific_name:
+            continue
+
+        table_start, table_end = c_data.find(content, table_match.start()), table_match.end()
+        table = SM64_AnimTable(
+            name, file_name=os.path.basename(path), elements=table_elements, start=table_start, end=table_end
+        )
+        table.read_c(
+            c_data[table_start:table_end], read_headers, read_animations, header_decls, values_decls, indices_decls
+        )
+        tables.append(table)
+    return tables
+
+
 DECL_PATTERN = re.compile(
-    r"(static\s+const\s+struct\s+Animation|static\s+const\s+u16|static\s+const\s+s16|const\s+struct Animation\s+\*const)\s+(\w+)\s*?(?:\[.*?\])?\s*?=\s*?\{(.*?)\};",
+    r"(static\s+const\s+struct\s+Animation|static\s+const\s+u16|static\s+const\s+s16)\s+(\w+)\s*?(?:\[.*?\])?\s*?=\s*?\{(.*?)\};",
     re.DOTALL,
 )
 VALUE_SPLIT_PATTERN = re.compile(r"\s*([^,\s]+)\s*(?:,|$)")
 
 
-def find_decls(c_data: str, f: os.PathLike, decl_list: dict[str, list[CArrayDeclaration]]):
-    file_basename = os.path.basename(f)
+def find_decls(c_data: str, path: os.PathLike, decl_list: dict[str, list[CArrayDeclaration]]):
+    file_basename = os.path.basename(path)
     matches = DECL_PATTERN.findall(c_data)
     for decl_type, name, value_text in matches:
         values = VALUE_SPLIT_PATTERN.findall(value_text)
-        decl_list[decl_type].append(CArrayDeclaration(name, f, file_basename, values))
+        decl_list[decl_type].append(CArrayDeclaration(name, path, file_basename, values))
 
 
-def import_c_animations(
-    path: os.PathLike,
-    read_headers: dict[str, SM64_AnimHeader],
-    read_animations: dict[tuple[str, str], SM64_Anim],
-    table: SM64_AnimTable,
-):
+def import_c_animations(path: os.PathLike):
     path_checks(path)
     if os.path.isfile(path):
         file_paths = [path]
@@ -451,40 +483,49 @@ def import_c_animations(
         )
 
     print(f"Reading from: {', '.join(file_paths)}.")
-    decl_lists = {
-        "static const struct Animation": [],
-        "static const u16": [],
-        "static const s16": [],
-        "const struct Animation *const": [],
-    }
+    decl_lists = {"static const struct Animation": [], "static const u16": [], "static const s16": []}
+    header_decls, indices_decls, value_decls = (
+        decl_lists["static const struct Animation"],
+        decl_lists["static const u16"],
+        decl_lists["static const s16"],
+    )
 
+    c_files = {}
     for file_path in file_paths:
         print(f"Reading from: {file_path}.")
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-            c_data = removeComments(f.read())
+            c_files[file_path] = removeComments(f.read())
+
+    for file_path, c_data in c_files.items():
         find_decls(c_data, file_path, decl_lists)
 
-    header_decls = decl_lists["static const struct Animation"]
-    indices_decls = decl_lists["static const u16"]
-    value_decls = decl_lists["static const s16"]
-    table_decls = decl_lists["const struct Animation *const"]
-
-    if table_decls:
-        if len(table_decls) > 1:
-            raise ValueError("More than 1 table declaration")
-        table.read_c(
-            table_decls[0],
-            read_headers,
-            read_animations,
-            header_decls,
-            value_decls,
-            indices_decls,
+    tables: list[SM64_AnimTable] = []
+    for file_path, c_data in c_files.items():
+        tables.extend(
+            import_tables(
+                c_data,
+                file_path,
+                None,
+                header_decls,
+                value_decls,
+                indices_decls,
+            )
         )
+        if len(tables) > 1:
+            raise ValueError("More than 1 table declaration")
+    
+    if tables:
+        table: SM64_AnimTable = tables[0]
+        read_headers = {header.reference: header for header in table.header_set}
+        read_animations = {anim.headers[0].data_key: anim for anim in table.get_seperate_anims()}
+        return table, read_animations, read_headers
     else:
+        read_headers, read_animations = {}, {}
         for table_index, header_decl in enumerate(sorted(header_decls, key=lambda h: h.name)):
             SM64_AnimHeader().read_c(
                 header_decl, value_decls, indices_decls, read_headers, read_animations, table_index
             )
+        return None, read_animations, read_headers
 
 
 def import_binary_animations(
@@ -596,9 +637,11 @@ def import_animations(context: Context):
     elif import_props.import_type == "C":
         c_path = abspath(import_props.path)
         path_checks(c_path)
-        import_c_animations(c_path, read_headers, read_animations, table)
+        table, read_animations, read_headers = import_c_animations(c_path)
+    else:
+        raise NotImplementedError(f"Unimplemented animation import type {import_props.import_type}")
 
-    if not table.elements:
+    if not table or not table.elements:
         print("No table was read. Automatically creating table.")
         table.elements = [SM64_AnimTableElement(header=header) for header in read_headers.values()]
 
@@ -649,12 +692,13 @@ def import_animations(context: Context):
             bpy.context.area.type = old_area
             obj.animation_data.action = old_action
 
-    print("Importing animation table into properties.")
-    from_anim_table_class(
-        anim_props, table, import_props.clear_table, import_props.use_custom_name, get_anim_actor_name(context)
-    )
-    if import_props.binary and import_props.check_null:
-        anim_props.null_delimiter = True
+    if table:
+        print("Importing animation table into properties.")
+        from_anim_table_class(
+            anim_props, table, import_props.clear_table, import_props.use_custom_name, get_anim_actor_name(context)
+        )
+        if import_props.binary and import_props.check_null:
+            anim_props.null_delimiter = True
 
 
 @functools.cache

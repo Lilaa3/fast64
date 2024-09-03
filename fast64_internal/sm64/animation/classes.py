@@ -1,5 +1,6 @@
 import dataclasses
 import os
+import re
 import numpy as np
 from copy import copy
 from io import StringIO
@@ -11,7 +12,7 @@ from ...utility import PluginError, encodeSegmentedAddr, is_bit_active, intToHex
 from ..sm64_constants import MAX_U16, SegmentData
 from ..sm64_classes import RomReader, DMATable, DMATableElement, IntArray
 
-from .constants import HEADER_STRUCT, HEADER_SIZE, C_FLAGS
+from .constants import HEADER_STRUCT, HEADER_SIZE, C_FLAGS, TABLE_ELEMENT_PATTERN
 from .utility import get_dma_header_name, get_dma_anim_name
 
 
@@ -60,6 +61,10 @@ class SM64_AnimData:
     indice_end_address: int = 0
     start_address: int = 0
     end_address: int = 0
+
+    @property
+    def key(self):
+        return (self.indice_reference, self.values_reference)
 
     def to_c(self, dma_structure: bool = False):
         text_data = StringIO()
@@ -148,6 +153,11 @@ class SM64_AnimHeader:
     end_address: int = 0
     header_variant: int = 0
     table_index: int = 0
+    action:Action = None
+
+    @property
+    def data_key(self):
+        return (self.indice_reference, self.values_reference)
 
     def get_flags_comment(self):
         if isinstance(self.flags, str):
@@ -272,8 +282,7 @@ class SM64_AnimHeader:
         header.end_address = reader.address + 1
         header.table_index = len(read_headers) if table_index is None else table_index
 
-        data_key = (str(header.indice_reference), str(header.values_reference))
-        if not data_key in read_animations:
+        if not header.data_key in read_animations:
             animation = SM64_Anim()
             indices_reader = reader.branch(header.indice_reference)
             values_reader = reader.branch(header.values_reference)
@@ -283,8 +292,8 @@ class SM64_AnimHeader:
                     values_reader,
                     header.bone_count,
                 )
-            read_animations[data_key] = animation
-        animation = read_animations[data_key]
+            read_animations[header.data_key] = animation
+        animation = read_animations[header.data_key]
         header.data = animation.data
         header.header_variant = len(animation.headers)
         animation.headers.append(header)
@@ -344,8 +353,7 @@ class SM64_AnimHeader:
 
         header.table_index = len(read_headers) if table_index is None else table_index
 
-        data_key = (header.indice_reference, header.values_reference)
-        if not data_key in read_animations:
+        if not header.data_key in read_animations:
             indices_decl = next(
                 (indice for indice in indices_decls if indice.name == header.indice_reference),
                 None,
@@ -357,8 +365,8 @@ class SM64_AnimHeader:
             animation = SM64_Anim()
             if indices_decl and value_decl:
                 animation.data = SM64_AnimData().read_c(indices_decl, value_decl)
-            read_animations[data_key] = animation
-        animation = read_animations[data_key]
+            read_animations[header.data_key] = animation
+        animation = read_animations[header.data_key]
         header.data = animation.data
         header.header_variant = len(animation.headers)
         animation.headers.append(header)
@@ -458,17 +466,17 @@ class SM64_AnimTableElement:
     enum_val: str = ""
 
     @property
+    def c_name(self):
+        if self.reference:
+            return self.reference
+        return "NULL"
+
+    @property
     def c_reference(self):
         if self.reference:
             return f"&{self.reference}"
         return "NULL"
-
-    def to_c(self, designated: bool):
-        if designated and self.enum_name:
-            return f"[{self.enum_name}] = {self.c_reference},"
-        else:
-            return f"{self.c_reference},"
-
+    
     @property
     def enum_c(self):
         assert self.enum_name
@@ -480,6 +488,11 @@ class SM64_AnimTableElement:
     def data(self):
         return self.header.data if self.header else None
 
+    def to_c(self, designated: bool):
+        if designated and self.enum_name:
+            return f"[{self.enum_name}] = {self.c_reference},"
+        else:
+            return f"{self.c_reference},"
 
 @dataclasses.dataclass
 class SM64_AnimTable:
@@ -487,11 +500,13 @@ class SM64_AnimTable:
     enum_list_reference: str = ""
     enum_list_end: str = ""
     file_name: str = ""
-    values_reference: str = ""
     elements: list[SM64_AnimTableElement] = dataclasses.field(default_factory=list)
-
     # Importing
     end_address: int = 0
+    # C exporting
+    values_reference: str = ""
+    start: int = -1
+    end: int = -1
 
     @property
     def names(self) -> tuple[list[str], list[str]]:
@@ -528,7 +543,7 @@ class SM64_AnimTable:
 
     def get_seperate_anims(self):
         print("Getting seperate animations from table.")
-        anims = []
+        anims: list[SM64_Anim] = []
         headers_set, headers_added = self.header_set, []
         for header in headers_set:
             if header in headers_added:
@@ -706,6 +721,7 @@ class SM64_AnimTable:
         for i in range(range_size):
             ptr = reader.read_ptr()
             if size is None and ptr == 0:  # If no specified size and ptr is NULL, break
+                self.elements.append(SM64_AnimTableElement())
                 break
             elif table_index is not None and i != table_index:  # Skip entries until table_index if specified
                 continue
@@ -778,30 +794,18 @@ class SM64_AnimTable:
 
     def read_c(
         self,
-        table_decl: CArrayDeclaration,
+        c_data: str,
         read_headers: dict[str, SM64_AnimHeader],
         read_animations: dict[tuple[str, str], SM64_Anim],
         header_decls: list[CArrayDeclaration],
         values_decls: list[CArrayDeclaration],
         indices_decls: list[CArrayDeclaration],
     ):
-        print(f'Reading table "{table_decl.name}" c declaration.')
-        self.reference = table_decl.name
-        self.file_name = table_decl.file_name
-        self.elements.clear()
-        for table_index, value in enumerate(table_decl.values):
-            enum_name_split: list[str] = value.split("=")
-            header_reference = enum_name_split[-1].replace("&", "").strip()
-            enum_name = (
-                enum_name_split[0].replace("[", "", 1).replace("]", "", 1).strip()
-                if len(enum_name_split) == 2
-                else None
-            )
+        for i, element_match in enumerate(re.finditer(TABLE_ELEMENT_PATTERN, c_data)):
+            enum, element = (element_match.group("enum"), element_match.group("element"))
             header = None
-            if header_reference == "NULL":
-                header_reference = None
-            else:
-                header_decl = next((header for header in header_decls if header.name == header_reference), None)
+            if element is not None:
+                header_decl = next((header for header in header_decls if header.name == element), None)
                 if header_decl:
                     header = SM64_AnimHeader.read_c(
                         header_decl,
@@ -809,11 +813,17 @@ class SM64_AnimTable:
                         indices_decls,
                         read_headers,
                         read_animations,
-                        table_index,
+                        i,
                     )
-
-            self.elements.append(SM64_AnimTableElement(header_reference, header, enum_name))
-        return self
+            self.elements.append(
+                SM64_AnimTableElement(
+                    element,
+                    enum_name=enum,
+                    reference_start=element_match.start(),
+                    reference_end=element_match.end(),
+                    header=header,
+                )
+            )
 
 
 def create_tables(anims_data: list[SM64_AnimData], values_name=""):

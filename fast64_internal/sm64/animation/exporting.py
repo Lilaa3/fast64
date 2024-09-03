@@ -2,7 +2,7 @@ import os
 import re
 import numpy as np
 import dataclasses
-from typing import TYPE_CHECKING, NamedTuple, Optional
+from typing import TYPE_CHECKING, Optional
 
 import bpy
 from bpy.types import Object, Action, PoseBone, Context
@@ -36,6 +36,7 @@ from .classes import (
     SM64_AnimTable,
     SM64_AnimTableElement,
 )
+from .importing import import_tables
 from .utility import (
     get_anim_owners,
     get_anim_actor_name,
@@ -44,7 +45,7 @@ from .utility import (
     get_action_props,
     duplicate_name,
 )
-from .constants import HEADER_SIZE, TABLE_ENUM_LIST_PATTERN, TABLE_ENUM_PATTERN, TABLE_PATTERN, TABLE_ELEMENT_PATTERN
+from .constants import HEADER_SIZE, TABLE_ENUM_LIST_PATTERN, TABLE_ENUM_PATTERN
 
 if TYPE_CHECKING:
     from .properties import (
@@ -540,41 +541,24 @@ def update_table_file(
         text = ""
 
     # First, find existing tables
-    tables: list[tuple[list[SM64_AnimTableElement], int, int]] = []
-    for table_match in re.finditer(TABLE_PATTERN, text):
-        table_elements = []
-        found_name, content = table_match.group("name"), table_match.group("content")
-        table_start, table_end = text.find(content, table_match.start()), table_match.end()
-        content = text[table_start:table_end]
-        if found_name is not None and table_name == found_name.strip():
-            for element_match in re.finditer(TABLE_ELEMENT_PATTERN, content):
-                enum, element = (element_match.group("enum"), element_match.group("element"))
-                table_elements.append(
-                    SM64_AnimTableElement(
-                        element,
-                        enum_name=enum,
-                        reference_start=element_match.start(),
-                        reference_end=element_match.end(),
-                    )
-                )
-            tables.append((table_elements, table_start, table_end))
+    tables = import_tables(text, table_path, table_name)
 
     if len(tables) > 1:
         raise PluginError(f'Duplicate animation table "{table_name}"')
     elif len(tables) == 1:
-        table_elements, table_start, table_end = tables[0]
+        table = tables[0]
     else:  # create new table
-        table_start = len(text)
+        table = SM64_AnimTable(name)
+        table.start = len(text)
         text += f"const struct Animation *const {table_name}[] = {{\n"
-        table_end = len(text)
+        table.end = len(text)
         text += "};\n"
-        table_elements = []
 
     if gen_enums:  # Figure out enums on existing enum-less elements
         prev_enums = []
-        for i, element in enumerate(table_elements):
+        for i, element in enumerate(table.elements):
             if not element.reference:
-                if i == len(table_elements) - 1:
+                if i == len(table.elements) - 1:
                     element.enum_name = duplicate_name(enum_list_end, prev_enums)
                 else:
                     element.enum_name = duplicate_name(f"{table_name}_NULL", prev_enums)
@@ -586,27 +570,27 @@ def update_table_file(
                 ),
                 prev_enums,
             )
-        update_enum_file(enum_list_path, enum_list_name, names[1], enum_list_end, override_files, table_elements)
+        update_enum_file(enum_list_path, enum_list_name, names[1], enum_list_end, override_files, table.elements)
 
-    has_delimiter = table_elements and not table_elements[-1].reference
+    has_delimiter = table.elements and not table.elements[-1].reference
     # add in new entries not already found in table, always true with override
-    existing_names = [element.reference for element in table_elements]
-    existing_enums = [element.enum_name for element in table_elements]
+    existing_names = [element.reference for element in table.elements]
+    existing_enums = [element.enum_name for element in table.elements]
     for name, enum in zip(*names):
         if name in existing_names and (not enum or enum in existing_enums):
             continue
         if has_delimiter:  # replace existing delimiter
-            new_element, has_delimiter = table_elements[-1], False
+            new_element, has_delimiter = table.elements[-1], False
         else:  # create new element
             new_element = SM64_AnimTableElement()
-            table_elements.append(new_element)
+            table.elements.append(new_element)
         new_element.reference, new_element.enum_name = name, enum
 
     if add_null_delimiter and not has_delimiter:  # add null delimiter if not present or replaced
-        table_elements.append(SM64_AnimTableElement(enum_name=enum_list_end))
+        table.elements.append(SM64_AnimTableElement(enum_name=enum_list_end))
 
-    content = text[table_start:table_end]
-    for i, element in enumerate(table_elements):
+    content = text[table.start : table.end]
+    for i, element in enumerate(table.elements):
         element_text = element.to_c(designated and gen_enums)
         if element.reference_start == -1 or element.reference_end == -1:
             content += f"\t{element_text}\n"
@@ -624,14 +608,14 @@ def update_table_file(
         size_increase = len(element_text) - len(old_text)
         if size_increase == 0:
             continue
-        for next_element in table_elements[i + 1 :]:  # acccount for changed size
+        for next_element in table.elements[i + 1 :]:  # acccount for changed size
             if next_element.reference_start != -1 and next_element.reference_end != -1:
                 next_element.reference_start += size_increase
                 next_element.reference_end += size_increase
 
     if not existing_file:
         print(f"Creating table file at {table_path}.")
-    text = text[:table_start] + content + text[table_end:]
+    text = text[: table.start] + content + text[table.end :]
     with open(table_path, "w", encoding="utf-8") as f:
         f.write(text)
 
