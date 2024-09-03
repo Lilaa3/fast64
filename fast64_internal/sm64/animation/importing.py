@@ -19,7 +19,7 @@ from ...utility import (
     intToHex,
     removeComments,
 )
-from ...utility_anim import create_basic_action, stashActionInArmature
+from ...utility_anim import create_basic_action
 from ..sm64_constants import level_pointers
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_utility import import_rom_checks
@@ -31,6 +31,7 @@ from .utility import (
     get_anim_owners,
     get_scene_anim_props,
     get_anim_actor_name,
+    anim_name_to_enum_name,
 )
 from .classes import (
     SM64_Anim,
@@ -221,6 +222,9 @@ def from_header_class(
     ):
         header_props.custom_name = header.reference
         header_props.use_custom_name = True
+    if header.enum_name and header.enum_name != header_props.get_enum(actor_name, action):
+        header_props.custom_enum = header.enum_name
+        header_props.use_custom_enum = True
 
     correct_loop_points = header.start_frame, header.loop_start, header.loop_end
     header_props.start_frame, header_props.loop_start, header_props.loop_end = correct_loop_points
@@ -358,7 +362,7 @@ def from_anim_table_class(
         anim_props.elements.clear()
     anim_props.null_delimiter = table.elements and not table.elements[-1].reference
 
-    prev_enums: dict[str, int] = []
+    prev_enums: dict[str, int] = {}
     for i, element in enumerate(table.elements):
         if anim_props.null_delimiter and i == len(table.elements) - 1:
             break
@@ -633,8 +637,9 @@ def import_animations(context: Context):
     if not table.elements:
         print("No table was read. Automatically creating table.")
         table.elements = [SM64_AnimTableElement(header=header) for header in read_headers.values()]
-
     seperate_anims = table.get_seperate_anims()
+
+    actor_name = get_anim_actor_name(context)
     if import_props.preset in ACTOR_PRESET_INFO:
         preset_animation_names = get_preset_anim_name_list(import_props.preset)
         for animation in seperate_anims:
@@ -642,10 +647,16 @@ def import_animations(context: Context):
                 continue
             names, indexes = [], []
             for header in animation.headers:
-                if header.table_index < len(preset_animation_names):
-                    names.append(preset_animation_names[header.table_index])
-                    indexes.append(str(header.table_index))
+                if header.table_index >= len(preset_animation_names):
+                    continue
+                name = preset_animation_names[header.table_index]
+                header.enum_name = header.enum_name or anim_name_to_enum_name(f"{actor_name}_anim_{name}")
+                names.append(name)
+                indexes.append(str(header.table_index))
             animation.action_name = f"{'/'.join(indexes)} - {'/'.join(names)}"
+        for i, element in enumerate(table.elements[: len(preset_animation_names)]):
+            name = preset_animation_names[i]
+            element.enum_name = element.enum_name or anim_name_to_enum_name(f"{actor_name}_anim_{name}")
 
     print("Importing animations into blender.")
     actions = []
@@ -655,7 +666,7 @@ def import_animations(context: Context):
                 obj,
                 sm64_props.blender_to_sm64_scale,
                 animation,
-                get_anim_actor_name(context),
+                actor_name,
                 import_props.use_custom_name,
                 import_props.import_type,
                 import_props.force_quaternion,
@@ -684,9 +695,7 @@ def import_animations(context: Context):
 
     if table:
         print("Importing animation table into properties.")
-        from_anim_table_class(
-            anim_props, table, import_props.clear_table, import_props.use_custom_name, get_anim_actor_name(context)
-        )
+        from_anim_table_class(anim_props, table, import_props.clear_table, import_props.use_custom_name, actor_name)
         if import_props.binary and import_props.check_null:
             anim_props.null_delimiter = True
 

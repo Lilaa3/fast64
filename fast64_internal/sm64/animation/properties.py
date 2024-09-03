@@ -56,6 +56,7 @@ from .utility import (
     get_dma_header_name,
     is_obj_animatable,
     anim_name_to_enum_name,
+    action_name_to_enum_name,
     duplicate_name,
 )
 from .importing import get_enum_from_import_preset, update_table_preset
@@ -221,17 +222,22 @@ class SM64_AnimHeaderProperties(PropertyGroup):
         elif self.use_custom_name:
             return self.custom_name
         elif self.header_variant == 0:
-            name = f"{actor_name}_anim_{action.name}"
-            return toAlnum(name)
+            return toAlnum(f"{actor_name}_anim_{action.name}")
         else:
-            main_header_name = get_action_props(action).headers[0].get_name(actor_name, action)
-            name = f"{main_header_name}_{self.header_variant}"
-        return toAlnum(name)
+            main_header_name = get_action_props(action).headers[0].get_name(actor_name, action, dma)
+            return toAlnum(f"{main_header_name}_{self.header_variant}")
 
     def get_enum(self, actor_name: str, action: Action) -> str:
         if self.use_custom_enum:
             return self.custom_enum
-        return anim_name_to_enum_name(self.get_name(actor_name, action))
+        elif self.use_custom_name:
+            return anim_name_to_enum_name(self.get_name(actor_name, action))
+        elif self.header_variant == 0:
+            clean_name = action_name_to_enum_name(action.name)
+            return anim_name_to_enum_name(f"{actor_name}_anim_{clean_name}")
+        else:
+            main_enum = get_action_props(action).headers[0].get_enum(actor_name, action)
+            return f"{main_enum}_{self.header_variant}"
 
     def draw_flag_props(self, layout: UILayout, use_int_flags: bool = False):
         col = layout.column()
