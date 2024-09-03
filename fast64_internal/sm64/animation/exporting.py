@@ -100,8 +100,12 @@ def get_animation_pairs(
     sm64_scale: float, actions: list[Action], obj: Object, quick_read=False
 ) -> dict[Action, list[SM64_AnimPair]]:
     anim_owners = get_anim_owners(obj)
+    is_owner_obj = isinstance(obj.type == "MESH", Object)
     if len(anim_owners) == 0:
         raise PluginError(f'No animation bones in armature "{obj.name}"')
+
+    if len(actions) < 1:
+        return {}
 
     max_frames = [get_action_props(action).get_max_frame(action) for action in actions]
     trans_values = [np.zeros((3, max_frame), dtype=np.float32) for max_frame in max_frames]
@@ -157,7 +161,7 @@ def get_animation_pairs(
                     bpy.context.scene.frame_set(frame)
 
                     for bone_index, anim_owner in enumerate(anim_owners):
-                        if isinstance(anim_owner, Object):
+                        if is_owner_obj:
                             local_matrix = anim_owner.matrix_local
                         else:
                             local_matrix = obj.convert_space(
@@ -176,7 +180,7 @@ def get_animation_pairs(
     action_pairs = {}
     for action, action_trans, action_rot in zip(actions, trans_values, rot_values):
         action_trans = trim_duplicates_vectorized(np.round(action_trans * sm64_scale).astype(np.int16))
-        action_rot = trim_duplicates_vectorized((np.degrees(action_rot) * (2**16 / 360.0)).astype(np.int16))
+        action_rot = trim_duplicates_vectorized(np.round(np.degrees(action_rot) * (2**16 / 360.0)).astype(np.int16))
 
         pairs = [SM64_AnimPair(values) for values in action_trans]
         pairs.extend([SM64_AnimPair(values) for values in action_rot])
