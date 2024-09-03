@@ -1,3 +1,5 @@
+import functools
+import re
 from typing import TYPE_CHECKING
 
 from bpy.types import Context, Object, Action, PoseBone
@@ -94,6 +96,7 @@ def num_to_padded_hex(num: int):
     return hex_str.zfill(2)
 
 
+@functools.cache
 def get_dma_header_name(index: int):
     return f"anim_{num_to_padded_hex(index)}"
 
@@ -102,10 +105,12 @@ def get_dma_anim_name(header_indices: list[int]):
     return f'anim_{"_".join([f"{num_to_padded_hex(num)}" for num in header_indices])}'
 
 
+@functools.cache
 def anim_name_to_enum_name(anim_name: str) -> str:
     enum_name = anim_name.upper()
+    enum_name = re.sub("_+", "_", toAlnum(enum_name))
     if anim_name == enum_name:
-        enum_name = f"_{enum_name}"
+        enum_name = f"{enum_name}_ENUM"
     return enum_name
 
 

@@ -575,9 +575,7 @@ class SM64_AnimTableElementProperties(PropertyGroup):
                 draw_custom_or_auto(
                     self, variant_split, "enum", self.get_enum(can_reference, actor_name, prev_enums), factor=0.3
                 )
-            if not draw_and_check_tab(
-                col, self, "expand_tab", name + (f" (Variant {variant + 1})" if variant > 0 else "")
-            ):
+            if not draw_and_check_tab(col, self, "expand_tab", name + (f" (Variant {variant})" if variant > 0 else "")):
                 return
 
         action_props.draw_props(
