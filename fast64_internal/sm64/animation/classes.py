@@ -717,7 +717,8 @@ class SM64_AnimTable:
         print(f"Reading table at address {reader.start_address}.")
         self.elements.clear()
         self.reference = reader.start_address
-        range_size = size if size is not None else 300
+
+        range_size = size or 300
         if table_index is not None:
             range_size = min(range_size, table_index + 1)
         for i in range(range_size):
@@ -732,18 +733,17 @@ class SM64_AnimTable:
             if header_reader is None:
                 self.elements.append(SM64_AnimTableElement(ptr))
             else:
-                self.elements.append(
-                    SM64_AnimTableElement(
-                        ptr,
-                        SM64_AnimHeader.read_binary(
-                            header_reader,
-                            read_headers,
-                            False,
-                            bone_count,
-                            i,
-                        ),
-                    ),
-                )
+                try:
+                    header = SM64_AnimHeader.read_binary(
+                        header_reader,
+                        read_headers,
+                        False,
+                        bone_count,
+                        i,
+                    )
+                except Exception as exc:
+                    raise PluginError(f"Failed to read header in table element {i}: {str(exc)}") from exc
+                self.elements.append(SM64_AnimTableElement(ptr, header))
 
             if table_index is not None:  # Break if table_index is specified
                 break
@@ -779,13 +779,13 @@ class SM64_AnimTable:
             )
 
         for i, entrie in enumerate(dma_table.entries):
-            header = SM64_AnimHeader.read_binary(
-                reader.branch(entrie.address),
-                read_headers,
-                True,
-                bone_count,
-                i,
-            )
+            header_reader = reader.branch(entrie.address)
+            try:
+                if not header_reader:
+                    raise PluginError("Failed to branch to header's address")
+                header = SM64_AnimHeader.read_binary(header_reader, read_headers, True, bone_count, i)
+            except Exception as exc:
+                raise PluginError(f"Failed to read header in table element {i}: {str(exc)}") from exc
             self.elements.append(SM64_AnimTableElement(reader.start_address, header))
         self.end_address = dma_table.end_address
         return self

@@ -450,14 +450,6 @@ def update_anim_header(header: os.PathLike, table_name: str, gen_enums: bool):
             f.write(extern + "\n")
 
 
-@dataclasses.dataclass
-class SM64_DynamicEnum:
-    start: int
-    end: int
-    enum: str
-    num: int
-
-
 def update_enum_file(
     path: os.PathLike,
     list_name: str,
@@ -842,7 +834,6 @@ def export_animation_binary(
         table = SM64_AnimTable().read_dma_binary(
             reader=RomReader(rom_file=binary_exporter.rom_file_output, start_address=dma_address),
             read_headers={},
-            read_animations={},
             table_index=None,
             bone_count=bone_count,
         )
