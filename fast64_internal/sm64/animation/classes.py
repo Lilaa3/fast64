@@ -265,10 +265,11 @@ class SM64_AnimHeader:
         header.loop_start = reader.read_int(2, True)  # /*0x06*/ s16 loopStart;
         header.loop_end = reader.read_int(2, True)  # /*0x08*/ s16 loopEnd;
 
-        header.bone_count = reader.read_int(2, True)  # /*0x0A*/ s16 unusedBoneCount; (Unused in engine)
+        # /*0x0A*/ s16 unusedBoneCount; (Unused in engine)
+        header.bone_count = reader.read_int(2, True)
         if header.bone_count <= 0:
             header.bone_count = bone_count
-            print("Old fast64 exports lack a defined bone count, invalid armatures won't be detected")
+            print("Old exports lack a defined bone count, invalid armatures won't be detected")
         elif header.bone_count != bone_count:
             raise PluginError(
                 f"Imported header's bone count is {header.bone_count} but object's is {bone_count}",
