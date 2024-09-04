@@ -832,7 +832,6 @@ def export_animation_binary(
     animation: SM64_Anim,
     action_props: "SM64_ActionAnimProperty",
     anim_props: "SM64_ArmatureAnimProperties",
-    combined_props: "SM64_CombinedObjectProperties",
     bone_count: int,
     level_option: str,
     extend_bank_4: bool,
@@ -845,7 +844,7 @@ def export_animation_binary(
             read_headers={},
             read_animations={},
             table_index=None,
-            bone_count=bone_count if combined_props.assume_bone_count else None,
+            bone_count=bone_count,
         )
         empty_data = SM64_AnimData()
         for header in animation.headers:
@@ -990,7 +989,6 @@ def export_animation(context: Context, obj: Object):
                 animation,
                 action_props,
                 anim_props,
-                combined_props,
                 bone_count,
                 combined_props.binary_level,
                 sm64_props.extend_bank_4,

@@ -1990,11 +1990,6 @@ class SM64_CombinedObjectProperties(bpy.types.PropertyGroup):
         name="Selected Action",
         description="Animation export will only export the armature's current action like in older versions of fast64",
     )
-    assume_bone_count: bpy.props.BoolProperty(
-        name="Assume Bone Count",
-        description="When importing a DMA table for insertion, "
-        "assume the bone count based on the armature instead of the header's",
-    )
     binary_level: bpy.props.EnumProperty(items=level_enums, name="Level", default="IC")
     insertable_directory_path: bpy.props.StringProperty(
         name="Directory Path", subtype="FILE_PATH"
@@ -2205,7 +2200,6 @@ class SM64_CombinedObjectProperties(bpy.types.PropertyGroup):
         if not is_dma and export_type == "C":
             col.prop(self, "export_single_action")
         if export_type == "Binary":
-            col.prop(self, "assume_bone_count")
             if not is_dma:
                 prop_split(col, self, "binary_level", "Level")
         elif export_type == "Insertable Binary":

@@ -624,11 +624,6 @@ class SM64_AnimImportProperties(PropertyGroup):
         name="Binary Import Type",
         default="Table",
     )
-    assume_bone_count: BoolProperty(
-        name="Assume Bone Count",
-        description="When enabled, the selected armature's bone count will be used instead of "
-        "the header's, as old fast64 binary exports did no export this value",
-    )
     read_entire_table: BoolProperty(name="Read Entire Table", default=True)
     check_null: BoolProperty(name="Check NULL Delimiter", default=True)
     table_size_prop: IntProperty(name="Size", min=1)
@@ -825,7 +820,6 @@ class SM64_AnimImportProperties(PropertyGroup):
                 self.draw_binary(col, import_rom)
             elif self.import_type == "Insertable Binary":
                 self.draw_insertable_binary(col, import_rom)
-            col.prop(self, "assume_bone_count")
         col.separator()
 
         self.draw_clean_up(col)

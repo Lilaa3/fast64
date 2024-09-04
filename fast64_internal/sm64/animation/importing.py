@@ -583,12 +583,11 @@ def import_animations(context: Context):
     print("Reading animation data.")
 
     if import_props.binary:
-        bone_count = len(get_anim_owners(obj)) if import_props.assume_bone_count else None
         binary_args = (
             read_headers,
             table,
             import_props.table_index,
-            bone_count,
+            len(get_anim_owners(obj)),
             import_props.table_size,
         )
     if import_props.import_type == "Binary":

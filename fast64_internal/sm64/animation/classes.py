@@ -264,8 +264,15 @@ class SM64_AnimHeader:
         header.start_frame = reader.read_int(2, True)  # /*0x04*/ s16 startFrame;
         header.loop_start = reader.read_int(2, True)  # /*0x06*/ s16 loopStart;
         header.loop_end = reader.read_int(2, True)  # /*0x08*/ s16 loopEnd;
-        bone_count = reader.read_int(2, True)  # /*0x0A*/ s16 unusedBoneCount; (Unused in engine)
-        header.bone_count = bone_count if bone_count is None else bone_count
+
+        header.bone_count = reader.read_int(2, True)  # /*0x0A*/ s16 unusedBoneCount; (Unused in engine)
+        if header.bone_count <= 0:
+            header.bone_count = bone_count
+        elif header.bone_count != bone_count:
+            raise PluginError(
+                f"Imported header's bone count is {header.bone_count} but object's is {bone_count}",
+            )
+
         # /*0x0C*/ const s16 *values;
         # /*0x10*/ const u16 *index;
         if dma:
