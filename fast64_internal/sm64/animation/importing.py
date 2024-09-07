@@ -40,7 +40,7 @@ from .classes import (
     SM64_AnimTable,
     SM64_AnimTableElement,
 )
-from .constants import FLAG_PROPS, ACTOR_PRESET_INFO, C_FLAGS, TABLE_PATTERN
+from .constants import ACTOR_PRESET_INFO, TABLE_PATTERN
 
 if TYPE_CHECKING:
     from .properties import (
@@ -229,31 +229,7 @@ def from_header_class(
         header_props.use_manual_loop = True
 
     header_props.trans_divisor = header.trans_divisor
-
-    # Flags
-    if isinstance(header.flags, int):
-        int_flags = header.flags
-        header_props.custom_flags = intToHex(header.flags, 2)
-        if int_flags >> 6:  # If any non supported bit is active
-            header_props.use_custom_flags = True
-    else:
-        header_props.custom_flags = header.flags
-        int_flags = 0
-
-        flags = header.flags.lstrip("(").rstrip(")").split("|")
-        try:
-            int_flags = int(header.flags, 0)
-        except ValueError:
-            for flag in flags:
-                flag = flag.strip()
-                index = next((index for index, flag_tuple in enumerate(C_FLAGS) if flag in flag_tuple), None)
-                if index is not None:
-                    int_flags |= 1 << index
-                else:
-                    header_props.use_custom_flags = True  # Unknown flag
-    header_props.custom_int_flags = intToHex(int_flags, 2)
-    for index, prop in enumerate(FLAG_PROPS):
-        setattr(header_props, prop, is_bit_active(int_flags, index))
+    header_props.set_flags(header.flags)
 
     header_props.table_index = header.table_index
 

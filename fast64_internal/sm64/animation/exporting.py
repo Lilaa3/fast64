@@ -208,11 +208,7 @@ def to_header_class(
     if gen_enums:
         header.enum_name = header_props.get_enum(actor_name, action)
 
-    if header_props.use_custom_flags and not (export_type.endswith("Binary") or dma):
-        header.flags = header_props.custom_flags
-    else:
-        header.flags = header_props.int_flags
-
+    header.flags = header_props.get_flags(not (export_type.endswith("Binary") or dma))
     header.trans_divisor = header_props.trans_divisor
     header.start_frame, header.loop_start, header.loop_end = header_props.get_loop_points(action)
     header.values_reference = values_reference

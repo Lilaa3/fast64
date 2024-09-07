@@ -7,28 +7,6 @@ from ..sm64_constants import ACTOR_PRESET_INFO, ActorPresetInfo
 HEADER_STRUCT = struct.Struct(">h h h h h h I I I")
 HEADER_SIZE = HEADER_STRUCT.size
 
-C_FLAGS = [
-    ("ANIM_FLAG_NOLOOP",),
-    ("ANIM_FLAG_FORWARD", "ANIM_FLAG_BACKWARD"),
-    ("ANIM_FLAG_NO_ACCEL", "ANIM_FLAG_2"),
-    ("ANIM_FLAG_HOR_TRANS",),
-    ("ANIM_FLAG_VERT_TRANS",),
-    ("ANIM_FLAG_DISABLED", "ANIM_FLAG_5"),
-    ("ANIM_FLAG_NO_TRANS", "ANIM_FLAG_6"),
-    # Not used anywhere and has no functionality, let it be picked up as custom
-    # ("ANIM_FLAG_UNUSED", "ANIM_FLAG_7"),
-]
-
-FLAG_PROPS = [
-    "no_loop",
-    "backwards",
-    "no_acceleration",
-    "only_horizontal_trans",
-    "only_vertical_trans",
-    "disabled",
-    "no_trans",
-]
-
 TABLE_ELEMENT_PATTERN = re.compile(  # strict but only in the sense that it requires valid c code
     r"""
     (?:COMMENT_PATTERN)|

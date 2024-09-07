@@ -1,9 +1,7 @@
 import os
-import re
-from typing import Iterable, Optional
 
 import bpy
-from bpy.types import PropertyGroup, Action, UILayout, Scene
+from bpy.types import PropertyGroup, Action, UILayout, Scene, Context
 from bpy.utils import register_class, unregister_class
 from bpy.props import (
     BoolProperty,
@@ -17,8 +15,10 @@ from bpy.props import (
 from bpy.path import abspath
 
 from ...utility import (
+    cast_integer,
     decompFolderMessage,
     directory_ui_warnings,
+    run_and_draw_errors,
     path_ui_warnings,
     draw_and_check_tab,
     multilineLabel,
@@ -29,6 +29,7 @@ from ...utility import (
     toAlnum,
 )
 from ...utility_anim import getFrameInterval
+from ...f3d.f3d_parser import math_eval
 
 from ..sm64_utility import import_rom_ui_warnings, int_from_str, string_int_prop, string_int_warning
 from ..sm64_constants import MAX_U16, MIN_S16, MAX_S16, level_enums
@@ -43,14 +44,10 @@ from .operators import (
     SM64_SearchAnimatedBhvs,
     SM64_SearchAnimTablePresets,
 )
-from .constants import (
-    enum_anim_import_types,
-    enum_anim_binary_import_types,
-    enum_animated_behaviours,
-    enum_anim_tables,
-    FLAG_PROPS,
-)
+from .constants import enum_anim_import_types, enum_anim_binary_import_types, enum_animated_behaviours, enum_anim_tables
+from .classes import SM64_AnimFlags
 from .utility import (
+    dma_structure_context,
     get_action_props,
     get_dma_anim_name,
     get_dma_header_name,
@@ -88,15 +85,7 @@ def prop_size_label(layout: UILayout, **label_args):
     return box
 
 
-def draw_list_op(
-    layout: UILayout,
-    op_cls: OperatorBase,
-    op_name: str,
-    index=-1,
-    text="",
-    icon="",
-    **op_args,
-):
+def draw_list_op(layout: UILayout, op_cls: OperatorBase, op_name: str, index=-1, text="", icon="", **op_args):
     col = layout.column()
     icon = icon or {"MOVE_UP": "TRIA_UP", "MOVE_DOWN": "TRIA_DOWN", "CLEAR": "TRASH"}.get(op_name) or op_name
     return op_cls.draw_props(col, icon, text, index=index, op_name=op_name, **op_args)
@@ -107,6 +96,16 @@ def draw_list_ops(layout: UILayout, op_cls: type, index: int, **op_args):
     ops = ("MOVE_UP", "MOVE_DOWN", "ADD", "REMOVE")
     for op_name in ops:
         draw_list_op(layout, op_cls, op_name, index, **op_args)
+
+
+def set_if_different(owner, prop: str, value: str):
+    if getattr(owner, prop) != value:
+        setattr(owner, prop, value)
+
+
+def on_flag_update(self: "SM64_AnimHeaderProperties", context: Context):
+    use_int = context.scene.fast64.sm64.binary_export or dma_structure_context(context)
+    self.set_flags(self.get_flags(not use_int), set_custom=not self.use_custom_flags)
 
 
 class SM64_AnimHeaderProperties(PropertyGroup):
@@ -131,13 +130,14 @@ class SM64_AnimHeaderProperties(PropertyGroup):
         max=MAX_S16,
     )
     use_custom_flags: BoolProperty(name="Set Custom Flags")
-    custom_flags: StringProperty(name="Flags", default="ANIM_NO_LOOP")
+    custom_flags: StringProperty(name="Flags", default="ANIM_NO_LOOP", update=on_flag_update)
     # Some flags are inverted in the ui for readability, descriptions match ui behavior
     no_loop: BoolProperty(
         name="No Loop",
         description="(ANIM_FLAG_NOLOOP)\n"
         "When disabled, the animation will not repeat from the loop start after reaching the loop "
         "end frame",
+        update=on_flag_update,
     )
     backwards: BoolProperty(
         name="Loop Backwards",
@@ -145,51 +145,90 @@ class SM64_AnimHeaderProperties(PropertyGroup):
         "When enabled, the animation will loop (or stop if looping is disabled) after reaching "
         "the loop start frame.\n"
         "Tipically used with animations which use acceleration to play an animation backwards",
+        update=on_flag_update,
     )
     no_acceleration: BoolProperty(
         name="No Acceleration",
         description="(ANIM_FLAG_NO_ACCEL/ANIM_FLAG_2)\n"
         "When disabled, acceleration will not be used when calculating which animation frame is "
         "next",
+        update=on_flag_update,
     )
     disabled: BoolProperty(
         name="No Shadow Translation",
         description="(ANIM_FLAG_DISABLED/ANIM_FLAG_5)\n"
         "When disabled, the animation translation will not be applied to shadows",
+        update=on_flag_update,
     )
-    only_horizontal_trans: BoolProperty(
-        name="Only Horizontal Translation",
-        description="(ANIM_FLAG_HOR_TRANS)\n"
-        "When enabled, only the animation horizontal translation will be used during rendering\n"
-        "(shadows included), the vertical translation will still be exported and included",
-    )
-    only_vertical_trans: BoolProperty(
+    only_vertical: BoolProperty(
         name="Only Vertical Translation",
+        description="(ANIM_FLAG_HOR_TRANS)\n"
+        "When enabled, only the animation vertical translation will be applied during rendering (takes priority over no translation and only horizontal)\n"
+        "(shadows included), the horizontal translation will still be exported and included",
+        update=on_flag_update,
+    )
+    only_horizontal: BoolProperty(
+        name="Only Horizontal Translation",
         description="(ANIM_FLAG_VERT_TRANS)\n"
-        "When enabled, only the animation vertical translation will be applied during rendering\n"
-        "(shadows included) the horizontal translation will still be exported and included",
+        "When enabled, only the animation horizontal translation will be applied during rendering (takes priority over no translation)\n"
+        "(shadows included) the vertical translation will still be exported and included",
+        update=on_flag_update,
     )
     no_trans: BoolProperty(
         name="No Translation",
         description="(ANIM_FLAG_NO_TRANS/ANIM_FLAG_6)\n"
         "When disabled, the animation translation will not be used during rendering\n"
         "(shadows included), the translation will still be exported and included",
+        update=on_flag_update,
     )
     # Binary
     table_index: IntProperty(name="Table Index", min=0)
-    custom_int_flags: StringProperty(name="Flags", default="0x01")
+
+    def get_flags(self, allow_str: bool):
+        if self.use_custom_flags:
+            try:
+                try:
+                    result = math_eval(self.custom_flags, SM64_AnimFlags)
+                except Exception as exc:
+                    raise ValueError(f"Failed to evaluate custom flags {exc}") from exc
+                if isinstance(result, str):
+                    raise ValueError("Failed to evaluate custom flags")
+                return SM64_AnimFlags(cast_integer(result, 16, signed=False))
+            except Exception as exc:
+                if allow_str:
+                    return self.custom_flags
+                raise exc
+        value = SM64_AnimFlags(0)
+        for prop, flag in SM64_AnimFlags.props_to_flags().items():
+            if getattr(self, prop, False):
+                value |= flag
+        return value
 
     @property
     def int_flags(self):
-        if self.use_custom_flags:
-            try:
-                return int_from_str(self.custom_int_flags)
-            except ValueError as exc:
-                raise ValueError(f"In custom flag: {exc}") from exc
-        flags = 0
-        for i, flag in enumerate(FLAG_PROPS):
-            flags |= int(getattr(self, flag)) << i
-        return flags
+        return self.get_flags(allow_str=False)
+
+    def set_flags(self, value: int | str, set_custom=True):
+        try:
+            value = math_eval(value, SM64_AnimFlags)  # try to evaluate in case of string
+        except Exception as exc:
+            print(f"Failed to evaluate flags {value}: {exc}")
+        if isinstance(value, SM64_AnimFlags):  # get int value from enum
+            value = value.value
+        if isinstance(value, int):  # the value was fully evaluated
+            value = cast_integer(value, 16, signed=False)  # cast to u16 for simplicity and readability
+            for prop, flag in SM64_AnimFlags.props_to_flags().items():  # set prop flags
+                set_if_different(self, prop, bool(value & flag.value))
+            if set_custom:
+                if value & ~SM64_AnimFlags.all_flags_with_prop():  # if a flag does not have a prop
+                    set_if_different(self, "use_custom_flags", True)
+                set_if_different(self, "custom_flags", intToHex(value, 2))
+        elif isinstance(value, str):
+            if set_custom:
+                set_if_different(self, "custom_flags", value)
+                set_if_different(self, "use_custom_flags", True)
+        else:  # invalid
+            raise ValueError(f"Invalid value: {value}")
 
     @property
     def manual_loop_range(self) -> tuple[int, int, int]:
@@ -230,11 +269,9 @@ class SM64_AnimHeaderProperties(PropertyGroup):
         custom_split = col.split()
         custom_split.prop(self, "use_custom_flags")
         if self.use_custom_flags:
+            custom_split.prop(self, "custom_flags", text="")
             if use_int_flags:
-                custom_split.prop(self, "custom_int_flags", text="")
-                string_int_warning(col, self.custom_int_flags)  # draw outside the split
-            else:
-                custom_split.prop(self, "custom_flags", text="")
+                run_and_draw_errors(col, self.get_flags, False)
             return
         else:
             prop_size_label(custom_split, text=intToHex(self.int_flags, 2), icon="LOCKED")
@@ -244,20 +281,34 @@ class SM64_AnimHeaderProperties(PropertyGroup):
         row.prop(self, "backwards", toggle=1)
         row.prop(self, "no_acceleration", invert_checkbox=True, text="Acceleration", toggle=1)
         if self.no_acceleration and self.backwards:
-            col.label(text="Backwards has no porpuse without acceleration.", icon="INFO", toggle=1)
+            col.label(text="Backwards has no porpuse without acceleration.", icon="INFO")
 
         trans_row = col.row(align=True)
-        trans_prop_row = trans_row.row()
-        trans_prop_row.prop(self, "no_trans", invert_checkbox=True, text="Translate", toggle=1)
+        no_row = trans_row.row()
+        no_row.enabled = not self.only_vertical and not self.only_horizontal
+        no_row.prop(self, "no_trans", invert_checkbox=True, text="Translate", toggle=1)
+
+        vert_row = trans_row.row()
+        vert_row.prop(self, "only_vertical", text="Only Vertical", toggle=1)
 
         hor_row = trans_row.row()
-        hor_row.enabled = not self.only_horizontal_trans and not self.no_trans
-        hor_row.prop(self, "only_vertical_trans", text="Only Vertically", toggle=1)
-        vert_row = trans_row.row()
-        vert_row.enabled = not self.only_vertical_trans and not self.no_trans
-        vert_row.prop(self, "only_horizontal_trans", text="Only Horizontally", toggle=1)
+        hor_row.enabled = not self.only_vertical
+        hor_row.prop(self, "only_horizontal", text="Only Horizontal", toggle=1)
+        if self.only_vertical and self.only_horizontal:
+            multilineLabel(
+                layout=col,
+                text='"Only Vertical" takes priority, only vertical\n translation will be used.',
+                icon="INFO",
+            )
+        if (self.only_vertical or self.only_horizontal) and self.no_trans:
+            multilineLabel(
+                layout=col,
+                text='"Only Horizontal" and "Only Vertical" take\n priority over no translation.',
+                icon="INFO",
+            )
+
         disabled_row = trans_row.row()
-        disabled_row.enabled = not self.only_vertical_trans and not self.no_trans
+        disabled_row.enabled = not self.no_trans and not self.only_vertical
         disabled_row.prop(self, "disabled", invert_checkbox=True, text="Shadow", toggle=1)
 
     def draw_frame_range(self, layout: UILayout, action: Action):
@@ -845,9 +896,10 @@ class SM64_AnimProperties(PropertyGroup):
         end_address = scene.pop("animExportEnd", None)
 
         for action in bpy.data.actions:
-            action_props = get_action_props(action)
+            action_props: SM64_ActionAnimProperty = get_action_props(action)
+            action_props.header: SM64_AnimHeaderProperties
             if loop is not None:
-                action_props.header.no_loop = not loop
+                action_props.header.set_flags(0x00 if loop else 0x01)
             if start_address is not None:
                 action_props.start_address = intToHex(int(start_address, 16))
             if end_address is not None:

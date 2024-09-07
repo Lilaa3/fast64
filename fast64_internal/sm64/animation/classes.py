@@ -2,6 +2,7 @@ import dataclasses
 import os
 import re
 import numpy as np
+from enum import IntFlag
 from copy import copy
 from io import StringIO
 from typing import Optional
@@ -12,7 +13,7 @@ from ...utility import PluginError, encodeSegmentedAddr, is_bit_active, intToHex
 from ..sm64_constants import MAX_U16, SegmentData
 from ..sm64_classes import RomReader, DMATable, DMATableElement, IntArray
 
-from .constants import HEADER_STRUCT, HEADER_SIZE, C_FLAGS, TABLE_ELEMENT_PATTERN
+from .constants import HEADER_STRUCT, HEADER_SIZE, TABLE_ELEMENT_PATTERN
 from .utility import get_dma_header_name, get_dma_anim_name
 
 
@@ -55,8 +56,8 @@ class SM64_AnimData:
     values_reference: str | int = ""
 
     # Importing
-    indices_file_name: str | int = ""
-    values_file_name: str | int = ""
+    indices_file_name: str = ""
+    values_file_name: str = ""
     value_end_address: int = 0
     indice_end_address: int = 0
     start_address: int = 0
@@ -132,10 +133,69 @@ class SM64_AnimData:
         return self
 
 
+class SM64_AnimFlags(IntFlag):
+    def __new__(cls, value, blender_prop: str | None = None):
+        obj = int.__new__(cls, value)
+        obj._value_, obj.prop = 1 << value, blender_prop
+        return obj
+
+    ANIM_FLAG_NOLOOP = (0, "no_loop")
+    ANIM_FLAG_BACKWARD = (1, "backwards")  # refresh 16
+    ANIM_FLAG_FORWARD = (1, "backwards")
+    ANIM_FLAG_2 = (2, "no_acceleration")
+    ANIM_FLAG_HOR_TRANS = (3, "only_vertical")
+    ANIM_FLAG_VERT_TRANS = (4, "only_horizontal")
+    ANIM_FLAG_5 = (5, "disabled")
+    ANIM_FLAG_6 = (6, "no_trans")
+    ANIM_FLAG_7 = 7
+
+    # hackersm64
+    ANIM_FLAG_NO_ACCEL = (2, "no_acceleration")
+    ANIM_FLAG_DISABLED = (5, "disabled")
+    ANIM_FLAG_NO_TRANS = (6, "no_trans")
+    ANIM_FLAG_UNUSED = 7
+
+    @classmethod
+    def all_flags(cls):
+        flags = SM64_AnimFlags(0)
+        for flag in cls.__members__.values():
+            flags |= flag
+        return flags
+
+    @classmethod
+    def all_flags_with_prop(cls):
+        flags = SM64_AnimFlags(0)
+        for flag in cls.__members__.values():
+            if flag.prop is not None:
+                flags |= flag
+        return flags
+
+    @classmethod
+    def props_to_flags(cls):
+        return {flag.prop: flag for flag in cls.__members__.values() if flag.prop is not None}
+
+    @classmethod
+    def flags_to_names(cls):
+        names: dict[SM64_AnimFlags, list(str)] = {}
+        for name, flag in cls.__members__.items():
+            if flag.value in names:
+                names[flag].append(name)
+            else:
+                names[flag] = [name]
+        return names
+
+    @property
+    def names(self) -> list[str]:
+        names = ["/".join(names) for flag, names in SM64_AnimFlags.flags_to_names().items() if flag in self]
+        if self & ~self.__class__.all_flags():
+            names.append("unknown bits")
+        return names
+
+
 @dataclasses.dataclass
 class SM64_AnimHeader:
     reference: str | int = ""
-    flags: int | str = 0
+    flags: SM64_AnimFlags | str = 0
     trans_divisor: int = 0
     start_frame: int = 0
     loop_start: int = 0
@@ -158,19 +218,15 @@ class SM64_AnimHeader:
     def data_key(self):
         return (self.indice_reference, self.values_reference)
 
-    def get_flags_comment(self):
-        if isinstance(self.flags, str):
-            return ""
-        flags_list: list[str] = []
-        for index, flags in enumerate(C_FLAGS):
-            if is_bit_active(self.flags, index):
-                flags_list.append("/".join(flags))
-
-        return ", ".join(flags_list)
+    @property
+    def flags_comment(self):
+        if isinstance(self.flags, SM64_AnimFlags):
+            return ", ".join(self.flags.names)
+        return ""
 
     @property
     def c_flags(self):
-        return self.flags if isinstance(self.flags, str) else intToHex(self.flags, 2)
+        return self.flags if isinstance(self.flags, str) else intToHex(self.flags.value, 2)
 
     def get_values_reference(self, override: Optional[str | int] = None, expected_type: type = str):
         if override:
@@ -202,10 +258,10 @@ class SM64_AnimHeader:
         indice_override: Optional[str] = None,
         dma_structure=False,
     ):
-        assert not dma_structure or isinstance(self.flags, int), "Flags must be int for C DMA"
+        assert not dma_structure or isinstance(self.flags, SM64_AnimFlags), "Flags must be int/enum for C DMA"
         return (
             f"static const struct Animation {self.reference}{'[]' if dma_structure else ''} = {{\n"
-            + f"\t{self.c_flags}, // flags {self.get_flags_comment()}\n"
+            + f"\t{self.c_flags}, // flags {self.flags_comment}\n"
             f"\t{self.trans_divisor}, // animYTransDivisor\n"
             f"\t{self.start_frame}, // startFrame\n"
             f"\t{self.loop_start}, // loopStart\n"
@@ -224,15 +280,15 @@ class SM64_AnimHeader:
         segment_data: SegmentData = None,
         length: int = 0,
     ):
+        assert isinstance(self.flags, SM64_AnimFlags), "Flags must be int/enum for binary"
         values_address = self.get_values_reference(values_override, int)
         indice_address = self.get_indice_reference(indice_override, int)
-
         if segment_data:
             values_address = int.from_bytes(encodeSegmentedAddr(values_address, segment_data), "big")
             indice_address = int.from_bytes(encodeSegmentedAddr(indice_address, segment_data), "big")
 
         return HEADER_STRUCT.pack(
-            self.flags,
+            self.flags.value,
             self.trans_divisor,
             self.start_frame,
             self.loop_start,
