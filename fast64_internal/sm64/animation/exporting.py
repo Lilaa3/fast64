@@ -1,7 +1,7 @@
 import os
+from pathlib import Path
 import re
 import numpy as np
-import dataclasses
 from typing import TYPE_CHECKING, Optional
 
 import bpy
@@ -15,12 +15,14 @@ from ...utility import (
     encodeSegmentedAddr,
     decodeSegmentedAddr,
     get64bitAlignedAddr,
+    getPathAndLevel,
     getExportDir,
     intToHex,
     writeIfNotFound,
     applyBasicTweaks,
     toAlnum,
     directory_path_checks,
+    filepath_checks,
 )
 from ...utility_anim import stashActionInArmature
 from ..sm64_constants import BEHAVIOR_COMMANDS, BEHAVIOR_EXITS, defaultExtendSegment4, level_pointers
@@ -410,26 +412,34 @@ def update_includes(
     level_name: str,
     group_name: str,
     dir_name: str,
-    directory: os.PathLike,
+    header_directory: Path,
     header_type: str,
     update_table: bool,
 ):
     if header_type == "Actor":
-        data_path = os.path.join(directory, f"{group_name}.c")
-        header_path = os.path.join(directory, f"{group_name}.h")
+        if group_name == "":
+            raise PluginError("Empty group name")
+        data_path = header_directory / f"{group_name}.c"
+        header_path = header_directory / f"{group_name}.h"
         include_start = f'#include "{dir_name}'
     elif header_type == "Level":
-        data_path = os.path.join(directory, "leveldata.c")
-        header_path = os.path.join(directory, "header.h")
+        if level_name == "":
+            raise PluginError("Empty level name")
+        data_path = header_directory / "leveldata.c"
+        header_path = header_directory / "header.h"
         include_start = f'#include "{dir_name}/{level_name}/anims'
+    else:
+        assert False, "Invalid header type"
     print(f"Updating includes at {data_path} and {header_path}.")
+    filepath_checks(data_path)
     writeIfNotFound(data_path, f'{include_start}/anims/data.inc.c"\n', "")
     if update_table:
+        filepath_checks(header_path)
         writeIfNotFound(data_path, f'{include_start}/anims/table.inc.c"\n', "")
         writeIfNotFound(header_path, f'{include_start}/anim_header.h"\n', "#endif")
 
 
-def update_anim_header(header: os.PathLike, table_name: str, gen_enums: bool):
+def update_anim_header(header: Path, table_name: str, gen_enums: bool):
     print("Writing animation header")
     if os.path.exists(header):
         with open(header, "r", encoding="utf-8") as f:
@@ -447,7 +457,7 @@ def update_anim_header(header: os.PathLike, table_name: str, gen_enums: bool):
 
 
 def update_enum_file(
-    path: os.PathLike,
+    path: Path,
     list_name: str,
     enum_names: list[str],
     end: str,
@@ -514,16 +524,16 @@ def update_enum_file(
 
 
 def update_table_file(
-    table_path: os.PathLike,
+    table_path: Path,
     table_name: str,
     add_null_delimiter: bool,
     names: tuple[list[str], list[str]],
     override_files: bool,
     gen_enums: bool,
-    designated: bool = False,
-    enum_list_path: os.PathLike = "",
-    enum_list_name: str = "",
-    enum_list_end: str = "",
+    designated: bool,
+    enum_list_path: Path,
+    enum_list_name,
+    enum_list_end,
 ):
     existing_file = os.path.exists(table_path) and not override_files
     if existing_file:
@@ -612,14 +622,13 @@ def update_table_file(
         f.write(text)
 
 
-def update_data_file(data_file_path: os.PathLike, anim_file_names: list, override_files: bool = False):
-    print(f"Updating animation data file at {data_file_path}")
-    if not os.path.exists(data_file_path) or override_files:
-        with open(data_file_path, "w", encoding="utf-8"):
-            pass  # Leave empty
+def update_data_file(path: Path, anim_file_names: list, override_files: bool = False):
+    print(f"Updating animation data file at {path}")
+    if not os.path.exists(path) or override_files:
+        path.write_text("")  # Leave empty
 
     for anim_file_name in anim_file_names:
-        writeIfNotFound(data_file_path, f'#include "{anim_file_name}"\n', "")
+        writeIfNotFound(path, f'#include "{anim_file_name}"\n', "")
 
 
 def update_behaviour_binary(
@@ -700,14 +709,10 @@ def export_animation_table_binary(
 
 
 def export_animation_table_insertable(
-    combined_props: "SM64_CombinedObjectProperties",
-    anim_props: "SM64_ArmatureAnimProperties",
-    table: SM64_AnimTable,
-    is_dma: bool,
+    anim_props: "SM64_ArmatureAnimProperties", table: SM64_AnimTable, is_dma: bool, directory: Path
 ):
-    directory = abspath(combined_props.insertable_directory_path)
     directory_path_checks(directory, "Empty directory path.")
-    path = os.path.join(directory, anim_props.insertable_file_name)
+    path = directory / anim_props.insertable_file_name
     if is_dma:
         data = table.to_binary_dma()
         InsertableBinaryData("Animation DMA Table", data).write(path)
@@ -720,31 +725,33 @@ def create_and_get_paths(
     anim_props: "SM64_ArmatureAnimProperties",
     combined_props: "SM64_CombinedObjectProperties",
     actor_name: str,
-    decomp: os.PathLike,
+    decomp: Path,
 ):
     anim_directory = geo_directory = header_directory = None
     if anim_props.is_dma:
         if combined_props.export_header_type == "Custom":
-            geo_directory = combined_props.custom_export_path
-            anim_directory = abspath(os.path.join(combined_props.custom_export_path, anim_props.dma_folder))
+            geo_directory = Path(abspath(combined_props.custom_export_path))
+            anim_directory = Path(abspath(combined_props.custom_export_path), anim_props.dma_folder)
         else:
-            anim_directory = os.path.join(decomp, anim_props.dma_folder)
+            anim_directory = Path(decomp, anim_props.dma_folder)
     else:
-        custom_export = combined_props.export_header_type == "Custom"
-        base_path = combined_props.custom_export_path if custom_export else bpy.context.scene.fast64.sm64.decomp_path
-        dir_name = actor_name
-        header_directory = bpy.path.abspath(
-            getExportDir(
-                custom_export,
-                base_path,
-                combined_props.export_header_type,
-                combined_props.export_level_name,
-                "",
-                dir_name,
-            )[0]
+        export_path, level_name = getPathAndLevel(
+            combined_props.is_actor_custom_export,
+            combined_props.actor_custom_path,
+            combined_props.export_level_name,
+            combined_props.level_name,
         )
-        geo_directory = bpy.path.abspath(os.path.join(header_directory, dir_name))
-        anim_directory = os.path.join(geo_directory, "anims/")
+        header_directory, _tex_dir = getExportDir(
+            combined_props.is_actor_custom_export,
+            export_path,
+            combined_props.export_header_type,
+            level_name,
+            texDir="",
+            dirName=actor_name,
+        )
+        header_directory = Path(bpy.path.abspath(header_directory))
+        geo_directory = header_directory / actor_name
+        anim_directory = geo_directory / "anims"
 
     for path in (anim_directory, geo_directory, header_directory):
         if path is not None and not os.path.exists(path):
@@ -756,11 +763,11 @@ def export_animation_table_c(
     anim_props: "SM64_ArmatureAnimProperties",
     combined_props: "SM64_CombinedObjectProperties",
     table: SM64_AnimTable,
-    decomp: os.PathLike,
+    decomp: Path,
     actor_name: str,
     designated: bool,
 ):
-    if combined_props.export_header_type != "Custom":
+    if not combined_props.is_actor_custom_export:
         applyBasicTweaks(decomp)
     anim_directory, geo_directory, header_directory = create_and_get_paths(
         anim_props, combined_props, actor_name, decomp
@@ -771,34 +778,34 @@ def export_animation_table_c(
         files_data = table.data_and_headers_to_c(anim_props.is_dma)
         print("Saving all generated data files")
         for file_name, file_data in files_data.items():
-            with open(os.path.join(anim_directory, file_name), "w", encoding="utf-8") as f:
+            with open(anim_directory / file_name, "w", encoding="utf-8") as f:
                 f.write(file_data)
             print(file_name)
         if not anim_props.is_dma:
             update_data_file(
-                os.path.join(anim_directory, "data.inc.c"),
+                anim_directory / "data.inc.c",
                 files_data.keys(),
                 anim_props.override_files,
             )
     else:
         result = table.data_and_headers_to_c_combined()
         print("Saving generated data file")
-        with open(os.path.join(anim_directory, "data.inc.c"), "w", encoding="utf-8") as f:
+        with open(anim_directory / "data.inc.c", "w", encoding="utf-8") as f:
             f.write(result)
     print("All animation data files exported.")
     if anim_props.is_dma:  # Don´t create an actual table and or update includes for dma exports
         return
 
-    header_path = os.path.join(geo_directory, "anim_header.h")
+    header_path = geo_directory / "anim_header.h"
     update_anim_header(header_path, table.reference, anim_props.gen_enums)
     update_table_file(
-        table_path=os.path.join(anim_directory, "table.inc.c"),
+        table_path=anim_directory / "table.inc.c",
         table_name=table.reference,
         names=table.names,
         add_null_delimiter=anim_props.null_delimiter,
         gen_enums=anim_props.gen_enums,
         designated=designated,
-        enum_list_path=os.path.join(anim_directory, "table_enum.h"),
+        enum_list_path=anim_directory / "table_enum.h",
         enum_list_name=table.enum_list_reference,
         enum_list_end=table.enum_list_end,
         override_files=anim_props.override_files,
@@ -807,7 +814,7 @@ def export_animation_table_c(
     if combined_props.export_header_type != "Custom":
         update_includes(
             combined_props.export_level_name,
-            combined_props.export_group_name,
+            combined_props.actor_group_name,
             actor_name,
             header_directory,
             combined_props.export_header_type,
@@ -875,14 +882,9 @@ def export_animation_binary(
         )
 
 
-def export_animation_insertable(
-    animation: SM64_Anim,
-    is_dma: bool,
-    insertable_directory: os.PathLike,
-):
+def export_animation_insertable(animation: SM64_Anim, is_dma: bool, directory: Path):
     data, ptrs = animation.to_binary(is_dma)
-    path = abspath(os.path.join(insertable_directory, animation.file_name))
-    InsertableBinaryData("Animation", data, 0, ptrs).write(path)
+    InsertableBinaryData("Animation", data, 0, ptrs).write(directory / animation.file_name)
 
 
 def export_animation_c(
@@ -893,13 +895,13 @@ def export_animation_c(
     actor_name: str,
     designated: bool,
 ):
-    if combined_props.export_header_type != "Custom":
+    if not combined_props.is_actor_custom_export:
         applyBasicTweaks(decomp)
     anim_directory, geo_directory, header_directory = create_and_get_paths(
         anim_props, combined_props, actor_name, decomp
     )
 
-    anim_path = os.path.join(anim_directory, animation.file_name)
+    anim_path = anim_directory / animation.file_name
     with open(anim_path, "w", encoding="utf-8") as f:
         f.write(animation.to_c(anim_props.is_dma))
     if anim_props.is_dma:  # Don´t create an actual table and don´t update includes for dma exports
@@ -909,27 +911,27 @@ def export_animation_c(
 
     if anim_props.update_table:
         update_anim_header(
-            os.path.join(geo_directory, "anim_header.h"),
+            geo_directory / "anim_header.h",
             table_name,
             anim_props.gen_enums,
         )
         update_table_file(
-            table_path=os.path.join(anim_directory, "table.inc.c"),
+            table_path=anim_directory / "table.inc.c",
             table_name=table_name,
             names=animation.names,
             add_null_delimiter=anim_props.null_delimiter,
             gen_enums=anim_props.gen_enums,
             designated=designated,
-            enum_list_path=os.path.join(anim_directory, "table_enum.h"),
+            enum_list_path=anim_directory / "table_enum.h",
             enum_list_name=anim_props.get_enum_name(actor_name),
             enum_list_end=anim_props.get_enum_end(actor_name),
             override_files=False,
         )
-    update_data_file(os.path.join(anim_directory, "data.inc.c"), [animation.file_name])
+    update_data_file(anim_directory / "data.inc.c", [animation.file_name])
     if combined_props.export_header_type != "Custom":
         update_includes(
             combined_props.export_level_name,
-            combined_props.export_group_name,
+            combined_props.actor_group_name,
             actor_name,
             header_directory,
             combined_props.export_header_type,
@@ -968,7 +970,9 @@ def export_animation(context: Context, obj: Object):
             animation, anim_props, combined_props, abspath(sm64_props.decomp_path), actor_name, sm64_props.designated
         )
     elif sm64_props.export_type == "Insertable Binary":
-        export_animation_insertable(animation, anim_props.is_dma, combined_props.insertable_directory_path)
+        export_animation_insertable(
+            animation, anim_props.is_dma, Path(abspath(combined_props.insertable_directory_path))
+        )
     elif sm64_props.export_type == "Binary":
         with BinaryExporter(abspath(sm64_props.export_rom), abspath(sm64_props.output_rom)) as binary_exporter:
             export_animation_binary(
@@ -1018,10 +1022,12 @@ def export_animation_table(context: Context, obj: Object):
     print("Exporting table data")
     if sm64_props.export_type == "C":
         export_animation_table_c(
-            anim_props, combined_props, table, abspath(sm64_props.decomp_path), actor_name, sm64_props.designated
+            anim_props, combined_props, table, Path(abspath(sm64_props.decomp_path)), actor_name, sm64_props.designated
         )
     elif sm64_props.export_type == "Insertable Binary":
-        export_animation_table_insertable(combined_props, anim_props, table, anim_props.is_dma)
+        export_animation_table_insertable(
+            anim_props, table, anim_props.is_dma, Path(abspath(combined_props.insertable_directory_path))
+        )
     elif sm64_props.export_type == "Binary":
         with BinaryExporter(abspath(sm64_props.export_rom), abspath(sm64_props.output_rom)) as binary_exporter:
             export_animation_table_binary(
