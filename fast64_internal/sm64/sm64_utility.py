@@ -172,7 +172,7 @@ def write_includes(
     path_must_exist=False,
     create_new=False,
     before_endif=False,
-):
+) -> bool:
     """Smarter version of writeIfNotFound, handles comments and all kinds of weird formatting
     but most importantly files without a trailing newline.
     Returns true if something was added.
@@ -183,7 +183,7 @@ def write_includes(
     if path_must_exist:
         filepath_checks(path)
     if not create_new and not includes and not externs:
-        return
+        return False
     includes, externs = includes or [], externs or []
 
     existing_includes = existing_externs = {}
