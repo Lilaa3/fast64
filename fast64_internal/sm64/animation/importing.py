@@ -330,7 +330,7 @@ def from_anim_table_class(
 ):
     if clear_table:
         anim_props.elements.clear()
-    anim_props.null_delimiter = table.elements and not table.elements[-1].reference
+    anim_props.null_delimiter = table.has_null_delimiter
 
     prev_enums: dict[str, int] = {}
     for i, element in enumerate(table.elements):
@@ -563,7 +563,7 @@ def import_animations(context: Context):
             read_headers,
             table,
             import_props.table_index,
-            len(get_anim_owners(obj)),
+            None if import_props.ignore_bone_count else len(get_anim_owners(obj)),
             import_props.table_size,
         )
     if import_props.import_type == "Binary":
@@ -691,7 +691,7 @@ def update_table_preset(import_props: "SM64_AnimImportProperties", context):
 
     preset = ACTOR_PRESET_INFO[import_props.preset]
 
-    if import_props.preset_animation == "":  # If the preset animation isn't in this prest, select the animation at 0
+    if import_props.preset_animation == "":  # If the preset animation isn't in this preset, select the animation at 0
         import_props.preset_animation = "0"
 
     # C
@@ -700,6 +700,7 @@ def update_table_preset(import_props: "SM64_AnimImportProperties", context):
     import_props.path = os.path.join(decomp_path, directory)
 
     # Binary
+    import_props.ignore_bone_count = preset.animation.ignore_bone_count
     import_props.level = preset.level
     if preset.animation.dma:
         import_props.dma_table_address = intToHex(preset.animation.address)

@@ -679,6 +679,11 @@ class SM64_AnimImportProperties(PropertyGroup):
     check_null: BoolProperty(name="Check NULL Delimiter", default=True)
     table_size_prop: IntProperty(name="Size", min=1)
     table_index_prop: IntProperty(name="Index", min=0)
+    ignore_bone_count: BoolProperty(
+        name="Ignore bone count",
+        description="The armature bone count won´t be used when importing, a safety check will be skipped and old "
+        "fast64 animations won´t import, needed to import bowser's broken animation",
+    )
     preset_animation: EnumProperty(name="Preset Animation", items=get_enum_from_import_preset)
 
     rom: StringProperty(name="Import ROM", subtype="FILE_PATH")
@@ -817,6 +822,7 @@ class SM64_AnimImportProperties(PropertyGroup):
                 if self.preset_animation == "Custom":
                     split.prop(self, "table_index_prop", text="Index")
             return
+        col.prop(self, "ignore_bone_count")
         prop_split(col, self, "binary_import_type", "Animation Type")
         if self.binary_import_type == "DMA":
             string_int_prop(col, self, "dma_table_address", "DMA Table Address")
@@ -854,6 +860,8 @@ class SM64_AnimImportProperties(PropertyGroup):
         if self.read_from_rom:
             self.draw_import_rom(col, import_rom)
             prop_split(col, self, "level", "Level")
+
+        col.prop(self, "ignore_bone_count")
 
     def draw_props(self, layout: UILayout, import_rom: os.PathLike = "", decomp: os.PathLike = ""):
         col = layout.column()

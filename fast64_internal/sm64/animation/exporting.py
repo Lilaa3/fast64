@@ -557,21 +557,20 @@ def update_table_file(
             )
         update_enum_file(enum_list_path, enum_list_name, names[1], enum_list_end, override_files, table.elements)
 
-    has_delimiter = table.elements and not table.elements[-1].reference
     # add in new entries not already found in table, always true with override
     existing_names = [element.reference for element in table.elements]
     existing_enums = [element.enum_name for element in table.elements]
     for name, enum in zip(*names):
         if name in existing_names and (not enum or enum in existing_enums):
             continue
-        if has_delimiter:  # replace existing delimiter
-            new_element, has_delimiter = table.elements[-1], False
+        if table.has_null_delimiter:  # replace existing delimiter
+            new_element = table.elements[-1]
         else:  # create new element
             new_element = SM64_AnimTableElement()
             table.elements.append(new_element)
         new_element.reference, new_element.enum_name = name, enum
 
-    if add_null_delimiter and not has_delimiter:  # add null delimiter if not present or replaced
+    if add_null_delimiter and not table.has_null_delimiter:  # add null delimiter if not present or replaced
         table.elements.append(SM64_AnimTableElement(enum_name=enum_list_end))
 
     content = text[table.start : table.end]

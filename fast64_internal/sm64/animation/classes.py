@@ -326,7 +326,7 @@ class SM64_AnimHeader:
         if header.bone_count <= 0:
             header.bone_count = bone_count
             print("Old exports lack a defined bone count, invalid armatures won't be detected")
-        elif header.bone_count != bone_count:
+        elif bone_count and header.bone_count != bone_count:
             raise PluginError(
                 f"Imported header's bone count is {header.bone_count} but object's is {bone_count}",
             )
@@ -595,6 +595,10 @@ class SM64_AnimTable:
     @property
     def header_set(self) -> list[SM64_AnimHeader]:
         return self.header_data_sets[0]
+
+    @property
+    def has_null_delimiter(self):
+        return bool(self.elements and self.elements[-1].reference is None)
 
     def get_seperate_anims(self):
         print("Getting seperate animations from table.")

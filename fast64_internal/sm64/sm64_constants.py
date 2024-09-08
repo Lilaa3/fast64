@@ -2276,6 +2276,7 @@ class AnimInfo:
     address: int
     behaviours: DictOrVal[int] = dataclasses.field(default_factory=dict)
     size: int | None = None  # None means the size can be determined from the NULL delimiter
+    ignore_bone_count: bool = False
     dma: bool = False
     directory: str | None = None
     names: list[str] | None = None
@@ -2337,7 +2338,6 @@ class CollisionInfo:
 
 @dataclasses.dataclass
 class ActorPresetInfo:
-    # TODO: Pass in name?
     decomp_path: str = None
     level: str | None = None
     group: str | None = None
@@ -2481,6 +2481,7 @@ ACTOR_PRESET_INFO = {
             address=101021664,
             behaviours=318773328,
             size=27,
+            ignore_bone_count=True,
             names=[
                 "Stand Up",
                 "Stand Up (Unused)",
