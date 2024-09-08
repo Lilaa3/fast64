@@ -9,7 +9,7 @@ from typing import Optional
 
 from bpy.types import Action
 
-from ...utility import PluginError, encodeSegmentedAddr, is_bit_active, intToHex
+from ...utility import PluginError, encodeSegmentedAddr, intToHex
 from ..sm64_constants import MAX_U16, SegmentData
 from ..sm64_classes import RomReader, DMATable, DMATableElement, IntArray
 
@@ -508,7 +508,7 @@ class SM64_Anim:
 
 @dataclasses.dataclass
 class SM64_AnimTableElement:
-    reference: str | int | None = ""
+    reference: str | int | None = None
     header: SM64_AnimHeader | None = None
 
     # C exporting
@@ -535,8 +535,8 @@ class SM64_AnimTableElement:
     def enum_c(self):
         assert self.enum_name
         if self.enum_val:
-            return f"{self.enum_name} = {self.enum_val},"
-        return f"{self.enum_name},"
+            return f"{self.enum_name} = {self.enum_val}"
+        return self.enum_name
 
     @property
     def data(self):
@@ -567,8 +567,11 @@ class SM64_AnimTable:
     def names(self) -> tuple[list[str], list[str]]:
         names, enums = [], []
         for element in self.elements:
-            assert isinstance(element.reference, str), "Reference is not a string."
-            names.append(element.reference)
+            if element.reference is None:
+                names.append("NULL")
+            else:
+                assert isinstance(element.reference, str), "Reference is not a string."
+                names.append(element.reference)
             enums.append(element.enum_name)
         return names, enums
 

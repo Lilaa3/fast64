@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 from pathlib import Path
 import os
-from pathlib import Path
 import re
 import numpy as np
 
@@ -405,6 +404,8 @@ def to_table_class(
             )
         except Exception as exc:
             raise PluginError(f"Table element {i}: {exc}") from exc
+    if anim_props.null_delimiter:
+        table.elements.append(SM64_AnimTableElement(enum_name=table.enum_list_end))
     return table
 
 
@@ -429,20 +430,13 @@ def update_includes(
     )
 
 
-def update_anim_header(path: Path, table_name: str, gen_enums: bool):
+def update_anim_header(path: Path, table_name: str, gen_enums: bool, override_files: bool):
     includes = ['"anims/table_enum.h"'] if gen_enums else None
-    if write_includes(path, includes, [f"const struct Animation *const {table_name}[]"]):
+    if write_includes(path, includes, [f"const struct Animation *const {table_name}[]"], create_new=override_files):
         print(f"Updated animation header {path}")
 
 
-def update_enum_file(
-    path: Path,
-    list_name: str,
-    enum_names: list[str],
-    end: str,
-    override_files: bool,
-    table_elements: list[SM64_AnimTableElement],
-):
+def update_enum_file(path: Path, override_files: bool, table: SM64_AnimTable):
     if os.path.exists(path) and not override_files:
         with open(path, "r", encoding="utf-8") as f:
             text = f.read()
@@ -455,7 +449,7 @@ def update_enum_file(
         found_name, content = list_match.group("name"), list_match.group("content")
         list_start, list_end = text.find(content, list_match.start()), list_match.end()
         content = text[list_start:list_end]
-        if found_name is not None and list_name == found_name.strip():
+        if found_name is not None and table.enum_list_reference == found_name.strip():
             for element_match in re.finditer(TABLE_ENUM_PATTERN, content):
                 name, num = (element_match.group("name"), element_match.group("num"))
                 elements.append(
@@ -466,27 +460,27 @@ def update_enum_file(
             enum_lists.append((elements, list_start, list_end))
 
     if len(enum_lists) > 1:
-        raise PluginError(f'Duplicate enum list "{list_name}"')
+        raise PluginError(f'Duplicate enum list "{table.enum_list_reference}"')
     elif len(enum_lists) == 1:
         elements, list_start, list_end = enum_lists[0]
     else:  # create new table
         list_start = len(text)
-        text += f"enum {list_name} {{\n"
+        text += f"enum {table.enum_list_reference} {{\n"
         list_end = len(text)
         text += "};\n"
-        elements = table_elements.copy()
+        elements = table.elements.copy()
 
     existing_enums = [element.enum_name for element in elements]
-    for name in enum_names:
+    for name in table.enum_names:
         if name not in existing_enums:
             elements.append(SM64_AnimTableElement(enum_name=name))
-    if end not in existing_enums:
-        elements.append(SM64_AnimTableElement(enum_name=end))
+    if table.enum_list_end not in existing_enums:
+        elements.append(SM64_AnimTableElement(enum_name=table.enum_list_end))
 
     content = text[list_start:list_end]
     for i, element in enumerate(elements):
         if element.enum_start == -1 or element.enum_end == -1:
-            content += f"\t{element.enum_c}\n"
+            content += f"\t{element.enum_c},\n"
         else:
             content = content[: element.enum_start] + element.enum_c + content[element.enum_end :]
             # acccount for changed size
@@ -503,16 +497,13 @@ def update_enum_file(
 
 
 def update_table_file(
+    table: SM64_AnimTable,
     table_path: Path,
-    table_name: str,
     add_null_delimiter: bool,
-    names: tuple[list[str], list[str]],
     override_files: bool,
     gen_enums: bool,
     designated: bool,
     enum_list_path: Path,
-    enum_list_name,
-    enum_list_end,
 ):
     existing_file = os.path.exists(table_path) and not override_files
     if existing_file:
@@ -522,56 +513,53 @@ def update_table_file(
         text = ""
 
     # add include if not already there
-    if gen_enums and '"table_enum.h"' not in find_includes_and_externs(text):
+    if gen_enums and '"table_enum.h"' not in find_includes_and_externs(text)[0]:
         text = '#include "table_enum.h"\n' + text
 
     # First, find existing tables
-    tables = import_tables(text, table_path, table_name)
+    tables = import_tables(text, table_path, table.reference)
 
     if len(tables) > 1:
-        raise PluginError(f'Duplicate animation table "{table_name}"')
+        raise PluginError(f'Duplicate animation table "{table.reference}"')
     elif len(tables) == 1:
-        table = tables[0]
+        existing_table = tables[0]
+        if gen_enums:  # Figure out enums on existing enum-less elements
+            # TODO: figure out existing enums from table_enum.h first?
+            prev_enums = {}
+            for i, element in enumerate(existing_table.elements):
+                if not element.reference:
+                    if i == len(existing_table.elements) - 1:
+                        element.enum_name = duplicate_name(table.enum_list_end, prev_enums)
+                    else:
+                        element.enum_name = duplicate_name(f"{existing_table.reference}_NULL", prev_enums)
+                    continue
+                element.enum_name = duplicate_name(
+                    next(
+                        (enum for name, enum in zip(*table.names) if enum and name == element.reference),
+                        anim_name_to_enum_name(element.reference),
+                    ),
+                    prev_enums,
+                )
+
+        table.start, table.end = existing_table.start, existing_table.end
+        new_elements = existing_table.elements.copy()
+        for name, enum in zip(*table.names):
+            if name in existing_table.header_names and (not gen_enums or enum in existing_table.enum_names):
+                continue
+            new_element = SM64_AnimTableElement(reference=name, enum_name=enum)
+            new_elements.append(new_element)
+        table.elements = new_elements
     else:  # create new table
-        table = SM64_AnimTable(table_name)
         table.start = len(text)
-        text += f"const struct Animation *const {table_name}[] = {{\n"
+        text += f"const struct Animation *const {table.reference}[] = {{\n"
         table.end = len(text)
         text += "};\n"
 
-    if gen_enums:  # Figure out enums on existing enum-less elements
-        prev_enums = {}
-        for i, element in enumerate(table.elements):
-            if not element.reference:
-                if i == len(table.elements) - 1:
-                    element.enum_name = duplicate_name(enum_list_end, prev_enums)
-                else:
-                    element.enum_name = duplicate_name(f"{table_name}_NULL", prev_enums)
-                continue
-            element.enum_name = duplicate_name(
-                next(
-                    (enum for name, enum in zip(*names) if enum and name == element.reference),
-                    anim_name_to_enum_name(element.reference),
-                ),
-                prev_enums,
-            )
-        update_enum_file(enum_list_path, enum_list_name, names[1], enum_list_end, override_files, table.elements)
-
-    # add in new entries not already found in table, always true with override
-    existing_names = [element.reference for element in table.elements]
-    existing_enums = [element.enum_name for element in table.elements]
-    for name, enum in zip(*names):
-        if name in existing_names and (not enum or enum in existing_enums):
-            continue
-        if table.has_null_delimiter:  # replace existing delimiter
-            new_element = table.elements[-1]
-        else:  # create new element
-            new_element = SM64_AnimTableElement()
-            table.elements.append(new_element)
-        new_element.reference, new_element.enum_name = name, enum
-
     if add_null_delimiter and not table.has_null_delimiter:  # add null delimiter if not present or replaced
-        table.elements.append(SM64_AnimTableElement(enum_name=enum_list_end))
+        table.elements.append(SM64_AnimTableElement(enum_name=table.enum_list_end))
+
+    if gen_enums:
+        update_enum_file(enum_list_path, override_files, table)
 
     content = text[table.start : table.end]
     for i, element in enumerate(table.elements):
@@ -778,17 +766,14 @@ def export_animation_table_c(
         return
 
     header_path = geo_directory / "anim_header.h"
-    update_anim_header(header_path, table.reference, anim_props.gen_enums)
+    update_anim_header(header_path, table.reference, anim_props.gen_enums, anim_props.override_files)
     update_table_file(
+        table=table,
         table_path=anim_directory / "table.inc.c",
-        table_name=table.reference,
-        names=table.names,
         add_null_delimiter=anim_props.null_delimiter,
         gen_enums=anim_props.gen_enums,
         designated=designated,
         enum_list_path=anim_directory / "table_enum.h",
-        enum_list_name=table.enum_list_reference,
-        enum_list_end=table.enum_list_end,
         override_files=anim_props.override_files,
     )
     update_includes(combined_props, header_directory, actor_name, True)
@@ -882,21 +867,19 @@ def export_animation_c(
     table_name = anim_props.get_table_name(actor_name)
 
     if anim_props.update_table:
-        update_anim_header(
-            geo_directory / "anim_header.h",
-            table_name,
-            anim_props.gen_enums,
-        )
+        update_anim_header(geo_directory / "anim_header.h", table_name, anim_props.gen_enums, anim_props.override_files)
         update_table_file(
+            table=SM64_AnimTable(
+                table_name,
+                elements=[
+                    SM64_AnimTableElement(header.reference, header, header.enum_name) for header in animation.headers
+                ],
+            ),
             table_path=anim_directory / "table.inc.c",
-            table_name=table_name,
-            names=animation.names,
             add_null_delimiter=anim_props.null_delimiter,
             gen_enums=anim_props.gen_enums,
             designated=designated,
             enum_list_path=anim_directory / "table_enum.h",
-            enum_list_name=anim_props.get_enum_name(actor_name),
-            enum_list_end=anim_props.get_enum_end(actor_name),
             override_files=False,
         )
     update_data_file(anim_directory / "data.inc.c", [animation.file_name])
