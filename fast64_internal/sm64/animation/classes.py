@@ -533,8 +533,6 @@ class SM64_AnimTableElement:
 
     @property
     def enum_c(self):
-        if not self.enum_name:
-            return
         if self.enum_val:
             return f"{self.enum_name} = {self.enum_val}"
         return self.enum_name

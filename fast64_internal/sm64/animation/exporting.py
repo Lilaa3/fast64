@@ -37,7 +37,7 @@ from .classes import (
     SM64_AnimTable,
     SM64_AnimTableElement,
 )
-from .importing import import_tables
+from .importing import import_enums, import_tables, update_table_with_table_enum
 from .utility import (
     get_anim_owners,
     get_anim_actor_name,
@@ -437,61 +437,32 @@ def update_anim_header(path: Path, table_name: str, gen_enums: bool, override_fi
 
 
 def update_enum_file(path: Path, override_files: bool, table: SM64_AnimTable):
-    if os.path.exists(path) and not override_files:
-        with open(path, "r", encoding="utf-8") as f:
-            text = f.read()
+    if path.exists() and not override_files:
+        text = path.read_text()
     else:
         text = ""
 
-    enum_lists: list[tuple[list[SM64_AnimTableElement], int, int]] = []
-    for list_match in re.finditer(TABLE_ENUM_LIST_PATTERN, text):
-        elements = []
-        found_name, content = list_match.group("name"), list_match.group("content")
-        list_start, list_end = text.find(content, list_match.start()), list_match.end()
-        content = text[list_start:list_end]
-        if found_name is not None and table.enum_list_reference == found_name.strip():
-            for element_match in re.finditer(TABLE_ENUM_PATTERN, content):
-                name, num = (element_match.group("name"), element_match.group("num"))
-                elements.append(
-                    SM64_AnimTableElement(
-                        enum_name=name, enum_val=num, enum_start=element_match.start(), enum_end=element_match.end()
-                    )
-                )
-            enum_lists.append((elements, list_start, list_end))
-
-    if len(enum_lists) > 1:
-        raise PluginError(f'Duplicate enum list "{table.enum_list_reference}"')
-    elif len(enum_lists) == 1:
-        elements, list_start, list_end = enum_lists[0]
-    else:  # create new table
-        list_start = len(text)
+    if table.enum_list_start == -1 and table.enum_list_end == -1:  # create new table
+        table.enum_list_start = len(text)
         text += f"enum {table.enum_list_reference} {{\n"
-        list_end = len(text)
+        table.enum_list_end = len(text)
         text += "};\n"
-        elements = table.elements.copy()
 
-    existing_enums = [element.enum_name for element in elements]
-    for name in table.enum_names:
-        if name not in existing_enums:
-            elements.append(SM64_AnimTableElement(enum_name=name))
-    if table.enum_list_delimiter not in existing_enums:
-        elements.append(SM64_AnimTableElement(enum_name=table.enum_list_delimiter))
-
-    content = text[list_start:list_end]
-    for i, element in enumerate(elements):
+    content = text[table.enum_list_start : table.enum_list_end]
+    for i, element in enumerate(table.elements):
         if element.enum_start == -1 or element.enum_end == -1:
             content += f"\t{element.enum_c},\n"
         else:
             content = content[: element.enum_start] + element.enum_c + content[element.enum_end :]
             # acccount for changed size
             size_increase = len(element.enum_c) - (element.enum_end - element.enum_start)
-            for next_element in elements[i + 1 :]:
+            for next_element in table.elements[i + 1 :]:
                 if next_element.enum_start != -1 and next_element.enum_end != -1:
                     next_element.enum_start += size_increase
                     next_element.enum_end += size_increase
     if not os.path.exists(path):
         print(f"Creating enum list file at {path}.")
-    text = text[:list_start] + content + text[list_end:]
+    text = text[: table.enum_list_start] + content + text[table.enum_list_end :]
     with open(path, "w", encoding="utf-8") as f:
         f.write(text)
 
@@ -505,12 +476,10 @@ def update_table_file(
     designated: bool,
     enum_list_path: Path,
 ):
-    existing_file = os.path.exists(table_path) and not override_files
+    text, enum_text = "", ""
+    existing_file = table_path.exists() and not override_files
     if existing_file:
-        with open(table_path, encoding="utf-8") as f:
-            text = f.read()
-    else:
-        text = ""
+        text = table_path.read_text()
 
     # add include if not already there
     if gen_enums and '"table_enum.h"' not in find_includes_and_externs(text)[0]:
@@ -518,15 +487,33 @@ def update_table_file(
 
     # First, find existing tables
     tables = import_tables(text, table_path, table.reference)
+    if gen_enums:
+        if enum_list_path.exists() and not override_files:
+            enum_text = enum_list_path.read_text()
+        enum_tables = import_enums(enum_text, enum_list_path, table.enum_list_reference)
+        if len(enum_tables) > 1:
+            raise PluginError(f'Duplicate enum list "{table.enum_list_reference}"')
+    else:
+        enum_tables = []
 
     if len(tables) > 1:
         raise PluginError(f'Duplicate animation table "{table.reference}"')
     elif len(tables) == 1:
         existing_table = tables[0]
-        if gen_enums:  # Figure out enums on existing enum-less elements
-            # TODO: figure out existing enums from table_enum.h first?
-            prev_enums = {}
+        if gen_enums:
+            if enum_tables:  # apply enum table names to existing unset enums
+                update_table_with_table_enum(existing_table, enum_tables[0])
+                table.enum_list_reference, table.enum_list_start, table.enum_list_end = (
+                    existing_table.enum_list_reference,
+                    existing_table.enum_list_start,
+                    existing_table.enum_list_end,
+                )
+
+            # Figure out enums on existing enum-less elements
+            prev_enums = {name: 0 for name in existing_table.enum_names}
             for i, element in enumerate(existing_table.elements):
+                if element.enum_name:
+                    continue
                 if not element.reference:
                     if i == len(existing_table.elements) - 1:
                         element.enum_name = duplicate_name(table.enum_list_delimiter, prev_enums)
@@ -541,14 +528,19 @@ def update_table_file(
                     prev_enums,
                 )
 
-        table.start, table.end = existing_table.start, existing_table.end
         new_elements = existing_table.elements.copy()
+        has_null_delimiter = existing_table.has_null_delimiter
         for name, enum in zip(*table.names):
             if name in existing_table.header_names and (not gen_enums or enum in existing_table.enum_names):
                 continue
-            new_element = SM64_AnimTableElement(reference=name, enum_name=enum)
-            new_elements.append(new_element)
+            if has_null_delimiter:
+                new_elements[-1].reference = name
+                new_elements[-1].enum_name = enum
+                has_null_delimiter = False
+            else:
+                new_elements.append(SM64_AnimTableElement(reference=name, enum_name=enum))
         table.elements = new_elements
+        table.start, table.end = (existing_table.start, existing_table.end)
     else:  # create new table
         table.start = len(text)
         text += f"const struct Animation *const {table.reference}[] = {{\n"
@@ -872,7 +864,7 @@ def export_animation_c(
             table=SM64_AnimTable(
                 table_name,
                 enum_list_reference=anim_props.get_enum_name(actor_name),
-                enum_list_end=anim_props.get_enum_end(actor_name),
+                enum_list_delimiter=anim_props.get_enum_end(actor_name),
                 elements=[
                     SM64_AnimTableElement(header.reference, header, header.enum_name) for header in animation.headers
                 ],

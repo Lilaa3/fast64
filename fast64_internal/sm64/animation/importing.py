@@ -401,22 +401,35 @@ def animation_import_to_blender(
 
 def update_table_with_table_enum(table: SM64_AnimTable, enum_table: SM64_AnimTable):
     for element, enum_element in zip(table.elements, enum_table.elements):
-        if not element.enum_name:
-            element.enum_name = enum_element.enum_name
-            element.enum_val = enum_element.enum_val
-            element.enum_start = enum_element.enum_start
-            element.enum_end = enum_element.enum_end
+        if element.enum_name:
+            enum_element = next(
+                (
+                    other_enum_element
+                    for other_enum_element in enum_table.elements
+                    if element.enum_name == other_enum_element.enum_name
+                ),
+                enum_element,
+            )
+        element.enum_name = enum_element.enum_name
+        element.enum_val = enum_element.enum_val
+        element.enum_start = enum_element.enum_start
+        element.enum_end = enum_element.enum_end
+    table.enum_list_reference = enum_table.enum_list_reference
+    table.enum_list_start = enum_table.enum_list_start
+    table.enum_list_end = enum_table.enum_list_end
 
 
-def import_enums(c_data: str, path: os.PathLike, name: str):
+def import_enums(c_data: str, path: os.PathLike, specific_name=""):
     tables = []
     for list_match in re.finditer(TABLE_ENUM_LIST_PATTERN, c_data):
-        found_name, content = list_match.group("name"), list_match.group("content")
+        name, content = list_match.group("name").strip(), list_match.group("content")
+        if specific_name and name != specific_name:
+            continue
         list_start, list_end = c_data.find(content, list_match.start()), list_match.end()
         content = c_data[list_start:list_end]
         table = SM64_AnimTable(
             file_name=os.path.basename(path),
-            enum_list_reference=found_name,
+            enum_list_reference=name,
             enum_list_start=list_start,
             enum_list_end=list_end,
         )
@@ -427,7 +440,7 @@ def import_enums(c_data: str, path: os.PathLike, name: str):
                     enum_name=name, enum_val=num, enum_start=element_match.start(), enum_end=element_match.end()
                 )
             )
-        tables.append(tables)
+        tables.append(table)
     return tables
 
 
