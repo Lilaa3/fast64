@@ -25,7 +25,7 @@ from ...utility import (
 )
 from ...utility_anim import stashActionInArmature
 from ..sm64_constants import BEHAVIOR_COMMANDS, BEHAVIOR_EXITS, defaultExtendSegment4, level_pointers
-from ..sm64_utility import write_includes, update_actor_includes
+from ..sm64_utility import find_includes_and_externs, write_includes, update_actor_includes
 from ..sm64_classes import BinaryExporter, RomReader, InsertableBinaryData
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_rom_tweaks import ExtendBank0x04
@@ -520,6 +520,10 @@ def update_table_file(
             text = f.read()
     else:
         text = ""
+
+    # add include if not already there
+    if gen_enums and '"table_enum.h"' not in find_includes_and_externs(text):
+        text = '#include "table_enum.h"\n' + text
 
     # First, find existing tables
     tables = import_tables(text, table_path, table_name)
