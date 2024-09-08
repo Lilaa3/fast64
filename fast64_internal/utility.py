@@ -511,11 +511,6 @@ def enableExtendedRAM(baseDir):
         segmentFile.close()
 
 
-def writeMaterialHeaders(exportDir, matCInclude, matHInclude):
-    writeIfNotFound(os.path.join(exportDir, "src/game/materials.c"), "\n" + matCInclude, "")
-    writeIfNotFound(os.path.join(exportDir, "src/game/materials.h"), "\n" + matHInclude, "#endif")
-
-
 def writeMaterialFiles(
     exportDir, assetDir, headerInclude, matHInclude, headerDynamic, dynamic_data, geoString, customExport
 ):
@@ -1739,7 +1734,7 @@ def getTextureSuffixFromFormat(texFmt):
     return texFmt.lower()
 
 
-COMMENT_PATTERN = r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"'
+COMMENT_PATTERN = re.compile(r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"', re.DOTALL | re.MULTILINE)
 
 
 def removeComments(text: str):
@@ -1752,9 +1747,7 @@ def removeComments(text: str):
         else:
             return s
 
-    pattern = re.compile(COMMENT_PATTERN, re.DOTALL | re.MULTILINE)
-
-    return re.sub(pattern, replacer, text)
+    return re.sub(COMMENT_PATTERN, replacer, text)
 
 
 binOps = {

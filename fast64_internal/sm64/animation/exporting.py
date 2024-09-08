@@ -415,11 +415,18 @@ def update_includes(
     update_table: bool,
 ):
     data_includes = [Path("anims/data.inc.c")]
+    header_includes = []
     if update_table:
         data_includes.append(Path("anims/table.inc.c"))
-        update_actor_includes(combined_props, header_dir, actor_name, data_includes, [Path("anim_header.h")])
-    else:
-        update_actor_includes(combined_props, header_dir, actor_name, data_includes, [])
+        header_includes.append(Path("anim_header.h"))
+    update_actor_includes(
+        combined_props.export_header_type,
+        combined_props.actor_group_name,
+        header_dir,
+        actor_name,
+        data_includes,
+        header_includes,
+    )
 
 
 def update_anim_header(path: Path, table_name: str, gen_enums: bool):

@@ -1,4 +1,3 @@
-from typing import TYPE_CHECKING
 from pathlib import Path
 import os
 import re
@@ -7,13 +6,13 @@ import bpy
 from bpy.types import UILayout
 
 from ..utility import (
-    COMMENT_PATTERN,
     PluginError,
     filepath_checks,
     removeComments,
     run_and_draw_errors,
     multilineLabel,
     prop_split,
+    COMMENT_PATTERN,
 )
 from .sm64_function_map import func_map
 
@@ -148,7 +147,7 @@ INCLUDE_EXTERN_PATTERN = re.compile(
     """.replace(
         r"\h", r"[^\v\S]"
     ).replace(
-        "COMMENT_PATTERN", COMMENT_PATTERN
+        "COMMENT_PATTERN", COMMENT_PATTERN.pattern
     ),
     re.MULTILINE | re.VERBOSE,
 )
@@ -159,7 +158,7 @@ ENDIF_PATTERN = re.compile(
     """.replace(
         r"\h", r"[^\v\S]"
     ).replace(
-        "COMMENT_PATTERN", COMMENT_PATTERN
+        "COMMENT_PATTERN", COMMENT_PATTERN.pattern
     ),
     re.MULTILINE | re.VERBOSE,
 )
@@ -224,37 +223,43 @@ def write_includes(
 
 
 def update_actor_includes(
-    combined_props: "SM64_CombinedObjectProperties",
+    header_type: str,
+    group_name: str,
     header_dir: Path,
     dir_name: str,
-    data_includes: list[Path],
-    header_includes: list[Path],
+    data_includes: list[Path] = None,
+    header_includes: list[Path] = None,
+    geo_includes: list[Path] = None,
 ):
-    if combined_props.export_header_type == "Actor":
-        group_name: str = combined_props.actor_group_name
-        if group_name == "":
+    data_includes, header_includes, geo_includes = data_includes or [], header_includes or [], geo_includes or []
+    if header_type == "Actor":
+        if not group_name:
             raise PluginError("Empty group name")
         data_path = header_dir / f"{group_name}.c"
         header_path = header_dir / f"{group_name}.h"
-        directory = Path(dir_name)
-    elif combined_props.export_header_type == "Level":
-        level_name: str = combined_props.export_level_name
-        if level_name == "":
-            raise PluginError("Empty level name")
+        geo_path = header_dir / f"{group_name}_geo.c"
+    elif header_type == "Level":
         data_path = header_dir / "leveldata.c"
         header_path = header_dir / "header.h"
-        directory = Path(dir_name) / Path(level_name)
-    elif combined_props.export_header_type == "Custom":
+        geo_path = header_dir / "geo.c"
+    elif header_type == "Custom":
         return  # Custom doesn't update includes
     else:
-        raise PluginError(f'Unknown header type "{combined_props.export_header_type}"')
+        raise PluginError(f'Unknown header type "{header_type}"')
 
-    if write_includes(data_path, [f'"{directory / include}"' for include in data_includes], path_must_exist=True):
+    if write_includes(data_path, [f'"{Path(dir_name) / include}"' for include in data_includes], path_must_exist=True):
         print(f"Updated data includes at {header_path}.")
     if write_includes(
         header_path,
-        [f'"{directory / include}"' for include in header_includes],
+        [f'"{Path(dir_name) / include}"' for include in header_includes],
         path_must_exist=True,
         before_endif=True,
     ):
         print(f"Updated header includes at {header_path}.")
+    if write_includes(geo_path, [f'"{Path(dir_name) / include}"' for include in geo_includes], path_must_exist=True):
+        print(f"Updated geo data at {geo_path}.")
+
+
+def writeMaterialHeaders(exportDir, matCInclude, matHInclude):
+    write_includes(Path(exportDir) / "src/game/materials.c", [matCInclude])
+    write_includes(Path(exportDir) / "src/game/materials.h", [matHInclude], before_endif=True)
