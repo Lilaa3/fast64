@@ -1,8 +1,9 @@
+from typing import TYPE_CHECKING, Optional
+from pathlib import Path
 import os
 from pathlib import Path
 import re
 import numpy as np
-from typing import TYPE_CHECKING, Optional
 
 import bpy
 from bpy.types import Object, Action, PoseBone, Context
@@ -18,14 +19,13 @@ from ...utility import (
     getPathAndLevel,
     getExportDir,
     intToHex,
-    writeIfNotFound,
     applyBasicTweaks,
     toAlnum,
     directory_path_checks,
-    filepath_checks,
 )
 from ...utility_anim import stashActionInArmature
 from ..sm64_constants import BEHAVIOR_COMMANDS, BEHAVIOR_EXITS, defaultExtendSegment4, level_pointers
+from ..sm64_utility import write_includes, update_actor_includes
 from ..sm64_classes import BinaryExporter, RomReader, InsertableBinaryData
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_rom_tweaks import ExtendBank0x04
@@ -409,51 +409,23 @@ def to_table_class(
 
 
 def update_includes(
-    level_name: str,
-    group_name: str,
-    dir_name: str,
-    header_directory: Path,
-    header_type: str,
+    combined_props: "SM64_CombinedObjectProperties",
+    header_dir: Path,
+    actor_name,
     update_table: bool,
 ):
-    if header_type == "Actor":
-        if group_name == "":
-            raise PluginError("Empty group name")
-        data_path = header_directory / f"{group_name}.c"
-        header_path = header_directory / f"{group_name}.h"
-        include_start = f'#include "{dir_name}'
-    elif header_type == "Level":
-        if level_name == "":
-            raise PluginError("Empty level name")
-        data_path = header_directory / "leveldata.c"
-        header_path = header_directory / "header.h"
-        include_start = f'#include "{dir_name}/{level_name}/anims'
-    else:
-        assert False, "Invalid header type"
-    print(f"Updating includes at {data_path} and {header_path}.")
-    filepath_checks(data_path)
-    writeIfNotFound(data_path, f'{include_start}/anims/data.inc.c"\n', "")
+    data_includes = [Path("anims/data.inc.c")]
     if update_table:
-        filepath_checks(header_path)
-        writeIfNotFound(data_path, f'{include_start}/anims/table.inc.c"\n', "")
-        writeIfNotFound(header_path, f'{include_start}/anim_header.h"\n', "#endif")
-
-
-def update_anim_header(header: Path, table_name: str, gen_enums: bool):
-    print("Writing animation header")
-    if os.path.exists(header):
-        with open(header, "r", encoding="utf-8") as f:
-            text = f.read()
+        data_includes.append(Path("anims/table.inc.c"))
+        update_actor_includes(combined_props, header_dir, actor_name, data_includes, [Path("anim_header.h")])
     else:
-        text = ""
-    with open(header, "a", encoding="utf-8") as f:
-        if gen_enums:
-            include = '#include "anims/table_enum.h"'
-            if include not in text:
-                f.write(include + "\n")
-        extern = f"extern const struct Animation *const {table_name}[];"
-        if extern not in text:
-            f.write(extern + "\n")
+        update_actor_includes(combined_props, header_dir, actor_name, data_includes, [])
+
+
+def update_anim_header(path: Path, table_name: str, gen_enums: bool):
+    includes = ['"anims/table_enum.h"'] if gen_enums else None
+    if write_includes(path, includes, [f"const struct Animation *const {table_name}[]"]):
+        print(f"Updated animation header {path}")
 
 
 def update_enum_file(
@@ -623,12 +595,11 @@ def update_table_file(
 
 
 def update_data_file(path: Path, anim_file_names: list, override_files: bool = False):
-    print(f"Updating animation data file at {path}")
-    if not os.path.exists(path) or override_files:
-        path.write_text("")  # Leave empty
-
+    includes = []
     for anim_file_name in anim_file_names:
-        writeIfNotFound(path, f'#include "{anim_file_name}"\n', "")
+        includes.append(f'"{anim_file_name}"')
+    if write_includes(path, includes, create_new=override_files):
+        print(f"Updating animation data file includes at {path}")
 
 
 def update_behaviour_binary(
@@ -810,16 +781,7 @@ def export_animation_table_c(
         enum_list_end=table.enum_list_end,
         override_files=anim_props.override_files,
     )
-
-    if combined_props.export_header_type != "Custom":
-        update_includes(
-            combined_props.export_level_name,
-            combined_props.actor_group_name,
-            actor_name,
-            header_directory,
-            combined_props.export_header_type,
-            True,
-        )
+    update_includes(combined_props, header_directory, actor_name, True)
 
 
 def export_animation_binary(
@@ -928,15 +890,7 @@ def export_animation_c(
             override_files=False,
         )
     update_data_file(anim_directory / "data.inc.c", [animation.file_name])
-    if combined_props.export_header_type != "Custom":
-        update_includes(
-            combined_props.export_level_name,
-            combined_props.actor_group_name,
-            actor_name,
-            header_directory,
-            combined_props.export_header_type,
-            anim_props.update_table,
-        )
+    update_includes(combined_props, header_directory, actor_name, anim_props.update_table)
 
 
 def export_animation(context: Context, obj: Object):

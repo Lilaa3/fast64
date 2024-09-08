@@ -22,7 +22,7 @@ TABLE_ELEMENT_PATTERN = re.compile(  # strict but only in the sense that it requ
 
 TABLE_PATTERN = re.compile(
     r"""
-    SKIP_COMMENT
+    SKIP_COMMENT # CURRENTLY DOESNT WORK, FIX
     const\s+struct\s*Animation\s*\*const\s*(?P<name>\w+)
     (?:\[.*?\])? # Optional size, don´t capture
     \s*=\s*\{
