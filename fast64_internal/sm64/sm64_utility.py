@@ -16,9 +16,6 @@ from ..utility import (
 )
 from .sm64_function_map import func_map
 
-if TYPE_CHECKING:
-    from .sm64_objects import SM64_CombinedObjectProperties
-
 
 def starSelectWarning(operator, fileStatus):
     if fileStatus is not None and not fileStatus.starSelectC:

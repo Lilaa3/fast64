@@ -14,7 +14,7 @@ TABLE_ELEMENT_PATTERN = re.compile(  # strict but only in the sense that it requ
     (?:(?:&\s*(?P<element>\w+))|(?:NULL)) # Capture element or null, element requires &
     (?:\s*,|) # allow no comma, techinically not correct but no other method works
     """.replace(
-        "COMMENT_PATTERN", COMMENT_PATTERN
+        "COMMENT_PATTERN", COMMENT_PATTERN.pattern
     ),
     re.DOTALL | re.VERBOSE | re.MULTILINE,
 )
@@ -31,7 +31,7 @@ TABLE_PATTERN = re.compile(
     """.replace(
         "SKIP_COMMENT", f"(?:^(?:{COMMENT_PATTERN}))*"
     ).replace(
-        "COMMENT_PATTERN", COMMENT_PATTERN
+        "COMMENT_PATTERN", COMMENT_PATTERN.pattern
     ),
     re.DOTALL | re.VERBOSE | re.MULTILINE,
 )
@@ -44,7 +44,7 @@ TABLE_ENUM_PATTERN = re.compile(  # strict but only in the sense that it require
     (?:\s*=\s*(?P<num>\w+)\s*)?
     (?=,|) # lookahead, allow no comma, techinically not correct but no other method works
     """.replace(
-        "SKIP_COMMENT", f"(?:^(?:{COMMENT_PATTERN}))*?"
+        "SKIP_COMMENT", f"(?:^(?:{COMMENT_PATTERN.pattern}))*?"
     ),
     re.DOTALL | re.VERBOSE | re.MULTILINE,
 )
@@ -57,9 +57,9 @@ TABLE_ENUM_LIST_PATTERN = re.compile(
         (?P<content>(?:COMMENT_PATTERN|[\s\S])*) # Capture any character including new lines, lazy
     (?=\}\s*;)
     """.replace(
-        "SKIP_COMMENT", f"(?:^(?:{COMMENT_PATTERN}))*?"
+        "SKIP_COMMENT", f"(?:^(?:{COMMENT_PATTERN.pattern}))*?"
     ).replace(
-        "COMMENT_PATTERN", COMMENT_PATTERN
+        "COMMENT_PATTERN", COMMENT_PATTERN.pattern
     ),
     re.DOTALL | re.VERBOSE | re.MULTILINE,
 )
