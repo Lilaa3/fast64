@@ -405,7 +405,7 @@ def to_table_class(
         except Exception as exc:
             raise PluginError(f"Table element {i}: {exc}") from exc
     if anim_props.null_delimiter:
-        table.elements.append(SM64_AnimTableElement(enum_name=table.enum_list_end))
+        table.elements.append(SM64_AnimTableElement(enum_name=table.enum_list_delimiter))
     return table
 
 
@@ -474,8 +474,8 @@ def update_enum_file(path: Path, override_files: bool, table: SM64_AnimTable):
     for name in table.enum_names:
         if name not in existing_enums:
             elements.append(SM64_AnimTableElement(enum_name=name))
-    if table.enum_list_end not in existing_enums:
-        elements.append(SM64_AnimTableElement(enum_name=table.enum_list_end))
+    if table.enum_list_delimiter not in existing_enums:
+        elements.append(SM64_AnimTableElement(enum_name=table.enum_list_delimiter))
 
     content = text[list_start:list_end]
     for i, element in enumerate(elements):
@@ -529,7 +529,7 @@ def update_table_file(
             for i, element in enumerate(existing_table.elements):
                 if not element.reference:
                     if i == len(existing_table.elements) - 1:
-                        element.enum_name = duplicate_name(table.enum_list_end, prev_enums)
+                        element.enum_name = duplicate_name(table.enum_list_delimiter, prev_enums)
                     else:
                         element.enum_name = duplicate_name(f"{existing_table.reference}_NULL", prev_enums)
                     continue
@@ -556,7 +556,7 @@ def update_table_file(
         text += "};\n"
 
     if add_null_delimiter and not table.has_null_delimiter:  # add null delimiter if not present or replaced
-        table.elements.append(SM64_AnimTableElement(enum_name=table.enum_list_end))
+        table.elements.append(SM64_AnimTableElement(enum_name=table.enum_list_delimiter))
 
     if gen_enums:
         update_enum_file(enum_list_path, override_files, table)
@@ -871,6 +871,8 @@ def export_animation_c(
         update_table_file(
             table=SM64_AnimTable(
                 table_name,
+                enum_list_reference=anim_props.get_enum_name(actor_name),
+                enum_list_end=anim_props.get_enum_end(actor_name),
                 elements=[
                     SM64_AnimTableElement(header.reference, header, header.enum_name) for header in animation.headers
                 ],

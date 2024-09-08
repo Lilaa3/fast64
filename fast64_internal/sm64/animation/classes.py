@@ -533,7 +533,8 @@ class SM64_AnimTableElement:
 
     @property
     def enum_c(self):
-        assert self.enum_name
+        if not self.enum_name:
+            return
         if self.enum_val:
             return f"{self.enum_name} = {self.enum_val}"
         return self.enum_name
@@ -553,7 +554,7 @@ class SM64_AnimTableElement:
 class SM64_AnimTable:
     reference: str | int = None
     enum_list_reference: str = ""
-    enum_list_end: str = ""
+    enum_list_delimiter: str = ""
     file_name: str = ""
     elements: list[SM64_AnimTableElement] = dataclasses.field(default_factory=list)
     # Importing
@@ -562,6 +563,8 @@ class SM64_AnimTable:
     values_reference: str = ""
     start: int = -1
     end: int = -1
+    enum_list_start: int = -1
+    enum_list_end: int = -1
 
     @property
     def names(self) -> tuple[list[str], list[str]]:
