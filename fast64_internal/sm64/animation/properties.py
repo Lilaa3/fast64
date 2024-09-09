@@ -792,8 +792,7 @@ class SM64_AnimImportProperties(PropertyGroup):
         col = layout.column()
         col.label(text="Uses scene import ROM by default", icon="INFO")
         prop_split(col, self, "rom", "Import ROM")
-        picked_rom = abspath(self.rom or import_rom)
-        return import_rom_ui_warnings(col, picked_rom)
+        return import_rom_ui_warnings(col, abspath(self.rom or import_rom))
 
     def draw_table_settings(self, layout: UILayout):
         row = layout.row(align=True)

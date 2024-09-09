@@ -1,7 +1,9 @@
 from typing import TYPE_CHECKING
+from pathlib import Path
 
 from bpy.utils import register_class, unregister_class
 from bpy.types import Context
+from bpy.path import abspath
 
 from ...utility_anim import is_action_stashed, CreateAnimData, AddBasicAction, StashAction
 from ...panels import SM64_Panel
@@ -19,6 +21,7 @@ from .operators import SM64_ExportAnim, SM64_ExportAnimTable
 if TYPE_CHECKING:
     from ..settings.properties import SM64_Properties
     from ..sm64_objects import SM64_CombinedObjectProperties
+    from .properties import SM64_AnimImportProperties
 
 
 # Base
@@ -45,7 +48,7 @@ class ObjAnimPanel(AnimationPanel):
 class SceneAnimPanelMain(SceneAnimPanel):
     bl_parent_id = ""
 
-    def draw(self, context: Context):
+    def draw(self, context):
         col = self.layout.column()
         sm64_props: SM64_Properties = context.scene.fast64.sm64
         combined_props: SM64_CombinedObjectProperties = sm64_props.combined_export
@@ -68,7 +71,7 @@ class ObjAnimPanelMain(ObjAnimPanel):
     def poll(cls, context: Context):
         return get_anim_obj(context) is not None
 
-    def draw(self, context: Context):
+    def draw(self, context):
         sm64_props: SM64_Properties = context.scene.fast64.sm64
         get_anim_props(context).draw_props(
             self.layout, sm64_props.export_type, sm64_props.combined_export.export_header_type
@@ -81,7 +84,7 @@ class ObjAnimPanelMain(ObjAnimPanel):
 class AnimationPanelAction(AnimationPanel):
     bl_label = "Action Inspector"
 
-    def draw(self, context: Context):
+    def draw(self, context):
         col = self.layout.column()
 
         if context.object.animation_data is None:
@@ -140,7 +143,7 @@ class ObjAnimPanelTable(ObjAnimPanel):
     bl_label = "Table"
     bl_idname = "OBJECT_PT_SM64_anim_table"
 
-    def draw(self, context: Context):
+    def draw(self, context):
         sm64_props: SM64_Properties = context.scene.fast64.sm64
         get_anim_props(context).draw_table(
             self.layout,
@@ -156,9 +159,10 @@ class AnimationPanelImport(AnimationPanel):
     bl_label = "Importing"
     import_panel = True
 
-    def draw(self, context: Context):
+    def draw(self, context):
         sm64_props: SM64_Properties = context.scene.fast64.sm64
-        sm64_props.animation.importing.draw_props(self.layout, sm64_props.import_rom, sm64_props.decomp_path)
+        importing: SM64_AnimImportProperties = sm64_props.animation.importing
+        importing.draw_props(self.layout, sm64_props.import_rom, sm64_props.decomp_path)
 
 
 class SceneAnimPanelImport(SceneAnimPanel, AnimationPanelImport):
