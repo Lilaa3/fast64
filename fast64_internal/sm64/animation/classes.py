@@ -700,13 +700,11 @@ class SM64_AnimTable:
         if null_delimiter:
             table_length += 4
         if data_address == -1:
-            headers_offset = table_address + table_length
-        else:
-            headers_offset = data_address
+            data_address = table_address + table_length
         if data_set:
             headers_length = len(headers_set) * HEADER_SIZE
             value_table, indice_tables = create_tables(data_set, self.values_reference)
-            indice_tables_offset = headers_offset + headers_length
+            indice_tables_offset = data_address + headers_length
             values_table_offset = indice_tables_offset + sum(
                 len(indice_table.data) * 2 for indice_table in indice_tables
             )
@@ -715,7 +713,7 @@ class SM64_AnimTable:
         for i, element in enumerate(self.elements):
             if element.header:
                 ptrs.append(table_address + len(table_data))
-                header_offset = headers_offset + (headers_set.index(element.header) * HEADER_SIZE)
+                header_offset = data_address + (headers_set.index(element.header) * HEADER_SIZE)
                 if segment_data:
                     table_data.extend(encodeSegmentedAddr(header_offset, segment_data))
                 else:
