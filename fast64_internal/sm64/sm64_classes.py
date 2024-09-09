@@ -1,10 +1,10 @@
 from io import BufferedReader, StringIO
 from typing import BinaryIO
 import dataclasses
-import numpy as np
 import shutil
 import struct
 import os
+import numpy as np
 
 from ..utility import intToHex, tempName, decodeSegmentedAddr, PluginError
 from .sm64_constants import insertableBinaryTypes, SegmentData
