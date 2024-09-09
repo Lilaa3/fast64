@@ -1,6 +1,6 @@
+from typing import TYPE_CHECKING
 import functools
 import re
-from typing import TYPE_CHECKING
 
 from bpy.types import Context, Object, Action, PoseBone
 

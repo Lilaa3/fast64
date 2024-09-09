@@ -1,5 +1,5 @@
-import re
 import struct
+import re
 
 from ...utility import intToHex, COMMENT_PATTERN
 from ..sm64_constants import ACTOR_PRESET_INFO, ActorPresetInfo

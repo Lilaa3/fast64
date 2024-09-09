@@ -1,11 +1,11 @@
+from typing import Optional
+from enum import IntFlag
+from io import StringIO
+from copy import copy
 import dataclasses
 import os
 import re
 import numpy as np
-from enum import IntFlag
-from copy import copy
-from io import StringIO
-from typing import Optional
 
 from bpy.types import Action
 

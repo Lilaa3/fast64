@@ -1,5 +1,4 @@
 from typing import TYPE_CHECKING
-from pathlib import Path
 
 from bpy.utils import register_class, unregister_class
 from bpy.types import Context

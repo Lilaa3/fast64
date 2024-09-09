@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING, Optional
 from pathlib import Path
 import dataclasses
-import numpy as np
 import functools
 import os
 import re
+import numpy as np
 
 import bpy
 from bpy.path import abspath

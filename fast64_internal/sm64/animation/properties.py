@@ -1,5 +1,5 @@
-import os
 from pathlib import Path
+import os
 
 import bpy
 from bpy.types import PropertyGroup, Action, UILayout, Scene, Context
