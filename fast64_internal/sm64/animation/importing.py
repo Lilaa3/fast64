@@ -1,23 +1,17 @@
+from typing import TYPE_CHECKING, Optional
+from pathlib import Path
+import dataclasses
+import numpy as np
 import functools
 import os
 import re
-import dataclasses
-import numpy as np
-from typing import TYPE_CHECKING, Optional
 
 import bpy
 from bpy.path import abspath
 from bpy.types import Object, Action, Context, PoseBone
 from mathutils import Quaternion
 
-from ...utility import (
-    PluginError,
-    decodeSegmentedAddr,
-    filepath_checks,
-    path_checks,
-    intToHex,
-    removeComments,
-)
+from ...utility import PluginError, decodeSegmentedAddr, filepath_checks, path_checks, intToHex, removeComments
 from ...utility_anim import create_basic_action
 from ..sm64_constants import level_pointers
 from ..sm64_level_parser import parseLevelAtPointer
@@ -418,7 +412,7 @@ def update_table_with_table_enum(table: SM64_AnimTable, enum_table: SM64_AnimTab
     table.enum_list_end = enum_table.enum_list_end
 
 
-def import_enums(c_data: str, path: os.PathLike, specific_name=""):
+def import_enums(c_data: str, path: Path, specific_name=""):
     tables = []
     for list_match in re.finditer(TABLE_ENUM_LIST_PATTERN, c_data):
         name, content = list_match.group("name"), list_match.group("content")
@@ -429,7 +423,7 @@ def import_enums(c_data: str, path: os.PathLike, specific_name=""):
         list_start, list_end = c_data.find(content, list_match.start()), list_match.end()
         content = c_data[list_start:list_end]
         table = SM64_AnimTable(
-            file_name=os.path.basename(path),
+            file_name=path.name,
             enum_list_reference=name,
             enum_list_start=list_start,
             enum_list_end=list_end,
@@ -449,7 +443,7 @@ def import_enums(c_data: str, path: os.PathLike, specific_name=""):
 
 def import_tables(
     c_data: str,
-    path: os.PathLike,
+    path: Path,
     specific_name="",
     header_decls: list[CArrayDeclaration] = None,
     values_decls: list[CArrayDeclaration] = None,
@@ -471,9 +465,7 @@ def import_tables(
             continue
 
         table_start, table_end = c_data.find(content, table_match.start()), table_match.end()
-        table = SM64_AnimTable(
-            name, file_name=os.path.basename(path), elements=table_elements, start=table_start, end=table_end
-        )
+        table = SM64_AnimTable(name, file_name=path.name, elements=table_elements, start=table_start, end=table_end)
         table.read_c(c_data[table_start:table_end], read_headers, header_decls, values_decls, indices_decls)
         tables.append(table)
     return tables
@@ -486,56 +478,40 @@ DECL_PATTERN = re.compile(
 VALUE_SPLIT_PATTERN = re.compile(r"\s*([^,\s]+)\s*(?:,|$)")
 
 
-def find_decls(c_data: str, path: os.PathLike, decl_list: dict[str, list[CArrayDeclaration]]):
-    file_basename = os.path.basename(path)
+def find_decls(c_data: str, path: Path, decl_list: dict[str, list[CArrayDeclaration]]):
     matches = DECL_PATTERN.findall(c_data)
     for decl_type, name, value_text in matches:
         values = VALUE_SPLIT_PATTERN.findall(value_text)
-        decl_list[decl_type].append(CArrayDeclaration(name, path, file_basename, values))
+        decl_list[decl_type].append(CArrayDeclaration(name, path, path.name, values))
 
 
-def import_c_animations(path: os.PathLike):
+def import_c_animations(path: Path):
     path_checks(path)
-    if os.path.isfile(path):
+    if path.is_file():
         file_paths = [path]
+    elif path.is_dir():
+        file_paths = sorted([f for f in path.rglob("*") if f.suffix in {".c", ".h"}])
     else:
-        file_paths = sorted(
-            [os.path.join(root, filename) for root, _, files in os.walk(path) for filename in files],
-        )
+        raise PluginError("Path does not exist.")
 
-    print(f"Reading from: {', '.join(file_paths)}.")
+    print("Reading from:\n" + "\n".join([f.name for f in file_paths]))
+    c_files = {file_path: removeComments(file_path.read_text()) for file_path in file_paths}
+
     decl_lists = {"static const struct Animation": [], "static const u16": [], "static const s16": []}
     header_decls, indices_decls, value_decls = (
         decl_lists["static const struct Animation"],
         decl_lists["static const u16"],
         decl_lists["static const s16"],
     )
-
-    c_files = {}
-    for file_path in file_paths:
-        print(f"Reading from: {file_path}.")
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-            c_files[file_path] = removeComments(f.read())
-
-    for file_path, c_data in c_files.items():
-        find_decls(c_data, file_path, decl_lists)
-
     tables: list[SM64_AnimTable] = []
     for file_path, c_data in c_files.items():
-        tables.extend(
-            import_tables(
-                c_data,
-                file_path,
-                None,
-                header_decls,
-                value_decls,
-                indices_decls,
-            )
-        )
-        if len(tables) > 1:
-            raise ValueError("More than 1 table declaration")
+        find_decls(c_data, file_path, decl_lists)
+    for file_path, c_data in c_files.items():
+        tables.extend(import_tables(c_data, file_path, None, header_decls, value_decls, indices_decls))
 
-    if tables:
+    if len(tables) > 1:
+        raise ValueError("More than 1 table declaration")
+    elif len(tables) == 1:
         table: SM64_AnimTable = tables[0]
         read_headers = {header.reference: header for header in table.header_set}
         return table, read_headers
@@ -646,9 +622,7 @@ def import_animations(context: Context):
                         *binary_args,
                     )
     elif import_props.import_type == "C":
-        c_path = abspath(import_props.path)
-        path_checks(c_path)
-        table, read_headers = import_c_animations(c_path)
+        table, read_headers = import_c_animations(Path(abspath(import_props.path)))
         table = table or SM64_AnimTable()
     else:
         raise NotImplementedError(f"Unimplemented animation import type {import_props.import_type}")

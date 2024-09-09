@@ -93,7 +93,7 @@ class SM64_Properties(PropertyGroup):
     @property
     def binary_export(self):
         return self.export_type in {"Binary", "Insertable Binary"}
-    
+
     @property
     def abs_decomp_path(self) -> Path:
         return Path(abspath(self.decomp_path))
