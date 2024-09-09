@@ -709,7 +709,7 @@ class SM64_AnimImportProperties(PropertyGroup):
     def table_index(self):
         if self.read_entire_table:
             return
-        elif self.preset_animation == "Custom" or self.import_type == "Insertable Binary":
+        elif self.preset_animation == "Custom" or not self.use_preset:
             return self.table_index_prop
         else:
             return int_from_str(self.preset_animation)
@@ -738,6 +738,10 @@ class SM64_AnimImportProperties(PropertyGroup):
     @property
     def table_size(self):
         return None if self.check_null else self.table_size_prop
+
+    @property
+    def use_preset(self):
+        return not self.import_type == "Insertable Binary" and self.preset == "Custom"
 
     def upgrade_old_props(self, scene: Scene):
         upgrade_old_prop(

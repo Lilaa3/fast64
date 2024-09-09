@@ -634,7 +634,7 @@ def import_animations(context: Context):
     seperate_anims = table.get_seperate_anims()
 
     actor_name = get_anim_actor_name(context)
-    if import_props.preset in ACTOR_PRESET_INFO:
+    if import_props.use_preset and import_props.preset in ACTOR_PRESET_INFO:
         preset_animation_names = get_preset_anim_name_list(import_props.preset)
         for animation in seperate_anims:
             if len(animation.headers) == 0:
@@ -711,7 +711,7 @@ def get_enum_from_import_preset(_import_props: "SM64_AnimImportProperties", cont
 
 
 def update_table_preset(import_props: "SM64_AnimImportProperties", context):
-    if import_props.import_type == "Insertable Binary" or import_props.preset == "Custom":
+    if not import_props.use_preset:
         return
 
     preset = ACTOR_PRESET_INFO[import_props.preset]
