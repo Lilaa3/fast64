@@ -855,7 +855,7 @@ def export_animation_c(
     animation: SM64_Anim,
     anim_props: "SM64_ArmatureAnimProperties",
     combined_props: "SM64_CombinedObjectProperties",
-    decomp: os.PathLike,
+    decomp: Path,
     actor_name: str,
     designated: bool,
 ):
@@ -923,7 +923,7 @@ def export_animation(context: Context, obj: Object):
         raise PluginError(f"Failed to generate animation class. {exc}") from exc
     if sm64_props.export_type == "C":
         export_animation_c(
-            animation, anim_props, combined_props, abspath(sm64_props.decomp_path), actor_name, sm64_props.designated
+            animation, anim_props, combined_props, sm64_props.abs_decomp_path, actor_name, sm64_props.designated
         )
     elif sm64_props.export_type == "Insertable Binary":
         export_animation_insertable(
@@ -978,7 +978,7 @@ def export_animation_table(context: Context, obj: Object):
     print("Exporting table data")
     if sm64_props.export_type == "C":
         export_animation_table_c(
-            anim_props, combined_props, table, Path(abspath(sm64_props.decomp_path)), actor_name, sm64_props.designated
+            anim_props, combined_props, table, sm64_props.abs_decomp_path, actor_name, sm64_props.designated
         )
     elif sm64_props.export_type == "Insertable Binary":
         export_animation_table_insertable(
