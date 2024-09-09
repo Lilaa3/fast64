@@ -585,6 +585,7 @@ def import_animations(context: Context):
     print("Reading animation data.")
 
     if import_props.binary:
+        rom_path = Path(abspath(import_props.rom if import_props.rom else sm64_props.import_rom))
         binary_args = (
             read_headers,
             table,
@@ -593,10 +594,9 @@ def import_animations(context: Context):
             import_props.table_size,
         )
     if import_props.import_type == "Binary":
-        rom_path = abspath(import_props.rom if import_props.rom else sm64_props.import_rom)
         import_rom_checks(rom_path)
         address = import_props.address
-        with open(rom_path, "rb") as rom_file:
+        with rom_path.open("rb") as rom_file:
             if import_props.binary_import_type == "DMA":
                 segment_data = None
             else:
@@ -609,18 +609,19 @@ def import_animations(context: Context):
                 *binary_args,
             )
     elif import_props.import_type == "Insertable Binary":
-        path = abspath(import_props.path)
-        filepath_checks(path)
-        with open(path, "rb") as insertable_file:
-            if not import_props.read_from_rom:
-                import_insertable_binary_animations(RomReader(insertable_file=insertable_file), *binary_args)
-            else:
-                with open(rom_path, "rb") as rom_file:
+        insertable_path = Path(abspath(import_props.path))
+        filepath_checks(insertable_path)
+        with insertable_path.open("rb") as insertable_file:
+            if import_props.read_from_rom:
+                import_rom_checks(rom_path)
+                with rom_path.open("rb") as rom_file:
                     segment_data = parseLevelAtPointer(rom_file, level_pointers[import_props.level]).segmentData
                     import_insertable_binary_animations(
                         RomReader(rom_file, insertable_file=insertable_file, segment_data=segment_data),
                         *binary_args,
                     )
+            else:
+                import_insertable_binary_animations(RomReader(insertable_file=insertable_file), *binary_args)
     elif import_props.import_type == "C":
         table, read_headers = import_c_animations(Path(abspath(import_props.path)))
         table = table or SM64_AnimTable()
