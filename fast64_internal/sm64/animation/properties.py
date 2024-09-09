@@ -741,7 +741,7 @@ class SM64_AnimImportProperties(PropertyGroup):
 
     @property
     def use_preset(self):
-        return not self.import_type == "Insertable Binary" and self.preset == "Custom"
+        return self.import_type != "Insertable Binary" and self.preset != "Custom"
 
     def upgrade_old_props(self, scene: Scene):
         upgrade_old_prop(

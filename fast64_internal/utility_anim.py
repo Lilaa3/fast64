@@ -1,5 +1,5 @@
 import bpy, math, mathutils
-from bpy.types import Object, Action
+from bpy.types import Object, Action, AnimData
 from bpy.utils import register_class, unregister_class
 from bpy.props import StringProperty
 
@@ -221,9 +221,10 @@ def getFrameInterval(action: bpy.types.Action):
 
 
 def is_action_stashed(obj: Object, action: Action):
-    if obj.animation_data is None:
+    animation_data: AnimData | None = obj.animation_data
+    if animation_data is None:
         return False
-    for track in obj.animation_data.nla_tracks:
+    for track in animation_data.nla_tracks:
         for strip in track.strips:
             if strip.action is None:
                 continue

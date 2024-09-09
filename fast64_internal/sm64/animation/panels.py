@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING
 
 from bpy.utils import register_class, unregister_class
 from bpy.types import Context
-from bpy.path import abspath
 
 from ...utility_anim import is_action_stashed, CreateAnimData, AddBasicAction, StashAction
 from ...panels import SM64_Panel
@@ -15,7 +14,7 @@ from .utility import (
     dma_structure_context,
     get_anim_obj,
 )
-from .operators import SM64_ExportAnim, SM64_ExportAnimTable
+from .operators import SM64_ExportAnim, SM64_ExportAnimTable, SM64_AddNLATracksToTable
 
 if TYPE_CHECKING:
     from ..settings.properties import SM64_Properties
@@ -143,6 +142,8 @@ class ObjAnimPanelTable(ObjAnimPanel):
     bl_idname = "OBJECT_PT_SM64_anim_table"
 
     def draw(self, context):
+        if SM64_AddNLATracksToTable.poll(context):
+            SM64_AddNLATracksToTable.draw_props(self.layout)
         sm64_props: SM64_Properties = context.scene.fast64.sm64
         get_anim_props(context).draw_table(
             self.layout,

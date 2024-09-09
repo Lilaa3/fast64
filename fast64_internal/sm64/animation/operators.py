@@ -100,7 +100,7 @@ class SM64_AnimTableOps(OperatorBase):
     header_variant: IntProperty()
 
     @classmethod
-    def is_enabled(cls, context: Context, op_name: str, index: int, **op_values):
+    def is_enabled(cls, context: Context, op_name: str, index: int, **_kwargs):
         table_elements = get_anim_props(context).elements
         if op_name == "MOVE_UP" and index == 0:
             return False
@@ -150,7 +150,7 @@ class SM64_AnimVariantOps(OperatorBase):
     action_name: StringProperty()
 
     @classmethod
-    def is_enabled(cls, context: Context, action_name: str, op_name: str, index: int, **op_values):
+    def is_enabled(cls, context: Context, action_name: str, op_name: str, index: int, **_kwargs):
         action_props = get_action_props(get_action(action_name))
         headers = action_props.headers
         if op_name == "REMOVE" and index == 0:
@@ -206,6 +206,38 @@ class SM64_AnimVariantOps(OperatorBase):
         else:
             raise NotImplementedError(f"Unimplemented table op {self.op_name}")
         action_props.update_variant_numbers()
+
+
+class SM64_AddNLATracksToTable(OperatorBase):
+    bl_idname = "scene.sm64_add_nla_tracks_to_table"
+    bl_label = "Add Existing NLA Tracks To Animation Table"
+    bl_description = "Adds all NLA tracks in the selected armature to the animation table"
+    bl_options = {"REGISTER", "UNDO", "PRESET"}
+    context_mode = "OBJECT"
+    icon = "NLA"
+
+    @classmethod
+    def poll(cls, context):
+        if get_anim_obj(context) is None or get_anim_obj(context).animation_data is None:
+            return False
+        actions = get_anim_props(context).actions
+        for track in context.object.animation_data.nla_tracks:
+            for strip in track.strips:
+                if strip.action is not None and strip.action not in actions:
+                    return True
+        return False
+
+    def execute_operator(self, context):
+        assert self.__class__.poll(context)
+        anim_props = get_anim_props(context)
+        for track in context.object.animation_data.nla_tracks:
+            for strip in track.strips:
+                action = strip.action
+                if action is None or action in anim_props.actions:
+                    continue
+                for header_variant in range(len(get_action_props(action).headers)):
+                    anim_props.elements.add()
+                    anim_props.elements[-1].set_variant(action, header_variant)
 
 
 class SM64_ExportAnimTable(OperatorBase):
@@ -292,6 +324,7 @@ classes = (
     SM64_PreviewAnim,
     SM64_AnimTableOps,
     SM64_AnimVariantOps,
+    SM64_AddNLATracksToTable,
     SM64_ImportAnim,
     SM64_SearchAnimPresets,
     SM64_SearchAnimatedBhvs,
