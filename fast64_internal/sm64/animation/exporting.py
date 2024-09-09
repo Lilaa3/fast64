@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 from pathlib import Path
 import os
-import re
 import numpy as np
 
 import bpy

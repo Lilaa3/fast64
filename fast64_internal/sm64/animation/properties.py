@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import bpy
 from bpy.types import PropertyGroup, Action, UILayout, Scene, Context
@@ -12,7 +13,7 @@ from bpy.props import (
     CollectionProperty,
     PointerProperty,
 )
-from bpy.path import abspath
+from bpy.path import abspath, clean_name
 
 from ...utility import (
     cast_integer,
@@ -25,7 +26,6 @@ from ...utility import (
     prop_split,
     intToHex,
     upgrade_old_prop,
-    to_valid_file_name,
     toAlnum,
 )
 from ...utility_anim import getFrameInterval
@@ -398,7 +398,7 @@ class SM64_ActionAnimProperty(PropertyGroup):
             return self.dma_name
         return toAlnum(f"anim_{action.name}")
 
-    def get_file_name(self, action: Action, export_type: str, dma=False) -> str:
+    def get_file_name(self, action: Action, export_type: str, dma=False) -> Path:
         if not export_type in {"C", "Insertable Binary"}:
             return ""
         if export_type == "C" and dma:
@@ -406,9 +406,8 @@ class SM64_ActionAnimProperty(PropertyGroup):
         elif self.use_custom_file_name:
             return self.custom_file_name
         else:
-            name = f"anim_{action.name}."
-            name += "inc.c" if export_type == "C" else "insertable"
-            return to_valid_file_name(name)
+            name = clean_name(f"anim_{action.name}", replace=" ")
+            return name + (".inc.c" if export_type == "C" else ".insertable")
 
     def get_max_frame(self, action: Action) -> int:
         if self.use_custom_max_frame:
@@ -500,7 +499,7 @@ class SM64_ActionAnimProperty(PropertyGroup):
                 string_int_prop(col, self, "end_address", "End Address")
         if export_type != "Binary" and export_seperately:
             if not dma or export_type == "Insertable Binary":
-                draw_custom_or_auto(self, col, "file_name", self.get_file_name(action, export_type))
+                draw_custom_or_auto(self, col, "file_name", str(self.get_file_name(action, export_type)))
             elif not in_table:
                 split = col.split(factor=0.5)
                 split.label(text="File Name")
