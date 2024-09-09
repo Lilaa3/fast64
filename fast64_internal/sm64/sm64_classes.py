@@ -1,5 +1,6 @@
 from io import BufferedReader, StringIO
 from typing import BinaryIO
+from pathlib import Path
 import dataclasses
 import shutil
 import struct
@@ -18,9 +19,8 @@ class InsertableBinaryData:
     start_address: int = 0
     ptrs: list[int] = dataclasses.field(default_factory=list)
 
-    def write(self, path: os.PathLike):
-        with open(path, "wb") as file:
-            file.write(self.to_binary())
+    def write(self, path: Path):
+        path.write_bytes(self.to_binary())
 
     def to_binary(self):
         data = bytearray()
