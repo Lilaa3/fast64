@@ -2244,7 +2244,7 @@ class SM64_CombinedObjectProperties(bpy.types.PropertyGroup):
 
     @property
     def actor_names(self) -> list:
-        return list(dict.fromkeys(filter(None, [self.obj_name_col, self.obj_name_gfx])).keys())
+        return list(dict.fromkeys(filter(None, [self.obj_name_col, self.obj_name_gfx, self.obj_name_anim])).keys())
 
     @property
     def export_locations(self) -> str | None:
@@ -2297,13 +2297,8 @@ class SM64_CombinedObjectProperties(bpy.types.PropertyGroup):
 
     def draw_anim_names(self, layout):
         anim_props = self.anim_object.fast64.sm64.animation
-        if self.export_header_type == "Actor":
-            if anim_props.is_dma:
-                layout.label(text=f"Animation path: {anim_props.dma_folder}(.c)")
-            else:
-                layout.label(text=f"Animation path: /actors/{toAlnum(self.obj_name_anim)}/(.c, .h)")
-        else:
-            self.draw_level_path(layout)
+        if anim_props.is_dma:
+            layout.label(text=f"Animation path: {anim_props.dma_folder}(.c)")
         layout.label(text=f"Animation table name: {self.anims_name}")
 
     def draw_obj_name(self, layout):
