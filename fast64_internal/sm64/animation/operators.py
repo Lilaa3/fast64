@@ -4,6 +4,7 @@ import bpy
 from bpy.utils import register_class, unregister_class
 from bpy.types import Context, Scene, Action
 from bpy.props import EnumProperty, StringProperty, IntProperty
+from bpy.app.handlers import persistent
 
 from ...operators import OperatorBase, SearchEnumOperatorBase
 from ...utility import copyPropertyGroup
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
     from .properties import SM64_AnimProperties, SM64_AnimHeaderProperties
 
 
+@persistent
 def emulate_no_loop(scene: Scene):
     if scene.gameEditorMode != "SM64":
         return
@@ -342,6 +344,3 @@ def anim_ops_register():
 def anim_ops_unregister():
     for cls in reversed(classes):
         unregister_class(cls)
-
-    if emulate_no_loop in bpy.app.handlers.frame_change_pre:
-        bpy.app.handlers.frame_change_pre.remove(emulate_no_loop)
