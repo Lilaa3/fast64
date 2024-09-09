@@ -14,7 +14,6 @@ from ...utility import (
     PluginError,
     decodeSegmentedAddr,
     filepath_checks,
-    is_bit_active,
     path_checks,
     intToHex,
     removeComments,
@@ -422,7 +421,9 @@ def update_table_with_table_enum(table: SM64_AnimTable, enum_table: SM64_AnimTab
 def import_enums(c_data: str, path: os.PathLike, specific_name=""):
     tables = []
     for list_match in re.finditer(TABLE_ENUM_LIST_PATTERN, c_data):
-        name, content = list_match.group("name").strip(), list_match.group("content")
+        name, content = list_match.group("name"), list_match.group("content")
+        if name is None and content is None:  # comment
+            continue
         if specific_name and name != specific_name:
             continue
         list_start, list_end = c_data.find(content, list_match.start()), list_match.end()
@@ -435,6 +436,8 @@ def import_enums(c_data: str, path: os.PathLike, specific_name=""):
         )
         for element_match in re.finditer(TABLE_ENUM_PATTERN, content):
             name, num = (element_match.group("name"), element_match.group("num"))
+            if name is None and num is None:  # comment
+                continue
             table.elements.append(
                 SM64_AnimTableElement(
                     enum_name=name, enum_val=num, enum_start=element_match.start(), enum_end=element_match.end()
@@ -461,7 +464,9 @@ def import_tables(
     tables: list[SM64_AnimTable] = []
     for table_match in re.finditer(TABLE_PATTERN, c_data):
         table_elements = []
-        name, content = table_match.group("name").strip(), table_match.group("content")
+        name, content = table_match.group("name"), table_match.group("content")
+        if name is None and content is None:  # comment
+            continue
         if specific_name and name != specific_name:
             continue
 

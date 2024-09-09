@@ -437,12 +437,15 @@ def update_anim_header(path: Path, table_name: str, gen_enums: bool, override_fi
 
 
 def update_enum_file(path: Path, override_files: bool, table: SM64_AnimTable):
-    if path.exists() and not override_files:
+    existing_file = path.exists() and not override_files
+    if existing_file:
         text = path.read_text()
     else:
         text = ""
 
-    if table.enum_list_start == -1 and table.enum_list_end == -1:  # create new table
+    if table.enum_list_start == -1 and table.enum_list_end == -1:  # create new enum list
+        if text and text[-1] not in {"\n", "\r"}:
+            text += "\n"
         table.enum_list_start = len(text)
         text += f"enum {table.enum_list_reference} {{\n"
         table.enum_list_end = len(text)
@@ -452,15 +455,22 @@ def update_enum_file(path: Path, override_files: bool, table: SM64_AnimTable):
     for i, element in enumerate(table.elements):
         if element.enum_start == -1 or element.enum_end == -1:
             content += f"\t{element.enum_c},\n"
-        else:
+            if existing_file:
+                print(f"Added enum list entrie {element.enum_c}.")
+            continue
+
+        old_text = content[element.enum_start : element.enum_end]
+        if old_text != element.enum_c:
             content = content[: element.enum_start] + element.enum_c + content[element.enum_end :]
-            # acccount for changed size
-            size_increase = len(element.enum_c) - (element.enum_end - element.enum_start)
-            for next_element in table.elements[i + 1 :]:
-                if next_element.enum_start != -1 and next_element.enum_end != -1:
-                    next_element.enum_start += size_increase
-                    next_element.enum_end += size_increase
-    if not os.path.exists(path):
+            if existing_file:
+                print(f'Replaced "{old_text}" with "{element.enum_c}".')
+        # acccount for changed size
+        size_increase = len(element.enum_c) - len(old_text)
+        for next_element in table.elements[i + 1 :]:
+            if next_element.enum_start != -1 and next_element.enum_end != -1:
+                next_element.enum_start += size_increase
+                next_element.enum_end += size_increase
+    if not existing_file:
         print(f"Creating enum list file at {path}.")
     text = text[: table.enum_list_start] + content + text[table.enum_list_end :]
     with open(path, "w", encoding="utf-8") as f:
@@ -518,7 +528,9 @@ def update_table_file(
                     if i == len(existing_table.elements) - 1:
                         element.enum_name = duplicate_name(table.enum_list_delimiter, prev_enums)
                     else:
-                        element.enum_name = duplicate_name(f"{existing_table.reference}_NULL", prev_enums)
+                        element.enum_name = duplicate_name(
+                            anim_name_to_enum_name(f"{existing_table.reference}_NULL"), prev_enums
+                        )
                     continue
                 element.enum_name = duplicate_name(
                     next(
@@ -530,18 +542,22 @@ def update_table_file(
 
         new_elements = existing_table.elements.copy()
         has_null_delimiter = existing_table.has_null_delimiter
-        for name, enum in zip(*table.names):
-            if name in existing_table.header_names and (not gen_enums or enum in existing_table.enum_names):
+        for element in table.elements:
+            if element.c_name in existing_table.header_names and (
+                not gen_enums or element.enum_name in existing_table.enum_names
+            ):
                 continue
             if has_null_delimiter:
-                new_elements[-1].reference = name
-                new_elements[-1].enum_name = enum
+                new_elements[-1].reference = element.reference
+                new_elements[-1].enum_name = element.enum_name
                 has_null_delimiter = False
             else:
-                new_elements.append(SM64_AnimTableElement(reference=name, enum_name=enum))
+                new_elements.append(element)
         table.elements = new_elements
         table.start, table.end = (existing_table.start, existing_table.end)
     else:  # create new table
+        if text and text[-1] not in {"\n", "\r"}:
+            text += "\n"
         table.start = len(text)
         text += f"const struct Animation *const {table.reference}[] = {{\n"
         table.end = len(text)

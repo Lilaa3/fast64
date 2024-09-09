@@ -523,7 +523,7 @@ class SM64_AnimTableElement:
     def c_name(self):
         if self.reference:
             return self.reference
-        return "NULL"
+        return ""
 
     @property
     def c_reference(self):
@@ -568,11 +568,7 @@ class SM64_AnimTable:
     def names(self) -> tuple[list[str], list[str]]:
         names, enums = [], []
         for element in self.elements:
-            if element.reference is None:
-                names.append("NULL")
-            else:
-                assert isinstance(element.reference, str), "Reference is not a string."
-                names.append(element.reference)
+            names.append(element.c_name)
             enums.append(element.enum_name)
         return names, enums
 
@@ -863,7 +859,13 @@ class SM64_AnimTable:
         indices_decls: list[CArrayDeclaration],
     ):
         for i, element_match in enumerate(re.finditer(TABLE_ELEMENT_PATTERN, c_data)):
-            enum, element = (element_match.group("enum"), element_match.group("element"))
+            enum, element, null = (
+                element_match.group("enum"),
+                element_match.group("element"),
+                element_match.group("null"),
+            )
+            if enum is None and element is None and null is None:  # comment
+                continue
             header = None
             if element is not None:
                 header_decl = next((header for header in header_decls if header.name == element), None)

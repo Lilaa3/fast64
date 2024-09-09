@@ -11,7 +11,7 @@ TABLE_ELEMENT_PATTERN = re.compile(  # strict but only in the sense that it requ
     r"""
     (?:COMMENT_PATTERN)|
     (?:\[\s*(?P<enum>\w+)\s*\]\s*=\s*)? # Don´t capture brackets or equal, works with nums
-    (?:(?:&\s*(?P<element>\w+))|(?:NULL)) # Capture element or null, element requires &
+    (?:(?:&\s*(?P<element>\w+))|(?P<null>NULL)) # Capture element or null, element requires &
     (?:\s*,|) # allow no comma, techinically not correct but no other method works
     """.replace(
         "COMMENT_PATTERN", COMMENT_PATTERN.pattern
@@ -22,15 +22,13 @@ TABLE_ELEMENT_PATTERN = re.compile(  # strict but only in the sense that it requ
 
 TABLE_PATTERN = re.compile(
     r"""
-    SKIP_COMMENT # CURRENTLY DOESNT WORK, FIX
-    const\s+struct\s*Animation\s*\*const\s*(?P<name>\w+)
+    (?:COMMENT_PATTERN)|
+    const\s+struct\s*Animation\s*\*const\s*(?P<name>\w+)\s*
     (?:\[.*?\])? # Optional size, don´t capture
     \s*=\s*\{
         (?P<content>(?:COMMENT_PATTERN|[\s\S])*) # Capture any character including new lines
     (?=\}\s*;) # Look ahead for the end
     """.replace(
-        "SKIP_COMMENT", f"(?:^(?:{COMMENT_PATTERN}))*"
-    ).replace(
         "COMMENT_PATTERN", COMMENT_PATTERN.pattern
     ),
     re.DOTALL | re.VERBOSE | re.MULTILINE,
@@ -39,12 +37,12 @@ TABLE_PATTERN = re.compile(
 
 TABLE_ENUM_PATTERN = re.compile(  # strict but only in the sense that it requires valid c code
     r"""
-    SKIP_COMMENT
+    (?:COMMENT_PATTERN)|
     (?P<name>\w+)\s*
     (?:\s*=\s*(?P<num>\w+)\s*)?
     (?=,|) # lookahead, allow no comma, techinically not correct but no other method works
     """.replace(
-        "SKIP_COMMENT", f"(?:^(?:{COMMENT_PATTERN.pattern}))*?"
+        "COMMENT_PATTERN", COMMENT_PATTERN.pattern
     ),
     re.DOTALL | re.VERBOSE | re.MULTILINE,
 )
@@ -52,13 +50,11 @@ TABLE_ENUM_PATTERN = re.compile(  # strict but only in the sense that it require
 
 TABLE_ENUM_LIST_PATTERN = re.compile(
     r"""
-    SKIP_COMMENT
+    (?:COMMENT_PATTERN)|
     enum\s*(?P<name>\w+)\s*\{
         (?P<content>(?:COMMENT_PATTERN|[\s\S])*) # Capture any character including new lines, lazy
     (?=\}\s*;)
     """.replace(
-        "SKIP_COMMENT", f"(?:^(?:{COMMENT_PATTERN.pattern}))*?"
-    ).replace(
         "COMMENT_PATTERN", COMMENT_PATTERN.pattern
     ),
     re.DOTALL | re.VERBOSE | re.MULTILINE,
