@@ -403,7 +403,7 @@ def to_table_class(
             )
         except Exception as exc:
             raise PluginError(f"Table element {i}: {exc}") from exc
-    if anim_props.null_delimiter:
+    if not dma and anim_props.null_delimiter:
         table.elements.append(SM64_AnimTableElement(enum_name=table.enum_list_delimiter))
     return table
 
@@ -925,7 +925,9 @@ def export_animation(context: Context, obj: Object):
             animation, anim_props.is_dma, Path(abspath(combined_props.insertable_directory_path))
         )
     elif sm64_props.export_type == "Binary":
-        with BinaryExporter(abspath(sm64_props.export_rom), abspath(sm64_props.output_rom)) as binary_exporter:
+        with BinaryExporter(
+            Path(abspath(sm64_props.export_rom)), Path(abspath(sm64_props.output_rom))
+        ) as binary_exporter:
             export_animation_binary(
                 binary_exporter,
                 animation,
@@ -980,7 +982,9 @@ def export_animation_table(context: Context, obj: Object):
             anim_props, table, anim_props.is_dma, Path(abspath(combined_props.insertable_directory_path))
         )
     elif sm64_props.export_type == "Binary":
-        with BinaryExporter(abspath(sm64_props.export_rom), abspath(sm64_props.output_rom)) as binary_exporter:
+        with BinaryExporter(
+            Path(abspath(sm64_props.export_rom)), Path(abspath(sm64_props.output_rom))
+        ) as binary_exporter:
             export_animation_table_binary(
                 binary_exporter,
                 anim_props,

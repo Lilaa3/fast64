@@ -7,9 +7,9 @@ import struct
 import os
 import numpy as np
 
-from ..utility import intToHex, tempName, decodeSegmentedAddr, PluginError
+from ..utility import intToHex, decodeSegmentedAddr, PluginError
 from .sm64_constants import insertableBinaryTypes, SegmentData
-from .sm64_utility import export_rom_checks
+from .sm64_utility import export_rom_checks, temp_file_path
 
 
 @dataclasses.dataclass
@@ -140,22 +140,22 @@ class RomReader:
 
 @dataclasses.dataclass
 class BinaryExporter:
-    export_rom: os.PathLike
-    output_rom: os.PathLike
+    export_rom: Path
+    output_rom: Path
     rom_file_output: BinaryIO = dataclasses.field(init=False)
-    temp_rom: os.PathLike = dataclasses.field(init=False)
+    temp_rom: Path = dataclasses.field(init=False)
 
     @property
     def tell(self):
         return self.rom_file_output.tell()
 
     def __enter__(self):
-        print("Binary export started, exporting to", self.output_rom)
         export_rom_checks(self.export_rom)
-        self.temp_rom: os.PathLike = tempName(self.output_rom)
+        print(f"Binary export started, exporting to {self.output_rom}")
+        self.temp_rom = temp_file_path(self.output_rom)
         print(f'Copying "{self.export_rom}" to temporary file "{self.temp_rom}".')
         shutil.copy(self.export_rom, self.temp_rom)
-        self.rom_file_output = open(self.temp_rom, "rb+")
+        self.rom_file_output = self.temp_rom.open("rb+")
         return self
 
     def write_to_range(self, start_address: int, end_address: int, data: bytes):
@@ -184,20 +184,20 @@ class BinaryExporter:
         return self.rom_file_output.write(s)
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.rom_file_output.close()
-        print("Closing temporary file.")
+        if self.temp_rom.exists():
+            print(f"Closing temporary file {self.temp_rom}.")
+            self.rom_file_output.close()
+        else:
+            raise FileNotFoundError(f"Temporary file {self.temp_rom} does not exist?")
         if exc_value:
             print("Deleting temporary file because of exception.")
-            if os.path.exists(self.temp_rom):
-                os.remove(self.temp_rom)
+            os.remove(self.temp_rom)
             print("Type:", exc_type, "\nValue:", exc_value, "\nTraceback:", traceback)
         else:
-            if not os.path.exists(self.temp_rom):
-                raise FileNotFoundError(f"Temporary file {self.temp_rom} does not exist?")
             print(f"Moving temporary file to {self.output_rom}.")
             if os.path.exists(self.output_rom):
                 os.remove(self.output_rom)
-            os.rename(self.temp_rom, self.output_rom)
+            self.temp_rom.rename(self.output_rom)
 
 
 @dataclasses.dataclass
