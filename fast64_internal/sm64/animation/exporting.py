@@ -472,8 +472,7 @@ def update_enum_file(path: Path, override_files: bool, table: SM64_AnimTable):
     if not existing_file:
         print(f"Creating enum list file at {path}.")
     text = text[: table.enum_list_start] + content + text[table.enum_list_end :]
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(text)
+    path.write_text(text)
 
 
 def update_table_file(
@@ -595,8 +594,7 @@ def update_table_file(
     if not existing_file:
         print(f"Creating table file at {table_path}.")
     text = text[: table.start] + content + text[table.end :]
-    with open(table_path, "w", encoding="utf-8") as f:
-        f.write(text)
+    table_path.write_text(text)
 
 
 def update_data_file(path: Path, anim_file_names: list, override_files: bool = False):
@@ -754,8 +752,7 @@ def export_animation_table_c(
         files_data = table.data_and_headers_to_c(anim_props.is_dma)
         print("Saving all generated data files")
         for file_name, file_data in files_data.items():
-            with open(anim_directory / file_name, "w", encoding="utf-8") as f:
-                f.write(file_data)
+            (anim_directory / file_name).write_text(file_data)
             print(file_name)
         if not anim_props.is_dma:
             update_data_file(
@@ -766,8 +763,7 @@ def export_animation_table_c(
     else:
         result = table.data_and_headers_to_c_combined()
         print("Saving generated data file")
-        with open(anim_directory / "data.inc.c", "w", encoding="utf-8") as f:
-            f.write(result)
+        (anim_directory / "data.inc.c").write_text(result)
     print("All animation data files exported.")
     if anim_props.is_dma:  # Don´t create an actual table and or update includes for dma exports
         return
@@ -865,9 +861,8 @@ def export_animation_c(
         anim_props, combined_props, actor_name, decomp
     )
 
-    anim_path = anim_directory / animation.file_name
-    with open(anim_path, "w", encoding="utf-8") as f:
-        f.write(animation.to_c(anim_props.is_dma))
+    (anim_directory / animation.file_name).write_text(animation.to_c(anim_props.is_dma))
+
     if anim_props.is_dma:  # Don´t create an actual table and don´t update includes for dma exports
         return
 
