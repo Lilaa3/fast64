@@ -687,11 +687,11 @@ def import_animations(context: Context):
             bpy.context.area.type = old_area
             obj.animation_data.action = old_action
 
+    if import_props.binary:
+        anim_props.is_dma = import_props.binary_import_type == "DMA"
     if table:
         print("Importing animation table into properties.")
         from_anim_table_class(anim_props, table, import_props.clear_table, import_props.use_custom_name, actor_name)
-        if import_props.binary and import_props.check_null:
-            anim_props.null_delimiter = True
 
 
 @functools.cache
