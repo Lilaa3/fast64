@@ -59,10 +59,10 @@ from .utility import (
 from .importing import get_enum_from_import_preset, update_table_preset
 
 
-def draw_custom_or_auto(holder, layout: UILayout, prop: str, default: str, factor=0.5):
+def draw_custom_or_auto(holder, layout: UILayout, prop: str, default: str, factor=0.5, **kwargs):
     use_custom_prop = "use_custom_" + prop
     name_split = layout.split(factor=factor)
-    name_split.prop(holder, use_custom_prop)
+    name_split.prop(holder, use_custom_prop, **kwargs)
     if getattr(holder, use_custom_prop):
         name_split.prop(holder, "custom_" + prop, text="")
     else:
@@ -497,10 +497,13 @@ class SM64_ActionAnimProperty(PropertyGroup):
             if export_type == "Binary" and not dma:
                 string_int_prop(col, self, "start_address", "Start Address")
                 string_int_prop(col, self, "end_address", "End Address")
-        if export_type != "Binary" and export_seperately:
-            if not dma or export_type == "Insertable Binary":
-                draw_custom_or_auto(self, col, "file_name", str(self.get_file_name(action, export_type)))
-            elif not in_table:
+        if export_type != "Binary" and (export_seperately or not in_table):
+            if not dma or export_type == "Insertable Binary":  # not c dma or insertable
+                text = "File Name"
+                if not in_table and not export_seperately:
+                    text = "File Name (individual action export)"
+                draw_custom_or_auto(self, col, "file_name", str(self.get_file_name(action, export_type)), text=text)
+            elif not in_table:  # C DMA forced auto name
                 split = col.split(factor=0.5)
                 split.label(text="File Name")
                 file_name = self.get_file_name(action, export_type, dma)
