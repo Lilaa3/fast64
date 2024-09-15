@@ -503,7 +503,7 @@ def addCollisionTriangles(
                     bleed_gfx_lists = BleedGfxLists()
                     bleed_gfx_lists.bled_mats = fmaterial.material.commands
                     for cmd in bleed_gfx_lists.bled_mats:
-                        bleed_gfx_lists.add_reset_cmd(cmd, reset_cmd_dict)
+                        bleed_gfx_lists.add_reset_cmd(fModel.f3d, cmd, reset_cmd_dict)
                     fmaterial.revert.commands = BleedGraphics().create_reset_cmds(
                         reset_cmd_dict, fModel.getRenderMode(draw_layer)
                     )
