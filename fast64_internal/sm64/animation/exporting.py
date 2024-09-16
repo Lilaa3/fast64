@@ -342,10 +342,10 @@ def to_table_element_class(
             indice_reference=indice_reference,
             dma=dma,
             export_type=export_type,
+            table_index=table_index,
             actor_name=actor_name,
             gen_enums=gen_enums,
             file_name=action_props.get_file_name(action, export_type),
-            table_index=table_index,
         ),
     )
     element.reference = element.header.reference
