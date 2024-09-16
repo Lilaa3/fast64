@@ -633,7 +633,7 @@ def import_animations(context: Context):
         table.elements = [SM64_AnimTableElement(header=header) for header in read_headers.values()]
     seperate_anims = table.get_seperate_anims()
 
-    actor_name = get_anim_actor_name(context)
+    actor_name: str = get_anim_actor_name(context)
     if import_props.use_preset and import_props.preset in ACTOR_PRESET_INFO:
         preset_animation_names = get_preset_anim_name_list(import_props.preset)
         for animation in seperate_anims:

@@ -895,7 +895,7 @@ def export_animation(context: Context, obj: Object):
     sm64_props: SM64_Properties = scene.fast64.sm64
     combined_props: SM64_CombinedObjectProperties = sm64_props.combined_export
     anim_props: SM64_ArmatureAnimProperties = obj.fast64.sm64.animation
-    actor_name = get_anim_actor_name(context)
+    actor_name: str = get_anim_actor_name(context)
 
     action = get_selected_action(obj)
     action_props = get_action_props(action)
@@ -948,7 +948,7 @@ def export_animation_table(context: Context, obj: Object):
     sm64_props: SM64_Properties = scene.fast64.sm64
     combined_props: SM64_CombinedObjectProperties = sm64_props.combined_export
     anim_props: SM64_ArmatureAnimProperties = obj.fast64.sm64.animation
-    actor_name = get_anim_actor_name(context)
+    actor_name: str = get_anim_actor_name(context)
 
     print("Stashing all actions in table")
     for action in anim_props.actions:
