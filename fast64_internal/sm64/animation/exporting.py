@@ -597,10 +597,10 @@ def update_table_file(
     table_path.write_text(text)
 
 
-def update_data_file(path: Path, anim_file_names: list, override_files: bool = False):
+def update_data_file(path: Path, anim_file_names: list[Path], override_files: bool = False):
     includes = []
     for anim_file_name in anim_file_names:
-        includes.append(f'"{anim_file_name}"')
+        includes.append(f'"{anim_file_name.as_posix()}"')
     if write_includes(path, includes, create_new=override_files):
         print(f"Updating animation data file includes at {path}")
 
