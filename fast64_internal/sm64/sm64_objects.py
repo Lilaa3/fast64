@@ -1453,6 +1453,7 @@ class BehaviorScriptProperty(bpy.types.PropertyGroup):
         "LOAD_COLLISION_DATA",
         "SET_MODEL",
         "LOAD_ANIMATIONS",
+        "ANIMATE"
         # add support later maybe
         # "SET_HITBOX_WITH_OFFSET",
         # "SET_HITBOX",
@@ -1512,6 +1513,12 @@ class BehaviorScriptProperty(bpy.types.PropertyGroup):
             if not props.anims_name:
                 raise PluginError("No animation name to inherit in behavior script")
             return f"oAnimations, {props.anims_name}"
+        if self.macro == "ANIMATE":
+            if not props.export_anim:
+                raise PluginError("Can't inherit animation table without exporting animation data")
+            if not props.anim_object:
+                raise PluginError("No animation properties to inherit in behavior script")
+            return f"oAnimations, {props.anim_object.fast64.sm64.animation.begining_animation}"
         return self.macro_args
 
     def get_args(self, context, props):

@@ -1059,7 +1059,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
             prev_enums,
         )
 
-    def draw_table(self, layout: UILayout, export_type: str, actor_name: str):
+    def draw_table(self, layout: UILayout, export_type: str, actor_name: str, bhv_export: bool):
         col = layout.column()
 
         if self.is_dma:
@@ -1102,13 +1102,14 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
                     SM64_SearchAnimatedBhvs.draw_props(box, self, "behaviour", "Behaviour")
                     if self.behaviour == "Custom":
                         prop_split(box, self, "behavior_address_prop", "Behavior Address")
-                    prop_split(box, self, "begining_animation", "Beginning Animation")
 
                 col.prop(self, "write_data_seperately")
                 if self.write_data_seperately:
                     string_int_prop(col, self, "data_address", "Data Address")
                     string_int_prop(col, self, "data_end_address", "Data End")
             col.prop(self, "null_delimiter")
+            if (export_type == "C" and bhv_export) or export_type == "Binary":
+                prop_split(col, self, "begining_animation", "Beginning Animation")
         if export_type == "Insertable Binary":
             prop_split(col, self, "insertable_file_name", "File Name")
 

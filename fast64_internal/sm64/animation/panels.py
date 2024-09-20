@@ -145,10 +145,9 @@ class ObjAnimPanelTable(ObjAnimPanel):
         if SM64_AddNLATracksToTable.poll(context):
             SM64_AddNLATracksToTable.draw_props(self.layout)
         sm64_props: SM64_Properties = context.scene.fast64.sm64
+        combined_props: SM64_CombinedObjectProperties = sm64_props.combined_export
         get_anim_props(context).draw_table(
-            self.layout,
-            sm64_props.export_type,
-            get_anim_actor_name(context),
+            self.layout, sm64_props.export_type, get_anim_actor_name(context), combined_props.export_bhv
         )
 
 

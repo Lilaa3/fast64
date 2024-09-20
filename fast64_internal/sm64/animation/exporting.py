@@ -22,8 +22,9 @@ from ...utility import (
     directory_path_checks,
 )
 from ...utility_anim import stashActionInArmature
+
 from ..sm64_constants import BEHAVIOR_COMMANDS, BEHAVIOR_EXITS, defaultExtendSegment4, level_pointers
-from ..sm64_utility import find_includes_and_externs, write_includes, update_actor_includes
+from ..sm64_utility import find_includes_and_externs, write_includes, update_actor_includes, int_from_str
 from ..sm64_classes import BinaryExporter, RomReader, InsertableBinaryData
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_rom_tweaks import ExtendBank0x04
@@ -45,7 +46,7 @@ from .utility import (
     get_action_props,
     duplicate_name,
 )
-from .constants import HEADER_SIZE, TABLE_ENUM_LIST_PATTERN, TABLE_ENUM_PATTERN
+from .constants import HEADER_SIZE
 
 if TYPE_CHECKING:
     from .properties import (
@@ -241,7 +242,7 @@ def to_animation_class(
 
     if can_reference and action_props.reference_tables:
         if export_type.endswith("Binary"):
-            values_reference, indice_reference = int(action_props.values_address, 0), int(
+            values_reference, indice_reference = int_from_str(action_props.values_address), int(
                 action_props.indices_address, 0
             )
         else:
@@ -294,7 +295,7 @@ def to_table_element_class(
         element.enum_name = enum
 
     if can_reference and element_props.reference:
-        reference = int(element_props.header_address, 0) if use_addresses else element_props.header_name
+        reference = int_from_str(element_props.header_address) if use_addresses else element_props.header_name
         element.reference = reference
         if reference == "":
             raise PluginError("Header is not set.")
@@ -316,8 +317,8 @@ def to_table_element_class(
         data = None
         if use_addresses:
             values_reference, indice_reference = (
-                int(action_props.values_address, 0),
-                int(action_props.indices_address, 0),
+                int_from_str(action_props.values_address),
+                int_from_str(action_props.indices_address),
             )
         else:
             values_reference, indice_reference = action_props.values_table, action_props.indices_table
@@ -653,7 +654,9 @@ def export_animation_table_binary(
 ):
     if is_dma:
         data = table.to_binary_dma()
-        binary_exporter.write_to_range(int(anim_props.dma_address, 0), int(anim_props.dma_end_address, 0), data)
+        binary_exporter.write_to_range(
+            get64bitAlignedAddr(int_from_str(anim_props.dma_address)), int_from_str(anim_props.dma_end_address), data
+        )
         return
 
     level_parsed = parseLevelAtPointer(binary_exporter.rom_file_output, level_pointers[level_option])
@@ -661,12 +664,12 @@ def export_animation_table_binary(
     if extend_bank_4:
         ExtendBank0x04(binary_exporter.rom_file_output, segment_data, defaultExtendSegment4)
 
-    address = get64bitAlignedAddr(int(anim_props.address, 0))
-    end_address = int(anim_props.end_address, 0)
+    address = get64bitAlignedAddr(int_from_str(anim_props.address))
+    end_address = int_from_str(anim_props.end_address)
 
     if anim_props.write_data_seperately:  # Write the data and the table into seperate address range
-        data_address = get64bitAlignedAddr(int(anim_props.data_address, 0))
-        data_end_address = int(anim_props.data_end_address, 0)
+        data_address = get64bitAlignedAddr(int_from_str(anim_props.data_address))
+        data_end_address = int_from_str(anim_props.data_end_address)
         table_data, data = table.to_combined_binary(address, data_address, segment_data, anim_props.null_delimiter)[:2]
         binary_exporter.write_to_range(address, end_address, table_data)
         binary_exporter.write_to_range(data_address, data_end_address, data)
@@ -678,7 +681,7 @@ def export_animation_table_binary(
             binary_exporter,
             decodeSegmentedAddr(anim_props.behavior_address.to_bytes(4, "big"), segment_data),
             encodeSegmentedAddr(address, segment_data),
-            int(anim_props.begining_animation, 0),
+            int_from_str(anim_props.begining_animation),
         )
 
 
@@ -792,7 +795,7 @@ def export_animation_binary(
     extend_bank_4: bool,
 ):
     if anim_props.is_dma:
-        dma_address = int(anim_props.dma_address, 0)
+        dma_address = int_from_str(anim_props.dma_address)
         print("Reading DMA table from ROM")
         table = SM64_AnimTable().read_dma_binary(
             reader=RomReader(rom_file=binary_exporter.rom_file_output, start_address=dma_address),
@@ -807,19 +810,15 @@ def export_animation_binary(
             table.elements[header.table_index] = SM64_AnimTableElement(header=header)
         print("Converting to binary data")
         data = table.to_binary_dma()
-        binary_exporter.write_to_range(
-            dma_address,
-            int(anim_props.dma_end_address, 0),
-            data,
-        )
+        binary_exporter.write_to_range(dma_address, int_from_str(anim_props.dma_end_address), data)
         return
     level_parsed = parseLevelAtPointer(binary_exporter.rom_file_output, level_pointers[level_option])
     segment_data = level_parsed.segmentData
     if extend_bank_4:
         ExtendBank0x04(binary_exporter.rom_file_output, segment_data, defaultExtendSegment4)
 
-    animation_address = get64bitAlignedAddr(int(action_props.start_address, 0))
-    animation_end_address = int(action_props.end_address, 0)
+    animation_address = get64bitAlignedAddr(int_from_str(action_props.start_address))
+    animation_end_address = int_from_str(action_props.end_address)
 
     data = animation.to_binary(animation_address, segment_data)[0]
     binary_exporter.write_to_range(
@@ -827,7 +826,7 @@ def export_animation_binary(
         animation_end_address,
         data,
     )
-    table_address = get64bitAlignedAddr(int(anim_props.address, 0))
+    table_address = get64bitAlignedAddr(int_from_str(anim_props.address))
     if anim_props.update_table:
         for i, header in enumerate(animation.headers):
             element_address = table_address + (4 * header.table_index)
@@ -838,7 +837,7 @@ def export_animation_binary(
             binary_exporter,
             decodeSegmentedAddr(anim_props.behavior_address.to_bytes(4, "big"), segment_data),
             encodeSegmentedAddr(table_address, segment_data),
-            int(anim_props.begining_animation, 0),
+            int_from_str(anim_props.begining_animation),
         )
 
 
