@@ -492,7 +492,7 @@ def import_c_animations(path: Path):
     elif path.is_dir():
         file_paths = sorted([f for f in path.rglob("*") if f.suffix in {".c", ".h"}])
     else:
-        raise PluginError("Path does not exist.")
+        raise PluginError("Path is neither a file or a folder but it exists, somehow.")
 
     print("Reading from:\n" + "\n".join([f.name for f in file_paths]))
     c_files = {file_path: removeComments(file_path.read_text()) for file_path in file_paths}
