@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 from pathlib import Path
 import os
+import typing
 import numpy as np
 
 import bpy
@@ -77,8 +78,12 @@ def trim_duplicates_vectorized(arr2d: np.ndarray) -> list:
 
 
 def get_entire_fcurve_data(
-    action: Action, anim_owner: PoseBone | Object, prop: str, max_frame: int, values: np.ndarray
-) -> list:
+    action: Action,
+    anim_owner: PoseBone | Object,
+    prop: str,
+    max_frame: int,
+    values: np.ndarray[tuple[typing.Any, typing.Any], np.dtype[np.float32]],
+):
     data_path = anim_owner.path_from_id(prop)
 
     default_values = list(getattr(anim_owner, prop))
