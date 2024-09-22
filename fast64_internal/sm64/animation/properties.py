@@ -98,7 +98,7 @@ def draw_list_ops(layout: UILayout, op_cls: type, index: int, **op_args):
         draw_list_op(layout, op_cls, op_name, index, **op_args)
 
 
-def set_if_different(owner, prop: str, value: str):
+def set_if_different(owner, prop: str, value):
     if getattr(owner, prop) != value:
         setattr(owner, prop, value)
 
@@ -184,20 +184,12 @@ class SM64_AnimHeaderProperties(PropertyGroup):
     # Binary
     table_index: IntProperty(name="Table Index", min=0)
 
-    def get_flags(self, allow_str: bool):
+    def get_flags(self, allow_str: bool) -> SM64_AnimFlags | str:
         if self.use_custom_flags:
-            try:
-                try:
-                    result = math_eval(self.custom_flags, SM64_AnimFlags)
-                except Exception as exc:
-                    raise ValueError(f"Failed to evaluate custom flags {exc}") from exc
-                if isinstance(result, str):
-                    raise ValueError("Failed to evaluate custom flags")
-                return SM64_AnimFlags(cast_integer(result, 16, signed=False))
-            except Exception as exc:
-                if allow_str:
-                    return self.custom_flags
-                raise exc
+            result = SM64_AnimFlags.evaluate(self.custom_flags)
+            if not allow_str and isinstance(result, str):
+                raise ValueError("Failed to evaluate custom flags")
+            return result
         value = SM64_AnimFlags(0)
         for prop, flag in SM64_AnimFlags.props_to_flags().items():
             if getattr(self, prop, False):
@@ -208,19 +200,12 @@ class SM64_AnimHeaderProperties(PropertyGroup):
     def int_flags(self):
         return self.get_flags(allow_str=False)
 
-    def set_flags(self, value: int | str, set_custom=True):
-        try:
-            value = math_eval(value, SM64_AnimFlags)  # try to evaluate in case of string
-        except Exception as exc:
-            print(f"Failed to evaluate flags {value}: {exc}")
-        if isinstance(value, SM64_AnimFlags):  # get int value from enum
-            value = value.value
-        if isinstance(value, int):  # the value was fully evaluated
-            value = cast_integer(value, 16, signed=False)  # cast to u16 for simplicity and readability
+    def set_flags(self, value: SM64_AnimFlags | str, set_custom=True):
+        if isinstance(value, SM64_AnimFlags):  # the value was fully evaluated
             for prop, flag in SM64_AnimFlags.props_to_flags().items():  # set prop flags
-                set_if_different(self, prop, bool(value & flag.value))
+                set_if_different(self, prop, flag in value)
             if set_custom:
-                if value & ~SM64_AnimFlags.all_flags_with_prop():  # if a flag does not have a prop
+                if value not in SM64_AnimFlags.all_flags_with_prop():  # if a flag does not have a prop
                     set_if_different(self, "use_custom_flags", True)
                 set_if_different(self, "custom_flags", intToHex(value, 2))
         elif isinstance(value, str):
@@ -228,7 +213,7 @@ class SM64_AnimHeaderProperties(PropertyGroup):
                 set_if_different(self, "custom_flags", value)
                 set_if_different(self, "use_custom_flags", True)
         else:  # invalid
-            raise ValueError(f"Invalid value: {value}")
+            raise ValueError(f"Invalid type: {value}")
 
     @property
     def manual_loop_range(self) -> tuple[int, int, int]:
@@ -912,7 +897,7 @@ class SM64_AnimProperties(PropertyGroup):
             action_props: SM64_ActionAnimProperty = get_action_props(action)
             action_props.header: SM64_AnimHeaderProperties
             if loop is not None:
-                action_props.header.set_flags(0x00 if loop else 0x01)
+                action_props.header.set_flags(SM64_AnimFlags(0) if loop else SM64_AnimFlags.ANIM_FLAG_NOLOOP)
             if start_address is not None:
                 action_props.start_address = intToHex(int(start_address, 16))
             if end_address is not None:

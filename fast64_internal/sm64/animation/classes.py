@@ -10,7 +10,9 @@ import numpy as np
 
 from bpy.types import Action
 
-from ...utility import PluginError, encodeSegmentedAddr, intToHex
+from ...f3d.f3d_parser import math_eval
+
+from ...utility import PluginError, cast_integer, encodeSegmentedAddr, intToHex
 from ..sm64_constants import MAX_U16, SegmentData
 from ..sm64_classes import RomReader, DMATable, DMATableElement, IntArray
 
@@ -194,6 +196,22 @@ class SM64_AnimFlags(IntFlag):
             names.append("unknown bits")
         return names
 
+    @classmethod
+    def evaluate(cls, value: str | int):
+        if isinstance(value, cls):
+            return value
+        elif isinstance(value, str):
+            try:
+                value = cls(math_eval(value, cls))
+            except Exception as exc:
+                print(f"Failed to evaluate flags {value}: {exc}")
+        if isinstance(value, int):  # the value was fully evaluated
+            if isinstance(value, SM64_AnimFlags):
+                value = value.value
+            return SM64_AnimFlags(cast_integer(value, 16, signed=False))  # cast to u16 for simplicity
+        else:
+            return value
+
 
 @dataclasses.dataclass
 class SM64_AnimHeader:
@@ -322,7 +340,7 @@ class SM64_AnimHeader:
         read_headers[str(reader.start_address)] = header
         header.reference = reader.start_address
 
-        header.flags = SM64_AnimFlags(reader.read_int(2, True))  # /*0x00*/ s16 flags;
+        header.flags = SM64_AnimFlags.evaluate(reader.read_int(2, True))  # /*0x00*/ s16 flags;
         header.trans_divisor = reader.read_int(2, True)  # /*0x02*/ s16 animYTransDivisor;
         header.start_frame = reader.read_int(2, True)  # /*0x04*/ s16 startFrame;
         header.loop_start = reader.read_int(2, True)  # /*0x06*/ s16 loopStart;
@@ -412,7 +430,7 @@ class SM64_AnimHeader:
                 designated[var_defs[i]] = value
 
         # Read from the dict
-        header.flags = designated["flags"]
+        header.flags = SM64_AnimFlags.evaluate(designated["flags"])
         header.trans_divisor = int(designated["animYTransDivisor"], 0)
         header.start_frame = int(designated["startFrame"], 0)
         header.loop_start = int(designated["loopStart"], 0)
