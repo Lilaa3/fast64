@@ -11,8 +11,10 @@ from bpy.path import abspath
 from bpy.types import Object, Action, Context, PoseBone
 from mathutils import Quaternion
 
+from ...f3d.f3d_parser import math_eval
 from ...utility import PluginError, decodeSegmentedAddr, filepath_checks, path_checks, intToHex, removeComments
 from ...utility_anim import create_basic_action
+
 from ..sm64_constants import level_pointers
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_utility import import_rom_checks
@@ -480,6 +482,7 @@ VALUE_SPLIT_PATTERN = re.compile(r"\s*(?:(?:\.(?P<var>\w+)|\[\s*(?P<designator>.
 
 
 def find_decls(c_data: str, path: Path, decl_list: dict[str, list[CArrayDeclaration]]):
+    """At this point a generilized c parser would be better"""
     matches = DECL_PATTERN.findall(c_data)
     for decl_type, name, value_text in matches:
         values = []
@@ -487,11 +490,17 @@ def find_decls(c_data: str, path: Path, decl_list: dict[str, list[CArrayDeclarat
             var, designator, val = match.group("var"), match.group("designator"), match.group("val")
             assert val is not None
             if designator is not None:
-                if isinstance(values, dict):
-                    raise PluginError("Invalid mix of designated initializers")
                 designator = math_eval(designator, object())
-                first_val = values[0] if values else "0"
-                values.extend([first_val] * (len(values) - designator))
+                if isinstance(designator, int):
+                    if isinstance(values, dict):
+                        raise PluginError("Invalid mix of designated initializers")
+                    first_val = values[0] if values else "0"
+                    values.extend([first_val] * (designator + 1 - len(values)))
+                else:
+                    if not values:
+                        values = {}
+                    elif isinstance(values, list):
+                        raise PluginError("Invalid mix of designated initializers")
                 values[designator] = val
             elif var is not None:
                 if not values:
