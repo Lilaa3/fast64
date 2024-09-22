@@ -1,3 +1,4 @@
+import functools
 from typing import Optional
 from enum import IntFlag
 from io import StringIO
@@ -162,6 +163,7 @@ class SM64_AnimFlags(IntFlag):
     ANIM_FLAG_UNUSED = 7
 
     @classmethod
+    @functools.cache
     def all_flags(cls):
         flags = SM64_AnimFlags(0)
         for flag in cls.__members__.values():
@@ -169,6 +171,7 @@ class SM64_AnimFlags(IntFlag):
         return flags
 
     @classmethod
+    @functools.cache
     def all_flags_with_prop(cls):
         flags = SM64_AnimFlags(0)
         for flag in cls.__members__.values():
@@ -177,20 +180,23 @@ class SM64_AnimFlags(IntFlag):
         return flags
 
     @classmethod
+    @functools.cache
     def props_to_flags(cls):
         return {flag.prop: flag for flag in cls.__members__.values() if flag.prop is not None}
 
     @classmethod
+    @functools.cache
     def flags_to_names(cls):
         names: dict[SM64_AnimFlags, list(str)] = {}
         for name, flag in cls.__members__.items():
-            if flag.value in names:
+            if flag in names:
                 names[flag].append(name)
             else:
                 names[flag] = [name]
         return names
 
     @property
+    @functools.cache
     def names(self) -> list[str]:
         names = ["/".join(names) for flag, names in SM64_AnimFlags.flags_to_names().items() if flag in self]
         if self & ~self.__class__.all_flags():
@@ -198,6 +204,7 @@ class SM64_AnimFlags(IntFlag):
         return names
 
     @classmethod
+    @functools.cache
     def evaluate(cls, value: str | int):
         if isinstance(value, cls):
             return value
