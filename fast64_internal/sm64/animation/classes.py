@@ -26,7 +26,7 @@ class CArrayDeclaration:
     name: str = ""
     path: os.PathLike = ""
     file_name: str = ""
-    values: list[str] | dict[str, str] = dataclasses.field(default_factory=str)
+    values: list[str] | dict[str, str] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass
