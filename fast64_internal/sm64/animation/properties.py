@@ -906,7 +906,7 @@ class SM64_AnimProperties(PropertyGroup):
         is_dma = scene.pop("loopAnimation", None)
         update_table = scene.pop("animExportStart", None)
         update_behavior = scene.pop("animExportEnd", None)
-        begining_animation = scene.pop("animExportEnd", None)
+        beginning_animation = scene.pop("animListIndexExport", None)
         for obj in bpy.data.objects:
             if not is_obj_animatable(obj):
                 continue
@@ -917,8 +917,8 @@ class SM64_AnimProperties(PropertyGroup):
                 anim_props.update_table = update_table
             if update_behavior is not None:
                 anim_props.update_behavior = update_behavior
-            if begining_animation is not None:
-                anim_props.begining_animation = begining_animation
+            if beginning_animation is not None:
+                anim_props.beginning_animation = beginning_animation
 
         # Deprecated:
         # - addr 0x27 was a pointer to a load anim cmd that would be used to update table pointers
@@ -971,7 +971,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
     update_behavior: BoolProperty(name="Update Behavior", default=True)
     behaviour: bpy.props.EnumProperty(items=enum_animated_behaviours, default=intToHex(0x13002EF8))
     behavior_address_prop: StringProperty(name="Behavior Address", default=intToHex(0x13002EF8))
-    begining_animation: StringProperty(name="Begining Animation", default="0x00")
+    beginning_animation: StringProperty(name="Begining Animation", default="0x00")
     # Mario animation table
     dma_address: StringProperty(name="DMA Table Address", default=intToHex(0x4EC000))
     dma_end_address: StringProperty(name="DMA Table End", default=intToHex(0x4EC000 + 0x8DC20))
@@ -1071,6 +1071,8 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
                 col.separator()
                 col.prop(self, "export_seperately_prop")
                 draw_forced(col, self, "override_files_prop", not self.export_seperately)
+                if bhv_export:
+                    prop_split(col, self, "beginning_animation", "Beginning Animation")
             elif export_type == "Binary":
                 string_int_prop(col, self, "address", "Table Address")
                 string_int_prop(col, self, "end_address", "Table End")
@@ -1087,14 +1089,13 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
                     SM64_SearchAnimatedBhvs.draw_props(box, self, "behaviour", "Behaviour")
                     if self.behaviour == "Custom":
                         prop_split(box, self, "behavior_address_prop", "Behavior Address")
+                    prop_split(box, self, "beginning_animation", "Beginning Animation")
 
                 col.prop(self, "write_data_seperately")
                 if self.write_data_seperately:
                     string_int_prop(col, self, "data_address", "Data Address")
                     string_int_prop(col, self, "data_end_address", "Data End")
             col.prop(self, "null_delimiter")
-            if (export_type == "C" and bhv_export) or export_type == "Binary":
-                prop_split(col, self, "begining_animation", "Beginning Animation")
         if export_type == "Insertable Binary":
             prop_split(col, self, "insertable_file_name", "File Name")
 

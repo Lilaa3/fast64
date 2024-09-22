@@ -682,7 +682,7 @@ def export_animation_table_binary(
             binary_exporter,
             decodeSegmentedAddr(anim_props.behavior_address.to_bytes(4, "big"), segment_data),
             encodeSegmentedAddr(address, segment_data),
-            int_from_str(anim_props.begining_animation),
+            int_from_str(anim_props.beginning_animation),
         )
 
 
@@ -838,7 +838,7 @@ def export_animation_binary(
             binary_exporter,
             decodeSegmentedAddr(anim_props.behavior_address.to_bytes(4, "big"), segment_data),
             encodeSegmentedAddr(table_address, segment_data),
-            int_from_str(anim_props.begining_animation),
+            int_from_str(anim_props.beginning_animation),
         )
 
 

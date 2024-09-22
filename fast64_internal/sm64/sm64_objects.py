@@ -1518,7 +1518,7 @@ class BehaviorScriptProperty(bpy.types.PropertyGroup):
                 raise PluginError("Can't inherit animation table without exporting animation data")
             if not props.anim_object:
                 raise PluginError("No animation properties to inherit in behavior script")
-            return f"oAnimations, {props.anim_object.fast64.sm64.animation.begining_animation}"
+            return f"oAnimations, {props.anim_object.fast64.sm64.animation.beginning_animation}"
         return self.macro_args
 
     def get_args(self, context, props):
