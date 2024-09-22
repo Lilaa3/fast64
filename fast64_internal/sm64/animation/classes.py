@@ -25,7 +25,7 @@ class CArrayDeclaration:
     name: str = ""
     path: os.PathLike = ""
     file_name: str = ""
-    values: list[str] = dataclasses.field(default_factory=str)
+    values: list[str] | dict[str, str] = dataclasses.field(default_factory=str)
 
 
 @dataclasses.dataclass
@@ -408,26 +408,25 @@ class SM64_AnimHeader:
         header.file_name = header_decl.file_name
 
         # Place the values into a dictionary, handles designated initialization
-        var_defs = [
-            "flags",
-            "animYTransDivisor",
-            "startFrame",
-            "loopStart",
-            "loopEnd",
-            "unusedBoneCount",
-            "values",
-            "index",
-            "length",
-        ]
-        designated = {}
-        for i, value in enumerate(header_decl.values):
-            var_value_split: list[str] = value.split("=")
-            value = var_value_split[-1].strip()
-            if len(var_value_split) == 2:
-                var = var_value_split[0].replace(".", "", 1).strip()
+        if isinstance(header_decl.values, list):
+            designated = {}
+            for value, var in zip(
+                header_decl.values,
+                [
+                    "flags",
+                    "animYTransDivisor",
+                    "startFrame",
+                    "loopStart",
+                    "loopEnd",
+                    "unusedBoneCount",
+                    "values",
+                    "index",
+                    "length",
+                ],
+            ):
                 designated[var] = value
-            else:
-                designated[var_defs[i]] = value
+        else:
+            designated = header_decl.values
 
         # Read from the dict
         header.flags = SM64_AnimFlags.evaluate(designated["flags"])

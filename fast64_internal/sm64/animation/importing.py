@@ -472,16 +472,37 @@ def import_tables(
 
 
 DECL_PATTERN = re.compile(
-    r"(static\s+const\s+struct\s+Animation|static\s+const\s+u16|static\s+const\s+s16)\s+(\w+)\s*?(?:\[.*?\])?\s*?=\s*?\{(.*?)\};",
+    r"(static\s+const\s+struct\s+Animation|static\s+const\s+u16|static\s+const\s+s16)\s+"
+    r"(\w+)\s*?(?:\[.*?\])?\s*?=\s*?\{(.*?)\};",
     re.DOTALL,
 )
-VALUE_SPLIT_PATTERN = re.compile(r"\s*([^,\s]+)\s*(?:,|$)")
+VALUE_SPLIT_PATTERN = re.compile(r"\s*(?:(?:\.(?P<var>\w+)|\[\s*(?P<designator>.*?)\s*\])\s*=\s*)?(?P<val>.+?)(?:,|\Z)")
 
 
 def find_decls(c_data: str, path: Path, decl_list: dict[str, list[CArrayDeclaration]]):
     matches = DECL_PATTERN.findall(c_data)
     for decl_type, name, value_text in matches:
-        values = VALUE_SPLIT_PATTERN.findall(value_text)
+        values = []
+        for match in VALUE_SPLIT_PATTERN.finditer(value_text):
+            var, designator, val = match.group("var"), match.group("designator"), match.group("val")
+            assert val is not None
+            if designator is not None:
+                if isinstance(values, dict):
+                    raise PluginError("Invalid mix of designated initializers")
+                designator = math_eval(designator, object())
+                first_val = values[0] if values else "0"
+                values.extend([first_val] * (len(values) - designator))
+                values[designator] = val
+            elif var is not None:
+                if not values:
+                    values = {}
+                elif isinstance(values, list):
+                    raise PluginError("Mix of designated and positional variable assignment")
+                values[var] = val
+            else:
+                if isinstance(values, dict):
+                    raise PluginError("Mix of designated and positional variable assignment")
+                values.append(val)
         decl_list[decl_type].append(CArrayDeclaration(name, path, path.name, values))
 
 
