@@ -158,7 +158,7 @@ class BinaryExporter:
         self.rom_file_output = self.temp_rom.open("rb+")
         return self
 
-    def write_to_range(self, start_address: int, end_address: int, data: bytes):
+    def write_to_range(self, start_address: int, end_address: int, data: bytes | bytearray):
         address_range_str = f"[{intToHex(start_address)}, {intToHex(end_address)}]"
         if end_address < start_address:
             raise PluginError(f"Start address is higher than the end address: {address_range_str}")
