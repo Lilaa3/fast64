@@ -69,6 +69,7 @@ def trim_duplicates_vectorized(arr2d: np.ndarray) -> list:
     mask = arr2d != last_elements[:, None]
     #  Reverse the order, find the last element with the same value
     trim_indices = np.argmax(mask[:, ::-1], axis=1)
+    # return list(arr2d)  # uncomment to test large sizes
     return [
         sub_array if index == 1 else sub_array[: 1 if index == 0 else (-index + 1)]
         for sub_array, index in zip(arr2d, trim_indices)
@@ -598,10 +599,10 @@ def update_table_file(
     table_path.write_text(text)
 
 
-def update_data_file(path: Path, anim_file_names: list[Path], override_files: bool = False):
+def update_data_file(path: Path, anim_file_names: list[str], override_files: bool = False):
     includes = []
     for anim_file_name in anim_file_names:
-        includes.append(f'"{anim_file_name.as_posix()}"')
+        includes.append(f'"{anim_file_name}"')
     if write_includes(path, includes, create_new=override_files):
         print(f"Updating animation data file includes at {path}")
 
@@ -670,11 +671,11 @@ def export_animation_table_binary(
     if anim_props.write_data_seperately:  # Write the data and the table into seperate address range
         data_address = get64bitAlignedAddr(int_from_str(anim_props.data_address))
         data_end_address = int_from_str(anim_props.data_end_address)
-        table_data, data = table.to_combined_binary(address, data_address, segment_data, anim_props.null_delimiter)[:2]
+        table_data, data = table.to_combined_binary(address, data_address, segment_data)[:2]
         binary_exporter.write_to_range(address, end_address, table_data)
         binary_exporter.write_to_range(data_address, data_end_address, data)
     else:  # Write table then the data in one address range
-        table_data, data = table.to_combined_binary(address, -1, segment_data, anim_props.null_delimiter)[:2]
+        table_data, data = table.to_combined_binary(address, -1, segment_data)[:2]
         binary_exporter.write_to_range(address, end_address, table_data + data)
     if anim_props.update_behavior:
         update_behaviour_binary(
@@ -694,7 +695,7 @@ def export_animation_table_insertable(
         data = table.to_binary_dma()
         InsertableBinaryData("Animation DMA Table", data).write(path)
     else:
-        table_data, data, ptrs = table.to_combined_binary(null_delimiter=anim_props.null_delimiter)
+        table_data, data, ptrs = table.to_combined_binary()
         InsertableBinaryData("Animation Table", table_data + data, 0, ptrs).write(path)
 
 

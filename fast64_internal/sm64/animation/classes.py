@@ -5,6 +5,7 @@ from copy import copy
 import dataclasses
 import os
 import re
+import typing
 import numpy as np
 
 from bpy.types import Action
@@ -27,7 +28,7 @@ class CArrayDeclaration:
 
 @dataclasses.dataclass
 class SM64_AnimPair:
-    values: np.array = dataclasses.field(compare=False)
+    values: np.ndarray[typing.Any, np.dtype[np.int16]] = dataclasses.field(compare=False)
 
     # Importing
     address: int = 0
@@ -67,12 +68,17 @@ class SM64_AnimData:
     def key(self):
         return (self.indice_reference, self.values_reference)
 
+    def create_tables(self, start_address=-1):
+        indice_tables, value_tables = create_tables([self], start_address=start_address)
+        assert (
+            len(value_tables) == 1 and len(indice_tables) == 1
+        ), "Single animation data export should only return 1 of each table."
+        return indice_tables[0], value_tables[0]
+
     def to_c(self, dma_structure: bool = False):
         text_data = StringIO()
 
-        value_table, indice_tables = create_tables([self])
-        indice_table = indice_tables[0]
-
+        indice_table, value_table = self.create_tables()
         if dma_structure:
             text_data.write(indice_table.to_c())
             text_data.write("\n")
@@ -84,12 +90,11 @@ class SM64_AnimData:
 
         return text_data.getvalue()
 
-    def to_binary(self) -> bytearray:
-        value_table, indice_tables = create_tables([self])
-        indice_table = indice_tables[0]
+    def to_binary(self, start_address=-1):
+        indice_table, value_table = self.create_tables(start_address)
         values_offset = len(indice_table.data) * 2
 
-        data: bytearray = bytearray()
+        data = bytearray()
         data.extend(indice_table.to_binary())
         data.extend(value_table.to_binary())
         return data, values_offset
@@ -127,9 +132,7 @@ class SM64_AnimData:
 
         for i in range(0, len(indices_values), 2):
             max_frame, offset = indices_values[i], indices_values[i + 1]
-            self.pairs.append(
-                SM64_AnimPair(values_array[offset : offset + max_frame], None, None, offset).clean_frames()
-            )
+            self.pairs.append(SM64_AnimPair(values_array[offset : offset + max_frame], -1, -1, offset).clean_frames())
         return self
 
 
@@ -195,7 +198,7 @@ class SM64_AnimFlags(IntFlag):
 @dataclasses.dataclass
 class SM64_AnimHeader:
     reference: str | int = ""
-    flags: SM64_AnimFlags | str = 0
+    flags: SM64_AnimFlags | str = SM64_AnimFlags(0)
     trans_divisor: int = 0
     start_frame: int = 0
     loop_start: int = 0
@@ -212,7 +215,7 @@ class SM64_AnimHeader:
     end_address: int = 0
     header_variant: int = 0
     table_index: int = 0
-    action: Action = None
+    action: Action | None = None
 
     @property
     def data_key(self):
@@ -235,6 +238,8 @@ class SM64_AnimHeader:
             reference = self.data.values_reference
         elif self.values_reference:
             reference = self.values_reference
+        else:
+            assert False, "Unknown values reference"
         assert isinstance(
             reference, expected_type
         ), f"Value reference must be a {expected_type}, but instead is equal to {reference}."
@@ -247,6 +252,8 @@ class SM64_AnimHeader:
             reference = self.data.indice_reference
         elif self.indice_reference:
             reference = self.indice_reference
+        else:
+            assert False, "Unknown indice reference"
         assert isinstance(
             reference, expected_type
         ), f"Indice reference must be a {expected_type}, but instead is equal to {reference}."
@@ -277,7 +284,7 @@ class SM64_AnimHeader:
         self,
         values_override: Optional[int] = None,
         indice_override: Optional[int] = None,
-        segment_data: SegmentData = None,
+        segment_data: SegmentData | None = None,
         length: int = 0,
     ):
         assert isinstance(self.flags, SM64_AnimFlags), "Flags must be int/enum for binary"
@@ -315,7 +322,7 @@ class SM64_AnimHeader:
         read_headers[str(reader.start_address)] = header
         header.reference = reader.start_address
 
-        header.flags = reader.read_int(2, True)  # /*0x00*/ s16 flags;
+        header.flags = SM64_AnimFlags(reader.read_int(2, True))  # /*0x00*/ s16 flags;
         header.trans_divisor = reader.read_int(2, True)  # /*0x02*/ s16 animYTransDivisor;
         header.start_frame = reader.read_int(2, True)  # /*0x04*/ s16 startFrame;
         header.loop_start = reader.read_int(2, True)  # /*0x06*/ s16 loopStart;
@@ -324,9 +331,13 @@ class SM64_AnimHeader:
         # /*0x0A*/ s16 unusedBoneCount; (Unused in engine)
         header.bone_count = reader.read_int(2, True)
         if header.bone_count <= 0:
+            if bone_count is None:
+                raise PluginError(
+                    "No bone count in header and no bone count passed in from target armature, cannot figure out"
+                )
             header.bone_count = bone_count
             print("Old exports lack a defined bone count, invalid armatures won't be detected")
-        elif bone_count and header.bone_count != bone_count:
+        elif bone_count is not None and header.bone_count != bone_count:
             raise PluginError(
                 f"Imported header's bone count is {header.bone_count} but object's is {bone_count}",
             )
@@ -428,7 +439,7 @@ class SM64_AnimHeader:
 
 @dataclasses.dataclass
 class SM64_Anim:
-    data: SM64_AnimData = None
+    data: SM64_AnimData | None = None
     headers: list[SM64_AnimHeader] = dataclasses.field(default_factory=list)
     file_name: str = ""
 
@@ -466,7 +477,7 @@ class SM64_Anim:
             indice_offset -= HEADER_SIZE
         return headers, anim_data
 
-    def to_binary(self, start_address: int = 0, segment_data: SegmentData = None):
+    def to_binary(self, start_address: int = 0, segment_data: SegmentData | None = None):
         data: bytearray = bytearray()
         ptrs: list[int] = []
         if self.data:
@@ -687,9 +698,7 @@ class SM64_AnimTable:
             dma_table.data.extend(data)
         return dma_table.to_binary()
 
-    def to_combined_binary(
-        self, table_address=0, data_address=-1, segment_data: SegmentData = None, null_delimiter=True
-    ):
+    def to_combined_binary(self, table_address=0, data_address=-1, segment_data: SegmentData | None = None):
         table_data: bytearray = bytearray()
         data: bytearray = bytearray()
         ptrs: list[int] = []
@@ -697,17 +706,11 @@ class SM64_AnimTable:
 
         # Pre calculate offsets
         table_length = len(self.elements) * 4
-        if null_delimiter:
-            table_length += 4
         if data_address == -1:
             data_address = table_address + table_length
-        if data_set:
-            headers_length = len(headers_set) * HEADER_SIZE
-            value_table, indice_tables = create_tables(data_set, self.values_reference)
-            indice_tables_offset = data_address + headers_length
-            values_table_offset = indice_tables_offset + sum(
-                len(indice_table.data) * 2 for indice_table in indice_tables
-            )
+
+        headers_length = len(headers_set) * HEADER_SIZE
+        indice_tables, value_tables = create_tables(data_set, self.values_reference, data_address + headers_length)
 
         # Add the animation table
         for i, element in enumerate(self.elements):
@@ -721,27 +724,21 @@ class SM64_AnimTable:
             else:
                 assert isinstance(element.reference, int), f"Reference at element {i} is not an int."
                 table_data.extend(element.reference.to_bytes(4, byteorder="big"))
-        if null_delimiter:
-            table_data.extend(bytearray([0x00] * 4))  # NULL delimiter
 
         for anim_header in headers_set:  # Add the headers
             if not anim_header.data:
                 data.extend(anim_header.to_binary())
                 continue
             ptrs.extend([data_address + len(data) + 12, data_address + len(data) + 16])
-            indice_offset = indice_tables_offset + sum(
-                len(indice_table.data) * 2 for indice_table in indice_tables[: data_set.index(anim_header.data)]
-            )
-            data.extend(anim_header.to_binary(values_table_offset, indice_offset, segment_data))
-        if data_set:  # Add the data
-            for indice_table in indice_tables:
-                data.extend(indice_table.to_binary())
-            data.extend(value_table.to_binary())
+            data.extend(anim_header.to_binary(segment_data=segment_data))
+
+        for table in indice_tables + value_tables:
+            data.extend(table.to_binary())
 
         return table_data, data, ptrs
 
     def data_and_headers_to_c(self, dma: bool):
-        files_data: dict[os.PathLike, str] = {}
+        files_data: dict[str, str] = {}
         animation: SM64_Anim
         for animation in self.get_seperate_anims_dma() if dma else self.get_seperate_anims():
             files_data[animation.file_name] = animation.to_c(dma_structure=dma)
@@ -751,15 +748,12 @@ class SM64_AnimTable:
         text_data = StringIO()
         headers_set, data_set = self.header_data_sets
         if data_set:
-            value_table, indice_tables = create_tables(data_set, self.values_reference)
-            text_data.write(value_table.to_c())
-            text_data.write("\n")
-            for indice_table in indice_tables:
-                text_data.write(indice_table.to_c())
+            indice_tables, value_tables = create_tables(data_set, self.values_reference)
+            for table in value_tables + indice_tables:
+                text_data.write(table.to_c())
                 text_data.write("\n")
-
         for anim_header in headers_set:
-            text_data.write(anim_header.to_c(values_override=self.values_reference))
+            text_data.write(anim_header.to_c())
             text_data.write("\n")
 
         return text_data.getvalue()
@@ -769,7 +763,7 @@ class SM64_AnimTable:
         reader: RomReader,
         read_headers: dict[str, SM64_AnimHeader],
         table_index: Optional[int] = None,
-        bone_count: Optional[int] = 0,
+        bone_count: Optional[int] = None,
         size: Optional[int] = None,
     ) -> SM64_AnimHeader | None:
         print(f"Reading table at address {reader.start_address}.")
@@ -784,8 +778,8 @@ class SM64_AnimTable:
             if size is None and ptr == 0:  # If no specified size and ptr is NULL, break
                 self.elements.append(SM64_AnimTableElement())
                 break
-            elif table_index is not None and i != table_index:  # Skip entries until table_index if specified
-                continue
+            elif table_index is not None and i != table_index:
+                continue  # Skip entries until table_index if specified
 
             header_reader = reader.branch(ptr)
             if header_reader is None:
@@ -828,8 +822,11 @@ class SM64_AnimTable:
                 dma_table.entries
             ), f"Index {table_index} outside of defined table ({len(dma_table.entries)} entries)."
             entrie = dma_table.entries[table_index]
+            header_reader = reader.branch(entrie.address)
+            if header_reader is None:
+                raise PluginError("Failed to branch into DMA entrie's address")
             return SM64_AnimHeader.read_binary(
-                reader.branch(entrie.address),
+                header_reader,
                 read_headers,
                 True,
                 bone_count,
@@ -886,39 +883,85 @@ class SM64_AnimTable:
             )
 
 
-def create_tables(anims_data: list[SM64_AnimData], values_name=""):
-    """Can generate multiple indices table with only one value table, which improves compression
-    This feature is used in table exports"""
+def create_tables(anims_data: list[SM64_AnimData], values_name="", start_address=-1):
+    """
+    Can generate multiple indices table with only one value table (or multiple if needed),
+    which improves compression (this feature is used in table exports).
+    Update the animation data with the correct references.
+    Returns: indice_tables, value_tables (in that order)
+    """
 
-    name = values_name if values_name else anims_data[0].values_reference
-    data = np.array([], np.int16)
+    def add_data(values_table: IntArray, size: int, anim_data: SM64_AnimData, values_address: int):
+        data = values_table.data
+        for pair in anim_data.pairs:
+            pair_values = pair.values
+            assert len(pair_values) <= MAX_U16, "Pair frame count is higher than the 16 bit max."
+
+            # It's never worth it to find an existing offset for values bigger than 1 frame.
+            # From my (@Lilaa3) testing, the only improvement in Mario resulted in just 286 bytes saved.
+            offset = None
+            if len(pair_values) == 1:
+                indices = np.isin(data[:size], pair_values[0]).nonzero()[0]
+                offset = indices[0] if indices.size > 0 else None
+
+            if offset is None:  # no existing offset found
+                offset = size
+                size = offset + len(pair_values)
+                if size > MAX_U16:
+                    return -1, None  # exceeded limit, but we may be able to recover with a new table
+                data[offset:size] = pair_values
+            pair.offset = offset
+
+        # build indice table
+        indice_values = np.empty((len(anim_data.pairs), 2), np.uint16)
+        for i, pair in enumerate(anim_data.pairs):
+            indice_values[i] = [len(pair.values), pair.offset]  # Use calculated offsets
+        indice_values = indice_values.reshape(-1)
+        indice_table = IntArray(str(anim_data.indice_reference), 6, -6, indice_values)
+
+        if values_address == -1:
+            anim_data.values_reference = value_table.name
+        else:
+            anim_data.values_reference = values_address
+        return size, indice_table
+
+    indice_tables: list[IntArray] = []
+    value_tables: list[IntArray] = []
+
+    values_name = values_name or str(anims_data[0].values_reference)
+    indices_address = start_address
+    if start_address != -1:
+        for anim_data in anims_data:
+            anim_data.indice_reference = indices_address
+            indices_address += len(anim_data.pairs) * 2 * 2
+    values_address = indices_address
 
     print("Generating compressed value table and offsets.")
-    for pair in [pair for anim_data in anims_data for pair in anim_data.pairs]:
-        pair_values = pair.values
-        assert len(pair_values) <= MAX_U16, "Pair frame count is higher than the 16 bit max."
+    size = 0
+    # opt: this is the max size possible, prevents tons of allocations (great for Mario), only about 65 kb
+    value_table = IntArray(values_name, 9, data=np.empty(MAX_U16, np.int16))
+    value_tables.append(value_table)
+    i = 0  # we can´t use enumarate, as we may repeat
+    while i < len(anims_data):
+        anim_data = anims_data[i]
 
-        # It's never worth to find an offset for values bigger than 1 frame from my testing
-        # the one use case resulted in a 286 bytes improvement
-        offset = None
-        if len(pair_values) == 1:
-            indices = np.isin(data, pair_values[0]).nonzero()[0]
-            offset = indices[0] if indices.size > 0 else None
-        if offset is None:
-            offset = len(data)
-            data = np.concatenate((data, pair_values))
-        assert offset <= MAX_U16, "Pair offset is higher than the 16 bit max."
-        pair.offset = offset
+        size_before_add = size
+        size, indice_table = add_data(value_table, size, anim_data, values_address)
+        if size != -1:  # sucefully added the data to the value table
+            assert indice_table is not None
+            indice_tables.append(indice_table)
+            i += 1  # do the next animation
+        else:  # Could not add to the value table
+            if size_before_add == 0:  # If the table was empty, it is simply invalid
+                raise PluginError(f"Index table cannot fit into value table of {MAX_U16} size")
+            else:  # try again with a fresh value table
+                value_table.data.resize(size_before_add, refcheck=False)  # resize to remove unused data
+                if start_address != -1:
+                    values_address += size_before_add * 2
+                value_table = IntArray(f"{values_name}_{len(value_tables)}", 9, data=np.empty(MAX_U16, np.int16))
+                value_tables.append(value_table)
+                size = 0  # reset size
+                # don't increment i, redo
+    value_table.data.resize(size, refcheck=False)  # resize to remove unused data
 
-    value_table = IntArray(name, 9, data=data)
-
-    print("Generating indices tables.")
-    indice_tables: list[IntArray] = []
-    for anim_data in anims_data:
-        indice_values = []
-        for pair in anim_data.pairs:
-            indice_values.extend([len(pair.values), pair.offset])  # Use calculated offsets
-        indice_table = IntArray(anim_data.indice_reference, 6, -6, np.array(indice_values, dtype=np.uint16))
-        indice_tables.append(indice_table)
-
-    return value_table, indice_tables
+    return indice_tables, value_tables

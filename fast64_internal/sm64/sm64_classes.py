@@ -268,7 +268,7 @@ class IntArray:
     def to_binary(self):
         return self.data.astype(">i2").tobytes()
 
-    def to_c(self):
+    def to_c(self):  # TODO: Use io stream arg
         assert self.name, "Array must have a name"
         data = self.data
         byte_count = data.itemsize
