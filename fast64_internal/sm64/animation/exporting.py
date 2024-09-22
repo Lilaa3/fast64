@@ -194,7 +194,7 @@ def get_animation_pairs(
 def to_header_class(
     header_props: "SM64_AnimHeaderProperties",
     bone_count: int,
-    data: SM64_AnimData,
+    data: SM64_AnimData | None,
     action: Action,
     values_reference: int | str,
     indice_reference: int | str,
@@ -286,11 +286,13 @@ def to_table_element_class(
     export_type: str,
     actor_name="mario",
     gen_enums=False,
-    prev_enums: dict[str, int] = None,
+    prev_enums: dict[str, int] | None = None,
 ):
+    prev_enums = {} or prev_enums
     use_addresses, can_reference = export_type.endswith("Binary"), not dma
     element = SM64_AnimTableElement()
 
+    enum = None
     if gen_enums:
         enum = element_props.get_enum(can_reference, actor_name, prev_enums)
         element.enum_name = enum
@@ -300,7 +302,7 @@ def to_table_element_class(
         element.reference = reference
         if reference == "":
             raise PluginError("Header is not set.")
-        if gen_enums and enum == "":
+        if enum == "":
             raise PluginError("Enum name is not set.")
         return element
 
@@ -310,7 +312,7 @@ def to_table_element_class(
         raise PluginError("Action is not set.")
     if not header_props:
         raise PluginError("Header is not set.")
-    if gen_enums and enum == "":
+    if enum == "":
         raise PluginError("Enum name is not set.")
 
     action_props = get_action_props(action)
@@ -333,9 +335,8 @@ def to_table_element_class(
         data = data_dict[action]
         values_reference, indice_reference = data.values_reference, data.indice_reference
 
-    element.header = header_dict.get(
-        header_props,
-        to_header_class(
+    if header_props not in header_dict:
+        header_dict[header_props] = to_header_class(
             header_props=header_props,
             bone_count=bone_count,
             data=data,
@@ -348,8 +349,9 @@ def to_table_element_class(
             actor_name=actor_name,
             gen_enums=gen_enums,
             file_name=action_props.get_file_name(action, export_type),
-        ),
-    )
+        )
+
+    element.header = header_dict[header_props]
     element.reference = element.header.reference
     return element
 

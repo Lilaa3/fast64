@@ -139,6 +139,7 @@ class SM64_AnimData:
 
 
 class SM64_AnimFlags(IntFlag):
+    prop: Optional[str]
     def __new__(cls, value, blender_prop: str | None = None):
         obj = int.__new__(cls, value)
         obj._value_, obj.prop = 1 << value, blender_prop
@@ -482,7 +483,7 @@ class SM64_Anim:
 
     def to_binary_dma(self):
         assert self.data
-        headers: list[bytearray] = []
+        headers: list[bytes] = []
 
         indice_offset = HEADER_SIZE * len(self.headers)
         anim_data, values_offset = self.data.to_binary()
@@ -498,20 +499,24 @@ class SM64_Anim:
         data: bytearray = bytearray()
         ptrs: list[int] = []
         if self.data:
-            indice_offset = start_address + (HEADER_SIZE * len(self.headers))
             anim_data, values_offset = self.data.to_binary()
+            indice_offset = start_address + (HEADER_SIZE * len(self.headers))
+            values_offset = indice_offset + values_offset
+        else:
+            anim_data = bytearray()
+            indice_offset = values_offset = None
         for header in self.headers:
-            ptrs.extend([start_address + len(data) + 12, start_address + len(data) + 16])
+            if self.data:
+                ptrs.extend([start_address + len(data) + 12, start_address + len(data) + 16])
             header_data = header.to_binary(
-                indice_offset + values_offset if self.data else None,
-                indice_offset if self.data else None,
+                values_offset,
+                indice_offset,
                 segment_data,
             )
             data.extend(header_data)
-        if self.data:
-            data.extend(anim_data)
-            return data, ptrs
-        return data, []
+
+        data.extend(anim_data)
+        return data, ptrs
 
     def headers_to_c(self, dma_structure: bool) -> str:
         text_data = StringIO()
@@ -578,7 +583,7 @@ class SM64_AnimTableElement:
 
 @dataclasses.dataclass
 class SM64_AnimTable:
-    reference: str | int = None
+    reference: str | int = ""
     enum_list_reference: str = ""
     enum_list_delimiter: str = ""
     file_name: str = ""
@@ -683,11 +688,7 @@ class SM64_AnimTable:
                 data = copy(data)
             data_already_added.append(data)
 
-            data.indice_reference, data.values_reference, data.file_name = (
-                f"{name}_indices",
-                f"{name}_values",
-                file_name,
-            )
+            data.indice_reference, data.values_reference = f"{name}_indices", f"{name}_values)"
             # Normal names are possible (order goes by line and file) but would break convention
             for i, included_header in enumerate(included_headers):
                 included_header.file_name = file_name
@@ -782,7 +783,7 @@ class SM64_AnimTable:
         table_index: Optional[int] = None,
         bone_count: Optional[int] = None,
         size: Optional[int] = None,
-    ) -> SM64_AnimHeader | None:
+    ):
         print(f"Reading table at address {reader.start_address}.")
         self.elements.clear()
         self.reference = reader.start_address

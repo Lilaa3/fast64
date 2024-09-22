@@ -378,12 +378,12 @@ class SM64_ActionAnimProperty(PropertyGroup):
     def dma_name(self):
         return get_dma_anim_name([header.table_index for header in self.headers])
 
-    def get_name(self, action: Action, dma=False):
+    def get_name(self, action: Action, dma=False) -> str:
         if dma:
             return self.dma_name
         return toAlnum(f"anim_{action.name}")
 
-    def get_file_name(self, action: Action, export_type: str, dma=False) -> Path:
+    def get_file_name(self, action: Action, export_type: str, dma=False) -> str:
         if not export_type in {"C", "Insertable Binary"}:
             return ""
         if export_type == "C" and dma:
@@ -487,7 +487,7 @@ class SM64_ActionAnimProperty(PropertyGroup):
                 text = "File Name"
                 if not in_table and not export_seperately:
                     text = "File Name (individual action export)"
-                draw_custom_or_auto(self, col, "file_name", str(self.get_file_name(action, export_type)), text=text)
+                draw_custom_or_auto(self, col, "file_name", self.get_file_name(action, export_type), text=text)
             elif not in_table:  # C DMA forced auto name
                 split = col.split(factor=0.5)
                 split.label(text="File Name")
