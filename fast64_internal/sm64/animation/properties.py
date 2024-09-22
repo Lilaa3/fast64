@@ -91,7 +91,7 @@ def draw_list_op(layout: UILayout, op_cls: OperatorBase, op_name: str, index=-1,
     return op_cls.draw_props(col, icon, text, index=index, op_name=op_name, **op_args)
 
 
-def draw_list_ops(layout: UILayout, op_cls: type, index: int, **op_args):
+def draw_list_ops(layout: UILayout, op_cls: OperatorBase, index: int, **op_args):
     layout.label(text=str(index))
     ops = ("MOVE_UP", "MOVE_DOWN", "ADD", "REMOVE")
     for op_name in ops:
@@ -1109,15 +1109,16 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
         draw_list_op(op_row, SM64_AnimTableOps, "ADD")
         draw_list_op(op_row, SM64_AnimTableOps, "CLEAR")
 
-        if self.elements:
-            box = col.box().column()
+        if not self.elements:
+            return
 
+        box = col.box().column()
         actions_dups: dict[Action, list[int]] = {}
         if self.is_dma:
             actions_repeats: dict[Action, list[int]] = {}  # possible dups
             last_action = None
             for i, element_props in enumerate(self.elements):
-                action = element_props.get_action(can_reference=not self.is_dma)
+                action: Action = element_props.get_action(can_reference=False)
                 if action != last_action:
                     if action in actions_repeats:
                         actions_repeats[action].append(i)

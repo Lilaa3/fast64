@@ -972,13 +972,13 @@ def create_tables(anims_data: list[SM64_AnimData], values_name="", start_address
             if size_before_add == 0:  # If the table was empty, it is simply invalid
                 raise PluginError(f"Index table cannot fit into value table of {MAX_U16} size")
             else:  # try again with a fresh value table
-                value_table.data.resize(size_before_add, refcheck=False)  # resize to remove unused data
+                value_table.data.resize(size_before_add, refcheck=False)
                 if start_address != -1:
                     values_address += size_before_add * 2
                 value_table = IntArray(f"{values_name}_{len(value_tables)}", 9, data=np.empty(MAX_U16, np.int16))
                 value_tables.append(value_table)
                 size = 0  # reset size
                 # don't increment i, redo
-    value_table.data.resize(size, refcheck=False)  # resize to remove unused data
+    value_table.data.resize(size, refcheck=False)
 
     return indice_tables, value_tables
