@@ -1,4 +1,5 @@
 import functools
+from pathlib import Path
 from typing import Optional
 from enum import IntFlag
 from io import StringIO
@@ -24,7 +25,7 @@ from .utility import get_dma_header_name, get_dma_anim_name
 @dataclasses.dataclass
 class CArrayDeclaration:
     name: str = ""
-    path: os.PathLike = ""
+    path: Path = Path("")
     file_name: str = ""
     values: list[str] | dict[str, str] = dataclasses.field(default_factory=list)
 
