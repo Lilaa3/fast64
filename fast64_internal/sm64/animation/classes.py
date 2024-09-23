@@ -84,13 +84,11 @@ class SM64_AnimData:
 
         indice_table, value_table = self.create_tables()
         if dma_structure:
-            text_data.write(indice_table.to_c())
-            text_data.write("\n")
-            text_data.write(value_table.to_c())
+            indice_table.to_c(text_data, new_lines=2)
+            value_table.to_c(text_data)
         else:
-            text_data.write(value_table.to_c())
-            text_data.write("\n")
-            text_data.write(indice_table.to_c())
+            value_table.to_c(text_data, new_lines=2)
+            indice_table.to_c(text_data)
 
         return text_data.getvalue()
 
@@ -287,12 +285,7 @@ class SM64_AnimHeader:
         ), f"Indice reference must be a {expected_type}, but instead is equal to {reference}."
         return reference
 
-    def to_c(
-        self,
-        values_override: Optional[str] = None,
-        indice_override: Optional[str] = None,
-        dma_structure=False,
-    ):
+    def to_c(self, values_override: Optional[str] = None, indice_override: Optional[str] = None, dma_structure=False):
         assert not dma_structure or isinstance(self.flags, SM64_AnimFlags), "Flags must be int/enum for C DMA"
         return (
             f"static const struct Animation {self.reference}{'[]' if dma_structure else ''} = {{\n"
@@ -313,7 +306,7 @@ class SM64_AnimHeader:
         values_override: Optional[int] = None,
         indice_override: Optional[int] = None,
         segment_data: SegmentData | None = None,
-        length: int = 0,
+        length=0,
     ):
         assert isinstance(self.flags, SM64_AnimFlags), "Flags must be int/enum for binary"
         values_address = self.get_values_reference(values_override, int)
@@ -777,8 +770,7 @@ class SM64_AnimTable:
         if data_set:
             indice_tables, value_tables = create_tables(data_set, self.values_reference)
             for table in value_tables + indice_tables:
-                text_data.write(table.to_c())
-                text_data.write("\n")
+                table.to_c(text_data, new_lines=2)
         for anim_header in headers_set:
             text_data.write(anim_header.to_c())
             text_data.write("\n")

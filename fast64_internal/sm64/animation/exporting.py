@@ -773,7 +773,7 @@ def export_animation_table_c(
         if not anim_props.is_dma:
             update_data_file(
                 anim_directory / "data.inc.c",
-                files_data.keys(),
+                list(files_data.keys()),
                 anim_props.override_files,
             )
     else:
@@ -783,6 +783,7 @@ def export_animation_table_c(
     print("All animation data files exported.")
     if anim_props.is_dma:  # Don´t create an actual table and or update includes for dma exports
         return
+    assert geo_directory and header_directory and isinstance(table.reference, str)
 
     header_path = geo_directory / "anim_header.h"
     update_anim_header(header_path, table.reference, anim_props.gen_enums, anim_props.override_files)

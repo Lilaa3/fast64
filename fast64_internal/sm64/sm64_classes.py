@@ -268,14 +268,14 @@ class IntArray:
     def to_binary(self):
         return self.data.astype(">i2").tobytes()
 
-    def to_c(self):  # TODO: Use io stream arg
+    def to_c(self, c_data: StringIO | None = None, new_lines=1):
         assert self.name, "Array must have a name"
         data = self.data
         byte_count = data.itemsize
         data_type = f"{'s' if data.dtype == np.int16 else 'u'}{byte_count * 8}"
         print(f'Generating {data_type} array "{self.name}" with {len(self.data)} elements')
 
-        c_data = StringIO()
+        c_data = c_data or StringIO()
         c_data.write(f"// {len(self.data)}\n")
         c_data.write(f"static const {data_type} {toAlnum(self.name)}[] = {{\n\t")
         i = self.wrap_start
@@ -286,5 +286,5 @@ class IntArray:
                 c_data.write("\n\t")
                 i = 0
 
-        c_data.write("\n};\n")
-        return c_data.getvalue()
+        c_data.write("\n};" + ("\n" * new_lines))
+        return c_data
