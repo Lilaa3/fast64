@@ -141,6 +141,7 @@ class SM64_AnimData:
 
 class SM64_AnimFlags(IntFlag):
     prop: Optional[str]
+
     def __new__(cls, value, blender_prop: str | None = None):
         obj = int.__new__(cls, value)
         obj._value_, obj.prop = 1 << value, blender_prop
@@ -695,7 +696,7 @@ class SM64_AnimTable:
                 data = copy(data)
             data_already_added.append(data)
 
-            data.indice_reference, data.values_reference = f"{name}_indices", f"{name}_values)"
+            data.indice_reference, data.values_reference = f"{name}_indices", f"{name}_values"
             # Normal names are possible (order goes by line and file) but would break convention
             for i, included_header in enumerate(included_headers):
                 included_header.file_name = file_name
@@ -942,7 +943,7 @@ def create_tables(anims_data: list[SM64_AnimData], values_name="", start_address
         for i, pair in enumerate(anim_data.pairs):
             indice_values[i] = [len(pair.values), pair.offset]  # Use calculated offsets
         indice_values = indice_values.reshape(-1)
-        indice_table = IntArray(str(anim_data.indice_reference), 6, -6, indice_values)
+        indice_table = IntArray(indice_values, str(anim_data.indice_reference), 6, -6)
 
         if values_address == -1:
             anim_data.values_reference = value_table.name
@@ -964,7 +965,7 @@ def create_tables(anims_data: list[SM64_AnimData], values_name="", start_address
     print("Generating compressed value table and offsets.")
     size = 0
     # opt: this is the max size possible, prevents tons of allocations (great for Mario), only about 65 kb
-    value_table = IntArray(values_name, 9, data=np.empty(MAX_U16, np.int16))
+    value_table = IntArray(np.empty(MAX_U16, np.int16), values_name, 9)
     value_tables.append(value_table)
     i = 0  # we can´t use enumarate, as we may repeat
     while i < len(anims_data):
@@ -983,7 +984,7 @@ def create_tables(anims_data: list[SM64_AnimData], values_name="", start_address
                 value_table.data.resize(size_before_add, refcheck=False)
                 if start_address != -1:
                     values_address += size_before_add * 2
-                value_table = IntArray(f"{values_name}_{len(value_tables)}", 9, data=np.empty(MAX_U16, np.int16))
+                value_table = IntArray(np.empty(MAX_U16, np.int16), f"{values_name}_{len(value_tables)}", 9)
                 value_tables.append(value_table)
                 size = 0  # reset size
                 # don't increment i, redo

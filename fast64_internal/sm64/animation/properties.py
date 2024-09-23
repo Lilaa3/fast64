@@ -16,7 +16,6 @@ from bpy.props import (
 from bpy.path import abspath, clean_name
 
 from ...utility import (
-    cast_integer,
     decompFolderMessage,
     directory_ui_warnings,
     run_and_draw_errors,
@@ -29,7 +28,6 @@ from ...utility import (
     toAlnum,
 )
 from ...utility_anim import getFrameInterval
-from ...f3d.f3d_parser import math_eval
 
 from ..sm64_utility import import_rom_ui_warnings, int_from_str, string_int_prop, string_int_warning
 from ..sm64_constants import MAX_U16, MIN_S16, MAX_S16, level_enums

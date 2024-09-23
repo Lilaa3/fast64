@@ -103,11 +103,77 @@ def get_entire_fcurve_data(
     return values
 
 
+def read_quick(actions, max_frames, anim_owners, trans_values, rot_values):
+    def to_xyz(row):
+        euler = Euler(row, mode)
+        return [euler.x, euler.y, euler.z]
+
+    for action, max_frame, action_trans, action_rot in zip(actions, max_frames, trans_values, rot_values):
+        quats = np.empty((4, max_frame), dtype=np.float32)
+
+        get_entire_fcurve_data(action, anim_owners[0], "location", max_frame, action_trans)
+
+        for bone_index, anim_owner in enumerate(anim_owners):
+            mode = anim_owner.rotation_mode
+            prop = {"QUATERNION": "rotation_quaternion", "AXIS_ANGLE": "rotation_axis_angle"}.get(
+                mode, "rotation_euler"
+            )
+
+            index = bone_index * 3
+            if mode == "QUATERNION":
+                get_entire_fcurve_data(action, anim_owner, prop, max_frame, quats)
+                action_rot[index : index + 3] = np.apply_along_axis(
+                    lambda row: Quaternion(row).to_euler(), 1, quats.T
+                ).T
+            elif mode == "AXIS_ANGLE":
+                get_entire_fcurve_data(action, anim_owner, prop, max_frame, quats)
+                action_rot[index : index + 3] = np.apply_along_axis(
+                    lambda row: list(Quaternion(row[1:], row[0]).to_euler()), 1, quats.T
+                ).T
+            else:
+                get_entire_fcurve_data(action, anim_owner, prop, max_frame, action_rot[index : index + 3])
+                if mode != "XYZ":
+                    action_rot[index : index + 3] = np.apply_along_axis(to_xyz, -1, action_rot[index : index + 3].T).T
+
+
+def read_full(actions, max_frames, anim_owners, trans_values, rot_values, obj, is_owner_obj):
+    pre_export_frame = bpy.context.scene.frame_current
+    pre_export_action = obj.animation_data.action
+    was_playing = bpy.context.screen.is_animation_playing
+
+    try:
+        if bpy.context.screen.is_animation_playing:
+            bpy.ops.screen.animation_play()  # if an animation is being played, stop it
+        for action, action_trans, action_rot, max_frame in zip(actions, trans_values, rot_values, max_frames):
+            print(f'Reading animation data from action "{action.name}".')
+            obj.animation_data.action = action
+            for frame in range(max_frame):
+                bpy.context.scene.frame_set(frame)
+
+                for bone_index, anim_owner in enumerate(anim_owners):
+                    if is_owner_obj:
+                        local_matrix = anim_owner.matrix_local
+                    else:
+                        local_matrix = obj.convert_space(
+                            pose_bone=anim_owner, matrix=anim_owner.matrix, from_space="POSE", to_space="LOCAL"
+                        )
+                    if bone_index == 0:
+                        action_trans[0:3, frame] = list(local_matrix.to_translation())
+                    index = bone_index * 3
+                    action_rot[index : index + 3, frame] = list(local_matrix.to_euler())
+    finally:
+        obj.animation_data.action = pre_export_action
+        bpy.context.scene.frame_set(pre_export_frame)
+        if was_playing != bpy.context.screen.is_animation_playing:
+            bpy.ops.screen.animation_play()
+
+
 def get_animation_pairs(
     sm64_scale: float, actions: list[Action], obj: Object, quick_read=False
 ) -> dict[Action, list[SM64_AnimPair]]:
     anim_owners = get_anim_owners(obj)
     is_owner_obj = isinstance(obj.type == "MESH", Object)
+
     if len(anim_owners) == 0:
         raise PluginError(f'No animation bones in armature "{obj.name}"')
 
@@ -119,70 +185,9 @@ def get_animation_pairs(
     rot_values = [np.zeros((len(anim_owners) * 3, max_frame), dtype=np.float32) for max_frame in max_frames]
 
     if quick_read:
-
-        def to_xyz(row):
-            euler = Euler(row, mode)
-            return [euler.x, euler.y, euler.z]
-
-        for action, max_frame, action_trans, action_rot in zip(actions, max_frames, trans_values, rot_values):
-            quats = np.empty((4, max_frame), dtype=np.float32)
-
-            get_entire_fcurve_data(action, anim_owners[0], "location", max_frame, action_trans)
-
-            for bone_index, anim_owner in enumerate(anim_owners):
-                mode = anim_owner.rotation_mode
-                prop = {"QUATERNION": "rotation_quaternion", "AXIS_ANGLE": "rotation_axis_angle"}.get(
-                    mode, "rotation_euler"
-                )
-
-                index = bone_index * 3
-                if mode == "QUATERNION":
-                    get_entire_fcurve_data(action, anim_owner, prop, max_frame, quats)
-                    action_rot[index : index + 3] = np.apply_along_axis(
-                        lambda row: Quaternion(row).to_euler(), 1, quats.T
-                    ).T
-                elif mode == "AXIS_ANGLE":
-                    get_entire_fcurve_data(action, anim_owner, prop, max_frame, quats)
-                    action_rot[index : index + 3] = np.apply_along_axis(
-                        lambda row: list(Quaternion(row[1:], row[0]).to_euler()), 1, quats.T
-                    ).T
-                else:
-                    get_entire_fcurve_data(action, anim_owner, prop, max_frame, action_rot[index : index + 3])
-                    if mode != "XYZ":
-                        action_rot[index : index + 3] = np.apply_along_axis(
-                            to_xyz, -1, action_rot[index : index + 3].T
-                        ).T
+        read_quick(actions, max_frames, anim_owners, trans_values, rot_values)
     else:
-        # Alternative to quick_read, read the actual matrix data
-        pre_export_frame = bpy.context.scene.frame_current
-        pre_export_action = obj.animation_data.action
-        was_playing = bpy.context.screen.is_animation_playing
-
-        try:
-            if bpy.context.screen.is_animation_playing:
-                bpy.ops.screen.animation_play()  # if an animation is being played, stop it
-            for action, action_trans, action_rot, max_frame in zip(actions, trans_values, rot_values, max_frames):
-                print(f'Reading animation data from action "{action.name}".')
-                obj.animation_data.action = action
-                for frame in range(max_frame):
-                    bpy.context.scene.frame_set(frame)
-
-                    for bone_index, anim_owner in enumerate(anim_owners):
-                        if is_owner_obj:
-                            local_matrix = anim_owner.matrix_local
-                        else:
-                            local_matrix = obj.convert_space(
-                                pose_bone=anim_owner, matrix=anim_owner.matrix, from_space="POSE", to_space="LOCAL"
-                            )
-                        if bone_index == 0:
-                            action_trans[0:3, frame] = list(local_matrix.to_translation())
-                        index = bone_index * 3
-                        action_rot[index : index + 3, frame] = list(local_matrix.to_euler())
-        finally:
-            obj.animation_data.action = pre_export_action
-            bpy.context.scene.frame_set(pre_export_frame)
-            if was_playing != bpy.context.screen.is_animation_playing:
-                bpy.ops.screen.animation_play()
+        read_full(actions, max_frames, anim_owners, trans_values, rot_values, obj, is_owner_obj)
 
     action_pairs = {}
     for action, action_trans, action_rot in zip(actions, trans_values, rot_values):

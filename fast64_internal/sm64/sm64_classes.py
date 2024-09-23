@@ -7,7 +7,7 @@ import struct
 import os
 import numpy as np
 
-from ..utility import intToHex, decodeSegmentedAddr, PluginError
+from ..utility import intToHex, decodeSegmentedAddr, PluginError, toAlnum
 from .sm64_constants import insertableBinaryTypes, SegmentData
 from .sm64_utility import export_rom_checks, temp_file_path
 
@@ -260,10 +260,10 @@ class DMATable:
 
 @dataclasses.dataclass
 class IntArray:
+    data: np.ndarray
     name: str = ""
     wrap: int = 6
     wrap_start: int = 0  # -6 To replicate decomp animation index table formatting
-    data: np.ndarray = None
 
     def to_binary(self):
         return self.data.astype(">i2").tobytes()
@@ -277,7 +277,7 @@ class IntArray:
 
         c_data = StringIO()
         c_data.write(f"// {len(self.data)}\n")
-        c_data.write(f"static const {data_type} {self.name}[] = {{\n\t")
+        c_data.write(f"static const {data_type} {toAlnum(self.name)}[] = {{\n\t")
         i = self.wrap_start
         for value in self.data:
             c_data.write(f"{intToHex(value, byte_count, False)}, ")
