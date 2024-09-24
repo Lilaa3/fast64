@@ -5,7 +5,6 @@ from enum import IntFlag
 from io import StringIO
 from copy import copy
 import dataclasses
-import os
 import re
 import typing
 import numpy as np
@@ -147,7 +146,6 @@ class SM64_AnimFlags(IntFlag):
         return obj
 
     ANIM_FLAG_NOLOOP = (0, "no_loop")
-    ANIM_FLAG_BACKWARD = (1, "backwards")  # refresh 16
     ANIM_FLAG_FORWARD = (1, "backwards")
     ANIM_FLAG_2 = (2, "no_acceleration")
     ANIM_FLAG_HOR_TRANS = (3, "only_vertical")
@@ -155,6 +153,8 @@ class SM64_AnimFlags(IntFlag):
     ANIM_FLAG_5 = (5, "disabled")
     ANIM_FLAG_6 = (6, "no_trans")
     ANIM_FLAG_7 = 7
+
+    ANIM_FLAG_BACKWARD = (1, "backwards")  # refresh 16
 
     # hackersm64
     ANIM_FLAG_NO_ACCEL = (2, "no_acceleration")
