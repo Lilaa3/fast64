@@ -25,7 +25,15 @@ from ...utility import (
 from ...utility_anim import stashActionInArmature
 
 from ..sm64_constants import BEHAVIOR_COMMANDS, BEHAVIOR_EXITS, defaultExtendSegment4, level_pointers
-from ..sm64_utility import find_includes_and_externs, write_includes, update_actor_includes, int_from_str
+from ..sm64_utility import (
+    ModifyFoundDescriptor,
+    find_descriptors,
+    to_include_descriptor,
+    write_includes,
+    update_actor_includes,
+    int_from_str,
+    write_or_delete_if_found,
+)
 from ..sm64_classes import BinaryExporter, RomReader, InsertableBinaryData
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_rom_tweaks import ExtendBank0x04
@@ -438,14 +446,22 @@ def update_includes(
         combined_props.actor_group_name,
         header_dir,
         actor_name,
+        combined_props.export_level_name,
         data_includes,
         header_includes,
     )
 
 
 def update_anim_header(path: Path, table_name: str, gen_enums: bool, override_files: bool):
-    includes = ['"anims/table_enum.h"'] if gen_enums else None
-    if write_includes(path, includes, [f"const struct Animation *const {table_name}[]"], create_new=override_files):
+    to_add = [
+        ModifyFoundDescriptor(
+            f"extern const struct Animation *const {table_name}[];",
+            rf"extern\h*const\h*struct\h*Animation\h?\*const\h*{table_name}\[.*?\]\h*?;",
+        )
+    ]
+    if gen_enums:
+        to_add.append(to_include_descriptor(Path("anims/table_enum.h")))
+    if write_or_delete_if_found(path, to_add, create_new=override_files):
         print(f"Updated animation header {path}")
 
 
@@ -504,7 +520,8 @@ def update_table_file(
         text = table_path.read_text()
 
     # add include if not already there
-    if gen_enums and '"table_enum.h"' not in find_includes_and_externs(text)[0]:
+    descriptor = to_include_descriptor(Path("table_enum.h"))
+    if gen_enums and descriptor not in find_descriptors(text, [descriptor])[0]:
         text = '#include "table_enum.h"\n' + text
 
     # First, find existing tables
@@ -612,9 +629,7 @@ def update_table_file(
 
 
 def update_data_file(path: Path, anim_file_names: list[str], override_files: bool = False):
-    includes = []
-    for anim_file_name in anim_file_names:
-        includes.append(f'"{anim_file_name}"')
+    includes = [Path(file_name) for file_name in anim_file_names]
     if write_includes(path, includes, create_new=override_files):
         print(f"Updating animation data file includes at {path}")
 
@@ -882,7 +897,7 @@ def export_animation_c(
     table_name = anim_props.get_table_name(actor_name)
 
     if anim_props.update_table:
-        update_anim_header(geo_directory / "anim_header.h", table_name, anim_props.gen_enums, anim_props.override_files)
+        update_anim_header(geo_directory / "anim_header.h", table_name, anim_props.gen_enums, False)
         update_table_file(
             table=SM64_AnimTable(
                 table_name,
