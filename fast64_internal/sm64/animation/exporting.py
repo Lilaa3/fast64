@@ -72,6 +72,7 @@ def trim_duplicates_vectorized(arr2d: np.ndarray) -> list:
     """
     Similar to the old removeTrailingFrames(), but using numpy vectorization.
     Remove trailing duplicate elements along the last axis of a 2D array.
+    One dimensional example of this in SM64_AnimPair.clean_frames
     """
     # Get the last element of each sub-array along the last axis
     last_elements = arr2d[:, -1]
@@ -306,7 +307,7 @@ def to_table_element_class(
     gen_enums=False,
     prev_enums: dict[str, int] | None = None,
 ):
-    prev_enums = {} or prev_enums
+    prev_enums = prev_enums or {}
     use_addresses, can_reference = export_type.endswith("Binary"), not dma
     element = SM64_AnimTableElement()
 

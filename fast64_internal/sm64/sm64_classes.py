@@ -282,7 +282,7 @@ class IntArray:
         for value in self.data:
             c_data.write(f"{intToHex(value, byte_count, False)}, ")
             i += 1
-            if i > self.wrap:
+            if i >= self.wrap:
                 c_data.write("\n\t")
                 i = 0
 

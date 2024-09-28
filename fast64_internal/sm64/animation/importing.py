@@ -517,7 +517,7 @@ def find_decls(c_data: str, path: Path, decl_list: dict[str, list[CArrayDeclarat
         decl_list[decl_type].append(CArrayDeclaration(name, path, path.name, values))
 
 
-def import_c_animations(path: Path):
+def import_c_animations(path: Path) -> tuple[SM64_AnimTable | None, dict[str, SM64_AnimHeader]]:
     path_checks(path)
     if path.is_file():
         file_paths = [path]
@@ -539,7 +539,7 @@ def import_c_animations(path: Path):
     for file_path, c_data in c_files.items():
         find_decls(c_data, file_path, decl_lists)
     for file_path, c_data in c_files.items():
-        tables.extend(import_tables(c_data, file_path, None, header_decls, value_decls, indices_decls))
+        tables.extend(import_tables(c_data, file_path, "", header_decls, value_decls, indices_decls))
 
     if len(tables) > 1:
         raise ValueError("More than 1 table declaration")
@@ -548,7 +548,7 @@ def import_c_animations(path: Path):
         read_headers = {header.reference: header for header in table.header_set}
         return table, read_headers
     else:
-        read_headers = {}
+        read_headers: dict[str, SM64_AnimHeader] = {}
         for table_index, header_decl in enumerate(sorted(header_decls, key=lambda h: h.name)):
             SM64_AnimHeader().read_c(header_decl, value_decls, indices_decls, read_headers, table_index)
         return None, read_headers

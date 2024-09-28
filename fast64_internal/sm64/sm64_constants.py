@@ -2242,7 +2242,7 @@ BEHAVIOR_COMMANDS = [
 ]
 
 T = TypeVar("T")
-DictOrVal = T | dict[T] | None
+DictOrVal = T | dict[str, T] | None
 ListOrVal = T | list[T] | None
 
 
