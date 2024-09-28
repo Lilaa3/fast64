@@ -84,7 +84,6 @@ class SearchEnumOperatorBase(OperatorBase):
     bl_label = "Search"
     bl_property = None
     bl_options = {"UNDO"}
-    result: EnumProperty = None
 
     @classmethod
     def draw_props(cls, layout: UILayout, data, prop: str, name: str):

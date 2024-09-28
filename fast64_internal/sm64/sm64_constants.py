@@ -2279,7 +2279,7 @@ class AnimInfo:
     ignore_bone_count: bool = False
     dma: bool = False
     directory: str | None = None
-    names: list[str] | None = None
+    names: list[str] = dataclasses.field(default_factory=list)
 
     def __post_init__(self):
         assert isinstance(self.address, int)

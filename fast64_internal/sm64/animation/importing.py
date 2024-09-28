@@ -15,7 +15,7 @@ from ...f3d.f3d_parser import math_eval
 from ...utility import PluginError, decodeSegmentedAddr, filepath_checks, path_checks, intToHex, removeComments
 from ...utility_anim import create_basic_action
 
-from ..sm64_constants import level_pointers
+from ..sm64_constants import AnimInfo, level_pointers
 from ..sm64_level_parser import parseLevelAtPointer
 from ..sm64_utility import import_rom_checks
 from ..sm64_classes import RomReader
@@ -48,11 +48,13 @@ if TYPE_CHECKING:
     from ..settings.properties import SM64_Properties
 
 
-def get_preset_anim_name_list(preset: str):
-    assert preset in ACTOR_PRESET_INFO, "Selected preset not in actor presets"
-    preset_info = ACTOR_PRESET_INFO[preset]
-    assert preset_info.animation is not None, "Selected preset's actor has not animation information"
-    return preset_info.animation.names
+def get_preset_anim_name_list(preset_name: str):
+    assert preset_name in ACTOR_PRESET_INFO, "Selected preset not in actor presets"
+    preset = ACTOR_PRESET_INFO[preset_name]
+    assert preset.animation is not None and isinstance(
+        preset.animation, AnimInfo
+    ), "Selected preset's actor has not animation information"
+    return preset.animation.names
 
 
 def flip_euler(euler: np.ndarray) -> np.ndarray:
@@ -725,17 +727,21 @@ def import_animations(context: Context):
 
 
 @functools.cache
-def cached_enum_from_import_preset(preset: str) -> list[str, str, str, int]:
+def cached_enum_from_import_preset(preset: str):
     animation_names = get_preset_anim_name_list(preset)
-    return [("Custom", "Custom", "Pick your own animation index", len(animation_names)), ("", "Presets", "")] + [
-        (str(i), f"{i} - {name}", f'"{preset}" Animation {i}', i) for i, name in enumerate(animation_names)
-    ]
+    enum_items: list[tuple[str, str, str, int]] = []
+    enum_items.append(("Custom", "Custom", "Pick your own animation index", 0))
+    if animation_names:
+        enum_items.append(("", "Presets", "", 1))
+    for i, name in enumerate(animation_names):
+        enum_items.append((str(i), f"{i} - {name}", f'"{preset}" Animation {i}', i + 2))
+    return enum_items
 
 
 def get_enum_from_import_preset(_import_props: "SM64_AnimImportProperties", context):
     try:
         return cached_enum_from_import_preset(get_scene_anim_props(context).importing.preset)
-    except Exception as exc:
+    except Exception as exc:  # pylint: disable=broad-except
         print(str(exc))
         return [("Custom", "Custom", "Pick your own animation index", 0)]
 
@@ -745,8 +751,12 @@ def update_table_preset(import_props: "SM64_AnimImportProperties", context):
         return
 
     preset = ACTOR_PRESET_INFO[import_props.preset]
+    assert preset.animation is not None and isinstance(
+        preset.animation, AnimInfo
+    ), "Selected preset's actor has not animation information"
 
-    if import_props.preset_animation == "":  # If the preset animation isn't in this preset, select the animation at 0
+    if import_props.preset_animation == "":
+        # If the previously selected animation isn't in this preset, select animation 0
         import_props.preset_animation = "0"
 
     # C

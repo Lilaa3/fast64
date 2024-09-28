@@ -187,7 +187,7 @@ class SM64_AnimFlags(IntFlag):
     @classmethod
     @functools.cache
     def flags_to_names(cls):
-        names: dict[SM64_AnimFlags, list(str)] = {}
+        names: dict[SM64_AnimFlags, list[str]] = {}
         for name, flag in cls.__members__.items():
             if flag in names:
                 names[flag].append(name)
