@@ -148,10 +148,9 @@ class SM64_Properties(PropertyGroup):
             for new, old in old_export_props_to_new.items():
                 upgrade_old_prop(combined_props, new, scene, old)
 
-            insertable_directory_path = get_first_set_prop(scene, "animInsertableBinaryPath")
-            if insertable_directory_path:
-                # Ignores file name
-                combined_props.insertable_directory_path = os.path.split(insertable_directory_path)[0]
+            insertable_directory = get_first_set_prop(scene, "animInsertableBinaryPath")
+            if insertable_directory is not None:  # Ignores file name
+                combined_props.insertable_directory = os.path.split(insertable_directory)[1]
 
             sm64_props.version = SM64_Properties.cur_version
 

@@ -391,7 +391,7 @@ def to_table_class(
         anim_props.get_table_name(actor_name),
         anim_props.get_enum_name(actor_name),
         anim_props.get_enum_end(actor_name),
-        "table.inc.c",
+        anim_props.get_table_file_name(actor_name, export_type),
         values_reference=toAlnum(f"anim_{actor_name}_values"),
     )
 
@@ -719,11 +719,9 @@ def export_animation_table_binary(
         )
 
 
-def export_animation_table_insertable(
-    anim_props: "SM64_ArmatureAnimProperties", table: SM64_AnimTable, is_dma: bool, directory: Path
-):
+def export_animation_table_insertable(table: SM64_AnimTable, is_dma: bool, directory: Path):
     directory_path_checks(directory, "Empty directory path.")
-    path = directory / anim_props.insertable_file_name
+    path = directory / table.file_name
     if is_dma:
         data = table.to_binary_dma()
         InsertableBinaryData("Animation DMA Table", data).write(path)
@@ -955,9 +953,7 @@ def export_animation(context: Context, obj: Object):
             animation, anim_props, combined_props, sm64_props.abs_decomp_path, actor_name, sm64_props.designated
         )
     elif sm64_props.export_type == "Insertable Binary":
-        export_animation_insertable(
-            animation, anim_props.is_dma, Path(abspath(combined_props.insertable_directory_path))
-        )
+        export_animation_insertable(animation, anim_props.is_dma, Path(abspath(combined_props.insertable_directory)))
     elif sm64_props.export_type == "Binary":
         with BinaryExporter(
             Path(abspath(sm64_props.export_rom)), Path(abspath(sm64_props.output_rom))
@@ -1012,9 +1008,7 @@ def export_animation_table(context: Context, obj: Object):
             anim_props, combined_props, table, sm64_props.abs_decomp_path, actor_name, sm64_props.designated
         )
     elif sm64_props.export_type == "Insertable Binary":
-        export_animation_table_insertable(
-            anim_props, table, anim_props.is_dma, Path(abspath(combined_props.insertable_directory_path))
-        )
+        export_animation_table_insertable(table, anim_props.is_dma, Path(abspath(combined_props.insertable_directory)))
     elif sm64_props.export_type == "Binary":
         with BinaryExporter(
             Path(abspath(sm64_props.export_rom)), Path(abspath(sm64_props.output_rom))

@@ -901,6 +901,7 @@ class SM64_AnimProperties(PropertyGroup):
             if end_address is not None:
                 action_props.end_address = intToHex(int(end_address, 16))
 
+        insertable_path = scene.pop("animInsertableBinaryPath", "")
         is_dma = scene.pop("loopAnimation", None)
         update_table = scene.pop("animExportStart", None)
         update_behavior = scene.pop("animExportEnd", None)
@@ -917,6 +918,9 @@ class SM64_AnimProperties(PropertyGroup):
                 anim_props.update_behavior = update_behavior
             if beginning_animation is not None:
                 anim_props.beginning_animation = beginning_animation
+            if insertable_path is not None:  # Ignores directory
+                anim_props.use_custom_file_name = True
+                anim_props.custom_file_name = os.path.split(insertable_path)[0]
 
         # Deprecated:
         # - addr 0x27 was a pointer to a load anim cmd that would be used to update table pointers
@@ -974,7 +978,8 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
     dma_address: StringProperty(name="DMA Table Address", default=intToHex(0x4EC000))
     dma_end_address: StringProperty(name="DMA Table End", default=intToHex(0x4EC000 + 0x8DC20))
 
-    insertable_file_name: StringProperty(name="Insertable File Name", default="toad.insertable")
+    use_custom_file_name: BoolProperty(name="File Name")
+    custom_file_name: StringProperty(name="File Name", default="toad.insertable")
 
     @property
     def behavior_address(self) -> int:
@@ -1010,6 +1015,16 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
     def get_enum_end(self, actor_name: str):
         table_name = self.get_table_name(actor_name)
         return f"{table_name.upper()}_END"
+
+    def get_table_file_name(self, actor_name: str, export_type: str) -> str:
+        if not export_type in {"C", "Insertable Binary"}:
+            return ""
+        elif export_type == "Insertable Binary":
+            if self.use_custom_file_name:
+                return self.custom_file_name
+            return clean_name(actor_name + ("_dma_table" if self.is_dma else "_table")) + ".insertable"
+        else:
+            return "table.inc.c"
 
     def draw_element(
         self,
@@ -1094,7 +1109,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
                     string_int_prop(col, self, "data_end_address", "Data End")
             col.prop(self, "null_delimiter")
         if export_type == "Insertable Binary":
-            prop_split(col, self, "insertable_file_name", "File Name")
+            draw_custom_or_auto(self, col, "file_name", self.get_table_file_name(actor_name, export_type))
 
         col.separator()
 

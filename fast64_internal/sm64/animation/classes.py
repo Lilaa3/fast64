@@ -746,9 +746,12 @@ class SM64_AnimTable:
                     table_data.extend(encodeSegmentedAddr(header_offset, segment_data))
                 else:
                     table_data.extend(header_offset.to_bytes(4, byteorder="big"))
-            else:
-                assert isinstance(element.reference, int), f"Reference at element {i} is not an int."
-                table_data.extend(element.reference.to_bytes(4, byteorder="big"))
+                continue
+            if element.reference is None:
+                table_data.extend(0x0.to_bytes(4, byteorder="big"))
+                continue
+            assert isinstance(element.reference, int), f"Reference at element {i} is not an int."
+            table_data.extend(element.reference.to_bytes(4, byteorder="big"))
 
         for anim_header in headers_set:  # Add the headers
             if not anim_header.data:

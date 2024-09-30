@@ -2008,9 +2008,7 @@ class SM64_CombinedObjectProperties(bpy.types.PropertyGroup):
         description="Animation export will only export the armature's current action like in older versions of fast64",
     )
     binary_level: bpy.props.EnumProperty(items=level_enums, name="Level", default="IC")
-    insertable_directory_path: bpy.props.StringProperty(
-        name="Directory Path", subtype="FILE_PATH"
-    )  # TODO should this be here
+    insertable_directory: bpy.props.StringProperty(name="Directory Path", subtype="FILE_PATH")
 
     # export options
     export_bhv: bpy.props.BoolProperty(
@@ -2220,7 +2218,7 @@ class SM64_CombinedObjectProperties(bpy.types.PropertyGroup):
             if not is_dma:
                 prop_split(col, self, "binary_level", "Level")
         elif export_type == "Insertable Binary":
-            prop_split(col, self, "insertable_directory_path", "Directory")
+            prop_split(col, self, "insertable_directory", "Directory")
 
     def draw_export_options(self, layout):
         split = layout.row(align=True)
