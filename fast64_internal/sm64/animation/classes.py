@@ -15,6 +15,7 @@ from ...f3d.f3d_parser import math_eval
 
 from ...utility import PluginError, cast_integer, encodeSegmentedAddr, intToHex
 from ..sm64_constants import MAX_U16, SegmentData
+from ..sm64_utility import CommentMatch, adjust_start_end
 from ..sm64_classes import RomReader, DMATable, DMATableElement, IntArray
 
 from .constants import HEADER_STRUCT, HEADER_SIZE, TABLE_ELEMENT_PATTERN
@@ -871,12 +872,18 @@ class SM64_AnimTable:
     def read_c(
         self,
         c_data: str,
+        start: int,
+        end: int,
+        comment_map: list[CommentMatch],
         read_headers: dict[str, SM64_AnimHeader],
         header_decls: list[CArrayDeclaration],
         values_decls: list[CArrayDeclaration],
         indices_decls: list[CArrayDeclaration],
     ):
-        for i, element_match in enumerate(re.finditer(TABLE_ELEMENT_PATTERN, c_data)):
+        table_start, table_end = adjust_start_end(start, end, comment_map)
+        self.start, self.end = table_start, table_end
+
+        for i, element_match in enumerate(re.finditer(TABLE_ELEMENT_PATTERN, c_data[start:end])):
             enum, element, null = (
                 element_match.group("enum"),
                 element_match.group("element"),
@@ -895,12 +902,15 @@ class SM64_AnimTable:
                         read_headers,
                         i,
                     )
+            element_start, element_end = adjust_start_end(
+                table_start + element_match.start(), table_start + element_match.end(), comment_map
+            )
             self.elements.append(
                 SM64_AnimTableElement(
                     element,
                     enum_name=enum,
-                    reference_start=element_match.start(),
-                    reference_end=element_match.end(),
+                    reference_start=element_start - table_start,
+                    reference_end=element_end - table_start,
                     header=header,
                 )
             )

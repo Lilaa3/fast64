@@ -131,6 +131,10 @@ def duplicate_name(name: str, existing_names: dict[str, int]) -> str:
     return name
 
 
+def table_name_to_enum(name: str):
+    return name.title().replace("_", "")
+
+
 def get_action_props(action: Action) -> "SM64_ActionAnimProperty":
     return action.fast64.sm64.animation
 

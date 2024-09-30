@@ -1,7 +1,7 @@
 import struct
 import re
 
-from ...utility import intToHex, COMMENT_PATTERN
+from ...utility import intToHex
 from ..sm64_constants import ACTOR_PRESET_INFO, ActorPresetInfo
 
 HEADER_STRUCT = struct.Struct(">h h h h h h I I I")
@@ -9,54 +9,42 @@ HEADER_SIZE = HEADER_STRUCT.size
 
 TABLE_ELEMENT_PATTERN = re.compile(  # strict but only in the sense that it requires valid c code
     r"""
-    (?:COMMENT_PATTERN)|
     (?:\[\s*(?P<enum>\w+)\s*\]\s*=\s*)? # Don´t capture brackets or equal, works with nums
     (?:(?:&\s*(?P<element>\w+))|(?P<null>NULL)) # Capture element or null, element requires &
     (?:\s*,|) # allow no comma, techinically not correct but no other method works
-    """.replace(
-        "COMMENT_PATTERN", COMMENT_PATTERN.pattern
-    ),
+    """,
     re.DOTALL | re.VERBOSE | re.MULTILINE,
 )
 
 
 TABLE_PATTERN = re.compile(
     r"""
-    (?:COMMENT_PATTERN)|
     const\s+struct\s*Animation\s*\*const\s*(?P<name>\w+)\s*
     (?:\[.*?\])? # Optional size, don´t capture
     \s*=\s*\{
-        (?P<content>(?:COMMENT_PATTERN|[\s\S])*) # Capture any character including new lines
+        (?P<content>[\s\S]*) # Capture any character including new lines
     (?=\}\s*;) # Look ahead for the end
-    """.replace(
-        "COMMENT_PATTERN", COMMENT_PATTERN.pattern
-    ),
+    """,
     re.DOTALL | re.VERBOSE | re.MULTILINE,
 )
 
 
 TABLE_ENUM_PATTERN = re.compile(  # strict but only in the sense that it requires valid c code
     r"""
-    (?:COMMENT_PATTERN)|
     (?P<name>\w+)\s*
     (?:\s*=\s*(?P<num>\w+)\s*)?
     (?=,|) # lookahead, allow no comma, techinically not correct but no other method works
-    """.replace(
-        "COMMENT_PATTERN", COMMENT_PATTERN.pattern
-    ),
+    """,
     re.DOTALL | re.VERBOSE | re.MULTILINE,
 )
 
 
 TABLE_ENUM_LIST_PATTERN = re.compile(
     r"""
-    (?:COMMENT_PATTERN)|
     enum\s*(?P<name>\w+)\s*\{
-        (?P<content>(?:COMMENT_PATTERN|[\s\S])*) # Capture any character including new lines, lazy
+        (?P<content>[\s\S]*) # Capture any character including new lines, lazy
     (?=\}\s*;)
-    """.replace(
-        "COMMENT_PATTERN", COMMENT_PATTERN.pattern
-    ),
+    """,
     re.DOTALL | re.VERBOSE | re.MULTILINE,
 )
 

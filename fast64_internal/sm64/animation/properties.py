@@ -1,4 +1,3 @@
-from pathlib import Path
 import os
 
 import bpy
@@ -53,6 +52,7 @@ from .utility import (
     anim_name_to_enum_name,
     action_name_to_enum_name,
     duplicate_name,
+    table_name_to_enum,
 )
 from .importing import get_enum_from_import_preset, update_table_preset
 
@@ -1005,8 +1005,7 @@ class SM64_ArmatureAnimProperties(PropertyGroup):
         return f"{actor_name}_anims"
 
     def get_enum_name(self, actor_name: str):
-        table_name = self.get_table_name(actor_name)
-        return table_name.title().replace("_", "")
+        return table_name_to_enum(self.get_table_name(actor_name))
 
     def get_enum_end(self, actor_name: str):
         table_name = self.get_table_name(actor_name)

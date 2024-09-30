@@ -27,7 +27,8 @@ from ...utility_anim import stashActionInArmature
 from ..sm64_constants import BEHAVIOR_COMMANDS, BEHAVIOR_EXITS, defaultExtendSegment4, level_pointers
 from ..sm64_utility import (
     ModifyFoundDescriptor,
-    find_descriptors,
+    find_descriptor_in_text,
+    get_comment_map,
     to_include_descriptor,
     write_includes,
     update_actor_includes,
@@ -467,11 +468,10 @@ def update_anim_header(path: Path, table_name: str, gen_enums: bool, override_fi
 
 
 def update_enum_file(path: Path, override_files: bool, table: SM64_AnimTable):
+    text, comment_map = "", []
     existing_file = path.exists() and not override_files
     if existing_file:
-        text = path.read_text()
-    else:
-        text = ""
+        text, comment_map = get_comment_map(path.read_text())
 
     if table.enum_list_start == -1 and table.enum_list_end == -1:  # create new enum list
         if text and text[-1] not in {"\n", "\r"}:
@@ -515,26 +515,31 @@ def update_table_file(
     designated: bool,
     enum_list_path: Path,
 ):
-    text, enum_text = "", ""
+    assert isinstance(table.reference, str) and table.reference, "Invalid table reference"
+
+    text, comment_less, enum_text, comment_map = "", "", "", []
     existing_file = table_path.exists() and not override_files
     if existing_file:
         text = table_path.read_text()
+        comment_less, comment_map = get_comment_map(text)
 
     # add include if not already there
     descriptor = to_include_descriptor(Path("table_enum.h"))
-    if gen_enums and descriptor not in find_descriptors(text, [descriptor])[0]:
+    if gen_enums and len(find_descriptor_in_text(descriptor, comment_less, comment_map)) == 0:
         text = '#include "table_enum.h"\n' + text
 
     # First, find existing tables
-    tables = import_tables(text, table_path, table.reference)
+    tables = import_tables(comment_less, table_path, comment_map, table.reference)
+    enum_tables = []
     if gen_enums:
+        assert isinstance(table.enum_list_reference, str) and table.enum_list_reference
+        enum_text, enum_comment_less, enum_comment_map = "", "", []
         if enum_list_path.exists() and not override_files:
             enum_text = enum_list_path.read_text()
-        enum_tables = import_enums(enum_text, enum_list_path, table.enum_list_reference)
+            enum_comment_less, enum_comment_map = get_comment_map(enum_text)
+        enum_tables = import_enums(enum_comment_less, enum_list_path, enum_comment_map, table.enum_list_reference)
         if len(enum_tables) > 1:
             raise PluginError(f'Duplicate enum list "{table.enum_list_reference}"')
-    else:
-        enum_tables = []
 
     if len(tables) > 1:
         raise PluginError(f'Duplicate animation table "{table.reference}"')

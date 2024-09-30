@@ -12,12 +12,12 @@ from bpy.types import Object, Action, Context, PoseBone
 from mathutils import Quaternion
 
 from ...f3d.f3d_parser import math_eval
-from ...utility import PluginError, decodeSegmentedAddr, filepath_checks, path_checks, intToHex, removeComments
+from ...utility import PluginError, decodeSegmentedAddr, filepath_checks, path_checks, intToHex
 from ...utility_anim import create_basic_action
 
 from ..sm64_constants import AnimInfo, level_pointers
 from ..sm64_level_parser import parseLevelAtPointer
-from ..sm64_utility import import_rom_checks
+from ..sm64_utility import CommentMatch, get_comment_map, adjust_start_end, import_rom_checks
 from ..sm64_classes import RomReader
 
 from .utility import (
@@ -27,6 +27,7 @@ from .utility import (
     get_scene_anim_props,
     get_anim_actor_name,
     anim_name_to_enum_name,
+    table_name_to_enum,
 )
 from .classes import (
     SM64_Anim,
@@ -353,7 +354,7 @@ def from_anim_table_class(
             anim_props.write_data_seperately = True
             anim_props.data_address = intToHex(min(start_addresses))
             anim_props.data_end_address = intToHex(max(end_addresses))
-    elif isinstance(table.reference, str):  # C
+    elif isinstance(table.reference, str) and table.reference:  # C
         if use_custom_name:
             anim_props.custom_table_name = table.reference
             if anim_props.get_table_name(actor_name) != anim_props.custom_table_name:
@@ -416,7 +417,7 @@ def update_table_with_table_enum(table: SM64_AnimTable, enum_table: SM64_AnimTab
     table.enum_list_end = enum_table.enum_list_end
 
 
-def import_enums(c_data: str, path: Path, specific_name=""):
+def import_enums(c_data: str, path: Path, comment_map: list[CommentMatch], specific_name=""):
     tables = []
     for list_match in re.finditer(TABLE_ENUM_LIST_PATTERN, c_data):
         name, content = list_match.group("name"), list_match.group("content")
@@ -424,7 +425,7 @@ def import_enums(c_data: str, path: Path, specific_name=""):
             continue
         if specific_name and name != specific_name:
             continue
-        list_start, list_end = c_data.find(content, list_match.start()), list_match.end()
+        list_start, list_end = adjust_start_end(c_data.find(content, list_match.start()), list_match.end(), comment_map)
         content = c_data[list_start:list_end]
         table = SM64_AnimTable(
             file_name=path.name,
@@ -436,9 +437,12 @@ def import_enums(c_data: str, path: Path, specific_name=""):
             name, num = (element_match.group("name"), element_match.group("num"))
             if name is None and num is None:  # comment
                 continue
+            enum_start, enum_end = adjust_start_end(
+                list_start + element_match.start(), list_start + element_match.end(), comment_map
+            )
             table.elements.append(
                 SM64_AnimTableElement(
-                    enum_name=name, enum_val=num, enum_start=element_match.start(), enum_end=element_match.end()
+                    enum_name=name, enum_val=num, enum_start=enum_start - list_start, enum_end=enum_end - list_start
                 )
             )
         tables.append(table)
@@ -448,10 +452,11 @@ def import_enums(c_data: str, path: Path, specific_name=""):
 def import_tables(
     c_data: str,
     path: Path,
+    comment_map: list[CommentMatch],
     specific_name="",
-    header_decls: list[CArrayDeclaration] = None,
-    values_decls: list[CArrayDeclaration] = None,
-    indices_decls: list[CArrayDeclaration] = None,
+    header_decls: Optional[list[CArrayDeclaration]] = None,
+    values_decls: Optional[list[CArrayDeclaration]] = None,
+    indices_decls: Optional[list[CArrayDeclaration]] = None,
 ):
     read_headers = {}
     header_decls, values_decls, indices_decls = (
@@ -468,16 +473,24 @@ def import_tables(
         if specific_name and name != specific_name:
             continue
 
-        table_start, table_end = c_data.find(content, table_match.start()), table_match.end()
-        table = SM64_AnimTable(name, file_name=path.name, elements=table_elements, start=table_start, end=table_end)
-        table.read_c(c_data[table_start:table_end], read_headers, header_decls, values_decls, indices_decls)
+        table = SM64_AnimTable(name, file_name=path.name, elements=table_elements)
+        table.read_c(
+            c_data,
+            c_data.find(content, table_match.start()),
+            table_match.end(),
+            comment_map,
+            read_headers,
+            header_decls,
+            values_decls,
+            indices_decls,
+        )
         tables.append(table)
     return tables
 
 
 DECL_PATTERN = re.compile(
     r"(static\s+const\s+struct\s+Animation|static\s+const\s+u16|static\s+const\s+s16)\s+"
-    r"(\w+)\s*?(?:\[.*?\])?\s*?=\s*?\{(.*?)\};",
+    r"(\w+)\s*?(?:\[.*?\])?\s*?=\s*?\{(.*?)\s*?\};",
     re.DOTALL,
 )
 VALUE_SPLIT_PATTERN = re.compile(r"\s*(?:(?:\.(?P<var>\w+)|\[\s*(?P<designator>.*?)\s*\])\s*=\s*)?(?P<val>.+?)(?:,|\Z)")
@@ -527,7 +540,7 @@ def import_c_animations(path: Path) -> tuple[SM64_AnimTable | None, dict[str, SM
         raise PluginError("Path is neither a file or a folder but it exists, somehow.")
 
     print("Reading from:\n" + "\n".join([f.name for f in file_paths]))
-    c_files = {file_path: removeComments(file_path.read_text()) for file_path in file_paths}
+    c_files = {file_path: get_comment_map(file_path.read_text()) for file_path in file_paths}
 
     decl_lists = {"static const struct Animation": [], "static const u16": [], "static const s16": []}
     header_decls, indices_decls, value_decls = (
@@ -536,15 +549,27 @@ def import_c_animations(path: Path) -> tuple[SM64_AnimTable | None, dict[str, SM
         decl_lists["static const s16"],
     )
     tables: list[SM64_AnimTable] = []
-    for file_path, c_data in c_files.items():
-        find_decls(c_data, file_path, decl_lists)
-    for file_path, c_data in c_files.items():
-        tables.extend(import_tables(c_data, file_path, "", header_decls, value_decls, indices_decls))
+    enum_lists: list[SM64_AnimTable] = []
+    for file_path, (comment_less, _comment_map) in c_files.items():
+        find_decls(comment_less, file_path, decl_lists)
+    for file_path, (comment_less, comment_map) in c_files.items():
+        tables.extend(import_tables(comment_less, file_path, comment_map, "", header_decls, value_decls, indices_decls))
+        enum_lists.extend(import_enums(comment_less, file_path, comment_map))
 
     if len(tables) > 1:
         raise ValueError("More than 1 table declaration")
     elif len(tables) == 1:
         table: SM64_AnimTable = tables[0]
+        if enum_lists:
+            enum_table = next(  # find enum with the same name or use the first
+                (
+                    enum_table
+                    for enum_table in enum_lists
+                    if enum_table.reference == table_name_to_enum(table.reference)
+                ),
+                enum_lists[0],
+            )
+            update_table_with_table_enum(table, enum_table)
         read_headers = {header.reference: header for header in table.header_set}
         return table, read_headers
     else:
