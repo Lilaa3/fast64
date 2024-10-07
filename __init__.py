@@ -4,7 +4,7 @@ from bpy.path import abspath
 
 from . import addon_updater_ops
 
-from .fast64_internal.utility import prop_split, multilineLabel, draw_and_check_tab
+from .fast64_internal.utility import prop_split
 
 from .fast64_internal.repo_settings import (
     draw_repo_settings,
@@ -26,26 +26,9 @@ from .fast64_internal.utility_anim import utility_anim_register, utility_anim_un
 
 from .fast64_internal.mk64 import MK64_Properties, mk64_register, mk64_unregister
 
-from .fast64_internal.f3d.f3d_material import (
-    F3D_MAT_CUR_VERSION,
-    mat_register,
-    mat_unregister,
-    check_or_ask_color_management,
-)
-from .fast64_internal.f3d.f3d_render_engine import render_engine_register, render_engine_unregister
-from .fast64_internal.f3d.f3d_writer import f3d_writer_register, f3d_writer_unregister
-from .fast64_internal.f3d.f3d_parser import f3d_parser_register, f3d_parser_unregister
-from .fast64_internal.f3d.flipbook import flipbook_register, flipbook_unregister
-from .fast64_internal.f3d.op_largetexture import op_largetexture_register, op_largetexture_unregister, ui_oplargetexture
-
-from .fast64_internal.f3d_material_converter import (
-    MatUpdateConvert,
-    upgrade_f3d_version_all_meshes,
-    bsdf_conv_register,
-    bsdf_conv_unregister,
-    bsdf_conv_panel_regsiter,
-    bsdf_conv_panel_unregsiter,
-)
+from .fast64_internal.f3d import f3d_register, f3d_unregister
+from .fast64_internal.f3d.f3d_material import F3D_MAT_CUR_VERSION, check_or_ask_color_management
+from .fast64_internal.f3d_material_converter import upgrade_f3d_version_all_meshes
 
 from .fast64_internal.render_settings import (
     Fast64RenderSettings_Properties,
@@ -71,36 +54,6 @@ gameEditorEnum = (
     ("MK64", "MK64", "Mario Kart 64", 3),
     ("Homebrew", "Homebrew", "Homebrew", 2),
 )
-
-
-class F3D_GlobalSettingsPanel(bpy.types.Panel):
-    bl_idname = "F3D_PT_global_settings"
-    bl_label = "F3D Global Settings"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "Fast64"
-
-    @classmethod
-    def poll(cls, context):
-        return True
-
-    # called every frame
-    def draw(self, context):
-        col = self.layout.column()
-        col.scale_y = 1.1  # extra padding
-        prop_split(col, context.scene, "f3d_type", "F3D Microcode")
-        col.prop(context.scene, "saveTextures")
-        col.prop(context.scene, "f3d_simple", text="Simple Material UI")
-        col.prop(context.scene, "exportInlineF3D", text="Bleed and Inline Material Exports")
-        if context.scene.exportInlineF3D:
-            multilineLabel(
-                col.box(),
-                "While inlining, all meshes will be restored to world default values.\n         You can configure these values in the world properties tab.",
-                icon="INFO",
-            )
-        col.prop(context.scene, "ignoreTextureRestrictions")
-        if context.scene.ignoreTextureRestrictions:
-            col.box().label(text="Width/height must be < 1024. Must be png format.")
 
 
 class Fast64_GlobalSettingsPanel(bpy.types.Panel):
@@ -133,26 +86,6 @@ class Fast64_GlobalSettingsPanel(bpy.types.Panel):
             col.prop(fast64_settings, "auto_pick_texture_format")
             if fast64_settings.auto_pick_texture_format:
                 col.prop(fast64_settings, "prefer_rgba_over_ci")
-
-
-class Fast64_GlobalToolsPanel(bpy.types.Panel):
-    bl_idname = "FAST64_PT_global_tools"
-    bl_label = "Fast64 Tools"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "Fast64"
-
-    @classmethod
-    def poll(cls, context):
-        return True
-
-    # called every frame
-    def draw(self, context):
-        col = self.layout.column()
-        col.operator(ArmatureApplyWithMeshOperator.bl_idname)
-        # col.operator(CreateMetarig.bl_idname)
-        ui_oplargetexture(col, context)
-        addon_updater_ops.update_notice_box_ui(self, context)
 
 
 def repo_path_update(self, context):
@@ -316,9 +249,7 @@ classes = (
     Fast64_Properties,
     Fast64_BoneProperties,
     Fast64_ObjectProperties,
-    F3D_GlobalSettingsPanel,
     Fast64_GlobalSettingsPanel,
-    Fast64_GlobalToolsPanel,
     UpgradeF3DMaterialsDialog,
 )
 
@@ -418,9 +349,7 @@ def register():
     addon_updater_ops.register(bl_info)
 
     utility_anim_register()
-    mat_register()
-    render_engine_register()
-    bsdf_conv_register()
+    f3d_register(True)
     sm64_register(True)
     oot_register(True)
     mk64_register(True)
@@ -429,12 +358,6 @@ def register():
 
     for cls in classes:
         register_class(cls)
-
-    bsdf_conv_panel_regsiter()
-    f3d_writer_register()
-    flipbook_register()
-    f3d_parser_register()
-    op_largetexture_register()
 
     # ROM
 
@@ -464,17 +387,10 @@ def register():
 # called on add-on disabling
 def unregister():
     utility_anim_unregister()
-    op_largetexture_unregister()
-    flipbook_unregister()
-    f3d_writer_unregister()
-    f3d_parser_unregister()
+    f3d_unregister(True)
     sm64_unregister(True)
     oot_unregister(True)
     mk64_unregister(True)
-    mat_unregister()
-    bsdf_conv_unregister()
-    bsdf_conv_panel_unregsiter()
-    render_engine_unregister()
 
     del bpy.types.Scene.fullTraceback
     del bpy.types.Scene.ignoreTextureRestrictions
