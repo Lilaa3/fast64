@@ -1,5 +1,7 @@
 import bpy
 from bpy.utils import register_class, unregister_class
+from bpy.props import PointerProperty
+from bpy.types import PropertyGroup
 
 from ... import addon_updater_ops
 from ..utility_anim import ArmatureApplyWithMeshOperator
@@ -11,7 +13,12 @@ from .f3d_writer import f3d_writer_register, f3d_writer_unregister
 from .f3d_parser import f3d_parser_register, f3d_parser_unregister
 from .flipbook import flipbook_register, flipbook_unregister
 from .op_largetexture import op_largetexture_register, op_largetexture_unregister, ui_oplargetexture
-from .bsdf_converter import bsdf_converter_register, bsdf_converter_unregister, bsdf_converter_panel_draw
+from .bsdf_converter import (
+    bsdf_converter_register,
+    bsdf_converter_unregister,
+    bsdf_converter_panel_draw,
+    F3D_BSDFConverterProperties,
+)
 
 
 class F3D_GlobalSettingsPanel(bpy.types.Panel):
@@ -81,7 +88,16 @@ class Fast64_GlobalToolsPanel(bpy.types.Panel):
         addon_updater_ops.update_notice_box_ui(self, context)
 
 
-classes = tuple()
+class F3D_Properties(PropertyGroup):
+    """
+    Properties in scene.fast64.f3d.
+    All new scene f3d properties should be children of this property group.
+    """
+
+    bsdf_converter: PointerProperty(name="BSDF Converter", type=F3D_BSDFConverterProperties)
+
+
+classes = (F3D_Properties,)
 panel_classes = (F3D_GlobalSettingsPanel, Fast64_GlobalToolsPanel)
 
 
@@ -98,8 +114,6 @@ def f3d_panel_unregister():
 def f3d_register(register_panels: bool):
     from ..f3d_material_converter import mat_updater_register
 
-    for cls in classes:
-        register_class(cls)
     mat_register()
     render_engine_register()
     mat_updater_register()
@@ -108,6 +122,8 @@ def f3d_register(register_panels: bool):
     f3d_parser_register()
     op_largetexture_register()
     bsdf_converter_register()
+    for cls in classes:
+        register_class(cls)
 
     if register_panels:
         f3d_panel_register()

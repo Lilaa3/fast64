@@ -26,7 +26,7 @@ from .fast64_internal.utility_anim import utility_anim_register, utility_anim_un
 
 from .fast64_internal.mk64 import MK64_Properties, mk64_register, mk64_unregister
 
-from .fast64_internal.f3d import f3d_register, f3d_unregister
+from .fast64_internal.f3d import f3d_register, f3d_unregister, F3D_Properties
 from .fast64_internal.f3d.f3d_material import F3D_MAT_CUR_VERSION, check_or_ask_color_management
 from .fast64_internal.f3d_material_converter import upgrade_f3d_version_all_meshes
 
@@ -156,6 +156,7 @@ class Fast64_Properties(bpy.types.PropertyGroup):
     sm64: bpy.props.PointerProperty(type=SM64_Properties, name="SM64 Properties")
     oot: bpy.props.PointerProperty(type=OOT_Properties, name="OOT Properties")
     mk64: bpy.props.PointerProperty(type=MK64_Properties, name="MK64 Properties")
+    f3d: bpy.props.PointerProperty(type=F3D_Properties, name="F3D Properties")
     settings: bpy.props.PointerProperty(type=Fast64Settings_Properties, name="Fast64 Settings")
     renderSettings: bpy.props.PointerProperty(type=Fast64RenderSettings_Properties, name="Fast64 Render Settings")
 
