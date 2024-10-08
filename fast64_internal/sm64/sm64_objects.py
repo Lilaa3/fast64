@@ -292,7 +292,7 @@ class SM64_Object:
         self.rotation = rotation
         self.name = name  # to sort by when exporting
 
-    def to_c(self):
+    def to_c(self, depth=0):
         if self.acts == 0x1F:
             return (
                 "OBJECT("
@@ -349,7 +349,7 @@ class SM64_Whirpool:
         self.position = position
         self.name = "whirlpool"  # for sorting
 
-    def to_c(self):
+    def to_c(self, depth=0):
         return (
             "WHIRPOOL("
             + str(self.index)
@@ -374,7 +374,7 @@ class SM64_Macro_Object:
         self.position = position
         self.rotation = rotation
 
-    def to_c(self):
+    def to_c(self, depth=0):
         if self.bparam is None:
             return (
                 "MACRO_OBJECT("
@@ -426,7 +426,7 @@ class SM64_Special_Object:
                 data.extend(int(self.bparam).to_bytes(2, "big"))
         return data
 
-    def to_c(self):
+    def to_c(self, depth=0):
         if self.rotation is None:
             return (
                 "SPECIAL_OBJECT("
@@ -437,7 +437,7 @@ class SM64_Special_Object:
                 + str(int(round(self.position[1])))
                 + ", "
                 + str(int(round(self.position[2])))
-                + "),\n"
+                + ")"
             )
         elif self.bparam is None:
             return (
@@ -451,7 +451,7 @@ class SM64_Special_Object:
                 + str(int(round(self.position[2])))
                 + ", "
                 + str(int(round(math.degrees(self.rotation[1]))))
-                + "),\n"
+                + ")"
             )
         else:
             return (
@@ -467,7 +467,7 @@ class SM64_Special_Object:
                 + str(int(round(math.degrees(self.rotation[1]))))
                 + ", "
                 + str(self.bparam)
-                + "),\n"
+                + ")"
             )
 
 
@@ -478,7 +478,7 @@ class SM64_Mario_Start:
         self.rotation = rotation
         self.name = "Mario"  # for sorting
 
-    def to_c(self):
+    def to_c(self, depth=0):
         return (
             "MARIO_POS("
             + str(self.area)
@@ -526,7 +526,7 @@ class SM64_Area:
             data += "\t\t" + warpNode + ",\n"
         # export objects in name order
         for obj in sorted(self.objects, key=(lambda obj: obj.name)):
-            data += "\t\t" + obj.to_c() + ",\n"
+            data += "\t\t" + obj.to_c(2) + ",\n"
         data += "\t\tTERRAIN(" + self.collision.name + "),\n"
         if includeRooms:
             data += "\t\tROOMS(" + self.collision.rooms_name() + "),\n"
@@ -547,7 +547,7 @@ class SM64_Area:
         data.header = "extern const MacroObject " + self.macros_name() + "[];\n"
         data.source += "const MacroObject " + self.macros_name() + "[] = {\n"
         for macro in self.macros:
-            data.source += "\t" + macro.to_c() + ",\n"
+            data.source += "\t" + macro.to_c(1) + ",\n"
         data.source += "\tMACRO_OBJECT_END(),\n};\n\n"
 
         return data
@@ -555,13 +555,13 @@ class SM64_Area:
     def to_c_camera_volumes(self):
         data = ""
         for camVolume in self.cameraVolumes:
-            data += "\t" + camVolume.to_c() + "\n"
+            data += "\t" + camVolume.to_c(1) + ",\n"
         return data
 
     def to_c_puppycam_volumes(self):
         data = ""
         for puppycamVolume in self.puppycamVolumes:
-            data += "\t" + puppycamVolume.to_c() + "\n"
+            data += "\t" + puppycamVolume.to_c(1) + ",\n"
         return data
 
     def hasCutsceneSpline(self):
@@ -598,7 +598,7 @@ class CollisionWaterBox:
         data.extend(int(round(self.height)).to_bytes(2, "big", signed=True))
         return data
 
-    def to_c(self):
+    def to_c(self, depth=0):
         data = (
             "COL_WATER_BOX("
             + ("0x00" if self.waterBoxType == "Water" else "0x32")
@@ -612,7 +612,7 @@ class CollisionWaterBox:
             + str(int(round(self.high[1])))
             + ", "
             + str(int(round(self.height)))
-            + "),\n"
+            + ")"
         )
         return data
 
@@ -630,7 +630,7 @@ class CameraVolume:
     def to_binary(self):
         raise PluginError("Binary exporting not implemented for camera volumens.")
 
-    def to_c(self):
+    def to_c(self, depth=0):
         data = (
             "{"
             + str(self.area)
@@ -650,7 +650,7 @@ class CameraVolume:
             + str(int(round(self.scale[2])))
             + ", "
             + str(convertRadiansToS16(self.rotation[1]))
-            + "},"
+            + "}"
         )
         return data
 
@@ -683,7 +683,7 @@ class PuppycamVolume:
     def to_binary(self):
         raise PluginError("Binary exporting not implemented for puppycam volumes.")
 
-    def to_c(self):
+    def to_c(self, depth=0):
         data = (
             "{"
             + str(self.level)
@@ -719,7 +719,7 @@ class PuppycamVolume:
             + str(int(round(self.camFocus[1])))
             + ", "
             + str(int(round(self.camFocus[2])))
-            + "},"
+            + "}"
         )
         return data
 
@@ -2346,7 +2346,7 @@ class WarpNodeProperty(bpy.types.PropertyGroup):
         ret.z = int(round(-difference.y * bpy.context.scene.blenderF3DScale))
         return ret
 
-    def to_c(self):
+    def to_c(self, depth=0):
         if self.warpType == "Instant":
             offset = Vector()
 
