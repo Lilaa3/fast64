@@ -228,8 +228,20 @@ def material_to_bsdf(material: Material):
     else:
         shader_node = nodes.new(type="ShaderNodeEmission")
     shader_node.location = (node_x, node_y)
-    node_x -= 300
+    node_x -= 150
     links.new(shader_node.outputs[0], output_node.inputs[0])
+
+    alpha_input = shader_node.inputs["Alpha"]
+    if bpy.app.version >= (4, 2, 0) and abstracted_mat.output_method == "CLIP":
+        alpha_clip = nodes.new(type="ShaderNodeMath")
+        alpha_clip.location = (node_x, node_y - 100)
+        alpha_clip.operation = "GREATER_THAN"
+        alpha_clip.use_clamp = True
+        alpha_clip.inputs[1].default_value = 0.125
+        links.new(alpha_clip.outputs[0], alpha_input)
+        alpha_input = alpha_clip.inputs[0]
+        
+        node_x -= 300
 
     # texture nodes
     tex_node_y = node_y
@@ -272,9 +284,9 @@ def material_to_bsdf(material: Material):
     else:
         shader_node.inputs["Base Color"].default_value = abstracted_mat.color[:3] + [1.0]
     if abstracted_mat.texture_sets_alpha:
-        links.new(texture_nodes[0].outputs[1], shader_node.inputs["Alpha"])
+        links.new(texture_nodes[0].outputs[1], alpha_input)
     else:
-        shader_node.inputs["Alpha"].default_value = abstracted_mat.color[3]
+        alpha_input.default_value = abstracted_mat.color[3]
 
     return new_material
 
