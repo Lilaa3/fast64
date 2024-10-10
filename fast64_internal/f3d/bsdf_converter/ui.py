@@ -2,11 +2,21 @@
 
 from bpy.types import UILayout, Context
 
-from .operators import F3D_ConvertF3DToBSDF, F3D_ConvertBSDFToF3D
+from .operators import F3D_ConvertBSDF
+from .properties import F3D_BSDFConverterProperties
 
 
 def bsdf_converter_panel_draw(layout: UILayout, context: Context):
     col = layout.column()
-    context.scene.fast64.f3d.bsdf_converter.draw_props(col)
-    F3D_ConvertF3DToBSDF.draw_props(col)
-    F3D_ConvertBSDFToF3D.draw_props(col)
+    bsdf_converter: F3D_BSDFConverterProperties = context.scene.fast64.f3d.bsdf_converter
+    bsdf_converter.draw_props(col)
+
+    for direction in ("F3D", "BSDF"):
+        opposite = "BSDF" if direction == "F3D" else "F3D"
+        F3D_ConvertBSDF.draw_props(
+            col,
+            text=f"Convert {opposite} to {direction}",
+            direction=direction,
+            converter_type=bsdf_converter.converter_type,
+            backup=bsdf_converter.backup,
+        )
