@@ -387,9 +387,26 @@ def material_to_bsdf(material: Material, put_alpha_into_color=False):
             uvmap_node.uv_map = "UVMap"
             uvmap_output = uvmap_node.outputs["UV"]
 
+    tex_color_inputs = [color_input, None]
+    tex_alpha_inputs = [alpha_input, None]
+    if len(abstracted_mat.textures) == 2:
+        if all(abstracted_tex.set_color for abstracted_tex in abstracted_mat.textures):
+            print("Creating mix rgb node for multi texture, setting color input")
+            color_mul = create_node(ShaderNodeMixRGB, "Multitexture Color Mul", True)
+            color_mul.use_clamp, color_mul.blend_type = True, "MULTIPLY"
+            color_mul.inputs[0].default_value = 1
+            tex_color_inputs = [color_mul.inputs[1], color_mul.inputs[2]]
+            links.new(color_mul.outputs[0], color_input)
+        if all(abstracted_tex.set_alpha for abstracted_tex in abstracted_mat.textures):
+            print("Creating mix rgb node for multi texture, setting alpha input")
+            alpha_mul = create_node(ShaderNodeMath, "Multitexture Alpha Mul", True, y_offset=alpha_y_offset)
+            alpha_mul.use_clamp, alpha_mul.operation = True, "MULTIPLY"
+            tex_alpha_inputs = [alpha_mul.inputs[0], alpha_mul.inputs[1]]
+            links.new(alpha_mul.outputs[0], alpha_input)
+
     tex_x_offset = tex_y_offset = 0
     texture_nodes = []
-    for abstracted_tex in abstracted_mat.textures:  # create textures
+    for abstracted_tex, tex_color_input, tex_alpha_input in zip(abstracted_mat.textures, tex_color_inputs, tex_alpha_inputs):  # create textures
         tex_node = create_node(ShaderNodeTexImage, "Texture", y_offset=tex_y_offset)
         tex_node.image = abstracted_tex.tex
         tex_node.extension = "REPEAT" if abstracted_tex.repeat else "EXTEND"
@@ -411,6 +428,15 @@ def material_to_bsdf(material: Material, put_alpha_into_color=False):
             new_x_offset -= padded_from_node(mapping_node)
         else:
             links.new(uvmap_output, tex_node.inputs[0])
+
+        if abstracted_tex.set_color:
+            links.new(tex_node.outputs[0], tex_color_input)
+        if abstracted_tex.set_alpha:
+            if abstracted_tex.color_is_alpha:  # i4/i8
+                links.new(tex_node.outputs[0], tex_alpha_input)
+            else:
+                links.new(tex_node.outputs[1], tex_alpha_input)
+
         if new_x_offset < tex_x_offset:
             tex_x_offset = new_x_offset
     node_x += tex_x_offset  # update node location
@@ -423,15 +449,7 @@ def material_to_bsdf(material: Material, put_alpha_into_color=False):
         set_location(uvmap_node, True)
 
     color_input.default_value = abstracted_mat.color[:3] + [1.0]
-    if abstracted_mat.texture_sets_col:
-        links.new(texture_nodes[0].outputs[0], color_input)
-
     alpha_input.default_value = abstracted_mat.color[3]
-    if abstracted_mat.texture_sets_alpha:
-        if abstracted_mat.main_texture.color_is_alpha:  # i4/i8
-            links.new(texture_nodes[0].outputs[0], alpha_input)
-        else:
-            links.new(texture_nodes[0].outputs[1], alpha_input)
 
     return new_material
 
