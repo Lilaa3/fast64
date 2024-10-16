@@ -456,107 +456,116 @@ def apply_alpha(blender_mesh: Mesh):
     color_layer.foreach_set("color", color)
 
 
-def material_to_f3d(
-    obj: Object, material: Material, uv_map: MeshUVLoopLayer | None = None, use_lights_for_colors=False
+def find_output_node(material: Material):
+    for node in material.node_tree.nodes:
+        if isinstance(node, ShaderNodeOutputMaterial):
+            return node
+    return None
+
+
+def find_linked_nodes(
+    starting_node: ShaderNode, node_check: callable, specific_input_sockets=None, specific_output_sockets=None
 ):
-    def find_output_node(material: Material):
-        for node in material.node_tree.nodes:
-            if isinstance(node, ShaderNodeOutputMaterial):
-                return node
-        return None
+    nodes: list[ShaderNode] = []
+    for inp in starting_node.inputs:
+        if specific_input_sockets is not None and inp.name not in specific_input_sockets:
+            continue
+        for link in inp.links:
+            if link.to_node == starting_node and (
+                specific_output_sockets is None or link.from_socket.name in specific_output_sockets
+            ):
+                if node_check(link.from_node):
+                    nodes.append(link.from_node)
+                    continue
+            nodes.extend(find_linked_nodes(link.from_node, node_check, specific_input_sockets, specific_output_sockets))
+    return nodes
 
-    def find_linked_nodes(
-        starting_node: ShaderNode, node_check: callable, specific_input_sockets=None, specific_output_sockets=None
-    ):
-        nodes: list[ShaderNode] = []
-        for inp in starting_node.inputs:
-            if specific_input_sockets is not None and inp.name not in specific_input_sockets:
-                continue
-            for link in inp.links:
-                if link.to_node == starting_node and (
-                    specific_output_sockets is None or link.from_socket.name in specific_output_sockets
-                ):
-                    if node_check(link.from_node):
-                        nodes.append(link.from_node)
-                        continue
-                nodes.extend(
-                    find_linked_nodes(link.from_node, node_check, specific_input_sockets, specific_output_sockets)
-                )
-        return nodes
 
-    print(f"Converting BSDF material {material.name}")
-
-    abstracted_mat = AbstractedN64Material()
-
-    abstracted_mat.color = None
+def bsdf_mat_to_abstracted(material: Material):
+    abstracted_mat = AbstractedN64Material(color=None)
     output_node = find_output_node(material) if material.use_nodes else None
     if output_node is None:
         abstracted_mat.color = material.diffuse_color
+        return abstracted_mat
+    shaders = find_linked_nodes(
+        output_node,
+        lambda node: node.bl_idname.startswith("ShaderNodeBsdf")
+        or node.bl_idname.removeprefix("ShaderNode")
+        in {"Background", "Emission", "SubsurfaceScattering", "VolumeAbsorption", "VolumeScatter"},
+        specific_input_sockets={"Surface"},
+    )
+    if len(shaders) == 0:
+        abstracted_mat.color = material.diffuse_color
+        print(f"WARNING: No shader connected to {material.name}. Using default color.")
+        return abstracted_mat
+    if len(shaders) > 1:
+        print(f"WARNING: More than 1 shader connected to {material.name}. Using first shader.")
+
+    main_shader = shaders[0]
+    if main_shader.bl_idname in {"Background", "Emission"}:  # is unlit
+        abstracted_mat.lighting = False
     else:
-        shaders = find_linked_nodes(
-            output_node,
-            lambda node: node.bl_idname.startswith("ShaderNodeBsdf")
-            or node.bl_idname.removeprefix("ShaderNode")
-            in {"Background", "Emission", "SubsurfaceScattering", "VolumeAbsorption", "VolumeScatter"},
-            specific_input_sockets={"Surface"},
-        )
-        if len(shaders) > 1:
-            print(f"WARNING: More than 1 shader connected to {material.name}. Using first shader.")
-        if len(shaders) == 0:
-            abstracted_mat.color = material.diffuse_color
-            print(f"WARNING: No shader connected to {material.name}. Using default color.")
-        else:
-            main_shader = shaders[0]
-            if main_shader.bl_idname in {"Background", "Emission"}:  # is unlit
-                abstracted_mat.lighting = False
-            else:
-                abstracted_mat.lighting = True
-            alpha_textures = find_linked_nodes(
-                main_shader,
-                lambda node: node.bl_idname == "ShaderNodeTexImage",
-                specific_output_sockets={"Alpha"},
+        abstracted_mat.lighting = True
+    alpha_textures = find_linked_nodes(
+        main_shader,
+        lambda node: node.bl_idname == "ShaderNodeTexImage",
+        specific_output_sockets={"Alpha"},
+    )
+    color_textures = find_linked_nodes(
+        main_shader,
+        lambda node: node.bl_idname == "ShaderNodeTexImage",
+        specific_output_sockets={"Color", "Base Color"},
+    )
+    textures: list[ShaderNodeTexImage] = list(dict.fromkeys(color_textures + alpha_textures).keys())
+    if len(textures) > 2:
+        print(f"WARNING: More than 2 textures connected to {material.name}.")
+    if len(textures) > 0:
+        for tex_node in textures[:2]:
+            abstracted_tex = AbstractedN64Texture(tex_node.image)
+            mapping = find_linked_nodes(tex_node, lambda node: node.bl_idname == "ShaderNodeMapping")
+            if len(mapping) > 1:
+                print(f"WARNING: More than 1 mapping node connected to {tex_node.name}.")
+            elif len(mapping) == 1:
+                mapping = mapping[0]
+                abstracted_tex.offset = tuple(mapping.inputs["Location"].default_value)
+                abstracted_tex.scale = tuple(mapping.inputs["Scale"].default_value)
+            uv_gen = find_linked_nodes(
+                tex_node,
+                lambda node: node.bl_idname == "ShaderNodeTexCoord",
+                specific_input_sockets={"Vector"},
+                specific_output_sockets={"Normal"},
             )
-            color_textures = find_linked_nodes(
-                main_shader,
-                lambda node: node.bl_idname == "ShaderNodeTexImage",
-                specific_output_sockets={"Color", "Base Color"},
-            )
-            textures: list[ShaderNodeTexImage] = list(dict.fromkeys(color_textures + alpha_textures).keys())
-            if len(textures) > 2:
-                print(f"WARNING: More than 2 textures connected to {material.name}.")
-            if len(textures) > 0:
-                for tex_node in textures[:2]:
-                    abstracted_tex = AbstractedN64Texture(tex_node.image)
-                    mapping = find_linked_nodes(tex_node, lambda node: node.bl_idname == "ShaderNodeMapping")
-                    if len(mapping) > 1:
-                        print(f"WARNING: More than 1 mapping node connected to {tex_node.name}.")
-                    elif len(mapping) == 1:
-                        mapping = mapping[0]
-                        abstracted_tex.offset = tuple(mapping.inputs["Location"].default_value)
-                        abstracted_tex.scale = tuple(mapping.inputs["Scale"].default_value)
-                    uv_gen = find_linked_nodes(
-                        tex_node,
-                        lambda node: node.bl_idname == "ShaderNodeTexCoord",
-                        specific_input_sockets={"Vector"},
-                        specific_output_sockets={"Normal"},
-                    )
-                    if uv_gen:
-                        abstracted_mat.uv_gen = True
-                    if tex_node.interpolation == "Closest":
-                        abstracted_mat.point_filtering = True
-                    abstracted_tex.repeat = tex_node.extension == "REPEAT"
-                    abstracted_tex.set_color = tex_node in color_textures
-                    abstracted_tex.set_alpha = tex_node in alpha_textures
-                    if abstracted_tex.set_color:
-                        abstracted_mat.texture_sets_col = True
-                    if abstracted_tex.set_alpha:
-                        abstracted_mat.texture_sets_alpha = True
-                    abstracted_mat.textures.append(abstracted_tex)
-            else:
-                abstracted_mat.color = Color(*shaders[0].inputs[0].default_value)
+            if uv_gen:
+                abstracted_mat.uv_gen = True
+            if tex_node.interpolation == "Closest":
+                abstracted_mat.point_filtering = True
+            abstracted_tex.repeat = tex_node.extension == "REPEAT"
+            abstracted_tex.set_color = tex_node in color_textures
+            abstracted_tex.set_alpha = tex_node in alpha_textures
+            if abstracted_tex.set_color:
+                abstracted_mat.texture_sets_col = True
+            if abstracted_tex.set_alpha:
+                abstracted_mat.texture_sets_alpha = True
+            abstracted_mat.textures.append(abstracted_tex)
+    else:
+        abstracted_mat.color = Color(*shaders[0].inputs[0].default_value)
+    return abstracted_mat
+
+
+def material_to_f3d(
+    obj: Object,
+    material: Material,
+    uv_map: MeshUVLoopLayer | None = None,
+    lights_for_colors=False,
+    fog=False,
+    set_render_mode=False,
+):
+    print(f"Converting BSDF material {material.name}")
+
+    abstracted_mat = bsdf_mat_to_abstracted(material)
 
     materials = obj.data.materials
-    found_uv_map_nodes = find_linked_nodes(output_node, lambda node: node.bl_idname == "ShaderNodeUVMap")
+    found_uv_map_nodes = find_linked_nodes(find_output_node(material), lambda node: node.bl_idname == "ShaderNodeUVMap")
     found_uv_map_names = dict.fromkeys([node.uv_map for node in found_uv_map_nodes]).keys()
     found_uv_maps = [obj.data.uv_layers[name] for name in found_uv_map_names]
     if len(found_uv_maps) > 1:
@@ -570,6 +579,7 @@ def material_to_f3d(
                 if poly.material_index < len(materials) and materials[poly.material_index] == material:
                     uv_map.data[loop_idx].uv = found_uv_map.data[loop_idx].uv
 
+    # TODO: we need to implement a system that can handle different material setups
     preset = getDefaultMaterialPreset("Shaded Solid")
     new_material = createF3DMat(obj, preset=preset, append=False)
     new_material.name = material.name
