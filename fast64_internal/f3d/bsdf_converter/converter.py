@@ -407,7 +407,9 @@ def material_to_bsdf(material: Material, put_alpha_into_color=False):
 
     tex_x_offset = tex_y_offset = 0
     texture_nodes = []
-    for abstracted_tex, tex_color_input, tex_alpha_input in zip(abstracted_mat.textures, tex_color_inputs, tex_alpha_inputs):  # create textures
+    for abstracted_tex, tex_color_input, tex_alpha_input in zip(
+        abstracted_mat.textures, tex_color_inputs, tex_alpha_inputs
+    ):  # create textures
         tex_node = create_node(ShaderNodeTexImage, "Texture", y_offset=tex_y_offset)
         tex_node.image = abstracted_tex.tex
         tex_node.extension = "REPEAT" if abstracted_tex.repeat else "EXTEND"
