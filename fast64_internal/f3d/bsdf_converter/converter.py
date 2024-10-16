@@ -1,4 +1,5 @@
 import copy
+import math
 import typing
 import dataclasses
 import numpy as np
@@ -619,8 +620,8 @@ def material_to_f3d(
         t: TextureFieldProperty = f3d_tex.T
         s.low = abstracted_tex.offset[0]
         t.low = abstracted_tex.offset[1]
-        s.shift = int(abstracted_tex.scale[0] // 2)  # TODO
-        t.shift = int(abstracted_tex.scale[1] // 2)
+        s.shift = int(-math.log2(abstracted_tex.scale[0]))
+        t.shift = int(-math.log2(abstracted_tex.scale[1]))
 
     with bpy.context.temp_override(material=new_material):
         update_all_node_values(new_material, bpy.context)  # Reload everything
