@@ -1,3 +1,4 @@
+import copy
 import typing
 import dataclasses
 import numpy as np
@@ -5,6 +6,7 @@ import numpy as np
 import bpy
 from bpy.types import (
     Mesh,
+    MeshUVLoopLayer,
     Object,
     Material,
     ShaderNodeOutputMaterial,
@@ -434,7 +436,29 @@ def material_to_bsdf(material: Material, put_alpha_into_color=False):
     return new_material
 
 
-def material_to_f3d(obj: Object, index: int, material: Material, use_lights_for_colors=False):
+def apply_alpha(blender_mesh: Mesh):
+    color_layer = getColorLayer(blender_mesh, layer="Col")
+    alpha_layer = getColorLayer(blender_mesh, layer="Alpha")
+    if not color_layer or not alpha_layer:
+        return
+    color = np.empty(len(blender_mesh.loops) * 4, dtype=np.float32)
+    alpha = np.empty(len(blender_mesh.loops) * 4, dtype=np.float32)
+    color_layer.foreach_get("color", color)
+    alpha_layer.foreach_get("color", alpha)
+    alpha = alpha.reshape(-1, 4)
+    color = color.reshape(-1, 4)
+
+    # Calculate alpha from the median of the alpha layer RGB
+    alpha_median = np.median(alpha[:, :3], axis=1)
+    color[:, 3] = alpha_median
+
+    color = color.flatten()
+    color_layer.foreach_set("color", color)
+
+
+def material_to_f3d(
+    obj: Object, material: Material, uv_map: MeshUVLoopLayer | None = None, use_lights_for_colors=False
+):
     def find_output_node(material: Material):
         for node in material.node_tree.nodes:
             if isinstance(node, ShaderNodeOutputMaterial):
@@ -530,7 +554,22 @@ def material_to_f3d(obj: Object, index: int, material: Material, use_lights_for_
                     abstracted_mat.textures.append(abstracted_tex)
             else:
                 abstracted_mat.color = Color(*shaders[0].inputs[0].default_value)
-    print(abstracted_mat)
+
+    materials = obj.data.materials
+    found_uv_map_nodes = find_linked_nodes(output_node, lambda node: node.bl_idname == "ShaderNodeUVMap")
+    found_uv_map_names = dict.fromkeys([node.uv_map for node in found_uv_map_nodes]).keys()
+    found_uv_maps = [obj.data.uv_layers[name] for name in found_uv_map_names]
+    if len(found_uv_maps) > 1:
+        print(f"WARNING: More than 1 UV map connected to {material.name}. Using first UV map.")
+    if uv_map and len(found_uv_maps) > 0 and not any(found_uv_map.active for found_uv_map in found_uv_maps):
+        found_uv_map = found_uv_maps[0]
+        # change the material's tris's uvs in the main UV map to the one found
+        print(f"Updating main UV map with {found_uv_map.name} UVs")
+        for poly in obj.data.polygons:
+            for loop_idx in poly.loop_indices:
+                if poly.material_index < len(materials) and materials[poly.material_index] == material:
+                    uv_map.data[loop_idx].uv = found_uv_map.data[loop_idx].uv
+
     preset = getDefaultMaterialPreset("Shaded Solid")
     new_material = createF3DMat(obj, preset=preset, append=False)
     new_material.name = material.name
@@ -552,7 +591,7 @@ def material_to_f3d(obj: Object, index: int, material: Material, use_lights_for_
         t: TextureFieldProperty = f3d_tex.T
         s.low = abstracted_tex.offset[0]
         t.low = abstracted_tex.offset[1]
-        s.shift = int(abstracted_tex.scale[0] // 2)
+        s.shift = int(abstracted_tex.scale[0] // 2)  # TODO
         t.shift = int(abstracted_tex.scale[1] // 2)
 
     with bpy.context.temp_override(material=new_material):
@@ -571,27 +610,12 @@ def obj_to_f3d(obj: Object, materials: dict[Material, Material]):
         if material in materials:
             obj.material_slots[index].material = materials[material]
         else:
-            obj.material_slots[index].material = material_to_f3d(obj, index, material)
-
-
-def apply_alpha(blender_mesh: Mesh):
-    color_layer = getColorLayer(blender_mesh, layer="Col")
-    alpha_layer = getColorLayer(blender_mesh, layer="Alpha")
-    if not color_layer or not alpha_layer:
-        return
-    color = np.empty(len(blender_mesh.loops) * 4, dtype=np.float32)
-    alpha = np.empty(len(blender_mesh.loops) * 4, dtype=np.float32)
-    color_layer.foreach_get("color", color)
-    alpha_layer.foreach_get("color", alpha)
-    alpha = alpha.reshape(-1, 4)
-    color = color.reshape(-1, 4)
-
-    # Calculate alpha from the median of the alpha layer RGB
-    alpha_median = np.median(alpha[:, :3], axis=1)
-    color[:, 3] = alpha_median
-
-    color = color.flatten()
-    color_layer.foreach_set("color", color)
+            obj.material_slots[index].material = material_to_f3d(obj, material, obj.data.uv_layers.active)
+    for uv_map in copy.copy(obj.data.uv_layers.values()):
+        if uv_map.active:
+            uv_map.name = "UVMap"
+        else:
+            obj.data.uv_layers.remove(uv_map)
 
 
 def obj_to_bsdf(obj: Object, materials: dict[Material, Material], put_alpha_into_color: bool):
