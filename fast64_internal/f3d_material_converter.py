@@ -7,7 +7,7 @@ from .f3d.f3d_material_helpers import node_tree_copy
 from .utility import *
 from bl_operators.presets import AddPresetBase
 
-really bad python error aha!
+
 
 
 def upgrade_f3d_version_all_meshes() -> None:
