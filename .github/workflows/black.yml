@@ -8,7 +8,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Discard local changes
-        run: git reset --hard
+        run: |
+          git reset --hard
+          git checkout HEAD^
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
