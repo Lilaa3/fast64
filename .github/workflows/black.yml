@@ -1,0 +1,41 @@
+name: black Suggest
+on: [pull_request]
+jobs:
+  formatting-check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip' # caching pip dependencies
+      
+      - run: |
+          pip install black==23.12.1
+      
+      - name: Run black and block if exit code is failure
+        run: |
+          black . || exit_code=$? # capture exit code
+          
+          # If black exits with a non-zero exit code (failure according to docs), exit with the same code
+          if [ "${exit_code:-0}" -ne 0 ]; then
+            echo "Black failed with exit code ${exit_code}. Failing the job."
+            exit ${exit_code}
+          fi
+
+      - name: Suggest changes via comment
+        uses: parkerbxyz/suggest-changes@v1
+        with:
+          comment: 'Please commit the suggested changes from black.'
+      
+      - name: Fail if changes were made
+        run: |
+          if git diff --quiet; then
+            echo "Black format applied no changes."
+            exit 0
+          else
+            run: |
+              echo "Black formatting applied changes. Please format with black."
+              exit 1
+          fi
