@@ -22,7 +22,8 @@ def upgrade_f3d_version_all_meshes() -> None:
 
     set_best_draw_layer_for_materials()
 
-    # Dict of non-f3d materials : converted f3d materials
+
+    #Dict of non-f3d materials : converted f3d materials
     # handles cases where materials are used in multiple objects
     materialDict = {}
     for obj in objs:
