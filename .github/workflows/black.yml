@@ -20,7 +20,7 @@ jobs:
           
           # If black exits with a non-zero exit code (failure according to docs), exit with the same code
           if [ "${exit_code:-0}" -ne 0 ]; then
-            echo "Black failed with exit code ${exit_code}. Failing the job."
+            echo "Black failed with exit code ${exit_code}. Could not finish formatting (code may be invalid)."
             exit ${exit_code}
           fi
 
