@@ -28,7 +28,6 @@ def upgrade_f3d_version_all_meshes() -> None:
     for obj in objs:
         upgradeF3DVersionOneObject(obj, materialDict, f3d_node_tree)
 
-
 def upgradeF3DVersionOneObject(obj, materialDict, f3d_node_tree: bpy.types.NodeTree):
     for index in range(len(obj.material_slots)):
         material = obj.material_slots[index].material
