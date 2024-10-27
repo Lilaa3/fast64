@@ -1,12 +1,16 @@
 name: Black lint and suggest changes
+
 on: [pull_request]
+
 jobs:
   black-lint-and-suggest:
-    permissions:
-      pull-requests: write # needed for forks
+    permissions: # needed in forks?
+      contents: read
+      pull-requests: write
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout and clean
+        uses: actions/checkout@v4
         with:
           clean: true
       - uses: actions/setup-python@v5
