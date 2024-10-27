@@ -7,15 +7,12 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-      - run: git checkout HEAD^
+      - run: git reset --hard HEAD # reset to HEAD
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
           cache: 'pip' # caching pip dependencies
-      - run: |
-          pip install black==23.12.1
+      - run: pip install black==23.12.1
       
       - name: Run black and block if exit code is failure
         run: |
