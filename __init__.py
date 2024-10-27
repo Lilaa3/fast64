@@ -494,3 +494,6 @@ def unregister():
 
     addon_updater_ops.unregister()
     unregister_class(ExampleAddonPreferences)
+
+new_test_array = [
+    "Badly formatted!"]
