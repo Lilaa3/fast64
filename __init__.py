@@ -496,5 +496,4 @@ def unregister():
     unregister_class(ExampleAddonPreferences)
 
 
-new_test_array = [
-    "Badly formatted!"]
+new_test_array = ["Badly formatted!"]
