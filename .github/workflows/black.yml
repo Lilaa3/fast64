@@ -6,10 +6,11 @@ jobs:
       pull-requests: write # needed for forks
     runs-on: ubuntu-24.04
     steps:
+      - uses: actions/checkout@v4
       - name: Discard local changes
         run: |
           git reset --hard
-      - uses: actions/checkout@v4
+          git pull
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
