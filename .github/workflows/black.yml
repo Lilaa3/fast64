@@ -1,7 +1,9 @@
-name: black Suggest
+name: Black lint and suggest changes
 on: [pull_request]
 jobs:
-  lint-and-suggest-check:
+  black-lint-and-suggest:
+    permissions:
+      pull-requests: write # needed for forks
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
