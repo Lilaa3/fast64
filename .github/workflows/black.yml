@@ -1,16 +1,14 @@
 name: black Suggest
 on: [pull_request]
 jobs:
-  formatting-check:
+  lint-and-suggest-check:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
           cache: 'pip' # caching pip dependencies
-      
       - run: |
           pip install black==23.12.1
       
