@@ -8,7 +8,7 @@ from .utility import *
 from bl_operators.presets import AddPresetBase
 
 
-def upgrade_f3d_version_all_meshes() -> None :
+def upgrade_f3d_version_all_meshes() -> None:
     objs = [obj for obj in bpy.data.objects if obj.type == "MESH"]
     f3d_node_tree = get_f3d_node_tree()
 
