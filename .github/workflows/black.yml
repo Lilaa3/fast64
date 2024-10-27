@@ -7,7 +7,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - run: git reset --hard HEAD # reset to HEAD
+      - name: Discard local changes
+        run: git reset --hard
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
