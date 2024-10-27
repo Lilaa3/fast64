@@ -7,6 +7,8 @@ from .f3d.f3d_material_helpers import node_tree_copy
 from .utility import *
 from bl_operators.presets import AddPresetBase
 
+really bad python error aha!
+
 
 def upgrade_f3d_version_all_meshes() -> None:
     objs = [obj for obj in bpy.data.objects if obj.type == "MESH"]
@@ -91,8 +93,7 @@ def set_best_draw_layer_for_materials():
     obj: bpy.types.Object = None
     for obj in objects:
         if obj.type != "MESH" or len(obj.material_slots) < 1:
-            conti  # lol
-            nue
+            continue
 
         p: bpy.types.MeshPolygon = None
         for p in obj.data.polygons:
