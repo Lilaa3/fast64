@@ -2,6 +2,7 @@ from pathlib import Path
 import bpy, random, string, os, math, traceback, re, os, mathutils, ast, operator
 from math import pi, ceil, degrees, radians, copysign
 from mathutils import *
+import numpy as np
 from .utility_anim import *
 from typing import Callable, Iterable, Any, Optional, Tuple, TypeVar, Union
 from bpy.types import UILayout, Scene, World
@@ -581,10 +582,8 @@ def colorToLuminance(color: mathutils.Color | list[float] | Vector):
     return RGB_TO_LUM_COEF.dot(color[:3])
 
 
-def getIA16Tuple(color):
-    intensity = colorToLuminance(color[0:3])
-    alpha = color[3]
-    return (int(round(intensity * 0xFF)) << 8) | int(alpha * 0xFF)
+def color_to_luminance_np(pixels: np.ndarray[Any, 4]) -> np.ndarray[Any, 1]:
+    return np.dot(pixels[:, :3], RGB_TO_LUM_COEF)
 
 
 def convertRadiansToS16(value):

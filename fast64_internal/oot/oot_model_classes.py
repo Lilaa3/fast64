@@ -1,5 +1,7 @@
 import bpy, os, re, mathutils
 from typing import Union
+
+import numpy as np
 from ..f3d.f3d_parser import F3DContext, F3DTextureReference, getImportData
 from ..f3d.f3d_material import TextureProperty, createF3DMat, texFormatOf, texBitSizeF3D
 from ..utility import PluginError, hexOrDecInt, create_or_get_world
@@ -179,7 +181,7 @@ class OOTModel(FModel):
 
         flipbook = TextureFlipbook(flipbookProp.name, flipbookProp.exportMode, [], [])
 
-        pal = []
+        pal = np.ndarray([], np.uint16)
         allImages = self.validateImages(material, index)
         for flipbookTexture in flipbookProp.textures:
             # print(f"Texture: {str(flipbookTexture.image)}")
@@ -200,7 +202,7 @@ class OOTModel(FModel):
                 filename,
             )
 
-            pal = mergePalettes(pal, getColorsUsedInImage(flipbookTexture.image, texProp.ci_format))
+            pal = mergePalettes(pal, getColorsUsedInImage(flipbookTexture.image, texProp.ci_format, False))
 
             flipbook.textureNames.append(fImage_temp.name)
             flipbook.images.append((flipbookTexture.image, fImage_temp))
@@ -230,7 +232,7 @@ class OOTModel(FModel):
             else:
                 fImage = fImage_temp
                 model.addTexture(imageKey, fImage, fMaterial)
-            writeCITextureData(image, fImage, pal, palFmt, texFmt)
+            writeCITextureData(image, fImage, pal, palFmt, texFmt, False)
         # Have to delay this until here because texture names may have changed
         model.addFlipbookWithRepeatCheck(flipbook)
 
@@ -275,7 +277,7 @@ class OOTModel(FModel):
         if flipbook is None:
             return super().writeTexRefNonCITextures(flipbook, texFmt)
         for image, fImage in flipbook.images:
-            writeNonCITextureData(image, fImage, texFmt)
+            writeNonCITextureData(image, fImage, texFmt, False)
 
     def onMaterialCommandsBuilt(self, fMaterial, material, drawLayer):
         super().onMaterialCommandsBuilt(fMaterial, material, drawLayer)
