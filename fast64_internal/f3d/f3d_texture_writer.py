@@ -1,4 +1,4 @@
-from typing import Union, Optional
+from typing import Literal, NamedTuple, Union, Optional
 from dataclasses import dataclass, field
 import numpy as np  # included by blender
 import bpy
@@ -1099,70 +1099,6 @@ def get_pixels_from_image(image: bpy.types.Image) -> PixelNpArray[np.float32]:
     return result
 
 
-def get_rgba16_colors(pixels: PixelNpArray[np.float32]) -> PixelNpArray[np.uint16]:
-    """5 bit RGB, 1 bit alpha"""
-    rgb5b = np.round(pixels[:, :3] * (2**5 - 1)).astype(np.uint16)
-    return (rgb5b[:, 0] << 11) | (rgb5b[:, 1] << 6) | (rgb5b[:, 2] << 1) | (pixels[:, 3] > 0.5)
-
-
-def get_rgb5a3_colors(pixels: PixelNpArray[np.float32]) -> PixelNpArray[np.uint16]:
-    """Each pixel can either be 5 bit RGB (opaque) or 4 bit RGB 3 bit alpha.
-    The upper 16th bit defines if a pixel is fully opaque,
-    therefor ignoring the other 3 bits that would otherwise be used for alpha."""
-    opaque_mask = pixels[:, 3] == 255
-    rgb5 = np.round(pixels[:, :3] * (2**5 - 1)).astype(np.uint16)
-    rgb4 = np.round(pixels[:, :3] * (2**4 - 1)).astype(np.uint16)
-    opaque_pixels = (1 << 15) | ((rgb5[:, 0] >> 3) << 10) | ((rgb5[:, 1] >> 3) << 5) | (rgb5[:, 2] >> 3)
-    translucent_pixels = (
-        np.round(pixels[:, 3] * (2**3 - 1)).astype(np.uint16)
-        | ((rgb4[:, 0] >> 4) << 8)
-        | ((rgb4[:, 1] >> 4) << 4)
-        | (rgb4[:, 2] >> 4)
-    )
-    return np.where(opaque_mask, opaque_pixels, translucent_pixels)
-
-
-def get_ia_colors(pixels: PixelNpArray[np.float32], i_bits=8, a_bits=8) -> PixelNpArray[np.uint8 | np.uint16]:
-    size = max(8, i_bits + a_bits)
-    i_max, a_max = 2**i_bits - 1, 2**a_bits - 1
-    assert hasattr(np, f"uint{size}"), f"Invalid size {size}"
-    typ = getattr(np, f"uint{size}")
-    result = (color_to_luminance_np(pixels) * i_max).round().astype(typ)
-    if a_bits > 0:
-        result = result << a_bits | (pixels[:, 3] * a_max).round().astype(typ)
-    if i_bits + a_bits == 4:
-        return compact_nibble_np(result)
-    return result
-
-
-def image_to_ci_texture(image: bpy.types.Image, pal_format: str, use_argb: bool) -> PixelNpArray[np.uint16]:
-    print(id(image))
-    pixels = get_pixels_from_image(image)
-    if pal_format == "RGBA16":
-        if use_argb:
-            return get_rgb5a3_colors(pixels)
-        else:
-            return get_rgba16_colors(pixels)
-    elif pal_format == "IA16":
-        return get_ia_colors(pixels)
-    raise PluginError(f"Internal error, palette format is {pal_format}")
-
-
-def getColorsUsedInImage(image: bpy.types.Image, pal_format: str, use_argb: bool):
-    return np.sort(np.unique(image_to_ci_texture(image, pal_format, use_argb)))
-
-
-def mergePalettes(pal0: PixelNpArray, pal1: PixelNpArray):
-    return np.sort(np.unique(np.concatenate((pal0, pal1))))
-
-
-def writePaletteData(fPalette: FImage, palette: PixelNpArray):
-    if fPalette.converted:
-        return
-    fPalette.data = palette
-    fPalette.converted = True
-
-
 def emu64_swizzle_pixels(input_list: PixelNpArray, width: int, height: int, fmt: str) -> PixelNpArray:
     block_w, block_h = EMU64_SWIZZLE_SIZES[texBitSizeF3D[fmt]]
     block_x_count = width // block_w
@@ -1185,6 +1121,93 @@ def compact_nibble_np(pixels: PixelNpArray[np.uint8]) -> PixelNpArray[np.uint8]:
     if len(pixels) % 2 != 0:  # uneven pixel count. this is uncommon, don't bother with a more opt approach
         pixels = np.append(pixels, pixels[-1])
     return (pixels[::2] << 4) | pixels[1::2]
+
+
+def get_best_np_type(size: int):
+    size = max(8, size)
+    assert hasattr(np, f"uint{size}"), f"Invalid size {size}"
+    return getattr(np, f"uint{size}")
+
+
+def get_rgba_colors(pixels: PixelNpArray[np.float32], r=5, g=5, b=5, a=1) -> PixelNpArray[np.uint16 | np.uint32]:
+    """5 bit RGB, 1 bit alpha"""
+    pixels = (
+        (
+            pixels
+            * np.array(
+                (2**r - 1, 2**g - 1, 2**b - 1, 2**a - 1),
+            )
+        )
+        .round()
+        .astype(get_best_np_type(r + g + b + a))
+    )
+    return (pixels[:, 0] << g + b + a) | (pixels[:, 1] << b + a) | pixels[:, 2] << a | pixels[:, 3]
+
+
+def get_a3rgb5_colors(pixels: PixelNpArray[np.float32]) -> PixelNpArray[np.uint16]:
+    """Each pixel can either be 5 bit RGB (opaque) or 4 bit RGB 3 bit alpha.
+    The upper 16th bit defines if a pixel is fully opaque,
+    therefor ignoring the other 3 bits that would otherwise be used for alpha."""
+    opaque_mask = pixels[:, 3] == 255
+    rgb5 = np.round(pixels[:, :3] * (2**5 - 1)).astype(np.uint16)
+    rgb4 = np.round(pixels[:, :3] * (2**4 - 1)).astype(np.uint16)
+    opaque_pixels = (1 << 15) | ((rgb5[:, 0] >> 3) << 10) | ((rgb5[:, 1] >> 3) << 5) | (rgb5[:, 2] >> 3)
+    translucent_pixels = (
+        np.round(pixels[:, 3] * (2**3 - 1)).astype(np.uint16)
+        | ((rgb4[:, 0] >> 4) << 8)
+        | ((rgb4[:, 1] >> 4) << 4)
+        | (rgb4[:, 2] >> 4)
+    )
+    return np.where(opaque_mask, opaque_pixels, translucent_pixels)
+
+
+def get_ia_colors(pixels: PixelNpArray[np.float32], i=8, a=8) -> PixelNpArray[np.uint8 | np.uint16]:
+    typ = get_best_np_type(i + a)
+    result = (color_to_luminance_np(pixels) * (2**i - 1)).round().astype(typ)
+    if a > 0:
+        result = result << a | (pixels[:, 3] * (2**a - 1)).round().astype(typ)
+    if i + a == 4:
+        return compact_nibble_np(result)
+    return result
+
+
+def get_yuv_colors(pixels: PixelNpArray[np.float32], y=8, u=4, v=4) -> PixelNpArray[np.uint16]:
+    """Y 8 bit, UV 4 bit"""
+    # https://gist.github.com/Quasimondo/c3590226c924a06b276d606f4f189639
+    m = np.array([[0.29900, -0.16874, 0.50000], [0.58700, -0.33126, -0.41869], [0.11400, 0.50000, -0.08131]])
+
+    pixels: np.ndarray[Any, 3] = np.dot(pixels[:, :3], m)
+    pixels[:, 1:] += 0.5
+    pixels = (pixels * np.array((2**y - 1, 2**u - 1, 2**v - 1))).round().astype(get_best_np_type(y + u + v))
+    return pixels[:, 0] << u | pixels[:, 1] << v | pixels[:, 2]
+
+
+def image_to_ci_texture(image: bpy.types.Image, pal_format: str, use_argb: bool) -> PixelNpArray[np.uint16]:
+    print(id(image))
+    pixels = get_pixels_from_image(image)
+    if pal_format == "RGBA16":
+        if use_argb:
+            return get_a3rgb5_colors(pixels)
+        else:
+            return get_rgba_colors(pixels)
+    elif pal_format == "IA16":
+        return get_ia_colors(pixels)
+    raise PluginError(f"Internal error, palette format is {pal_format}")
+
+
+def getColorsUsedInImage(image: bpy.types.Image, pal_format: str, use_argb: bool):
+    return np.sort(np.unique(image_to_ci_texture(image, pal_format, use_argb)))
+
+
+def mergePalettes(pal0: PixelNpArray, pal1: PixelNpArray):
+    return np.sort(np.unique(np.concatenate((pal0, pal1))))
+
+
+def writePaletteData(fPalette: FImage, palette: PixelNpArray):
+    if fPalette.converted:
+        return
+    fPalette.data = palette
+    fPalette.converted = True
 
 
 def writeCITextureData(
@@ -1215,25 +1238,16 @@ def writeNonCITextureData(image: bpy.types.Image, fImage: FImage, tex_format: st
     if emu64:
         pixels = emu64_swizzle_pixels(pixels, image.size[0], image.size[1], tex_format)
     if fmt == "G_IM_FMT_RGBA":
-        if bitSize == "G_IM_SIZ_16b":  # 5 bit RGB, 1 bit alpha
-            fImage.data = get_rgba16_colors(pixels)
-        elif bitSize == "G_IM_SIZ_32b":  # 8 bit RGBA
-            fImage.data = (pixels * 0xFF).round().astype(np.uint8)
+        if bitSize == "G_IM_SIZ_16b":
+            fImage.data = get_rgba_colors(pixels, 5, 5, 5, 1)
+        elif bitSize == "G_IM_SIZ_32b":
+            fImage.data = get_rgba_colors(pixels, 8, 8, 8, 8)
         else:
             raise PluginError("Invalid combo: " + fmt + ", " + bitSize)
 
     elif fmt == "G_IM_FMT_YUV":
-        if bitSize == "G_IM_SIZ_16b":  # 4 bit Y, 2 bit UV
-            # https://gist.github.com/Quasimondo/c3590226c924a06b276d606f4f189639
-            m = np.array([[0.29900, -0.16874, 0.50000], [0.58700, -0.33126, -0.41869], [0.11400, 0.50000, -0.08131]])
-
-            pixels: np.ndarray[Any, 3] = np.dot(pixels[:, :3], m)
-            pixels[:, 1:] += 0.5
-            fImage.data = (
-                (pixels[:, 0] * 0xFF).round().astype(np.uint16) << 8
-                | (pixels[:, 1] * 0xF).round().astype(np.uint16) << 4
-                | (pixels[:, 2] * 0xF).round().astype(np.uint16)
-            )
+        if bitSize == "G_IM_SIZ_16b":
+            fImage.data = get_yuv_colors(pixels, y=4, u=2, v=2)
         else:
             raise PluginError("Invalid combo: " + fmt + ", " + bitSize)
 
@@ -1241,19 +1255,19 @@ def writeNonCITextureData(image: bpy.types.Image, fImage: FImage, tex_format: st
         raise PluginError("Internal error, writeNonCITextureData called for CI image.")
 
     elif fmt == "G_IM_FMT_IA":
-        if bitSize == "G_IM_SIZ_4b":  # 3 bit intensity, 1 bit alpha
-            fImage.data = get_ia_colors(pixels, i_bits=3, a_bits=1)
-        elif bitSize == "G_IM_SIZ_8b":  # 4 bit intensity, 4 bit alpha
-            fImage.data = get_ia_colors(pixels, i_bits=4, a_bits=4)
-        elif bitSize == "G_IM_SIZ_16b":  # 8 bit intensity, 8 bit alpha
-            fImage.data = get_ia_colors(pixels)
+        if bitSize == "G_IM_SIZ_4b":
+            fImage.data = get_ia_colors(pixels, i=3, a=1)
+        elif bitSize == "G_IM_SIZ_8b":
+            fImage.data = get_ia_colors(pixels, i=4, a=4)
+        elif bitSize == "G_IM_SIZ_16b":
+            fImage.data = get_ia_colors(pixels, i=8, a=8)
         else:
             raise PluginError("Invalid combo: " + fmt + ", " + bitSize)
     elif fmt == "G_IM_FMT_I":
-        if bitSize == "G_IM_SIZ_4b":  # 4 bit intensity
-            fImage.data = get_ia_colors(pixels, i_bits=4, a_bits=0)
-        elif bitSize == "G_IM_SIZ_8b":  # 8 bit intensity
-            fImage.data = get_ia_colors(pixels, i_bits=8, a_bits=0)
+        if bitSize == "G_IM_SIZ_4b":
+            fImage.data = get_ia_colors(pixels, i=4, a=0)
+        elif bitSize == "G_IM_SIZ_8b":
+            fImage.data = get_ia_colors(pixels, i=8, a=0)
         else:
             raise PluginError("Invalid combo: " + fmt + ", " + bitSize)
     else:
