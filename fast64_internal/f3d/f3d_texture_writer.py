@@ -1148,15 +1148,12 @@ def get_a3rgb5_colors(pixels: PixelNpArray[np.float32]) -> PixelNpArray[np.uint1
     """Each pixel can either be 5 bit RGB (opaque) or 4 bit RGB 3 bit alpha.
     The upper 16th bit defines if a pixel is fully opaque,
     therefor ignoring the other 3 bits that would otherwise be used for alpha."""
-    opaque_mask = pixels[:, 3] == 255
+    opaque_mask = pixels[:, 3] == 1.0
     rgb5 = np.round(pixels[:, :3] * (2**5 - 1)).astype(np.uint16)
     rgb4 = np.round(pixels[:, :3] * (2**4 - 1)).astype(np.uint16)
-    opaque_pixels = (1 << 15) | ((rgb5[:, 0] >> 3) << 10) | ((rgb5[:, 1] >> 3) << 5) | (rgb5[:, 2] >> 3)
+    opaque_pixels = 1 << 15 | rgb5[:, 0] << 10 | rgb5[:, 1] << 5 | rgb5[:, 2]
     translucent_pixels = (
-        np.round(pixels[:, 3] * (2**3 - 1)).astype(np.uint16)
-        | ((rgb4[:, 0] >> 4) << 8)
-        | ((rgb4[:, 1] >> 4) << 4)
-        | (rgb4[:, 2] >> 4)
+        np.round(pixels[:, 3] * (2**3 - 1)).astype(np.uint16) | rgb4[:, 0] << 8 | rgb4[:, 1] << 4 | rgb4[:, 2]
     )
     return np.where(opaque_mask, opaque_pixels, translucent_pixels)
 
