@@ -582,10 +582,6 @@ def colorToLuminance(color: mathutils.Color | list[float] | Vector):
     return RGB_TO_LUM_COEF.dot(color[:3])
 
 
-def color_to_luminance_np(pixels: np.ndarray[Any, 4]) -> np.ndarray[Any, 1]:
-    return np.dot(pixels[:, :3], RGB_TO_LUM_COEF)
-
-
 def convertRadiansToS16(value):
     value = math.degrees(value)
     # ??? Why is this negative?
