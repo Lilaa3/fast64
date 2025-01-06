@@ -2927,6 +2927,20 @@ class TextureProperty(PropertyGroup):
         default="RGBA16",
         update=update_tex_values,
     )
+    dither_method: bpy.props.EnumProperty(
+        name="Dither Method",
+        items={
+            ("NONE", "None", "None"),
+            (
+                "FLOYD",
+                "Floyd-Steinberg",
+                "Uses error diffusion, meaning it adds the residual quantization error of a pixel onto its neighboring pixels",
+            ),
+            ("RANDOM", "Random", "TODO"),
+            ("ORDERED", "Ordered", "TODO"),
+        },
+        default="FLOYD",
+    )
     S: bpy.props.PointerProperty(type=TextureFieldProperty)
     T: bpy.props.PointerProperty(type=TextureFieldProperty)
 
@@ -3093,6 +3107,8 @@ def ui_image(
         prop_split(prop_input, textureProp, "tex_format", name="Format")
         if textureProp.tex_format[:2] == "CI":
             prop_split(prop_input, textureProp, "ci_format", name="CI Format")
+
+        prop_split(prop_input, textureProp, "dither_method", name="Dither Method")
 
         if not isLarge:
             if width > 0 and height > 0:

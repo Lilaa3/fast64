@@ -343,7 +343,10 @@ enumTexFormat = [
     ("CI8", "Color Index 8-bit", "Color Index 8-bit"),
     ("RGBA16", "RGBA 16-bit", "RGBA 16-bit"),
     ("RGBA32", "RGBA 32-bit", "RGBA 32-bit"),
-    # ('YUV16','YUV 16-bit', 'YUV 16-bit'),
+    # WIP from here
+    ("YUV16", "YUV 16-bit", "YUV 16-bit"),
+    ("", "Pseudo Types", ""),
+    ("HQ", "HQ", "Libdragon IHQ/SHQ"),
 ]
 
 enumCIFormat = [
@@ -367,6 +370,7 @@ texBitSizeInt = {
     "IA16": 16,
     "YUV16": 16,
     "RGBA32": 32,
+    "HQ": 8,
 }
 
 # 512 words * 64 bits / n bitSize

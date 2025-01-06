@@ -21,11 +21,9 @@ from .flipbook import TextureFlipbook
 from ..utility import *
 
 T = TypeVar("T")
-InterPixelNpArray = np.ndarray[
-    float, Literal[(Any, Any, Any), (Any, Any)]
-]  # unflattened np array, multiple or single channels
+InterPixelNpArray = np.ndarray[float, (Any, Any, Any)]  # unflattened np array, multiple or single channels
 PixelNpArray = np.ndarray[T, Literal[(Any, Any), (Any)]]  # flattened np array (n64 order), multiple or single channels
-DITHER_MODES = Literal["NONE", "FLOYD_STEINBERG"] | None
+DITHER_MODES = Literal["NONE", "FLOYD"] | None
 
 
 def UVtoSTLarge(obj, loopIndex, uv_data, texDimensions):
@@ -1095,10 +1093,21 @@ def get_pixels_from_image(image: bpy.types.Image) -> InterPixelNpArray:
     width, height = image.size
 
     bpy_pixels = np.array(image.pixels, dtype=np.float32).reshape((height, width, channel_count)).clip(0.0, 1.0)
-    result = np.ones((image.size[1], image.size[0], 4), dtype=np.float32)  # default to white opaque
-    result[:, :, :channel_count] = bpy_pixels  # copy, if channel count is 3 all alpha channels will stay 1
+    pixels = np.ones((image.size[1], image.size[0], 4), dtype=np.float32)  # default to white opaque
+    pixels[:, :, :channel_count] = bpy_pixels  # copy, if channel count is 3 all alpha channels will stay 1
+    return pixels
 
-    return result
+
+def compact_nibble_np(pixels: PixelNpArray[np.uint8]) -> PixelNpArray[np.uint8]:
+    if len(pixels) % 2 != 0:  # uneven pixel count. this is uncommon, don't bother with a more opt approach
+        pixels = np.append(pixels, pixels[-1])
+    return (pixels[::2] << 4) | pixels[1::2]
+
+
+def get_best_np_type(size: int):
+    size = max(8, size)
+    assert hasattr(np, f"uint{size}"), f"Invalid size {size}"
+    return getattr(np, f"uint{size}")
 
 
 def emu64_swizzle_pixels(input_list: InterPixelNpArray, fmt: str) -> InterPixelNpArray:
@@ -1120,41 +1129,83 @@ def emu64_swizzle_pixels(input_list: InterPixelNpArray, fmt: str) -> InterPixelN
     return output_buffer
 
 
-def compact_nibble_np(pixels: PixelNpArray[np.uint8]) -> PixelNpArray[np.uint8]:
-    if len(pixels) % 2 != 0:  # uneven pixel count. this is uncommon, don't bother with a more opt approach
-        pixels = np.append(pixels, pixels[-1])
-    return (pixels[::2] << 4) | pixels[1::2]
+def floyd_dither(old: InterPixelNpArray, new: InterPixelNpArray) -> InterPixelNpArray:
+    height, width = old.shape[:2]
+    errors = old - new
+    up_left_error = errors * 3 / 8
+    up_right_error = errors * 1 / 8
+    up_error = errors * 5 / 8
+    right_error = errors * 7 / 8
+    result = np.copy(new)
+    for y in range(0, height - 1):
+        for x in range(1, width - 1):
+            result[y, x + 1] += right_error[y, x]  # 7 / 16
+            result[y + 1, x - 1] += up_left_error[y, x]  # 3 / 16
+            result[y + 1, x] += up_error[y, x]  # 5 / 16
+            result[y + 1, x + 1] += up_right_error[y, x]  # 1 / 16
+    return result
 
 
-def get_best_np_type(size: int):
-    size = max(8, size)
-    assert hasattr(np, f"uint{size}"), f"Invalid size {size}"
-    return getattr(np, f"uint{size}")
+def apply_dither(old: InterPixelNpArray, new: InterPixelNpArray, dither_mode: DITHER_MODES) -> InterPixelNpArray:
+    match dither_mode:
+        case "FLOYD":
+            return floyd_dither(old, new)
+    return old
+
+
+def flatten_pixels(pixels: InterPixelNpArray) -> PixelNpArray[float]:
+    return pixels.reshape((np.prod(pixels.shape[:-1]), pixels.shape[-1]))
+
+
+def generate_palette_kmeans(pixels: InterPixelNpArray, n_colors: int, max_iter=32, tolerance=1e-4):
+    """Generate a palette from pixels in an arbritary shape using K-means clustering."""
+    shape = pixels.shape
+    pixels = flatten_pixels(pixels)
+
+    np.random.seed(0)  # make deterministic
+    centroids = pixels[np.random.choice(len(pixels), n_colors, replace=False)]
+
+    for _ in range(max_iter):
+        distances = np.linalg.norm(
+            pixels[:, np.newaxis, ...] - centroids, axis=-1
+        )  # distance between pixels and centroids
+        labels = np.argmin(distances, axis=-1)  # find nearest centroids to pixels
+        new_centroids = np.array(  # update centroids based on the assigned clusters
+            [pixels[labels == i].mean(axis=0) if np.any(labels == i) else centroids[i] for i in range(n_colors)]
+        )
+        if np.linalg.norm(new_centroids - centroids) < tolerance:  # check for convergence
+            break
+        else:
+            centroids = new_centroids
+
+    return centroids, labels.reshape(shape[:-1])
 
 
 def process_float_pixels(
-    unrounded_pixels: InterPixelNpArray, emu64: bool, dither_mode: DITHER_MODES
+    unrounded_pixels: InterPixelNpArray, emu64: bool, dither_mode: DITHER_MODES, palette_size: int | None = None
 ) -> PixelNpArray[float]:
     """Rounds the pixels to the nearest integer (optionally dither) and swizzle on emu64 exports"""
-    height, width = unrounded_pixels.shape[:2]
     rounded_pixels = unrounded_pixels.round()
-    match dither_mode:
-        case "FLOYD_STEINBERG":
-            error = unrounded_pixels - rounded_pixels
-            for y in range(0, height - 1):
-                for x in range(1, width - 1):
-                    rounded_pixels[y, x + 1, ...] += error[y, x + 1, ...] * 7 / 16
-                    rounded_pixels[y + 1, x - 1, ...] += error[y + 1, x - 1, ...] * 3 / 16
-                    rounded_pixels[y + 1, x, ...] += error[y + 1, x, ...] * 5 / 16
-                    rounded_pixels[y + 1, x + 1, ...] += error[y + 1, x + 1, ...] * 1 / 16
-            rounded_pixels = rounded_pixels.round()  # floyd steinberg dither can fall onto inbetween values, round.
+    if palette_size is not None:
+        unique_colors = np.unique(flatten_pixels(rounded_pixels))
+        if len(unique_colors) > palette_size:  # skip kmeans if palette size is correct
+            palette, indices = generate_palette_kmeans(unrounded_pixels, palette_size)
+            palette = palette.round()
+            rounded_pixels = palette[indices]
+            palette = np.unique(palette)
+        else:
+            palette = unique_colors
+
+    if dither_mode is not None:
+        rounded_pixels = apply_dither(unrounded_pixels, rounded_pixels, dither_mode).round()
     if emu64:
         rounded_pixels = emu64_swizzle_pixels(rounded_pixels, "RGBA")
-    rounded_pixels = np.flip(rounded_pixels, 0)  # N64 is -Y, Blender is +Y
-    # flatten pixels
-    if len(rounded_pixels.shape) == 2:  # handle single channel
-        return rounded_pixels.reshape((height * width))
-    return rounded_pixels.reshape((height * width, rounded_pixels.shape[-1]))
+
+    if palette_size is not None:
+        palette = np.sort(palette)
+        return palette, np.searchsorted(palette, rounded_pixels)
+
+    return flatten_pixels(np.flip(rounded_pixels, 0))  # N64 is -Y, Blender is +Y
 
 
 RGBA_SCALE = lambda r, g, b, a: np.array((2**r - 1, 2**g - 1, 2**b - 1, 2**a - 1))
@@ -1165,12 +1216,12 @@ def get_rgba_colors_legacy(pixels: PixelNpArray[float], r=5, g=5, b=5, a=1) -> P
     return pixels[:, 0] << (g + b + a) | pixels[:, 1] << (b + a) | pixels[:, 2] << a | pixels[:, 3]
 
 
-def get_rgba_colors_float(pixels: InterPixelNpArray, r=5, g=5, b=5, a=1) -> np.ndarray[float, (Any, 4)]:
+def get_rgba_colors_float(pixels: InterPixelNpArray, r=5, g=5, b=5, a=1) -> np.ndarray[float, (Any, Any, 4)]:
     return pixels * RGBA_SCALE(r, g, b, a)
 
 
 def rounded_rgba_to_n64(
-    rounded_pixels: np.ndarray[float, (Any, 4)], r=5, g=5, b=5, a=1
+    rounded_pixels: np.ndarray[float, (Any, Any, 4)], r=5, g=5, b=5, a=1
 ) -> PixelNpArray[np.uint16 | np.uint32]:
     pixels = rounded_pixels.astype(get_best_np_type(r + g + b + a))
     return pixels[:, 0] << (g + b + a) | pixels[:, 1] << (b + a) | pixels[:, 2] << a | pixels[:, 3]
@@ -1195,18 +1246,7 @@ The upper 16th bit defines if a pixel is fully opaque,
 therefor ignoring the other 3 bits that would otherwise be used for alpha."""
 
 
-def get_a3rgb5_colors_legacy(pixels: PixelNpArray[float]) -> PixelNpArray[np.uint16]:
-    opaque_mask = pixels[:, 3] == 1.0
-    rgb5 = np.round(pixels[:, :3] * (2**5 - 1)).astype(np.uint16)
-    rgb4 = np.round(pixels[:, :3] * (2**4 - 1)).astype(np.uint16)
-    opaque_pixels = 1 << 15 | rgb5[:, 0] << 10 | rgb5[:, 1] << 5 | rgb5[:, 2]
-    translucent_pixels = (
-        np.round(pixels[:, 3] * (2**3 - 1)).astype(np.uint16) | rgb4[:, 0] << 8 | rgb4[:, 1] << 4 | rgb4[:, 2]
-    )
-    return np.where(opaque_mask, opaque_pixels, translucent_pixels)
-
-
-def get_a3rgb5_colors_float(pixels: InterPixelNpArray) -> np.ndarray[float, (Any, 4)]:
+def get_a3rgb5_colors_float(pixels: InterPixelNpArray) -> np.ndarray[float, (Any, Any, 4)]:
     """Doesn´t return in correct order, as it would be a waste of time.
     That's handled in rounded_a3rgb5_to_n64"""
     a3rgb5 = pixels * np.array((2**5 - 1, 2**5 - 1, 2**5 - 1, 2**3 - 1))
@@ -1214,7 +1254,7 @@ def get_a3rgb5_colors_float(pixels: InterPixelNpArray) -> np.ndarray[float, (Any
     return np.where(pixels[:, 3] == 1.0, a3rgb5, a3rgb4)
 
 
-def rounded_a3rgb5_to_n64(rounded_pixels: np.ndarray[float, (Any, 4)]) -> PixelNpArray[np.uint16]:
+def rounded_a3rgb5_to_n64(rounded_pixels: np.ndarray[float, (Any, Any, 4)]) -> PixelNpArray[np.uint16]:
     rounded_pixels = rounded_pixels.astype(get_best_np_type(16))
     opaque_mask = rounded_pixels[:, 3] == 2**3 - 1
     opaque_pixels = 1 << 15 | rounded_pixels[:, 0] << 10 | rounded_pixels[:, 1] << 5 | rounded_pixels[:, 2]
@@ -1246,16 +1286,16 @@ def get_ia_colors_legacy(pixels: PixelNpArray[float], i=8, a=8) -> PixelNpArray[
     return result
 
 
-def get_ia_colors_float(pixels: InterPixelNpArray, i=8, a=8) -> np.ndarray[float, (Any, Literal[2, 1])]:
+def get_ia_colors_float(pixels: InterPixelNpArray, i=8, a=8) -> np.ndarray[float, (Any, Any, Literal[1, 2])]:
     lum = color_to_luminance_np(pixels) * (2**i - 1)
     if a > 0:
         alpha_pixels = pixels[..., 3] * (2**a - 1)
-        return np.stack((lum, alpha_pixels), axis=1)
-    return lum
+        return np.stack((lum, alpha_pixels), axis=-1)
+    return lum.reshape((*pixels.shape[:-1], 1))
 
 
 def rounded_ia_to_n64(
-    rounded_pixels: np.ndarray[float, (Any, Literal[2, 1])], i=8, a=8
+    rounded_pixels: np.ndarray[float, (Any, Any, Literal[1, 2])], i=8, a=8
 ) -> PixelNpArray[np.uint8 | np.uint16]:
     typ = get_best_np_type(i + a)
     result = rounded_pixels.astype(typ)
@@ -1283,8 +1323,8 @@ def get_yuv_colors_legacy(pixels: PixelNpArray[float], y=8, u=4, v=4) -> PixelNp
 
 
 def get_yuv_colors_float(pixels: PixelNpArray[float], y=8, u=4, v=4) -> np.ndarray[float, (Any, 3)]:
-    pixels = np.dot(pixels[:, :3], YUV_COF)
-    pixels[:, 1:] += 0.5
+    pixels = np.dot(pixels[..., :3], YUV_COF)
+    pixels[..., 1:] += 0.5
     return pixels * YUV_SCALE(y, u, v)
 
 
@@ -1298,69 +1338,69 @@ def get_yuv_colors(pixels: PixelNpArray[float], emu64=False, y=8, u=4, v=4, dith
 
 
 def image_to_n64_texture(
-    pixels: PixelNpArray[float],
-    width: int,
-    height: int,
+    pixels: InterPixelNpArray | bpy.types.Image,
     tex_fmt: str,
-    dither_mode: str,
     emu64: bool,
+    dither_mode: DITHER_MODES,
     ci_format: str | None = None,
 ) -> PixelNpArray:
     fmt = texFormatOf[tex_fmt]
     bit_size = texBitSizeF3D[tex_fmt]
-    invalid_combo_exc = PluginError(f"Invalid combo: {fmt}, {bit_size}")
 
-    og = pixels
+    if isinstance(pixels, bpy.types.Image):
+        pixels = get_pixels_from_image(pixels)
+
+    invalid_combo_exc = PluginError(f"Invalid combo: {fmt} : {bit_size}")
 
     if fmt == "G_IM_FMT_RGBA":
         if bit_size == "G_IM_SIZ_16b":
-            unrounded = get_rgba_colors_float(pixels, 5, 5, 5, 1)
+            return get_rgba_colors(pixels, emu64, 5, 5, 5, 1)
         elif bit_size == "G_IM_SIZ_32b":
-            unrounded = get_rgba_colors_float(pixels, 8, 8, 8, 8)
+            return get_rgba_colors(pixels, emu64, 8, 8, 8, 8)
         else:
             raise invalid_combo_exc
-        dither_pixels(unrounded, height, width, dither_mode)
 
     elif fmt == "G_IM_FMT_YUV":
         if bit_size == "G_IM_SIZ_16b":
-            pixels = get_yuv_colors(pixels)
+            return get_yuv_colors(pixels, emu64, y=4, u=2, v=2)
         else:
             raise invalid_combo_exc
 
     elif fmt == "G_IM_FMT_CI":
-        raise PluginError("Internal error, writeNonCITextureData called for CI image.")
+        if ci_format is None:
+            raise PluginError("CI format not set")
+        elif ci_format == "RGBA16":
+            colors = get_rgba_colors(pixels, emu64, 5, 5, 5, 1)
+        else:
+            raise invalid_combo_exc
 
     elif fmt == "G_IM_FMT_IA":
         if bit_size == "G_IM_SIZ_4b":
-            pixels = get_ia_colors(pixels, i=3, a=1)
+            return get_ia_colors(pixels, emu64, i=3, a=1)
         elif bit_size == "G_IM_SIZ_8b":
-            pixels = get_ia_colors(pixels, i=4, a=4)
+            return get_ia_colors(pixels, emu64, i=4, a=4)
         elif bit_size == "G_IM_SIZ_16b":
-            pixels = get_ia_colors(pixels, i=8, a=8)
+            return get_ia_colors(pixels, emu64, i=8, a=8)
         else:
             raise invalid_combo_exc
     elif fmt == "G_IM_FMT_I":
         if bit_size == "G_IM_SIZ_4b":
-            pixels = get_ia_colors(pixels, i=4, a=0)
+            return get_ia_colors(pixels, emu64, i=4, a=0)
         elif bit_size == "G_IM_SIZ_8b":
-            pixels = get_ia_colors(pixels, i=8, a=0)
+            return get_ia_colors(pixels, emu64, i=8, a=0)
         else:
             raise invalid_combo_exc
     else:
         raise PluginError(f"Invalid image format {fmt}")
 
-    if emu64:
-        pixels = emu64_swizzle_pixels(pixels, width, height, tex_fmt)
-
 
 def image_to_ci_texture(image: bpy.types.Image, pal_format: str, use_argb: bool) -> PixelNpArray[np.uint16]:
-    print(id(image))
     pixels = get_pixels_from_image(image)
     if pal_format == "RGBA16":
         if use_argb:
             return get_a3rgb5_colors(pixels)
         else:
-            return get_rgba_colors_legacy(pixels)
+            return get_rgba_colors(pixels)
     elif pal_format == "IA16":
         return get_ia_colors(pixels)
     raise PluginError(f"Internal error, palette format is {pal_format}")
@@ -1393,54 +1433,13 @@ def writeCITextureData(
         return
 
     pixels = np.searchsorted(sorted_palette, image_to_ci_texture(image, pal_format, emu64)).astype(np.uint8)
-    if emu64:
-        pixels = emu64_swizzle_pixels(pixels, image.size[0], image.size[1], tex_format)
     fImage.data = compact_nibble_np(pixels) if tex_format == "CI4" else pixels
     fImage.converted = True
 
 
-def writeNonCITextureData(image: bpy.types.Image, fImage: FImage, tex_format: str, emu64=False):
+def writeNonCITextureData(image: bpy.types.Image, fImage: FImage, tex_fmt: str, emu64=False):
     if fImage.converted:
         return
-    fmt = texFormatOf[tex_format]
-    bitSize = texBitSizeF3D[tex_format]
-
-    pixels = get_pixels_from_image(image)
-
-    if fmt == "G_IM_FMT_RGBA":
-        if bitSize == "G_IM_SIZ_16b":
-            fImage.data = get_rgba_colors(pixels, emu64, 5, 5, 5, 1)
-        elif bitSize == "G_IM_SIZ_32b":
-            fImage.data = get_rgba_colors(pixels, emu64, 8, 8, 8, 8)
-        else:
-            raise PluginError("Invalid combo: " + fmt + ", " + bitSize)
-
-    elif fmt == "G_IM_FMT_YUV":
-        if bitSize == "G_IM_SIZ_16b":
-            fImage.data = get_yuv_colors(pixels, emu64, y=4, u=2, v=2)
-        else:
-            raise PluginError("Invalid combo: " + fmt + ", " + bitSize)
-
-    elif fmt == "G_IM_FMT_CI":
-        raise PluginError("Internal error, writeNonCITextureData called for CI image.")
-
-    elif fmt == "G_IM_FMT_IA":
-        if bitSize == "G_IM_SIZ_4b":
-            fImage.data = get_ia_colors(pixels, emu64, i=3, a=1)
-        elif bitSize == "G_IM_SIZ_8b":
-            fImage.data = get_ia_colors(pixels, emu64, i=4, a=4)
-        elif bitSize == "G_IM_SIZ_16b":
-            fImage.data = get_ia_colors(pixels, emu64, i=8, a=8)
-        else:
-            raise PluginError("Invalid combo: " + fmt + ", " + bitSize)
-    elif fmt == "G_IM_FMT_I":
-        if bitSize == "G_IM_SIZ_4b":
-            fImage.data = get_ia_colors(pixels, emu64, i=4, a=0)
-        elif bitSize == "G_IM_SIZ_8b":
-            fImage.data = get_ia_colors(pixels, emu64, i=8, a=0)
-        else:
-            raise PluginError("Invalid combo: " + fmt + ", " + bitSize)
-    else:
-        raise PluginError("Invalid image format " + fmt)
+    fImage.data = image_to_n64_texture(image, tex_fmt, emu64, None, None)
 
     fImage.converted = True
