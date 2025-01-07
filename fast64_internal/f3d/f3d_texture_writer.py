@@ -21,8 +21,9 @@ from .flipbook import TextureFlipbook
 from ..utility import *
 
 T = TypeVar("T")
-InterPixelNpArray = np.ndarray[float, (Any, Any, Any)]  # unflattened np array, multiple or single channels
-PixelNpArray = np.ndarray[T, Literal[(Any, Any), (Any)]]  # flattened np array (n64 order), multiple or single channels
+FloatPixels = np.ndarray[float, (Any, Any, Any)]  # unflattened pixels
+FlatPixels = np.ndarray[T, (Any, Any)]  # flattened (height * width) pixels (n64 order)
+N64Pixels = np.ndarray[TypeVar("T", bound=int), (Any)]  # flattened, n64 order, packed (only one channel) pixels
 DITHER_MODES = Literal["NONE", "FLOYD"] | None
 
 
@@ -398,7 +399,7 @@ class TexInfo:
     errorMsg: str = ""
 
     # Parameters from moreSetupFromModel
-    pal: Optional[PixelNpArray[np.uint16]] = None
+    pal: Optional[N64Pixels[np.uint16]] = None
     palLen: int = 0
     imDependencies: Optional[list[bpy.types.Image]] = None
     flipbook: Optional["TextureFlipbook"] = None
@@ -745,7 +746,7 @@ class MultitexManager:
                             )
                         else:
 
-                            def pad_and_join(a: PixelNpArray, b: PixelNpArray) -> PixelNpArray[np.uint16]:
+                            def pad_and_join(a: N64Pixels, b: N64Pixels) -> N64Pixels[np.uint16]:
                                 return np.concatenate((np.pad(a, (0, max(0, 16 - len(a)))), b))
 
                             # Load one palette across 0-1. Put the longer in slot 0
@@ -1088,7 +1089,7 @@ def savePaletteLoad(
 # Functions for converting and writing texture and palette data
 
 
-def get_pixels_from_image(image: bpy.types.Image) -> InterPixelNpArray:
+def get_pixels_from_image(image: bpy.types.Image) -> FloatPixels:
     channel_count = image.channels
     width, height = image.size
 
@@ -1098,7 +1099,7 @@ def get_pixels_from_image(image: bpy.types.Image) -> InterPixelNpArray:
     return pixels
 
 
-def compact_nibble_np(pixels: PixelNpArray[np.uint8]) -> PixelNpArray[np.uint8]:
+def compact_nibble_np(pixels: N64Pixels[np.uint8]) -> N64Pixels[np.uint8]:
     if len(pixels) % 2 != 0:  # uneven pixel count. this is uncommon, don't bother with a more opt approach
         pixels = np.append(pixels, pixels[-1])
     return (pixels[::2] << 4) | pixels[1::2]
@@ -1110,7 +1111,7 @@ def get_best_np_type(size: int):
     return getattr(np, f"uint{size}")
 
 
-def emu64_swizzle_pixels(input_list: InterPixelNpArray, fmt: str) -> InterPixelNpArray:
+def emu64_swizzle_pixels(input_list: FloatPixels, fmt: str) -> FloatPixels:
     height, width = input_list.shape[:2]
     block_w, block_h = EMU64_SWIZZLE_SIZES[texBitSizeF3D[fmt]]
     block_x_count = width // block_w
@@ -1129,7 +1130,7 @@ def emu64_swizzle_pixels(input_list: InterPixelNpArray, fmt: str) -> InterPixelN
     return output_buffer
 
 
-def floyd_dither(old: InterPixelNpArray, new: InterPixelNpArray) -> InterPixelNpArray:
+def floyd_dither(old: FloatPixels, new: FloatPixels) -> FloatPixels:
     height, width = old.shape[:2]
     errors = old - new
     up_left_error = errors * 3 / 8
@@ -1146,18 +1147,18 @@ def floyd_dither(old: InterPixelNpArray, new: InterPixelNpArray) -> InterPixelNp
     return result
 
 
-def apply_dither(old: InterPixelNpArray, new: InterPixelNpArray, dither_mode: DITHER_MODES) -> InterPixelNpArray:
+def apply_dither(old: FloatPixels, new: FloatPixels, dither_mode: DITHER_MODES) -> FloatPixels:
     match dither_mode:
         case "FLOYD":
             return floyd_dither(old, new)
     return old
 
 
-def flatten_pixels(pixels: InterPixelNpArray) -> PixelNpArray[float]:
+def flatten_pixels(pixels: FloatPixels) -> FlatPixels[float]:
     return pixels.reshape((np.prod(pixels.shape[:-1]), pixels.shape[-1]))
 
 
-def generate_palette_kmeans(pixels: InterPixelNpArray, n_colors: int, max_iter=32, tolerance=1e-4):
+def generate_palette_kmeans(pixels: FloatPixels, n_colors: int, max_iter=32, tolerance=1e-4):
     """Generate a palette from pixels in an arbritary shape using K-means clustering."""
     shape = pixels.shape
     pixels = flatten_pixels(pixels)
@@ -1182,8 +1183,8 @@ def generate_palette_kmeans(pixels: InterPixelNpArray, n_colors: int, max_iter=3
 
 
 def process_float_pixels(
-    unrounded_pixels: InterPixelNpArray, emu64: bool, dither_mode: DITHER_MODES, palette_size: int | None = None
-) -> PixelNpArray[float]:
+    unrounded_pixels: FloatPixels, emu64: bool, dither_mode: DITHER_MODES, palette_size: int | None = None
+) -> FlatPixels[float]:
     """Rounds the pixels to the nearest integer (optionally dither) and swizzle on emu64 exports"""
     rounded_pixels = unrounded_pixels.round()
     if palette_size is not None:
@@ -1211,24 +1212,24 @@ def process_float_pixels(
 RGBA_SCALE = lambda r, g, b, a: np.array((2**r - 1, 2**g - 1, 2**b - 1, 2**a - 1))
 
 
-def get_rgba_colors_legacy(pixels: PixelNpArray[float], r=5, g=5, b=5, a=1) -> PixelNpArray[np.uint16 | np.uint32]:
+def get_rgba_colors_legacy(pixels: FlatPixels[float], r=5, g=5, b=5, a=1) -> N64Pixels[np.uint16 | np.uint32]:
     pixels = (pixels * RGBA_SCALE(r, g, b, a)).round().astype(get_best_np_type(r + g + b + a))
     return pixels[:, 0] << (g + b + a) | pixels[:, 1] << (b + a) | pixels[:, 2] << a | pixels[:, 3]
 
 
-def get_rgba_colors_float(pixels: InterPixelNpArray, r=5, g=5, b=5, a=1) -> np.ndarray[float, (Any, Any, 4)]:
+def get_rgba_colors_float(pixels: FloatPixels, r=5, g=5, b=5, a=1) -> np.ndarray[float, (Any, Any, 4)]:
     return pixels * RGBA_SCALE(r, g, b, a)
 
 
 def rounded_rgba_to_n64(
     rounded_pixels: np.ndarray[float, (Any, Any, 4)], r=5, g=5, b=5, a=1
-) -> PixelNpArray[np.uint16 | np.uint32]:
+) -> N64Pixels[np.uint16 | np.uint32]:
     pixels = rounded_pixels.astype(get_best_np_type(r + g + b + a))
     return pixels[:, 0] << (g + b + a) | pixels[:, 1] << (b + a) | pixels[:, 2] << a | pixels[:, 3]
 
 
 def get_rgba_colors(
-    pixels: InterPixelNpArray,
+    pixels: FloatPixels,
     emu64=False,
     r=5,
     g=5,
@@ -1246,7 +1247,7 @@ The upper 16th bit defines if a pixel is fully opaque,
 therefor ignoring the other 3 bits that would otherwise be used for alpha."""
 
 
-def get_a3rgb5_colors_float(pixels: InterPixelNpArray) -> np.ndarray[float, (Any, Any, 4)]:
+def get_a3rgb5_colors_float(pixels: FloatPixels) -> np.ndarray[float, (Any, Any, 4)]:
     """Doesn´t return in correct order, as it would be a waste of time.
     That's handled in rounded_a3rgb5_to_n64"""
     a3rgb5 = pixels * np.array((2**5 - 1, 2**5 - 1, 2**5 - 1, 2**3 - 1))
@@ -1254,7 +1255,7 @@ def get_a3rgb5_colors_float(pixels: InterPixelNpArray) -> np.ndarray[float, (Any
     return np.where(pixels[:, 3] == 1.0, a3rgb5, a3rgb4)
 
 
-def rounded_a3rgb5_to_n64(rounded_pixels: np.ndarray[float, (Any, Any, 4)]) -> PixelNpArray[np.uint16]:
+def rounded_a3rgb5_to_n64(rounded_pixels: np.ndarray[float, (Any, Any, 4)]) -> N64Pixels[np.uint16]:
     rounded_pixels = rounded_pixels.astype(get_best_np_type(16))
     opaque_mask = rounded_pixels[:, 3] == 2**3 - 1
     opaque_pixels = 1 << 15 | rounded_pixels[:, 0] << 10 | rounded_pixels[:, 1] << 5 | rounded_pixels[:, 2]
@@ -1265,18 +1266,18 @@ def rounded_a3rgb5_to_n64(rounded_pixels: np.ndarray[float, (Any, Any, 4)]) -> P
 
 
 def get_a3rgb5_colors(
-    pixels: InterPixelNpArray,
+    pixels: FloatPixels,
     emu64=False,
     dither_mode: DITHER_MODES = None,
 ):
     return rounded_a3rgb5_to_n64(process_float_pixels(get_a3rgb5_colors_float(pixels), emu64, dither_mode))
 
 
-def color_to_luminance_np(pixels: InterPixelNpArray) -> InterPixelNpArray:
+def color_to_luminance_np(pixels: FloatPixels) -> FloatPixels:
     return np.dot(pixels[..., :3], RGB_TO_LUM_COEF)
 
 
-def get_ia_colors_legacy(pixels: PixelNpArray[float], i=8, a=8) -> PixelNpArray[np.uint8 | np.uint16]:
+def get_ia_colors_legacy(pixels: FlatPixels[float], i=8, a=8) -> N64Pixels[np.uint8 | np.uint16]:
     typ = get_best_np_type(i + a)
     result = (color_to_luminance_np(pixels) * (2**i - 1)).round().astype(typ)
     if a > 0:
@@ -1286,7 +1287,7 @@ def get_ia_colors_legacy(pixels: PixelNpArray[float], i=8, a=8) -> PixelNpArray[
     return result
 
 
-def get_ia_colors_float(pixels: InterPixelNpArray, i=8, a=8) -> np.ndarray[float, (Any, Any, Literal[1, 2])]:
+def get_ia_colors_float(pixels: FloatPixels, i=8, a=8) -> np.ndarray[float, (Any, Any, Literal[1, 2])]:
     lum = color_to_luminance_np(pixels) * (2**i - 1)
     if a > 0:
         alpha_pixels = pixels[..., 3] * (2**a - 1)
@@ -1296,7 +1297,7 @@ def get_ia_colors_float(pixels: InterPixelNpArray, i=8, a=8) -> np.ndarray[float
 
 def rounded_ia_to_n64(
     rounded_pixels: np.ndarray[float, (Any, Any, Literal[1, 2])], i=8, a=8
-) -> PixelNpArray[np.uint8 | np.uint16]:
+) -> FlatPixels[np.uint8 | np.uint16]:
     typ = get_best_np_type(i + a)
     result = rounded_pixels.astype(typ)
     if a > 0:
@@ -1306,7 +1307,7 @@ def rounded_ia_to_n64(
     return result
 
 
-def get_ia_colors(pixels: InterPixelNpArray, emu64=False, i=8, a=8, dither_mode: DITHER_MODES = None):
+def get_ia_colors(pixels: FloatPixels, emu64=False, i=8, a=8, dither_mode: DITHER_MODES = None):
     return rounded_ia_to_n64(process_float_pixels(get_ia_colors_float(pixels, i, a), emu64, dither_mode), i, a)
 
 
@@ -1315,35 +1316,35 @@ YUV_COF = np.array([[0.29900, -0.16874, 0.50000], [0.58700, -0.33126, -0.41869],
 YUV_SCALE = lambda y, u, v: np.array((2**y - 1, 2**u - 1, 2**v - 1))
 
 
-def get_yuv_colors_legacy(pixels: PixelNpArray[float], y=8, u=4, v=4) -> PixelNpArray[np.uint16]:
+def get_yuv_colors_legacy(pixels: FlatPixels[float], y=8, u=4, v=4) -> N64Pixels[np.uint16]:
     pixels = np.dot(pixels[:, :3], YUV_COF)
     pixels[:, 1:] += 0.5
     pixels = (pixels * YUV_SCALE(y, u, v)).round().astype(get_best_np_type(y + u + v))
     return pixels[:, 0] << u | pixels[:, 1] << v | pixels[:, 2]
 
 
-def get_yuv_colors_float(pixels: PixelNpArray[float], y=8, u=4, v=4) -> np.ndarray[float, (Any, 3)]:
+def get_yuv_colors_float(pixels: FlatPixels[float], y=8, u=4, v=4) -> np.ndarray[float, (Any, 3)]:
     pixels = np.dot(pixels[..., :3], YUV_COF)
     pixels[..., 1:] += 0.5
     return pixels * YUV_SCALE(y, u, v)
 
 
-def rounded_yuv_to_n64(rounded_pixels: np.ndarray[float, (Any, 3)], y=8, u=4, v=4) -> PixelNpArray[np.uint16]:
+def rounded_yuv_to_n64(rounded_pixels: np.ndarray[float, (Any, 3)], y=8, u=4, v=4) -> N64Pixels[np.uint16]:
     rounded_pixels = rounded_pixels.astype(get_best_np_type(y + u + v))
     return rounded_pixels[:, 0] << u | rounded_pixels[:, 1] << v | rounded_pixels[:, 2]
 
 
-def get_yuv_colors(pixels: PixelNpArray[float], emu64=False, y=8, u=4, v=4, dither_mode: DITHER_MODES = None):
+def get_yuv_colors(pixels: FlatPixels[float], emu64=False, y=8, u=4, v=4, dither_mode: DITHER_MODES = None):
     return rounded_yuv_to_n64(process_float_pixels(get_yuv_colors_float(pixels, y, u, v), emu64, dither_mode), y, u, v)
 
 
 def image_to_n64_texture(
-    pixels: InterPixelNpArray | bpy.types.Image,
+    pixels: FloatPixels | bpy.types.Image,
     tex_fmt: str,
     emu64: bool,
     dither_mode: DITHER_MODES,
     ci_format: str | None = None,
-) -> PixelNpArray:
+) -> N64Pixels:
     fmt = texFormatOf[tex_fmt]
     bit_size = texBitSizeF3D[tex_fmt]
 
@@ -1394,7 +1395,7 @@ def image_to_n64_texture(
         raise PluginError(f"Invalid image format {fmt}")
 
 
-def image_to_ci_texture(image: bpy.types.Image, pal_format: str, use_argb: bool) -> PixelNpArray[np.uint16]:
+def image_to_ci_texture(image: bpy.types.Image, pal_format: str, use_argb: bool) -> FlatPixels[np.uint16]:
     pixels = get_pixels_from_image(image)
     if pal_format == "RGBA16":
         if use_argb:
@@ -1410,11 +1411,11 @@ def getColorsUsedInImage(image: bpy.types.Image, pal_format: str, use_argb: bool
     return np.sort(np.unique(image_to_ci_texture(image, pal_format, use_argb)))
 
 
-def mergePalettes(pal0: PixelNpArray, pal1: PixelNpArray):
+def mergePalettes(pal0: FlatPixels, pal1: FlatPixels):
     return np.sort(np.unique(np.concatenate((pal0, pal1))))
 
 
-def writePaletteData(fPalette: FImage, palette: PixelNpArray):
+def writePaletteData(fPalette: FImage, palette: FlatPixels):
     if fPalette.converted:
         return
     fPalette.data = palette
@@ -1424,7 +1425,7 @@ def writePaletteData(fPalette: FImage, palette: PixelNpArray):
 def writeCITextureData(
     image: bpy.types.Image,
     fImage: FImage,
-    sorted_palette: PixelNpArray[np.uint16],
+    sorted_palette: FlatPixels[np.uint16],
     pal_format: str,
     tex_format: str,
     emu64=False,
@@ -1441,5 +1442,4 @@ def writeNonCITextureData(image: bpy.types.Image, fImage: FImage, tex_fmt: str, 
     if fImage.converted:
         return
     fImage.data = image_to_n64_texture(image, tex_fmt, emu64, None, None)
-
     fImage.converted = True

@@ -3278,7 +3278,7 @@ class FImage:
     width: int
     height: int
     filename: str
-    data: np.ndarray[int, Any] = field(init=False, compare=False, default=np.ndarray((0)))
+    data: np.ndarray[int, (Any)] = field(init=False, compare=False, default=np.ndarray((0)))
     startAddress: int = field(init=False, compare=False, default=0)
     isLargeTexture: bool = field(init=False, compare=False, default=False)
     converted: bool = field(init=False, compare=False, default=False)

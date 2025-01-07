@@ -1,8 +1,8 @@
 from pathlib import Path
 import bpy, random, string, os, math, traceback, re, os, mathutils, ast, operator
 from math import pi, ceil, degrees, radians, copysign
-from mathutils import *
 import numpy as np
+from mathutils import *
 from .utility_anim import *
 from typing import Callable, Iterable, Any, Optional, Tuple, TypeVar, Union
 from bpy.types import UILayout, Scene, World
