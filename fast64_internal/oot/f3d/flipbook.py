@@ -2,9 +2,9 @@ import bpy, re
 from typing import Any, Callable, Optional
 from bpy.utils import register_class, unregister_class
 from bpy.app.handlers import persistent
-from .f3d_gbi import FImage
-from .f3d_material import all_combiner_uses, update_tex_values_manual, iter_tex_nodes, TextureProperty
-from ..utility import prop_split, CollectionProperty
+from ...f3d.f3d_gbi import FImage
+from ...f3d.f3d_material import all_combiner_uses, update_tex_values_manual, iter_tex_nodes, TextureProperty
+from ...utility import prop_split, CollectionProperty
 from dataclasses import dataclass
 import dataclasses
 

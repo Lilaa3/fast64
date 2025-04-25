@@ -1,4 +1,4 @@
-from typing import Union, Optional
+from typing import Union, Optional, TYPE_CHECKING
 from dataclasses import dataclass, field
 import bpy
 from math import ceil, floor
@@ -14,8 +14,9 @@ from .f3d_material import (
     isTexturePointSampled,
 )
 from .f3d_gbi import *
-from .f3d_gbi import _DPLoadTextureBlock
-from .flipbook import TextureFlipbook
+
+if TYPE_CHECKING:
+    from ..oot.f3d.flipbook import TextureFlipbook
 
 from ..utility import *
 

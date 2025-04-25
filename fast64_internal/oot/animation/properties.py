@@ -1,7 +1,7 @@
 from bpy.types import Object, PropertyGroup, UILayout, Context
 from bpy.utils import register_class, unregister_class
 from bpy.props import PointerProperty, BoolProperty, StringProperty, IntProperty
-from ...f3d.flipbook import ootFlipbookAnimUpdate
+from ..f3d.flipbook import ootFlipbookAnimUpdate
 from ...utility import prop_split
 
 

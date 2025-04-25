@@ -3,7 +3,7 @@ from typing import Union
 from ..f3d.f3d_parser import F3DContext, F3DTextureReference, getImportData
 from ..f3d.f3d_material import TextureProperty, createF3DMat, texFormatOf, texBitSizeF3D
 from ..utility import PluginError, hexOrDecInt, create_or_get_world
-from ..f3d.flipbook import TextureFlipbook, FlipbookProperty, usesFlipbook, ootFlipbookReferenceIsValid
+from .f3d.flipbook import TextureFlipbook, FlipbookProperty, usesFlipbook, ootFlipbookReferenceIsValid
 
 from ..f3d.f3d_writer import VertexGroupInfo, TriangleConverterInfo
 from ..f3d.f3d_texture_writer import (
