@@ -188,22 +188,23 @@ def maybeSaveSingleLargeTextureSetup(
         assert 0 <= tileSettings.sl < texDimensions[0]
         assert 0 <= tileSettings.tl < texDimensions[1]
         siz = texBitSizeF3D[texProp.tex_format]
+        fmt = texFormatOf[texProp.tex_format]
         line = getTileLine(fImage, tileSettings.sl, tileSettings.sh, siz, fModel.f3d)
         tmem = fMaterial.largeTexAddr[i]
         if wrapS or wrapT:
-            fmt = texFormatOf[texProp.tex_format]
             texelsPerWord = 64 // texBitSizeInt[texProp.tex_format]
             wid = texDimensions[0]
-            is4bit = siz == "G_IM_SIZ_4b"
-            if is4bit:
+            sm = 4
+            if siz == "G_IM_SIZ_4b":
                 siz = "G_IM_SIZ_8b"
                 wid >>= 1
                 assert (tileSettings.sl & 1) == 0
                 assert (tileSettings.sh & 1) == 1
-            # TL, TH is always * 4 because tile values are 10.2 fixed.
-            # SL, SH is * 2 for 4 bit and * 4 otherwise, because actually loading
-            # 8 bit pairs of texels. Also written using f3d.G_TEXTURE_IMAGE_FRAC.
-            sm = 2 if is4bit else 4
+                # TL, TH is always * 4 because tile values are 10.2 fixed.
+                # SL, SH is * 2 for 4 bit and * 4 otherwise, because actually loading
+                # 8 bit pairs of texels. Also written using f3d.G_TEXTURE_IMAGE_FRAC.
+                sm = 2
+
             nocm = ["G_TX_WRAP", "G_TX_NOMIRROR"]
             if curImgSet != i:
                 gfxOut.commands.append(DPSetTextureImage(fmt, siz, wid, fImage))
@@ -991,12 +992,16 @@ def saveTextureLoadOnly(
             wid >>= 1
             loadCommand = DPLoadTile(loadtile, sl2, tl, sh2, th)
     else:
+        if texProp.tex_format == "YUV16":
+            siz = "G_IM_SIZ_32b"
         if useLoadBlock:
             dxs = (
                 ((fImage.width) * (fImage.height) + f3d.G_IM_SIZ_VARS[siz + "_INCR"])
                 >> f3d.G_IM_SIZ_VARS[siz + "_SHIFT"]
             ) - 1
             dxt = f3d.CALC_DXT(fImage.width, f3d.G_IM_SIZ_VARS[siz + "_BYTES"])
+            if texProp.tex_format == "YUV16":  # still has to be 16b
+                siz = "G_IM_SIZ_16b"
             siz += "_LOAD_BLOCK"
             loadCommand = DPLoadBlock(loadtile, 0, 0, dxs, dxt)
         else:
@@ -1050,6 +1055,8 @@ def saveTextureTile(
     SL, _, SH, _, sl, tl, sh, th = getTileSizeSettings(texProp, tileSettings, f3d)
     line = getTileLine(fImage, SL, SH, siz, f3d)
 
+    if texProp.tex_format == "YUV16":
+        siz = "G_IM_SIZ_16b"
     tileCommand = DPSetTile(fmt, siz, line, tmem, rendertile, pal, cmt, maskt, shiftt, cms, masks, shifts)
     tileSizeCommand = DPSetTileSize(rendertile, sl, tl, sh, th)
 
@@ -1227,9 +1234,38 @@ def writeNonCITextureData(image: bpy.types.Image, fImage: FImage, texFmt: str):
             raise PluginError("Invalid combo: " + fmt + ", " + bitSize)
 
     elif fmt == "G_IM_FMT_YUV":
-        raise PluginError("YUV not yet implemented.")
-        if bitSize == "G_IM_SIZ_16b":
-            pass
+        if bitSize == "G_IM_SIZ_16b":  # TODO: temporary since we want to replace this with a clean numpy impl later
+            yuvs = [
+                (  # shift, u and v by 128, since they go negative
+                    round((0.299 * r + 0.587 * g + 0.114 * b) * 0xFF) & 0xFF,
+                    ((-0.14713 * r - 0.28886 * g + 0.436 * b) * 0x80),
+                    ((0.615 * r - 0.51499 * g - 0.10001 * b) * 0x80),
+                )
+                for j in reversed(range(image.size[1]))
+                for i in range(image.size[0])
+                for r, g, b in [
+                    [
+                        pixels[(j * image.size[0] + i) * image.channels + 0],
+                        pixels[(j * image.size[0] + i) * image.channels + 1],
+                        pixels[(j * image.size[0] + i) * image.channels + 2],
+                    ],
+                ]
+            ]
+            fImage.data = bytearray(
+                [
+                    byte_val
+                    for yuv_pair in [
+                        (
+                            round((pixel0[1] + pixel1[1]) / 2.0 + 0x80) & 0xFF,
+                            pixel0[0],
+                            round((pixel0[2] + pixel1[2]) / 2.0 + 0x80) & 0xFF,
+                            pixel1[0],
+                        )
+                        for pixel0, pixel1 in [yuvs[i : i + 2] for i in range(0, len(yuvs), 2)]
+                    ]
+                    for byte_val in yuv_pair
+                ]
+            )
         else:
             raise PluginError("Invalid combo: " + fmt + ", " + bitSize)
 

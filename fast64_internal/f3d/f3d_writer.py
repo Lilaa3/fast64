@@ -1499,7 +1499,6 @@ def saveOrGetF3DMaterial(material, fModel, obj, drawLayer, convertTextureData):
     if useDict["Convert"] and f3dMat.set_k0_5:
         fMaterial.mat_only_DL.commands.extend(
             [
-                DPSetTextureConvert("G_TC_FILTCONV"),  # TODO: allow filter option
                 DPSetConvert(
                     int(f3dMat.k0 * 255),
                     int(f3dMat.k1 * 255),
