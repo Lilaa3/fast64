@@ -1297,9 +1297,9 @@ class F3DPanel(Panel):
             ui_image(
                 f3d_mat.use_large_textures,
                 f3d_mat.is_multi_tex,
-                col,
+                col.box(),
                 f3d_mat.all_textures[0],
-                "Base Texture",
+                -1,
                 False,
                 always_load=True,
                 forced_fmt=f3d_mat.gen_pseudo_format,
@@ -1310,7 +1310,7 @@ class F3DPanel(Panel):
         for i, (tex_index, tex) in enumerate(textures.items()):
             if tex.menu and i > 0:
                 col.separator(factor=1.0)
-            ui_image(f3d_mat.use_large_textures, f3d_mat.is_multi_tex, col, tex, f"Texture {tex_index}", not is_simple)
+            ui_image(f3d_mat.use_large_textures, f3d_mat.is_multi_tex, col.box(), tex, tex_index, not is_simple)
             if tex.menu or i == len(textures) - 1:
                 col.separator(factor=1.0)
 
@@ -3135,12 +3135,13 @@ def update_combiner_connections_and_preset(self, context: Context):
         toggle_texture_node_muting(material, 1, f3d_mat.tex1.tex and combiner_uses_tex1(material.f3d_mat))
 
 
+@wrap_func_with_hooks
 def ui_image(
     canUseLargeTextures: bool,
     is_multi_tex: Material,
     layout: UILayout,
     tex_prop: TextureProperty,
-    name: str,
+    name_or_index: str|int,
     show_toggle: bool,
     hide_lowhigh=False,
     always_load=False,
@@ -3150,6 +3151,10 @@ def ui_image(
 
     row = inputGroup.row()
     row.prop(tex_prop, "menu", text="", icon="TRIA_DOWN" if tex_prop.menu else "TRIA_RIGHT", emboss=False)
+    if isinstance(name_or_index, str):
+        name = name_or_index
+    else:
+        name = f"Texture {name_or_index}" if name_or_index != -1 else "Base Texture"
     if show_toggle:
         row.prop(tex_prop, "tex_set", text=f"Set {name}")
     else:

@@ -1,3 +1,4 @@
+import functools
 from pathlib import Path
 import bpy, random, string, os, math, traceback, re, os, mathutils, ast, operator, inspect
 from math import pi, ceil, degrees, radians, copysign
@@ -1986,3 +1987,71 @@ def wrap_func_with_error_message(error_message: Callable):
         return wrapper
 
     return decorator
+
+
+class HookSet:
+    def __init__(self):
+        self._hooks: list[Tuple[int, Callable]] = []
+
+    @property
+    def individual_hooks(self) -> list[Callable]:
+        return [h[1] for h in self._hooks]
+
+    def add(self, hook: Callable, priority: int = 0):
+        if hook in self.individual_hooks:
+            print(f"Hook {hook} already been registered")
+            index = self.individual_hooks.index(hook)
+            cur_priority, cur_hook = self._hooks[index]
+            if cur_priority != priority:
+                self._hooks.remove((cur_priority, cur_hook))
+        self._hooks.append((priority, hook))
+
+    def remove(self, hook: Callable) -> None:
+        self._hooks = [(p, h) for (p, h) in self._hooks if h is not hook]
+
+    def __iter__(self) -> list[Callable]:
+        self._hooks.sort(key=lambda ph: ph[0])
+        for _, h in self._hooks:
+            yield h
+
+
+def wrap_func_with_hooks(func: Callable) -> Callable:
+    """
+    Decorator for external hooks or game specific code.
+    For stuff like f3d writer we call those functions with a custom F3D class, this is more for UI or future stuff.
+
+    Each set of hooks can have priority, default 0. They are called with a "context" dict, containing all the arguments
+    and "skip" flag.
+
+    But why a context dict instead of just the arguments?
+    Function arguments can easily change, but usually it's only small changes or additions,
+    so we avoid breaking outside fast64 (which this is intended for as well).
+    """
+    func._pre_hooks = HookSet()
+    func._post_hooks = HookSet()
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        sig = inspect.signature(func)
+        bound_args = sig.bind(*args, **kwargs)
+        bound_args.apply_defaults()
+        ctx = {"args": bound_args.arguments, "skip": False}
+
+        pre_hooks: HookSet = func._pre_hooks
+        for pre in pre_hooks:
+            pre(ctx)
+            if ctx["skip"]:
+                return ctx.get("result", None)
+
+        ctx["result"] = func(**ctx["args"])
+
+        post_hooks: HookSet = func._post_hooks
+        for post in func._post_hooks:
+            post(ctx)
+
+        return ctx.get("result", None)
+
+    wrapper.pre_hook = func._pre_hooks
+    wrapper.post_hook = func._post_hooks
+
+    return wrapper
