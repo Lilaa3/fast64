@@ -493,24 +493,37 @@ def addCollisionTriangles(
                 fmaterial.material = copy.copy(fmaterial.material)
                 fmaterial.revert = copy.copy(fmaterial.revert)
                 fmaterial.material.name = toAlnum(f"{material.name}_layer_{draw_layer}")
-                if bpy.context.scene.exportInlineF3D or fmaterial.revert is None:
+                fmaterial.revert.name = fmaterial.material.name + "_revert"
+                if bpy.context.scene.exportInlineF3D:
+                    reset_cmd_dict = {}
+                    bleed_graphics = BleedGraphics()
+                    fmaterial.material.commands = []
+                    fmaterial.material.commands.extend(
+                        bleed_graphics.bleed_mat(
+                            fmaterial,
+                            None,
+                            [],
+                            fModel.matWriteMethod,
+                            fModel.getRenderMode(draw_layer),
+                            bleed_graphics.bleed_start,
+                        )
+                    )
+                    fmaterial.material.commands.extend(
+                        bleed_graphics.bleed_textures(fmaterial, None, bleed_graphics.bleed_start)
+                    )
+                    fmaterial.material.commands.append(SPEndDisplayList())
+                    bleed_graphics.optimize_syncs(fmaterial.material)
+
+                    for cmd in fmaterial.material.commands:
+                        bleed_graphics.add_reset_cmd(fModel.f3d, cmd, reset_cmd_dict, fModel.matWriteMethod)
                     fmaterial.revert = GfxList(
                         fmaterial.material.name + "_revert", GfxListTag.MaterialRevert, fModel.DLFormat
                     )
-                    fmaterial.revert.commands.append(SPEndDisplayList())
-                if bpy.context.scene.exportInlineF3D:
-                    reset_cmd_dict = {}
-                    bleed_gfx_lists = BleedGfxLists()
-                    bleed_gfx_lists.bled_mats = fmaterial.material.commands
-                    for cmd in bleed_gfx_lists.bled_mats:
-                        bleed_gfx_lists.add_reset_cmd(fModel.f3d, cmd, reset_cmd_dict)
-                    fmaterial.revert.commands = BleedGraphics().create_reset_cmds(
-                        reset_cmd_dict, fModel.getRenderMode(draw_layer)
+                    fmaterial.revert.commands = bleed_graphics.create_reset_cmds(
+                        reset_cmd_dict, fModel.matWriteMethod, fModel.getRenderMode(draw_layer)
                     )
-                    if DPPipeSync in fmaterial.revert.commands:
-                        fmaterial.revert.commands.remove(DPPipeSync)
-                        fmaterial.revert.commands.insert(0, DPPipeSync)
                     fmaterial.revert.commands.append(SPEndDisplayList())
+                    bleed_graphics.optimize_syncs(fmaterial.revert)
 
                 fmaterial_dict[material] = (fmaterial, draw_layer)
 
