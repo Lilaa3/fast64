@@ -663,7 +663,7 @@ class F3DPanel(Panel):
     def ui_scale(self, material, layout):
         inputGroup = layout.row().split(factor=0.5)
         prop_input = inputGroup.column()
-        prop_input.prop(material, "scale_autoprop", text="Texture Auto Scale")
+        prop_input.prop(material, "scale_autoprop", text="Auto Scale")
         prop_input_group = inputGroup.row()
         prop_input_group.prop(material, "tex_scale", text="")
         prop_input_group.enabled = not material.scale_autoprop
@@ -1134,6 +1134,7 @@ class F3DPanel(Panel):
     ):
         f3d = get_F3D_GBI()
         textures = f3d_mat.set_textures if is_simple else f3d_mat.used_textures
+        use_base_texture = f3d_mat.use_base_texture
         col = layout.column()
         if len(textures) > 0:
             draw_and_check_tab(col, f3d_mat, "texture_tab", "Textures", "IMAGE_DATA")
@@ -1155,10 +1156,14 @@ class F3DPanel(Panel):
         self.ui_scale(f3d_mat, col)
         if len(textures) > 1:
             col.prop(f3d_mat, "uv_basis", text="UV Basis")
+        if use_base_texture or any(tex.has_tex for tex in textures.values()):
+            prop_split(col, f3d_mat, "dithering_method", "Dither (Conversion)")
+
         # TODO: in the future we should make a multitex manager for UI and preview (and cache it) and use the errors from that
         self.draw_ci_warnings(col, f3d_mat)
+
         col.separator(factor=1.0)
-        if f3d_mat.gen_auto_mips or f3d_mat.gen_pseudo_format:
+        if use_base_texture:
             ui_image(
                 f3d_mat.use_large_textures,
                 f3d_mat.is_multi_tex,
@@ -1905,14 +1910,17 @@ def set_texture_settings_node(material: Material):
         textureSettings.node_tree = desired_group
 
 
-def setAutoProp(field: "TextureFieldProperty", pixel_length: int):
-    field.mask = log2iRoundUp(pixel_length)
+def calculate_high_mask(field: "TextureFieldProperty", pixel_length: int):
     high = pixel_length
     if field.clamp:
         high *= field.repeats
     high += field.low
     high -= 1
-    field.high = high
+    return log2iRoundUp(pixel_length), high
+
+
+def setAutoProp(field: "TextureFieldProperty", pixel_length: int):
+    field.mask, field.high = calculate_high_mask(field, pixel_length)
 
 
 def set_texture_size(self, tex_size, tex_index):
@@ -2159,14 +2167,11 @@ def update_tex_values(self, context):
 
 
 def get_tex_basis_size(f3d_mat: "F3DMaterialProperty"):
-    tex_size = None
-    if f3d_mat.tex0.tex is not None and f3d_mat.tex1.tex is not None:
-        return f3d_mat.tex0.tex.size if f3d_mat.uv_basis == "TEXEL0" else f3d_mat.tex1.tex.size
-    elif f3d_mat.tex0.tex is not None:
-        return f3d_mat.tex0.tex.size
-    elif f3d_mat.tex1.tex is not None:
-        return f3d_mat.tex1.tex.size
-    return tex_size
+    uv_basis_index = f3d_mat.uv_basis_index
+    for i, tex in f3d_mat.set_textures.items():
+        if i == uv_basis_index:
+            return tex.size
+    return None
 
 
 def get_tex_gen_size(tex_size: list[int | float]):
@@ -2213,9 +2218,10 @@ def update_tex_values_manual(material: Material, context, prop_path=None):
             texture_inputs["1 T TexSize"].default_value = f3dMat.tex1.tex.size[0]
 
     uv_basis: ShaderNodeGroup = nodes["UV Basis"]  # TODO
-    if f3dMat.uv_basis == "TEXEL0":
+    uv_basis_index = f3dMat.uv_basis_index
+    if uv_basis_index == 0:
         uv_basis.node_tree = bpy.data.node_groups["UV Basis 0"]
-    elif f3dMat.uv_basis == "TEXEL1":
+    elif uv_basis_index == 1:
         uv_basis.node_tree = bpy.data.node_groups["UV Basis 1"]
 
     if not isTexGen:
@@ -2858,16 +2864,6 @@ class TextureProperty(PropertyGroup):
         default=True,
         update=update_tex_values,
     )
-    dithering_method: bpy.props.EnumProperty(
-        name="Dithering (Conversion)",
-        items=[
-            ("NONE", "None", ""),
-            ("RANDOM", "Random", ""),
-            ("DITHERED", "Dithered", ""),
-            ("FLOYD", "Floyd-Steinberg", "TODO in mksprite, but by far the best dithering method on n64"),
-        ],
-        description="How the texture will be dithered when quantizing (reducing colors) on export, this helps with color banding",
-    )
     tex_index: bpy.props.IntProperty(
         name="Texture Index",
         default=0,
@@ -2969,16 +2965,16 @@ class TextureProperty(PropertyGroup):
         return f"G_TT_{self.ci_format if self.is_ci else 'NONE'}"
 
     @property
-    def has_texture(self) -> bool:
+    def has_tex(self) -> bool:
         return self.load_tex and not self.use_tex_reference
 
     @property
-    def has_palette(self) -> bool:
-        return self.load_pal and self.has_texture and not self.use_pal_reference
+    def has_pal(self) -> bool:
+        return self.is_ci and self.load_pal and not self.use_pal_reference
 
     @property
     def size(self) -> tuple[int, int]:
-        if self.has_texture:
+        if self.has_tex:
             if self.tex is not None:
                 return tuple(self.tex.size)
         return tuple(self.tex_reference_size)
@@ -3006,7 +3002,6 @@ class TextureProperty(PropertyGroup):
             self.pal_reference_size if texSet and useRef and isCI else None,
             self.load_tex if texSet else None,
             self.load_pal if texSet and isCI else None,
-            self.dithering_method if texSet else None,
         )
 
 
@@ -3061,7 +3056,7 @@ def ui_image(
         prop_input = inputGroup.column()
 
         flipbook = tex_prop.flipbook is not None and tex_prop.flipbook.enable
-        has_texture = tex_prop.has_texture or always_load
+        has_tex = tex_prop.has_tex or always_load
 
         if not always_load:
             row = prop_input.row()
@@ -3078,20 +3073,18 @@ def ui_image(
                         prop_split(prop_input, tex_prop, "tex_reference", "Texture Reference")
             else:
                 prop_split(prop_input, tex_prop, "tex_index", "Texture Index")
-        if not flipbook or has_texture or always_load:
+        if not flipbook or has_tex or always_load:
             prop_input.template_ID(
                 tex_prop,
                 "tex",
                 new="image.new",
                 open="image.open",
-                text=None if has_texture else "Preview Only",
+                text=None if has_tex else ("Preview and Pallete" if tex_prop.has_pal else "Preview"),
             )
-            if has_texture:
+            if has_tex:
                 size = tex_prop.size
                 prop_input.label(text=f"Size: {size[0]}x{size[1]}")
-        if has_texture:
-            prop_split(prop_input, tex_prop, "dithering_method", "Dithering (Conversion)")
-        else:
+        if not has_tex:
             prop_split(prop_input, tex_prop, "tex_reference_size", "Texture Size")
 
         if not forced_fmt:
@@ -3135,9 +3128,9 @@ def ui_image(
                                 prop_split(prop_input, tex_prop, "pal_reference_size", "Palette Size")
                 else:
                     prop_split(prop_input, tex_prop, "pal_index", "Palette Index")
-                if not tex_prop.has_palette:
+                if not tex_prop.has_pal:
                     prop_input.template_ID(tex_prop, "pal", new="image.new", open="image.open")
-                    if has_texture:
+                    if has_tex:
                         if tex_prop.pal:
                             multilineLabel(
                                 prop_input,
@@ -4389,6 +4382,16 @@ class F3DMaterialProperty(PropertyGroup):
     gen_auto_mips_internal: bpy.props.BoolProperty(name="Auto Mipmaps", update=update_tex_values)
     auto_mipmaps: bpy.props.EnumProperty(name="Auto Mipmaps", items=[("BOX", "Box", "Box")], update=update_tex_values)
     tex_scale: bpy.props.FloatVectorProperty(min=0, max=1, size=2, default=(1, 1), step=1, update=update_tex_values)
+    dithering_method: bpy.props.EnumProperty(
+        name="Dithering (Conversion)",
+        items=[
+            ("NONE", "None", ""),
+            ("RANDOM", "Random", ""),
+            ("DITHERED", "Dithered", ""),
+            ("FLOYD", "Floyd-Steinberg", "TODO in mksprite, but by far the best dithering method on n64"),
+        ],
+        description="How the texture will be dithered when quantizing (reducing colors) on export, this helps with color banding",
+    )
     tex0: bpy.props.PointerProperty(type=TextureProperty, name="tex0")
     tex1: bpy.props.PointerProperty(type=TextureProperty, name="tex1")
     tex2: bpy.props.PointerProperty(type=TextureProperty, name="tex2")
@@ -4673,7 +4676,7 @@ class F3DMaterialProperty(PropertyGroup):
     rdp_settings: bpy.props.PointerProperty(type=RDPSettings)
 
     draw_layer: bpy.props.PointerProperty(type=DrawLayerProperty)
-    use_large_textures: bpy.props.BoolProperty(name="Large Texture Mode")
+    use_large_textures: bpy.props.BoolProperty(name="Large Mode")
     large_edges: bpy.props.EnumProperty(items=enumLargeEdges, default="Clamp")
 
     expand_cel_shading_ui: bpy.props.BoolProperty(name="Expand Cel Shading UI")
@@ -4695,10 +4698,14 @@ class F3DMaterialProperty(PropertyGroup):
     def all_textures(self) -> list[TextureProperty]:
         return tuple(getattr(self, f"tex{i}") for i in range(8))
 
-    def get_used_textures(self, tex_use: dict = None) -> dict[int, TextureProperty]:
+    @property
+    def base_texture(self) -> TextureProperty:
+        return self.all_textures[0]
+
+    def get_used_textures(self, tex_use: dict = None, use_base_texture: bool = False) -> dict[int, TextureProperty]:
         self.rdp_settings: RDPSettings
-        if self.gen_pseudo_format or self.gen_auto_mips:
-            return {0: self.all_textures[0]}
+        if self.use_base_texture:
+            return {0: self.base_texture}
         if self.uses_mipmap:
             return {i: t for i, t in enumerate(self.all_textures[: self.rdp_settings.num_textures_mipmapped])}
         if tex_use is None:
@@ -4710,7 +4717,22 @@ class F3DMaterialProperty(PropertyGroup):
         return self.get_used_textures()
 
     def get_set_textures(self, tex_use: dict = None):
-        return {i: tex for i, tex in self.get_used_textures(tex_use).items() if tex.tex_set}
+        use_base_texture = self.use_base_texture
+        return {
+            i: tex
+            for i, tex in self.get_used_textures(tex_use, use_base_texture).items()
+            if tex.tex_set or use_base_texture
+        }
+
+    @property
+    def uv_basis_index(self) -> int | None:
+        try:
+            index = int(self.uv_basis)
+            if index < 0 or index > 7:
+                return None
+            return index
+        except ValueError:
+            return None
 
     @property
     def set_textures(self):
@@ -4766,6 +4788,10 @@ class F3DMaterialProperty(PropertyGroup):
     @property
     def gen_auto_mips(self) -> bool:
         return self.pseudo_fmt_can_mip and (self.gen_auto_mips_internal or self.forced_mipmap)
+
+    @property
+    def use_base_texture(self) -> bool:
+        return self.gen_pseudo_format or self.gen_auto_mips
 
     def get_tex_lod(self, only_auto=False, rdp_defaults: RDPSettings = None) -> bool:
         if self.gen_auto_mips:
@@ -4869,13 +4895,14 @@ class F3DMaterialProperty(PropertyGroup):
         useDefaultLighting = self.set_lights and self.use_default_lighting
         return (
             self.scale_autoprop,
-            self.uv_basis,
+            self.uv_basis_index,
             self.UVanim0.key(),
             tuple([round(value, 4) for value in self.tex_scale]),
             tuple((i, tex.key()) for i, tex in self.set_textures.items()),
             self.rdp_settings.key(),
             self.draw_layer.key(),
             self.use_large_textures,
+            self.dithering_method,
             self.use_cel_shading,
             self.cel_shading.tintPipeline if self.use_cel_shading else None,
             (

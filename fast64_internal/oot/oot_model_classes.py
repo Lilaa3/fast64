@@ -165,46 +165,19 @@ class OOTModel(FModel):
                 allImages.append(flipbookTexture.image)
         return allImages
 
-    def processTexRefCITextures(self, fMaterial: FMaterial, material: bpy.types.Material, index: int) -> FImage:
+    def gather_images(
+        self, material: bpy.types.Material | None, texProp: TextureProperty, is_ref: bool, base_texture: bool
+    ) -> set[TextureProperty]:
+        if material is None and not is_ref:
+            return super().gather_images(material, texProp, is_ref, base_texture)
         # print("Processing flipbook...")
-        model = self.getFlipbookOwner()
-        texProp = material.f3d_mat.all_textures[index]
-        flipbookProp = texProp.flipbook
-        if not usesFlipbook(material, flipbookProp, index, True, ootFlipbookReferenceIsValid):
-            return super().processTexRefCITextures(fMaterial, material, index)
-        if len(flipbookProp.textures) == 0:
-            raise PluginError(f"{str(material)} cannot have a flipbook material with no flipbook textures.")
+        flipbook_prop = texProp.flipbook
+        if not usesFlipbook(base_texture, flipbook_prop, texProp, True, ootFlipbookReferenceIsValid):
+            return super().gather_images(material, texProp, is_ref, base_texture)
+        if len(flipbook_prop.textures) == 0:
+            raise PluginError("Cannot have a flipbook material with no flipbook textures.")
 
-        flipbook = TextureFlipbook(flipbookProp.name, flipbookProp.exportMode, [], [])
-
-        pal = []
-        allImages = self.validateImages(texProp)
-        for flipbookTexture in flipbookProp.textures:
-            # print(f"Texture: {str(flipbookTexture.image)}")
-            imageName, filename = getTextureNamesFromImage(flipbookTexture.image, texProp.tex_format, model)
-            if flipbookProp.exportMode == "Individual":
-                imageName = flipbookTexture.name
-
-            # We don't know yet if this already exists, cause we need the full set
-            # of images which contribute to the palette, which we don't get until
-            # writeTexRefCITextures (in case the other texture in multitexture contributes).
-            # So these get created but may get dropped later.
-            fImage_temp = FImage(
-                imageName,
-                texFormatOf[texProp.tex_format],
-                texBitSizeF3D[texProp.tex_format],
-                flipbookTexture.image.size[0],
-                flipbookTexture.image.size[1],
-                filename,
-            )
-
-            pal = mergePalettes(pal, getColorsUsedInImage(flipbookTexture.image, texProp.ci_format))
-
-            flipbook.textureNames.append(fImage_temp.name)
-            flipbook.images.append((flipbookTexture.image, fImage_temp))
-
-        # print(f"Palette length: {len(pal)}") # Checked in moreSetupFromModel
-        return allImages, flipbook, pal
+        return self.validateImages(texProp)
 
     def writeTexRefCITextures(
         self,
@@ -231,43 +204,6 @@ class OOTModel(FModel):
             writeCITextureData(image, fImage, pal, palFmt, texFmt)
         # Have to delay this until here because texture names may have changed
         model.addFlipbookWithRepeatCheck(flipbook)
-
-    def processTexRefNonCITextures(self, fMaterial: FMaterial, material: bpy.types.Material, index: int):
-        model = self.getFlipbookOwner()
-        texProp = material.f3d_mat.all_textures[index]
-        flipbookProp = texProp.flipbook
-        if not usesFlipbook(material, flipbookProp, index, True, ootFlipbookReferenceIsValid):
-            return super().processTexRefNonCITextures(fMaterial, material, index)
-        if len(flipbookProp.textures) == 0:
-            raise PluginError(f"{str(material)} cannot have a flipbook material with no flipbook textures.")
-
-        flipbook = TextureFlipbook(flipbookProp.name, flipbookProp.exportMode, [], [])
-        allImages = self.validateImages(texProp)
-        for flipbookTexture in flipbookProp.textures:
-            # print(f"Texture: {str(flipbookTexture.image)}")
-            # Can't use saveOrGetTextureDefinition because the way it gets the
-            # image key and the name from the texture property won't work here.
-            imageKey = FImageKey(flipbookTexture.image, texProp.tex_format, texProp.ci_format, [flipbookTexture.image])
-            fImage = model.getTextureAndHandleShared(imageKey)
-            if fImage is None:
-                imageName, filename = getTextureNamesFromImage(flipbookTexture.image, texProp.tex_format, model)
-                if flipbookProp.exportMode == "Individual":
-                    imageName = flipbookTexture.name
-                fImage = FImage(
-                    imageName,
-                    texFormatOf[texProp.tex_format],
-                    texBitSizeF3D[texProp.tex_format],
-                    flipbookTexture.image.size[0],
-                    flipbookTexture.image.size[1],
-                    filename,
-                )
-                model.addTexture(imageKey, fImage, fMaterial)
-
-            flipbook.textureNames.append(fImage.name)
-            flipbook.images.append((flipbookTexture.image, fImage))
-
-        self.addFlipbookWithRepeatCheck(flipbook)
-        return allImages, flipbook
 
     def writeTexRefNonCITextures(self, flipbook: Union[TextureFlipbook, None], texFmt: str):
         if flipbook is None:
@@ -483,7 +419,7 @@ class OOTF3DContext(F3DContext):
         index: int,
     ):
         flipbook = texProp.flipbook
-        if usesFlipbook(material, flipbook, index, True, ootFlipbookReferenceIsValid):
+        if usesFlipbook(material.f3d_mat.use_base_texture, flipbook, texProp, True, ootFlipbookReferenceIsValid):
             # Don't apply TLUT to texProp.tex, as it is the same texture as the first flipbook texture.
             # Make sure to check if tlut is already applied (ex. LOD skeleton uses same flipbook textures)
             # applyTLUTToIndex() doesn't check for this if texProp.use_tex_reference.

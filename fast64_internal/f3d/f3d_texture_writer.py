@@ -1,11 +1,15 @@
-from typing import Union, Optional
+from typing import Literal, Union, Optional
 from dataclasses import dataclass, field
+import numpy as np
+import copy
+
 import bpy
 from math import ceil, floor
 
 from .f3d_enums import *
 from .f3d_material import (
     all_combiner_uses,
+    calculate_high_mask,
     getTmemWordUsage,
     texBitSizeF3D,
     texFormatOf,
@@ -18,7 +22,6 @@ from .f3d_gbi import _DPLoadTextureBlock
 from .flipbook import TextureFlipbook
 
 from ..utility import *
-
 
 def UVtoSTLarge(obj, loopIndex, uv_data, texDimensions):
     uv = uv_data[loopIndex].uv.copy()
@@ -320,7 +323,7 @@ def saveOrGetPaletteDefinition(
     fMaterial: FMaterial,
     parent: Union[FModel, FTexRect],
     texProp: TextureProperty,
-    isPalRef: bool,
+    is_pal_reference: bool,
     images: list[bpy.types.Image],
     palBaseName: str,
     palLen: int,
@@ -330,7 +333,7 @@ def saveOrGetPaletteDefinition(
     palFormat = texFormatOf[palFmt]
     paletteKey = FPaletteKey(palFmt, images)
 
-    if isPalRef:
+    if is_pal_reference:
         fPalette = FImage(texProp.pal_reference, None, None, 1, palLen, None)
         return paletteKey, fPalette
 
@@ -381,175 +384,143 @@ def saveOrGetTextureDefinition(
 
 @dataclass
 class TexInfo:
-    # Main parameters
-    useTex: bool = False
-    isTexRef: bool = False
-    isTexCI: bool = False
+    load_tex: bool = False
+    tex_reference: Optional[str] = None
     texFormat: str = ""
-    palFormat: str = ""
+    main_image: Optional[FloatPixelsImage] = None
+    _imDependencies: set[FloatPixelsImage] = field(default_factory=set)
     imageDims: tuple[int, int] = (0, 0)
-    tmemSize: int = 0
-    errorMsg: str = ""
 
-    # Parameters from moreSetupFromModel
-    pal: Optional[list[int]] = None
+    load_pal: bool = False
+    pal_reference: Optional[str] = None
+    palFormat: str = ""
+    main_pal: Optional[FloatPixelsImage] = None
+    _palDependencies: set[FloatPixelsImage] = field(default_factory=set)
+
+    tmemSize: int = 0
     palLen: int = 0
-    imDependencies: Optional[set[bpy.types.Image]] = None
-    flipbook: Optional["TextureFlipbook"] = None
-    isPalRef: bool = False
+
+    mirror: tuple[bool, bool] = (False, False)
+    clamp: tuple[bool, bool] = (False, False)
+    shift: tuple[int, int] = (0, 0)
+    low: tuple[float, float] = (0.0, 0.0)
+    high: tuple[float, float] = (0.0, 0.0)
+    mask: tuple[int, int] = (0, 0)
 
     # Parameters computed by MultitexManager.writeAll
     texAddr: int = 0
     palAddr: int = 0
     palIndex: int = 0
-    palDependencies: set[bpy.types.Image] = field(default_factory=set)
     palBaseName: str = ""
-    loadPal: bool = False
-    doTexLoad: bool = True
     doTexTile: bool = True
 
     # Internal parameters--copies of passed parameters
     texProp: Optional[TextureProperty] = None
+    tex: Optional[bpy.types.Image] = None
     indexInMat: int = -1
 
-    def fromMat(self, index: int, f3dMat: F3DMaterialProperty) -> bool:
-        useDict = all_combiner_uses(f3dMat)
-        if not useDict["Texture " + str(index)]:
-            return True
+    @property
+    def has_tex(self) -> bool:
+        return self.load_tex and self.tex_reference is None
 
-        return self.fromProp(f3dMat.all_textures[index], index)
+    @property
+    def is_ci(self) -> bool:
+        return self.texFormat.startswith("CI")
 
-    def fromProp(self, texProp: TextureProperty, index: int, ignore_tex_set=False) -> bool:
+    @property
+    def has_pal(self) -> bool:
+        return self.is_ci and self.load_pal and self.pal_reference is None
+
+    @property
+    def tmem_hash(self):
+        values = [self.tex_reference, self.tmemSize, self.texFormat]
+        if self.tex_reference is None:
+            if self.main_image is not None:
+                values.append(self.main_image.name)
+        values.append(self.imageDims)
+        return hash(tuple(values))
+    
+    @property
+    def palDependencies(self):
+        return {self.main_pal} if self.main_pal is not None else {} | self._palDependencies
+
+    @property
+    def imDependencies(self):
+        return {self.main_image} if self.main_image is not None else {} | self._imDependencies
+
+    def copy(self):
+        new = copy.copy(self)
+        new._palDependencies = copy.copy(new._palDependencies)
+        new._imDependencies = copy.copy(new._imDependencies)
+        return new
+
+    def from_prop(
+        self,
+        tex_prop: TextureProperty,
+        index: int,
+        material: bpy.types.Material | None,
+        fModel: FModel,
+        ignore_tex_set=False,
+        base_texture=False,
+        pseudo_fmt=False,
+    ) -> None:
+        if not tex_prop.tex_set and not ignore_tex_set:
+            return None
+        self.texProp = tex_prop
         self.indexInMat = index
-        self.texProp = texProp
-        if not texProp.tex_set and not ignore_tex_set:
-            return True
 
         self.useTex = True
-        tex = texProp.tex
-        self.isTexRef = texProp.use_tex_reference
-        self.texFormat = texProp.tex_format
-        self.isTexCI = self.texFormat[:2] == "CI"
-        self.palFormat = texProp.ci_format if self.isTexCI else ""
+        self.texFormat = "RGBA32" if pseudo_fmt else tex_prop.tex_format
+        self.palFormat = tex_prop.ci_format if self.is_ci else ""
 
-        if tex is not None and (tex.size[0] == 0 or tex.size[1] == 0):
-            self.errorMsg = f"Image {tex.name} has 0 size; may have been deleted/moved."
-            return False
+        self.values_from_dims(*tex_prop.size)
 
-        if not self.isTexRef:
-            if tex is None:
-                self.errorMsg = f"No texture is selected."
-                return False
-            elif len(tex.pixels) == 0:
-                self.errorMsg = f"Image {tex.name} is missing on disk."
-                return False
+        self.mirror = (tex_prop.S.mirror, tex_prop.T.mirror)
+        self.clamp = (tex_prop.S.clamp, tex_prop.T.clamp)
+        self.shift = (tex_prop.S.shift, tex_prop.T.shift)
+        self.low = (tex_prop.S.low, tex_prop.T.low)
 
-        if self.isTexRef:
-            width, height = texProp.tex_reference_size
-        else:
-            width, height = tex.size
-        self.imageDims = (width, height)
-
-        self.tmemSize = getTmemWordUsage(self.texFormat, width, height)
-
-        if width > 1024 or height > 1024:
-            self.errorMsg = f"Image size (even large textures) limited to 1024 in each dimension."
-            return False
-
-        if texBitSizeInt[self.texFormat] == 4 and (width & 1) != 0:
-            self.errorMsg = f"A 4-bit image must have a width which is even."
-            return False
-
-        return True
-
-    def materialless_setup(self) -> None:
-        """moreSetupFromModel equivalent that does not handle material properties like OOT flipbooks"""
-        if not self.useTex:
-            return
-
-        if self.isTexCI:
-            self.imDependencies, self.flipbook, self.pal = (
-                set() if self.texProp.tex is None else {self.texProp.tex},
-                None,
-                None,
-            )
-            if self.isTexRef:
-                self.palLen = self.texProp.pal_reference_size
+        self.load_tex = tex_prop.load_tex or base_texture
+        self.tex_reference = tex_prop.tex_reference if (tex_prop.use_tex_reference and not base_texture) else None
+        img_deps = fModel.gather_images(material, tex_prop, self.tex_reference is not None, base_texture)
+        img_deps = set(fModel.gather_pixels(image) for image in img_deps)
+        if self.has_tex:
+            if len(img_deps) == 1:
+                self.main_image = list(img_deps)[0]
             else:
-                assert self.flipbook is None
-                self.pal = getColorsUsedInImage(self.texProp.tex, self.palFormat)
-                self.palLen = len(self.pal)
-            if self.palLen > (16 if self.texFormat == "CI4" else 256):
-                raise PluginError(
-                    f"Error in Texture {self.indexInMat} uses too many unique colors to fit in format {self.texFormat}."
-                )
-        else:
-            self.imDependencies = set() if self.texProp.tex is None else {self.texProp.tex}
-            self.flipbook = None
-
-        self.isPalRef = self.isTexRef and self.flipbook is None
-        self.palDependencies = self.imDependencies
-
-    def moreSetupFromModel(
-        self,
-        material: bpy.types.Material,
-        fMaterial: FMaterial,
-        fModel: FModel,
-    ) -> None:
-        if not self.useTex:
-            return
-
-        if self.isTexCI:
-            self.imDependencies, self.flipbook, self.pal = fModel.processTexRefCITextures(
-                fMaterial, material, self.indexInMat
-            )
-            if self.isTexRef:
-                if self.flipbook is not None:
-                    self.palLen = len(self.pal)
+                self._imDependencies = img_deps
+        if self.is_ci:
+            self.load_pal = tex_prop.load_pal or base_texture
+            self.pal_reference = tex_prop.pal_reference if (tex_prop.use_pal_reference and not base_texture) else None
+            if self.has_pal:
+                if self.has_tex:
+                    self._palDependencies = img_deps
                 else:
-                    self.palLen = self.texProp.pal_reference_size
-            else:
-                assert self.flipbook is None
-                self.pal = getColorsUsedInImage(self.texProp.tex, self.palFormat)
-                self.palLen = len(self.pal)
-            if self.palLen > (16 if self.texFormat == "CI4" else 256):
-                raise PluginError(
-                    f"Texture {self.indexInMat}"
-                    + (" (all flipbook textures)" if self.flipbook is not None else "")
-                    + f" uses too many unique colors to fit in format {self.texFormat}."
-                )
-        else:
-            self.imDependencies, self.flipbook = fModel.processTexRefNonCITextures(fMaterial, material, self.indexInMat)
+                    if tex_prop.pal is not None:
+                        image = tex_prop.pal
+                        self.main_pal = fModel.gather_pixels(image)
+                        self._palDependencies = {self.main_pal}
 
-        self.isPalRef = self.isTexRef and self.flipbook is None
-        self.palDependencies = self.imDependencies
+        return self
 
-    def getPaletteName(self):
-        if not self.useTex or self.isPalRef:
-            return None
-        if self.flipbook is not None:
-            return self.flipbook.name
-        return getImageName(self.texProp.tex)
+    def values_from_dims(self, width: int, height: int):
+        self.imageDims = (width, height)
+        self.tmemSize = getTmemWordUsage(self.texFormat, width, height)
+        tex_prop = self.texProp
+        s_high_mask, t_high_mask = calculate_high_mask(tex_prop.S, width), calculate_high_mask(tex_prop.T, height)
+        self.high = (s_high_mask[1], t_high_mask[1])
+        self.mask = (s_high_mask[0], t_high_mask[0])
 
-    def setup_single_tex(self, is_ci: bool, use_large_tex: bool):
-        is_large = False
-        tmem_size = 256 if is_ci else 512
-        if is_ci:
-            assert self.useTex  # should this be here?
-            if self.useTex:
-                self.loadPal = True
-            self.palBaseName = self.getPaletteName()
-        if self.tmemSize > tmem_size:
-            if use_large_tex:
-                self.doTexLoad = False
-                return True
-            elif not bpy.context.scene.ignoreTextureRestrictions:
-                raise PluginError(
-                    "Textures are too big. Max TMEM size is 4k "
-                    "bytes, ex. 2 32x32 RGBA 16 bit textures.\n"
-                    "Note that texture width will be internally padded to 64 bit boundaries."
-                )
-        return is_large
+    def error_checking(self):
+        if self.has_tex:
+            if self.main_image is None:
+                raise PluginError("No texture is selected.")
+            elif len(self.main_image.pixels) == 0:
+                raise PluginError(f"Image {self.tex.name} is missing on disk.")
+        if self.imageDims[0] > 1024 or self.imageDims[1] > 1024:
+            raise PluginError("Image size (even large textures) limited to 1024 in each dimension.")
+        if abs(self.shift[0]) > 10 or abs(self.shift[1]) > 10:
+            raise PluginError("Image shift too large.")
 
     def writeAll(
         self,
@@ -557,8 +528,6 @@ class TexInfo:
         fModel: Union[FModel, FTexRect],
         convertTextureData: bool,
     ):
-        if not self.useTex:
-            return
         assert (
             self.imDependencies is not None
         ), "self.imDependencies is None, either moreSetupFromModel or materialless_setup must be called beforehand"
@@ -568,17 +537,23 @@ class TexInfo:
             fMaterial, fModel, self.texProp, self.imDependencies, fMaterial.isTexLarge[self.indexInMat]
         )
         fMaterial.imageKey[self.indexInMat] = imageKey
-        if self.loadPal:
+        if self.load_pal:
             _, fPalette = saveOrGetPaletteDefinition(
-                fMaterial, fModel, self.texProp, self.isPalRef, self.palDependencies, self.palBaseName, self.palLen
+                fMaterial,
+                fModel,
+                self.texProp,
+                self.is_pal_reference,
+                self.palDependencies,
+                self.palBaseName,
+                self.palLen,
             )
 
         # Write loads
         loadGfx = fMaterial.texture_DL
         f3d = fModel.f3d
-        if self.loadPal:
+        if self.load_pal:
             savePaletteLoad(loadGfx, fPalette, self.palFormat, self.palAddr, self.palLen, 5 - self.indexInMat, f3d)
-        if self.doTexLoad:
+        if self.load_tex:
             saveTextureLoadOnly(fImage, loadGfx, self.texProp, None, 7 - self.indexInMat, self.texAddr, f3d)
         if self.doTexTile:
             saveTextureTile(
@@ -587,17 +562,17 @@ class TexInfo:
 
         # Write texture data
         if convertTextureData:
-            if self.loadPal and not self.isPalRef:
+            if self.load_pal and not self.is_pal_reference:
                 writePaletteData(fPalette, self.pal)
-            if self.isTexRef:
-                if self.isTexCI:
+            if self.is_tex_reference:
+                if self.is_ci:
                     fModel.writeTexRefCITextures(
                         self.flipbook, fMaterial, self.imDependencies, self.pal, self.texFormat, self.palFormat
                     )
                 else:
                     fModel.writeTexRefNonCITextures(self.flipbook, self.texFormat)
             else:
-                if self.isTexCI:
+                if self.is_ci:
                     assert (
                         self.pal is not None
                     ), "self.pal is None, either moreSetupFromModel or materialless_setup must be called beforehand"
@@ -606,303 +581,199 @@ class TexInfo:
                     writeNonCITextureData(self.texProp.tex, fImage, self.texFormat)
 
 
+MAX_IMAGES = 8
+
+
+def shrink_box(pixels: np.ndarray[np.float32, (WIDTH_T, HEIGHT_T, Any)], width_div: int, height_div: int):
+    assert width_div > 1 and height_div > 1
+    width, height, channels = pixels.shape
+    n_width, n_height = width // width_div, height // height_div
+    return pixels.reshape(n_width, width_div, n_height, height_div, channels).mean(axis=(1, 3))
+
+
+YUV_MATRIX = np.array([[0.299, 0.587, 0.114], [-0.14713, -0.28886, 0.436], [0.615, -0.51499, -0.10001]])
+WHITE_YUV = np.ones((3,)) @ YUV_MATRIX.T
+
+
+def ihq_calc_best_i(
+    width: int, height: int, yuv_base: np.ndarray[np.float32, (Any, 3)], yuv_target: np.ndarray[np.float32, (Any, 3)], ifactor: float
+) -> tuple[np.ndarray[np.float32, (WIDTH_T, HEIGHT_T)], float]:
+    yuv_base_ref = yuv_base * (1.0 - ifactor)
+    yuv_ifactor = WHITE_YUV * ifactor
+
+    num = np.sum((yuv_target - yuv_base_ref) * yuv_ifactor, axis=1)
+    den = np.sum(np.square(yuv_ifactor))
+    best_i_flat = np.clip(num / np.maximum(den, 1e-9), 0.0, 1.0)
+
+    final = yuv_base_ref + best_i_flat[:, None] * yuv_ifactor[None, :]
+    errs_flat = np.sum((final - yuv_target) ** 2, axis=1)
+
+    return best_i_flat.reshape(width, height), np.sum(errs_flat)
+
+
+def bilinear_resize(
+    pixels: np.ndarray[np.float32, (Any, Any, Any)], width_multiplier: int, height_multiplier: int
+) -> np.ndarray[np.float32, (WIDTH_T, HEIGHT_T, Any)]:
+    assert (
+        width_multiplier > 1 and height_multiplier > 1
+    ), "width_multiplier and height_multiplier must be an integer > 1."
+
+    old_width, old_height, _ = pixels.shape
+    new_height = old_height * height_multiplier
+    new_width = old_width * width_multiplier
+
+    y_new = np.arange(new_height)
+    x_new = np.arange(new_width)
+
+    y_old = y_new / height_multiplier  # 1 becomes 0.5
+    x_old = x_new / width_multiplier
+
+    # get the top-left integer coordinates
+    y0 = np.floor(y_old).astype(np.uint32)
+    x0 = np.floor(x_old).astype(np.uint32)
+
+    # get the bottom-right integer coordinates
+    y1 = np.clip(y0 + 1, 0, old_height - 1)
+    x1 = np.clip(x0 + 1, 0, old_width - 1)
+
+    p00 = pixels[x0, :][:, y0]  # top-left
+    p10 = pixels[x1, :][:, y0]  # top-right
+    p01 = pixels[x0, :][:, y1]  # bottom-left
+    p11 = pixels[x1, :][:, y1]  # bottom-right
+
+    # fractional parts
+    yf = y_old - y0
+    xf = x_old - x0
+    # reshape for broadcasting
+    yf = yf.reshape(1, new_height, 1)
+    xf = xf.reshape(new_width, 1, 1)
+
+    interp_top = p00 * (1 - xf) + p10 * xf
+    interp_bottom = p01 * (1 - xf) + p11 * xf
+    new_image = interp_top * (1 - yf) + interp_bottom * yf
+
+    return new_image
+
+
+def generate_ihq(pixels: FloatPixels):
+    width, height, _ = pixels.shape
+    if width % 4 != 0 and height % 4 != 0:
+        raise ValueError("Image width or height must be a multiple of 4")
+
+    alpha_channel = pixels[:, :, 3]
+    color_channels = pixels[:, :, :3]
+    uses_alpha = np.any(alpha_channel < 0.5)
+    yuv_target = color_channels.reshape(-1, 3) @ YUV_MATRIX.T
+
+    best_err = np.inf
+    best_i_pixels, best_rgba_pixels = None, None
+    for dir in range(2):
+        if dir == 0 and width % 4 == 0:
+            width_div, height_div = 4, 2
+        elif dir == 1 and height % 4 == 0:
+            width_div, height_div = 2, 4
+        else:
+            assert False, "What the fuck"
+        down_scale = shrink_box(pixels, width_div=width_div, height_div=height_div)
+        bilinear_upscale = bilinear_resize(down_scale[:, :, :3], width_multiplier=width_div, height_multiplier=height_div)
+        yuv_base = bilinear_upscale.reshape(-1, 3) @ YUV_MATRIX.T
+        for ifactor in range(1, 11):
+            ifactor *= 0.05
+            i_pixels, error = ihq_calc_best_i(width, height, yuv_base, yuv_target, ifactor)
+
+            if error < best_err:
+                best_err = error
+                if uses_alpha:
+                    i_pixels[:, :, 3] = alpha_channel
+                best_i_pixels, best_rgba_pixels = i_pixels, down_scale
+
+    return best_i_pixels, best_rgba_pixels, uses_alpha
+
+
+@dataclass
 class MultitexManager:
-    def __init__(
-        self,
-        material: bpy.types.Material,
-        fMaterial: FMaterial,
-        fModel: FModel,
-    ):
-        f3dMat = material.f3d_mat
-        self.ti0, self.ti1 = TexInfo(), TexInfo()
-        if not self.ti0.fromMat(0, f3dMat):
-            raise PluginError(f"Tex0: {self.ti0.errorMsg}")
-        if not self.ti1.fromMat(1, f3dMat):
-            raise PluginError(f"Tex1: {self.ti1.errorMsg}")
-        self.ti0.moreSetupFromModel(material, fMaterial, fModel)
-        self.ti1.moreSetupFromModel(material, fMaterial, fModel)
+    is_ci: bool = False
+    textures: dict[int, TexInfo] = field(default_factory=dict)
+    main_tex: int = 0
+    dithering_method: DITHER_MODES = "FLOYD"
 
-        self.isCI = self.ti0.isTexCI or self.ti1.isTexCI
+    @property
+    def mip_levels(self):
+        return max((i for i in self.textures.keys()), default=0)
 
-        if self.ti0.useTex and self.ti1.useTex:
-            if self.ti0.isTexCI != self.ti1.isTexCI:
-                raise PluginError("N64 does not support CI + non-CI texture. Must be both CI or neither CI.")
-            if (
-                self.ti0.isTexRef
-                and self.ti1.isTexRef
-                and self.ti0.texProp.tex_reference == self.ti1.texProp.tex_reference
-                and self.ti0.texProp.tex_reference_size != self.ti1.texProp.tex_reference_size
-            ):
-                raise PluginError("Two textures with the same reference must have the same size.")
-            if self.isCI:
-                if self.ti0.palFormat != self.ti1.palFormat:
-                    raise PluginError("Both CI textures must use the same palette format (usually RGBA16).")
-                if (
-                    self.ti0.isTexRef
-                    and self.ti1.isTexRef
-                    and self.ti0.texProp.pal_reference == self.ti1.texProp.pal_reference
-                    and self.ti0.texProp.pal_reference_size != self.ti1.texProp.pal_reference_size
-                ):
-                    raise PluginError("Two textures with the same palette reference must have the same palette size.")
+    def __repr__(self):
+        return f"MultitexManager(is_ci={self.is_ci}, textures={self.textures}, dithering_method={self.dithering_method}, mip_levels={self.mip_levels})"
 
-        self.palFormat = self.ti0.palFormat if self.ti0.useTex else self.ti1.palFormat
+    def get_tmem_size(self):
+        tmem_size = 0
+        added_tex = set()
+        for i, tex in self.textures.items():
+            tmem_hash = tex.tmem_hash
+            if tmem_hash not in added_tex:
+                added_tex.add(tmem_hash)
+                tmem_size += tex.tmemSize
+        return tmem_size
 
-    def writeAll(
-        self, material: bpy.types.Material, fMaterial: FMaterial, fModel: FModel, convertTextureData: bool
-    ) -> None:
-        f3dMat = material.f3d_mat
-        # Determine how to arrange / load palette entries into upper half of tmem
-        if self.isCI:
-            assert self.ti0.useTex or self.ti1.useTex
-            if not self.ti1.useTex:
-                self.ti0.loadPal = True
-            elif not self.ti0.useTex:
-                self.ti1.loadPal = True
-            elif not convertTextureData:
-                if self.ti0.texFormat == "CI8" or self.ti1.texFormat == "CI8":
-                    raise PluginError(
-                        "When using export as PNGs mode, can't have multitexture with one or more CI8 textures."
-                        + " Only single CI texture or two CI4 textures."
-                    )
-                self.ti0.loadPal = self.ti1.loadPal = True
-                self.ti1.palIndex = 1
-                self.ti1.palAddr = 16
-            else:  # Two CI textures, normal mode
-                if self.ti0.texFormat == "CI8" and self.ti1.texFormat == "CI8":
-                    if (self.ti0.pal is None) != (self.ti1.pal is None):
-                        raise PluginError(
-                            "Can't have two CI8 textures where only one is a non-flipbook reference; "
-                            + "no way to assign the palette."
-                        )
-                    self.ti0.loadPal = True
-                    if self.ti0.pal is None:
-                        if self.ti0.texProp.pal_reference != self.ti1.texProp.pal_reference:
-                            raise PluginError("Can't have two CI8 textures with different palette references.")
-                    else:
-                        self.ti0.pal = mergePalettes(self.ti0.pal, self.ti1.pal)
-                        self.ti0.palLen = len(self.ti0.pal)
-                        if self.ti0.palLen > 256:
-                            raise PluginError(
-                                "The two CI textures together contain a total of "
-                                + str(self.ti0.palLen)
-                                + " colors, which can't fit in a CI8 palette (256)."
-                            )
-                        # self.ti0.imDependencies remains what it was; the CIs in im0 are the same as they
-                        # would be if im0 was alone. But im1 and self.ti0.pal depend on both.
-                        self.ti1.imDependencies = self.ti0.palDependencies = (
-                            self.ti0.imDependencies | self.ti1.imDependencies
-                        )
-                elif self.ti0.texFormat != self.ti1.texFormat:  # One CI8, one CI4
-                    ci8Pal, ci4Pal = (
-                        (self.ti0.pal, self.ti1.pal) if self.ti0.texFormat == "CI8" else (self.ti1.pal, self.ti0.pal)
-                    )
-                    ci8PalLen, ci4PalLen = (
-                        (self.ti0.palLen, self.ti1.palLen)
-                        if self.ti0.texFormat == "CI8"
-                        else (self.ti1.palLen, self.ti0.palLen)
-                    )
-                    if self.ti0.pal is None or self.ti1.pal is None:
-                        if ci8PalLen > 256 - 16:
-                            raise PluginError(
-                                "The CI8 texture has over 240 colors, which can't fit together with the CI4 palette."
-                            )
-                        self.ti0.loadPal = self.ti1.loadPal = True
-                        if self.ti0.texFormat == "CI8":
-                            self.ti1.palIndex = 15
-                            self.ti1.palAddr = 240
-                        else:
-                            self.ti0.palIndex = 15
-                            self.ti0.palAddr = 240
-                    else:
-                        # CI4 indices in palette 0, CI8 indices start from palette 0
-                        self.ti0.loadPal = True
-                        self.ti0.pal = mergePalettes(ci4Pal, ci8Pal)
-                        self.ti0.palLen = len(self.ti0.pal)
-                        if self.ti0.palLen > 256:
-                            raise PluginError(
-                                "The two CI textures together contain a total of "
-                                + str(self.ti0.palLen)
-                                + " colors, which can't fit in a CI8 palette (256)."
-                                + " The CI8 texture must contain up to 240 unique colors,"
-                                + " plus the same up to 16 colors used in the CI4 texture."
-                            )
-                        # The use for the CI4 texture remains what it was; its CIs are the
-                        # same as if it was alone. But both the palette and the CI8 CIs are affected.
-                        self.ti0.palDependencies = self.ti0.imDependencies | self.ti1.imDependencies
-                        if self.ti0.texFormat == "CI8":
-                            self.ti0.imDependencies = self.ti0.palDependencies
-                        else:
-                            self.ti1.imDependencies = self.ti0.palDependencies
-                else:  # both CI4 textures
-                    if (
-                        self.ti0.pal is None
-                        and self.ti1.pal is None
-                        and self.ti0.texProp.pal_reference == self.ti1.texProp.pal_reference
-                    ):
-                        self.ti0.loadPal = True
-                    elif self.ti0.pal is None or self.ti1.pal is None:
-                        self.ti0.loadPal = self.ti1.loadPal = True
-                        self.ti1.palIndex = 1
-                        self.ti1.palAddr = 16
-                    else:
-                        self.ti0.loadPal = True
-                        tempPal = mergePalettes(self.ti0.pal, self.ti1.pal)
-                        tempPalLen = len(tempPal)
-                        assert tempPalLen <= 32
-                        if tempPalLen <= 16:
-                            # Share palette 0
-                            self.ti0.pal = tempPal
-                            self.ti0.palLen = tempPalLen
-                            # self.ti0.imDependencies remains what it was; the CIs in im0 are the same as they
-                            # would be if im0 was alone. But im1 and self.ti0.pal depend on both.
-                            self.ti1.imDependencies = self.ti0.palDependencies = (
-                                self.ti0.imDependencies | self.ti1.imDependencies
-                            )
-                        else:
-                            # Load one palette across 0-1. Put the longer in slot 0
-                            if self.ti0.palLen >= self.ti1.palLen:
-                                while len(self.ti0.pal) < 16:
-                                    self.ti0.pal.append(0)
-                                self.ti0.pal.extend(self.ti1.pal)
-                                self.ti0.palLen = len(self.ti0.pal)
-                                self.ti1.palIndex = 1
-                            else:
-                                while len(self.ti1.pal) < 16:
-                                    self.ti1.pal.append(0)
-                                self.ti0.pal = self.ti1.pal + self.ti0.pal
-                                self.ti0.palLen = len(self.ti0.pal)
-                                self.ti0.palIndex = 1
-                            # The up-to-32 entries in self.ti0.pal depend on both images. But the
-                            # CIs in both im0 and im1 are the same as if there was no shared palette.
-                            self.ti0.palDependencies = self.ti0.imDependencies | self.ti1.imDependencies
-        fMaterial.texPaletteIndex = [self.ti0.palIndex, self.ti1.palIndex]
-        self.ti0.palBaseName = self.ti0.getPaletteName()
-        self.ti1.palBaseName = self.ti1.getPaletteName()
-        if self.isCI and self.ti0.useTex and self.ti1.useTex and not self.ti1.loadPal:
-            self.ti0.palBaseName = self.ti0.palBaseName + "_x_" + self.ti1.palBaseName
-            self.ti1.pal = self.ti0.pal
+    def generate_mipmaps(self, fModel: FModel):
+        tmem_size = self.get_tmem_size()
+        prev, mips = None, 0
+        for i in range(MAX_IMAGES):
+            if i in self.textures:
+                prev, mips = self.textures[i], 0
+                continue
+            elif prev is None:
+                continue
+            divisor = (mips + 1) * 2
+            assert prev.main_image is not None, "prev.main_image is None"
+            width, height = prev.imageDims
+            n_width, n_height = width // divisor, height // divisor
+            if (n_width < 4) or (n_height < 4):
+                break
+            tmem_size += getTmemWordUsage(prev.texFormat, n_width, n_height)
+            if tmem_size >= 256 * (1 if self.is_ci else 2):
+                break
 
-        # Assign TMEM addresses
-        sameTextures = (
-            (self.ti0.useTex and self.ti1.useTex)
-            and self.ti0.isTexRef == self.ti1.isTexRef
-            and self.ti0.tmemSize == self.ti1.tmemSize
-            and self.ti0.texFormat == self.ti1.texFormat
-            and (
-                (  # not a reference
-                    not self.ti0.isTexRef and self.ti0.texProp.tex == self.ti1.texProp.tex  # same image
-                )
-                or (  # reference
-                    self.ti0.isTexRef
-                    and self.ti0.texProp.tex_reference == self.ti1.texProp.tex_reference
-                    and self.ti0.texProp.tex_reference_size == self.ti1.texProp.tex_reference_size
-                    and (  # ci format reference
-                        not self.isCI
-                        or (
-                            self.ti0.texProp.pal_reference == self.ti1.texProp.pal_reference
-                            and self.ti0.texProp.pal_reference_size == self.ti1.texProp.pal_reference_size
-                        )
-                    )
-                )
+            new = prev.copy()
+            new.main_image = FloatPixelsImage(
+                prev.main_image.name + f"_mip{mips}", shrink_box(prev.main_image.pixels, divisor, divisor)
             )
-        )
-        useLargeTextures = material.mat_ver > 3 and f3dMat.use_large_textures
-        tmemSize = 256 if self.isCI else 512
-        self.ti1.texAddr = None  # must be set whenever tex 1 used (and loaded or tiled)
-        tmemOccupied = self.texDimensions = None  # must be set on all codepaths
-        if sameTextures:
-            assert (
-                self.ti0.tmemSize == self.ti1.tmemSize
-            ), f"Unreachable code path, same textures (same image or reference) somehow not the same size"
-            tmemOccupied = self.ti0.tmemSize
-            self.ti1.doTexLoad = False
-            self.ti1.texAddr = 0
-            self.texDimensions = self.ti0.imageDims
-            fMaterial.largeTexFmt = self.ti0.texFormat
-        elif not useLargeTextures or self.ti0.tmemSize + self.ti1.tmemSize <= tmemSize:
-            self.ti1.texAddr = self.ti0.tmemSize
-            tmemOccupied = self.ti0.tmemSize + self.ti1.tmemSize
-            if not self.ti0.useTex and not self.ti1.useTex:
-                self.texDimensions = [32, 32]
-                fMaterial.largeTexFmt = "RGBA16"
-            elif not self.ti1.useTex or f3dMat.uv_basis == "TEXEL0":
-                self.texDimensions = self.ti0.imageDims
-                fMaterial.largeTexFmt = self.ti0.texFormat
-            else:
-                self.texDimensions = self.ti1.imageDims
-                fMaterial.largeTexFmt = self.ti1.texFormat
-        else:  # useLargeTextures
-            if self.ti0.useTex and self.ti1.useTex:
-                tmemOccupied = tmemSize
-                # TODO: Could change this in the future to do the face tile assigments
-                # first, to see how large a tile the large texture(s) needed, instead
-                # of arbitrarily assigning half of TMEM to each of the two textures.
-                if self.ti0.tmemSize <= tmemSize // 2:
-                    # Tex 0 normal, tex 1 large
-                    self.texDimensions = self.ti1.imageDims
-                    fMaterial.largeTexFmt = self.ti1.texFormat
-                    fMaterial.isTexLarge[1] = True
-                    fMaterial.largeTexAddr[1] = self.ti0.tmemSize
-                    fMaterial.largeTexWords = tmemSize - self.ti0.tmemSize
-                    self.ti1.doTexLoad = self.ti1.doTexTile = False
-                elif self.ti1.tmemSize <= tmemSize // 2:
-                    # Tex 0 large, tex 1 normal
-                    self.texDimensions = self.ti0.imageDims
-                    fMaterial.largeTexFmt = self.ti0.texFormat
-                    fMaterial.isTexLarge[0] = True
-                    fMaterial.largeTexAddr[0] = 0
-                    fMaterial.largeTexWords = tmemSize - self.ti1.tmemSize
-                    self.ti0.doTexLoad = self.ti0.doTexTile = False
-                    self.ti1.texAddr = tmemSize - self.ti1.tmemSize
-                else:
-                    # Both textures large
-                    raise PluginError("Multitexture with two large textures is not currently supported.")
-                    # Limited cases of 2x large textures could be supported in the
-                    # future. However, these cases are either of questionable
-                    # utility or have substantial restrictions. Most cases could be
-                    # premixed into one texture, or would run out of UV space for
-                    # tiling (1024x1024 in the space of whichever texture had
-                    # smaller pixels), or one of the textures could be non-large.
-                    if f3dMat.uv_basis == "TEXEL0":
-                        self.texDimensions = self.ti0.imageDims
-                        fMaterial.largeTexFmt = self.ti0.texFormat
-                    else:
-                        self.texDimensions = self.ti1.imageDims
-                        fMaterial.largeTexFmt = self.ti1.texFormat
-                    fMaterial.isTexLarge[0] = True
-                    fMaterial.isTexLarge[1] = True
-                    fMaterial.largeTexAddr[0] = 0
-                    fMaterial.largeTexAddr[1] = tmemSize // 2
-                    fMaterial.largeTexWords = tmemSize // 2
-                    self.ti0.doTexLoad = self.ti0.doTexTile = self.ti1.doTexLoad = self.ti1.doTexTile = False
-            elif self.ti0.useTex:
-                self.texDimensions = self.ti0.imageDims
-                fMaterial.largeTexFmt = self.ti0.texFormat
-                fMaterial.isTexLarge[0] = True
-                fMaterial.largeTexAddr[0] = 0
-                fMaterial.largeTexWords = tmemSize
-                self.ti0.doTexLoad = self.ti0.doTexTile = False
-                tmemOccupied = tmemSize
-            elif self.ti1.useTex:
-                self.ti1.texAddr = 0
-                self.texDimensions = self.ti1.imageDims
-                fMaterial.largeTexFmt = self.ti1.texFormat
-                fMaterial.isTexLarge[1] = True
-                fMaterial.largeTexAddr[1] = 0
-                fMaterial.largeTexWords = tmemSize
-                self.ti1.doTexLoad = self.ti1.doTexTile = False
-                tmemOccupied = tmemSize
-        if tmemOccupied > tmemSize:
-            if sameTextures and useLargeTextures:
-                raise PluginError("Using the same texture for Tex0 and Tex1 is not compatible with large textures.")
-            elif not bpy.context.scene.ignoreTextureRestrictions:
-                raise PluginError(
-                    "Textures are too big. Max TMEM size is 4k "
-                    + "bytes, ex. 2 32x32 RGBA 16 bit textures.\nNote that texture width will be internally padded to 64 bit boundaries."
-                )
+            # print(n_width, n_height, new.main_image.pixels)
+            if prev.main_image == prev.main_pal:
+                new.main_pal = new.main_image
+            new.values_from_dims(n_width, n_height)
+            new.indexInMat = i
+            self.textures[i] = new
+            divisor *= 2
 
-        self.ti0.writeAll(fMaterial, fModel, convertTextureData)
-        self.ti1.writeAll(fMaterial, fModel, convertTextureData)
+    def generate_ihq(self):
+        assert len(self.textures) == 1 and list(self.textures.keys())[0] == 0
+        base_tex = list(self.textures.values())[0]
+        rgba_tex = base_tex.copy()
+
+        intensity, rgba, uses_alpha = generate_ihq(base_tex.main_image.pixels)
+        base_tex.main_image = FloatPixelsImage(base_tex.main_image.name + "_ihq_i", intensity)
+        base_tex.texFormat = "IA4" if uses_alpha else "I4"
+        base_tex.values_from_dims(intensity.shape[0], intensity.shape[1])
+        
+        rgba_tex.main_image = FloatPixelsImage(rgba_tex.main_image.name + "_ihq_rgba", rgba)
+        rgba_tex.texFormat = "RGBA16"
+        rgba_tex.shift = (rgba_tex.shift[0] + 1, rgba_tex.shift[1] + 1)
+        if rgba_tex.shift[0] > 10 or rgba_tex.shift[1] > 10:
+            raise PluginError("Shift is too large for IHQ.")
+        rgba_tex.values_from_dims(rgba.shape[0], rgba.shape[1])
+        rgba_tex.indexInMat = 1
+        self.textures[1] = rgba_tex
+
+    def from_mat(self, mat: bpy.types.Material, pseudo_format: str, f_material: FMaterial, fModel: FModel):
+        f3d_mat: "F3DMaterialProperty" = mat.f3d_mat
+        self.is_ci = f3d_mat.is_ci
+        for i, tex_prop in f3d_mat.set_textures.items():
+            tex = TexInfo()
+            tex.from_prop(tex_prop, i, mat, fModel, False, False, pseudo_format != "NONE")
+            self.textures[i] = tex
+
+    def convert():
+        pass
 
     def getTexDimensions(self):
         return self.texDimensions

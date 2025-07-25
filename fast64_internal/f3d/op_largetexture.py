@@ -22,7 +22,7 @@ def getLargeTextureInfo(material):
         return ti0.errorMsg, None
     if not ti1.fromMat(1, f3dMat):
         return ti1.errorMsg, None
-    isCI = ti0.isTexCI or ti1.isTexCI
+    isCI = ti0.is_ci or ti1.is_ci
     tmemSize = 256 if isCI else 512
     if not ti0.useTex and not ti1.useTex:
         return "Material does not use textures.", None

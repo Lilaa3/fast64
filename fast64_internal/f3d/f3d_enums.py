@@ -388,6 +388,8 @@ texBitSizeInt = {
     "IA16": 16,
     "YUV16": 16,
     "RGBA32": 32,
+    "IHQ": 16,
+    "SHQ": 16,
 }
 
 # 512 words * 64 bits / n bitSize

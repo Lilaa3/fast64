@@ -41,14 +41,13 @@ def flipbook_2d_to_c(flipbook: TextureFlipbook, isStatic: bool, count: int):
 
 
 def usesFlipbook(
-    material: bpy.types.Material,
+    base_texture: bool,
     flipbookProperty: Any,
-    index: int,
+    texProp: TextureProperty,
     checkEnable: bool,
     checkFlipbookReference: Optional[Callable[[str], bool]],
 ) -> bool:
-    texProp = material.f3d_mat.used_textures.get(index)
-    if texProp and texProp.use_tex_reference:
+    if not base_texture and texProp and texProp.use_tex_reference:
         return (
             checkFlipbookReference is not None
             and checkFlipbookReference(texProp.tex_reference)
@@ -208,9 +207,10 @@ def drawFlipbookGroupProperty(
     layout.box().column().label(text="Flipbook Properties")
     if drawFlipbookRequirementMessage is not None:
         drawFlipbookRequirementMessage(layout)
-    for i, tex_prop in enumerate(material.f3d_mat.all_textures):
+    base_texture = material.f3d_mat.use_base_texture
+    for i, tex_prop in material.f3d_mat.set_textures.items():
         flipbook = tex_prop.flipbook
-        if usesFlipbook(material, flipbook, i, False, checkFlipbookReference):
+        if usesFlipbook(base_texture, flipbook, tex_prop, False, checkFlipbookReference):
             drawFlipbookProperty(layout.column(), flipbook, i)
             if tex_prop.tex_format[:2] == "CI":
                 layout.label(text="New shared CI palette will be generated.", icon="RENDERLAYERS")
@@ -231,9 +231,10 @@ def ootFlipbookAnimUpdate(self, armatureObj: bpy.types.Object, segment: str, ind
         if child.type != "MESH":
             continue
         for material in child.data.materials:
+            base_texture = material.f3d_mat.use_base_texture
             for i, tex_prop in enumerate(material.f3d_mat.all_textures):
                 flipbook = tex_prop.flipbook
-                if usesFlipbook(material, flipbook, i, True, ootFlipbookReferenceIsValid):
+                if usesFlipbook(base_texture, flipbook, tex_prop, True, ootFlipbookReferenceIsValid):
                     match = re.search(f"0x0([0-9A-F])000000", tex_prop.tex_reference)
                     if match is None:
                         continue

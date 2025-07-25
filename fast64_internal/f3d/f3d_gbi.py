@@ -1,9 +1,11 @@
 # Macros are all copied over from gbi.h
 from __future__ import annotations
 
-from typing import Sequence, Union, Tuple
+from typing import Literal, Sequence, Union, Tuple
 from dataclasses import dataclass, fields, field
 import bpy, os, enum, copy
+
+import numpy as np
 from ..utility import *
 
 from typing import TYPE_CHECKING
@@ -43,6 +45,31 @@ class GfxTag(enum.Flag):
 class GfxMatWriteMethod(enum.Enum):
     WriteAll = 1
     WriteDifferingAndRevert = 2
+
+
+WIDTH_T = TypeVar("WIDTH_T")
+HEIGHT_T = TypeVar("HEIGHT_T")
+CHANNELS_T = TypeVar("CHANNELS_T")
+FloatPixels = np.ndarray[np.float32, (WIDTH_T, HEIGHT_T, 4)]  # unflattened pixels
+FlatPixels = np.ndarray[np.float32, (WIDTH_T, HEIGHT_T)]  # flattened (height * width) pixels (n64 order)
+N64Pixels = np.ndarray[TypeVar("T", bound=int), (Any)]  # flattened, n64 order, packed (only one channel) pixels
+
+DITHER_MODES = Literal["NONE", "DITHER", "RANDOM", "FLOYD"]
+
+
+@dataclass
+class FloatPixelsImage:
+    name: str
+    pixels: FloatPixels
+
+    def __hash__(self):
+        return hash(self.name)
+
+    def __repr__(self):
+        return self.name
+
+    def __str__(self):
+        return self.name
 
 
 enumTexScroll = [
@@ -2287,25 +2314,29 @@ class FGlobalData:
 
 class FImageKey:
     def __init__(
-        self, image: bpy.types.Image, texFormat: str, palFormat: str, imagesSharingPalette: list[bpy.types.Image] = []
+        self,
+        name: str,
+        tex_format: str,
+        pal_format: str,
+        dither_method: DITHER_MODES,
+        images_sharing_pallete: set[FloatPixelsImage],
     ):
-        self.image = image
-        self.texFormat = texFormat
-        self.palFormat = palFormat
-        self.imagesSharingPalette = tuple(imagesSharingPalette)
+        self.name = name
+        self.tex_format = tex_format
+        if tex_format.startswith("CI"):
+            self.pal_format = pal_format
+        else:
+            self.pal_format = None
+        self.dither_method = dither_method
+        self.images_sharing_pallete = set(images_sharing_pallete)
 
     def __hash__(self) -> int:
-        return hash((self.image, self.texFormat, self.palFormat, self.imagesSharingPalette))
+        return hash((self.name, self.tex_format, self.pal_format, self.dither_method, self.images_sharing_pallete))
 
     def __eq__(self, __o: object) -> bool:
         if not isinstance(__o, FImageKey):
             return False
-        return (
-            self.image == __o.image
-            and self.texFormat == __o.texFormat
-            and self.palFormat == __o.palFormat
-            and self.imagesSharingPalette == __o.imagesSharingPalette
-        )
+        return hash(self) == hash(__o)
 
 
 def getImageKey(texProp: "TextureProperty", useList) -> FImageKey:
@@ -2325,6 +2356,18 @@ class FPaletteKey:
             return False
         return self.palFormat == __o.palFormat and self.imagesSharingPalette == __o.imagesSharingPalette
 
+
+def get_pixels_from_image(image: bpy.types.Image) -> FloatPixels:
+    channel_count = image.channels
+    width, height = image.size
+
+    bpy_pixels = np.array(image.pixels, dtype=np.float32).reshape((height, width, channel_count)).clip(0.0, 1.0)
+    pixels = np.ones((image.size[1], image.size[0], 4), dtype=np.float32)  # default to white opaque
+    pixels[:, :, :channel_count] = bpy_pixels  # copy, if channel count is 3 all alpha channels will stay 1
+    return pixels
+
+def get_numpy_image(image: bpy.types.Image) -> FloatPixelsImage:
+    return FloatPixelsImage(image.name, get_pixels_from_image(image))
 
 class FModel:
     def __init__(
@@ -2361,38 +2404,29 @@ class FModel:
         self.no_light_direction = False
         self.global_data: FGlobalData = FGlobalData()
         self.texturesSavedLastExport: int = 0  # hacky
-
-    def processTexRefNonCITextures(self, fMaterial: FMaterial, material: bpy.types.Material, index: int):
-        """
-        For non CI textures that use a texture reference, process additional textures that will possibly be loaded here.
-        Returns:
-            - a list of images which are referenced (normally just the texture
-              image), for creating image / palette keys
-            - an object containing info about the additional textures, or None
-        """
-        texProp = material.f3d_mat.all_textures[index]
-        imDependencies = set() if texProp.tex is None else {texProp.tex}
-        return imDependencies, None
+        self.raw_images: dict[str, FloatPixelsImage] = {}
 
     def writeTexRefNonCITextures(self, obj, texFmt: str):
         """
         Write data for non-CI textures which were previously processed.
-        obj is the object returned by processTexRefNonCITextures.
+        obj is the object returned by gather_images.
         """
         pass
 
-    def processTexRefCITextures(self, fMaterial: FMaterial, material: bpy.types.Material, index: int) -> "FImage":
+    def gather_images(
+        self, _material: bpy.types.Material | None, tex_prop: TextureProperty, _is_ref: bool, _base_texture: bool
+    ) -> set[bpy.types.Image]:
         """
         For CI textures that use a texture reference, process additional textures that will possibly be loaded here.
-        Returns:
-            - a list of images which are referenced (normally just the texture
-              image), for creating image / palette keys
-            - an object containing info about the additional textures, or None
-            - the palette to use (or None)
+        Returns a list of images which are referenced (normally just the texture image), for creating image / palette keys
         """
-        texProp = material.f3d_mat.all_textures[index]
-        imDependencies = set() if texProp.tex is None else {texProp.tex}
-        return imDependencies, None, None
+        return set() if tex_prop.tex is None else {tex_prop.tex}
+
+    def gather_pixels(self, image: bpy.types.Image):
+        if image.name_full in self.raw_images:
+            return self.raw_images[image.name_full]
+        img = self.raw_images[image.name_full] = get_numpy_image(image)
+        return img
 
     def writeTexRefCITextures(
         self,
@@ -2405,7 +2439,7 @@ class FModel:
     ):
         """
         Write data for CI textures which were previously processed.
-        obj is the object returned by processTexRefCITextures.
+        obj is the object returned by gather_images.
         """
         pass
 
