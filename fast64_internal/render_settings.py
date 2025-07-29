@@ -107,8 +107,8 @@ def update_scene_props_from_rs_fogPreviewColor(
 def update_scene_props_from_rs_clippingPlanes(
     sceneOutputs: bpy.types.NodeGroupOutput, renderSettings: "Fast64RenderSettings_Properties"
 ):
-    sceneOutputs.inputs["F3D_NearClip"].default_value = float(renderSettings.clippingPlanes[0])
-    sceneOutputs.inputs["F3D_FarClip"].default_value = float(renderSettings.clippingPlanes[1])
+    sceneOutputs.inputs["NearClip"].default_value = float(renderSettings.clippingPlanes[0])
+    sceneOutputs.inputs["FarClip"].default_value = float(renderSettings.clippingPlanes[1])
 
 
 def update_scene_props_from_rs_fogPreviewPosition(
@@ -184,7 +184,7 @@ def update_scene_props_from_render_settings(
     update_scene_props_from_rs_useWorldSpaceLighting(renderSettings)
 
     # TODO use a callback on the scale props to set this value
-    sceneOutputs.inputs["Blender_Game_Scale"].default_value = float(get_blender_to_game_scale(bpy.context))
+    sceneOutputs.inputs["BlenderGameScale"].default_value = float(get_blender_to_game_scale(bpy.context))
 
 
 def getSceneOutputs():

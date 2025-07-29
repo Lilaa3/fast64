@@ -52,7 +52,7 @@ from .f3d_material_helpers import F3DMaterial_UpdateLock, node_tree_copy
 from bpy.app.handlers import persistent
 from typing import Generator, Optional, Tuple, Any, Dict, Union
 
-F3D_MAT_CUR_VERSION = 6  # Increment this when changing the nodes
+F3D_MAT_CUR_VERSION = 7  # Increment this when changing the nodes
 
 F3DMaterialHash = Any  # giant tuple
 
@@ -1560,20 +1560,20 @@ def getSocketFromCombinerToNodeDictAlpha(nodes, combinerInput):
 # Maps the color combiner input name to the corresponding node name and output socket name
 color_combiner_inputs = {
     "COMBINED": (None, "Color"),
-    "TEXEL0": ("Tex0_I", "Color"),
-    "TEXEL1": ("Tex1_I", "Color"),
+    "TEXEL0": ("TextureSelector", "Tex 0 Col"),
+    "TEXEL1": ("TextureSelector", "Tex 1 Col"),
     "PRIMITIVE": ("CombinerInputs", "Prim Color"),
     "SHADE": ("Shade Color", "Color"),
     "ENVIRONMENT": ("CombinerInputs", "Env Color"),
     "CENTER": ("CombinerInputs", "Chroma Key Center"),
     "SCALE": ("CombinerInputs", "Chroma Key Scale"),
     "COMBINED_ALPHA": (None, "Alpha"),
-    "TEXEL0_ALPHA": ("Tex0_I", "Alpha"),
-    "TEXEL1_ALPHA": ("Tex1_I", "Alpha"),
+    "TEXEL0_ALPHA": ("TextureSelector", "Tex 0 Alpha"),
+    "TEXEL1_ALPHA": ("TextureSelector", "Tex 1 Alpha"),
     "PRIMITIVE_ALPHA": ("CombinerInputs", "Prim Alpha"),
     "SHADE_ALPHA": ("Shade Color", "Alpha"),
     "ENV_ALPHA": ("CombinerInputs", "Env Alpha"),
-    "LOD_FRACTION": ("CombinerInputs", "LOD Fraction"),
+    "LOD_FRACTION": ("TextureSelector", "LoD Fraction"),
     "PRIM_LOD_FRAC": ("CombinerInputs", "Prim LOD Fraction"),
     "NOISE": ("CombinerInputs", "Noise"),
     "K4": ("CombinerInputs", "YUVConvert K4"),
@@ -1585,8 +1585,8 @@ color_combiner_inputs = {
 # Maps the alpha combiner input name to the corresponding node name and output name
 alpha_combiner_inputs = {
     "COMBINED": (None, "Alpha"),
-    "TEXEL0": ("Tex0_I", "Alpha"),
-    "TEXEL1": ("Tex1_I", "Alpha"),
+    "TEXEL0": ("TextureSelector", "Tex 0 Alpha"),
+    "TEXEL1": ("TextureSelector", "Tex 1 Alpha"),
     "PRIMITIVE": ("CombinerInputs", "Prim Alpha"),
     "SHADE": ("Shade Color", "Alpha"),
     "ENVIRONMENT": ("CombinerInputs", "Env Alpha"),
@@ -1684,7 +1684,9 @@ def update_fog_nodes(material: Material, context: Context):
         or not f3dMat.set_fog
         or inherit_light_and_fog()
     ):  # Inherit fog
-        link_if_none_exist(material, nodes["SceneProperties"].outputs["FogColor"], nodes["FogColor"].inputs[0])
+        link_if_none_exist(
+            material, nodes["SceneProperties"].outputs["FogColor"], nodes["FogBlender"].inputs["Fog Color"]
+        )
         link_if_none_exist(material, nodes["GlobalFogColor"].outputs[0], fogBlender.inputs["Fog Color"])
         link_if_none_exist(material, nodes["SceneProperties"].outputs["FogNear"], nodes["CalcFog"].inputs["FogNear"])
         link_if_none_exist(material, nodes["SceneProperties"].outputs["FogFar"], nodes["CalcFog"].inputs["FogFar"])
@@ -1901,15 +1903,6 @@ def update_node_values_of_material(material: Material, context):
     update_fog_nodes(material, context)
 
 
-def set_texture_settings_node(material: Material):
-    nodes = material.node_tree.nodes
-    textureSettings: ShaderNodeGroup = nodes["TextureSettings"]
-
-    desired_group = bpy.data.node_groups["TextureSettings_Advanced"]
-    if textureSettings.node_tree is not desired_group:
-        textureSettings.node_tree = desired_group
-
-
 def calculate_high_mask(field: "TextureFieldProperty", pixel_length: int):
     high = pixel_length
     if field.clamp:
@@ -1923,15 +1916,6 @@ def setAutoProp(field: "TextureFieldProperty", pixel_length: int):
     field.mask, field.high = calculate_high_mask(field, pixel_length)
 
 
-def set_texture_size(self, tex_size, tex_index):
-    nodes = self.node_tree.nodes
-    uv_basis: ShaderNodeGroup = nodes["UV Basis"]
-    inputs = uv_basis.inputs
-
-    inputs[f"{tex_index} S TexSize"].default_value = tex_size[0]
-    inputs[f"{tex_index} T TexSize"].default_value = tex_size[1]
-
-
 def trunc_10_2(val: float):
     return int(val * 4) / 4
 
@@ -1939,47 +1923,40 @@ def trunc_10_2(val: float):
 def update_tex_values_field(self: Material, texProperty: "TextureProperty", tex_size: list[int], tex_index: int):
     f3d = get_F3D_GBI()
     nodes = self.node_tree.nodes
-    textureSettings: ShaderNodeGroup = nodes["TextureSettings"]
-    inputs = textureSettings.inputs
-
-    set_texture_size(self, tex_size, tex_index)
+    sample_positions: ShaderNodeGroup = nodes[f"SamplePositions{tex_index}"]
+    inputs = sample_positions.inputs
 
     if texProperty.autoprop or f3d.RDPQ:
         setAutoProp(texProperty.S, tex_size[0])
         setAutoProp(texProperty.T, tex_size[1])
 
-    str_index = str(tex_index)
+    inputs["Width"].default_value = tex_size[0]
+    inputs["Height"].default_value = tex_size[1]
 
-    # S/T Low
-    inputs[str_index + " S Low"].default_value = trunc_10_2(texProperty.S.low)
-    inputs[str_index + " T Low"].default_value = trunc_10_2(texProperty.T.low)
+    inputs["S Low"].default_value = trunc_10_2(texProperty.S.low)
+    inputs["T Low"].default_value = trunc_10_2(texProperty.T.low)
 
-    # S/T High
-    inputs[str_index + " S High"].default_value = trunc_10_2(texProperty.S.high)
-    inputs[str_index + " T High"].default_value = trunc_10_2(texProperty.T.high)
+    inputs["S High"].default_value = trunc_10_2(texProperty.S.high)
+    inputs["T High"].default_value = trunc_10_2(texProperty.T.high)
 
-    # Clamp
-    inputs[str_index + " ClampX"].default_value = 1 if texProperty.S.clamp else 0
-    inputs[str_index + " ClampY"].default_value = 1 if texProperty.T.clamp else 0
+    inputs["S Clamp"].default_value = 1 if texProperty.S.clamp else 0
+    inputs["T Clamp"].default_value = 1 if texProperty.T.clamp else 0
 
-    # Mask
-    inputs[str_index + " S Mask"].default_value = texProperty.S.mask
-    inputs[str_index + " T Mask"].default_value = texProperty.T.mask
+    inputs["S Mask"].default_value = texProperty.S.mask
+    inputs["T Mask"].default_value = texProperty.T.mask
 
-    # Mirror
-    inputs[str_index + " MirrorX"].default_value = 1 if texProperty.S.mirror > 0 else 0
-    inputs[str_index + " MirrorY"].default_value = 1 if texProperty.T.mirror > 0 else 0
+    inputs["S Mirror"].default_value = 1 if texProperty.S.mirror > 0 else 0
+    inputs["T Mirror"].default_value = 1 if texProperty.T.mirror > 0 else 0
 
-    # Shift
-    inputs[str_index + " S Shift"].default_value = texProperty.S.shift
-    inputs[str_index + " T Shift"].default_value = texProperty.T.shift
+    inputs["S Shift"].default_value = texProperty.S.shift
+    inputs["T Shift"].default_value = texProperty.T.shift
 
 
-def iter_tex_nodes(node_tree: NodeTree, texIndex: int) -> Generator[TextureNodeImage, None, None]:
-    for i in range(1, 5):
-        nodeName = f"Tex{texIndex}_{i}"
-        if node_tree.nodes.get(nodeName):
-            yield node_tree.nodes[nodeName]
+def iter_tex_nodes(node_tree: NodeTree, tex_index: int) -> Generator[TextureNodeImage, None, None]:
+    for i in range(4):
+        name = f"Sampler{i+1}Tex{tex_index}"
+        if node_tree.nodes.get(name):
+            yield node_tree.nodes[name]
 
 
 def toggle_texture_node_muting(material: Material, texIndex: int, isUsed: bool):
@@ -2016,13 +1993,12 @@ def set_texture_nodes_settings(
     node_tree = material.node_tree
     f3dMat: "F3DMaterialProperty" = material.f3d_mat
 
-    # Return value
-    texSize: Optional[list[int]] = None
+    tex_size = texProperty.size
 
     toggle_texture_node_muting(material, texIndex, isUsed)
 
     if not isUsed:
-        return texSize
+        return
 
     # Enforce typing from generator
     texNode: None | TextureNodeImage = None
@@ -2033,38 +2009,7 @@ def set_texture_nodes_settings(
             "Linear" if f3dMat.get_rdp_othermode("g_mdsft_text_filt") == "G_TF_AVERAGE" else "Closest"
         )
 
-        if texSize:
-            continue
-
-        if texNode.image is not None or texProperty.use_tex_reference:
-            if texNode.image is not None:
-                texSize = texNode.image.size
-            else:
-                texSize = texProperty.tex_reference_size
-    return texSize
-
-
-def update_tex_values_index(self: Material, *, texProperty: "TextureProperty", texIndex: int, isUsed: bool):
-    nodes = self.node_tree.nodes
-
-    tex_size = set_texture_nodes_settings(self, texProperty, texIndex, isUsed)
-
-    if tex_size:  # only returns tex size if a texture is being set
-        if tex_size[0] > 0 and tex_size[1] > 0:
-            update_tex_values_field(self, texProperty, tex_size, texIndex)
-
-            texFormat = texProperty.tex_format
-            ciFormat = texProperty.ci_format
-            if has_f3d_nodes(self):
-                tex_I_node = nodes["Tex" + str(texIndex) + "_I"]
-                desired_node = bpy.data.node_groups["Is not i"]
-                if "IA" in texFormat or (texFormat[:2] == "CI" and "IA" in ciFormat):
-                    desired_node = bpy.data.node_groups["Is ia"]
-                elif texFormat[0] == "I" or (texFormat[:2] == "CI" and ciFormat[0] == "I"):
-                    desired_node = bpy.data.node_groups["Is i"]
-
-                if tex_I_node.node_tree is not desired_node:
-                    tex_I_node.node_tree = desired_node
+    update_tex_values_field(material, texProperty, tex_size, texIndex)
 
 
 def get_color_info_from_tex(tex: bpy.types.Image):
@@ -2166,86 +2111,73 @@ def update_tex_values(self, context):
         update_tex_values_manual(material, context, prop_path=prop_path)
 
 
-def get_tex_basis_size(f3d_mat: "F3DMaterialProperty"):
-    uv_basis_index = f3d_mat.uv_basis_index
-    for i, tex in f3d_mat.set_textures.items():
-        if i == uv_basis_index:
-            return tex.size
-    return None
-
-
 def get_tex_gen_size(tex_size: list[int | float]):
     return (tex_size[0] - 1) / 1024, (tex_size[1] - 1) / 1024
 
 
 def update_tex_values_manual(material: Material, context, prop_path=None):
-    f3dMat: "F3DMaterialProperty" = material.f3d_mat
+    f3d_mat: "F3DMaterialProperty" = material.f3d_mat
     nodes = material.node_tree.nodes
-    texture_settings = nodes["TextureSettings"]
-    texture_inputs: NodeInputs = texture_settings.inputs
+    texture_settings = nodes["UVScaleValues"]
 
-    if f3dMat.uv_basis == "":
-        f3dMat.uv_basis = str(max(f3dMat.set_textures.keys()) if f3dMat.set_textures else -1)
+    used_textures = f3d_mat.used_textures
+    if f3d_mat.uv_basis == "":  # out of bounds enum
+        f3d_mat.uv_basis = str(max(used_textures.keys()) if len(used_textures) > 0 else -1)
 
-    tex0_used, tex1_used = f3dMat.get_tex_combiner_use().values()
-
-    if not tex0_used and not tex1_used:
-        texture_settings.mute = True
-        set_texture_nodes_settings(material, f3dMat.tex0, 0, False)
-        set_texture_nodes_settings(material, f3dMat.tex1, 1, False)
-        return
-    elif texture_settings.mute:
-        texture_settings.mute = False
+    uv_basis_index = f3d_mat.uv_basis_index
+    tex_size = (0, 0)
+    for i, tex in enumerate(f3d_mat.all_textures):
+        if not prop_path or "tex0" in prop_path:
+            set_texture_nodes_settings(material, tex, i, i in used_textures)
+        if i == uv_basis_index:
+            tex_size = tex.size
 
     # linear requires tex gen to be enabled as well
-    isTexGen = f3dMat.rdp_settings.g_lighting and f3dMat.rdp_settings.g_tex_gen
+    is_tex_gen = f3d_mat.rdp_settings.uses_tex_gen
 
-    if f3dMat.scale_autoprop:
-        if isTexGen:
-            tex_size = get_tex_basis_size(f3dMat)
-
-            if tex_size is not None:
-                # This is needed for exporting tex gen!
-                f3dMat.tex_scale = get_tex_gen_size(tex_size)
+    if f3d_mat.scale_autoprop:
+        if is_tex_gen:
+            f3d_mat.tex_scale = get_tex_gen_size(tex_size)
         else:
-            f3dMat.tex_scale = (1, 1)
+            f3d_mat.tex_scale = (1, 1)
 
-        if f3dMat.tex0.tex is not None:
-            texture_inputs["0 S TexSize"].default_value = f3dMat.tex0.tex.size[0]
-            texture_inputs["0 T TexSize"].default_value = f3dMat.tex0.tex.size[0]
-        if f3dMat.tex1.tex is not None:
-            texture_inputs["1 S TexSize"].default_value = f3dMat.tex1.tex.size[0]
-            texture_inputs["1 T TexSize"].default_value = f3dMat.tex1.tex.size[0]
+    texture_settings.inputs["S Tex Size"].default_value = tex_size[0]
+    texture_settings.inputs["T Tex Size"].default_value = tex_size[1]
 
-    uv_basis: ShaderNodeGroup = nodes["UV Basis"]  # TODO
-    uv_basis_index = f3dMat.uv_basis_index
-    if uv_basis_index == 0:
-        uv_basis.node_tree = bpy.data.node_groups["UV Basis 0"]
-    elif uv_basis_index == 1:
-        uv_basis.node_tree = bpy.data.node_groups["UV Basis 1"]
-
-    if not isTexGen:
-        uv_basis.inputs["S Scale"].default_value = f3dMat.tex_scale[0]
-        uv_basis.inputs["T Scale"].default_value = f3dMat.tex_scale[1]
-    elif f3dMat.scale_autoprop:
+    if not is_tex_gen:
+        texture_settings.inputs["S Scale"].default_value = f3d_mat.tex_scale[0]
+        texture_settings.inputs["T Scale"].default_value = f3d_mat.tex_scale[1]
+    elif f3d_mat.scale_autoprop:
         # Tex gen is 1:1
-        uv_basis.inputs["S Scale"].default_value = 1
-        uv_basis.inputs["T Scale"].default_value = 1
+        texture_settings.inputs["S Scale"].default_value = 1
+        texture_settings.inputs["T Scale"].default_value = 1
     else:
-        gen_size = get_tex_gen_size(get_tex_basis_size(f3dMat))
+        gen_size = get_tex_gen_size(tex_size)
         # scale tex gen proportionally
-        node_uv_scale = (f3dMat.tex_scale[0] / gen_size[0], f3dMat.tex_scale[1] / gen_size[1])
-        uv_basis.inputs["S Scale"].default_value = node_uv_scale[0]
-        uv_basis.inputs["T Scale"].default_value = node_uv_scale[1]
+        node_uv_scale = (f3d_mat.tex_scale[0] / gen_size[0], f3d_mat.tex_scale[1] / gen_size[1])
+        texture_settings.inputs["S Scale"].default_value = node_uv_scale[0]
+        texture_settings.inputs["T Scale"].default_value = node_uv_scale[1]
 
-    if not prop_path or "tex0" in prop_path:
-        update_tex_values_index(material, texProperty=f3dMat.tex0, texIndex=0, isUsed=tex0_used)
-    if not prop_path or "tex1" in prop_path:
-        update_tex_values_index(material, texProperty=f3dMat.tex1, texIndex=1, isUsed=tex1_used)
+    texture_settings.inputs["3 Point"].default_value = int(
+        f3d_mat.get_rdp_othermode("g_mdsft_text_filt") == "G_TF_BILERP"
+    )
+    texture_settings.inputs["Apply Offset"].default_value = int(
+        f3d_mat.get_rdp_othermode("g_mdsft_text_filt") != "G_TF_POINT"
+    )
 
-    texture_inputs["3 Point"].default_value = int(f3dMat.get_rdp_othermode("g_mdsft_text_filt") == "G_TF_BILERP")
-    uv_basis.inputs["EnableOffset"].default_value = int(f3dMat.get_rdp_othermode("g_mdsft_text_filt") != "G_TF_POINT")
-    set_texture_settings_node(material)
+    texture_selector = nodes["TextureSelector"]
+    if f3d_mat.textlod == "G_TL_LOD":
+        cur_texture_selector = bpy.data.node_groups["TextureSelectorMipMap"]
+    else:
+        cur_texture_selector = bpy.data.node_groups["TextureSelector"]
+    if texture_selector.node_tree is not cur_texture_selector:
+        texture_selector.node_tree = cur_texture_selector
+    text_detail = f3d_mat.textdetail
+    texture_selector.inputs["Sharpen"].default_value = int(text_detail == "G_TD_SHARPEN")
+    texture_selector.inputs["Clamp"].default_value = int(text_detail == "G_TD_CLAMP")
+    texture_selector.inputs["Detail"].default_value = int(text_detail == "G_TD_DETAIL")
+    texture_selector.inputs["Min LoD"].default_value = f3d_mat.prim_lod_min
+    texture_selector.inputs["Mip Count"].default_value = f3d_mat.get_num_textures_mipmapped()
 
 
 def shift_num(num: int, amt: int):
@@ -2355,10 +2287,12 @@ def load_handler(dummy):
 
 bpy.app.handlers.load_post.append(load_handler)
 
-SCENE_PROPERTIES_VERSION = 2
+SCENE_PROPERTIES_VERSION = 3
 
 
 def createOrUpdateSceneProperties():
+    from ..render_settings import update_scene_props_from_render_settings
+
     group = bpy.data.node_groups.get("SceneProperties")
     upgrade_group = bool(group and group.get("version", -1) < SCENE_PROPERTIES_VERSION)
 
@@ -2369,15 +2303,15 @@ def createOrUpdateSceneProperties():
     if upgrade_group and group:
         # Need to upgrade; remove old outputs
         if bpy.app.version >= (4, 0, 0):
-            for item in group.interface.items_tree:
+            for item in list(group.interface.items_tree).copy():
                 if item.item_type == "SOCKET" and item.in_out == "OUTPUT":
                     group.interface.remove(item)
         else:
-            for out in group.outputs:
+            for out in list(group.outputs).copy():
                 group.outputs.remove(out)
         new_group = group
     else:
-        logger.info("Creating Scene Properties")
+        print("Creating Scene Properties")
         # create a group
         new_group = bpy.data.node_groups.new("SceneProperties", "ShaderNodeTree")
         # create group outputs
@@ -2387,68 +2321,32 @@ def createOrUpdateSceneProperties():
 
     # Create outputs
     if bpy.app.version >= (4, 0, 0):
-        tree_interface = new_group.interface
 
-        _nodeFogEnable: NodeSocketFloat = tree_interface.new_socket(
-            "FogEnable", socket_type="NodeSocketFloat", in_out="OUTPUT"
-        )
-        _nodeFogColor: NodeSocketColor = tree_interface.new_socket(
-            "FogColor", socket_type="NodeSocketColor", in_out="OUTPUT"
-        )
-        _nodeF3D_NearClip: NodeSocketFloat = tree_interface.new_socket(
-            "F3D_NearClip", socket_type="NodeSocketFloat", in_out="OUTPUT"
-        )
-        _nodeF3D_FarClip: NodeSocketFloat = tree_interface.new_socket(
-            "F3D_FarClip", socket_type="NodeSocketFloat", in_out="OUTPUT"
-        )
-        _nodeBlender_Game_Scale: NodeSocketFloat = tree_interface.new_socket(
-            "Blender_Game_Scale", socket_type="NodeSocketFloat", in_out="OUTPUT"
-        )
-        _nodeFogNear: NodeSocketFloat = tree_interface.new_socket(
-            "FogNear", socket_type="NodeSocketFloat", in_out="OUTPUT"
-        )
-        _nodeFogFar: NodeSocketFloat = tree_interface.new_socket(
-            "FogFar", socket_type="NodeSocketFloat", in_out="OUTPUT"
-        )
-
-        _nodeAmbientColor: NodeSocketColor = tree_interface.new_socket(
-            "AmbientColor", socket_type="NodeSocketColor", in_out="OUTPUT"
-        )
-        _nodeLight0Color: NodeSocketColor = tree_interface.new_socket(
-            "Light0Color", socket_type="NodeSocketColor", in_out="OUTPUT"
-        )
-        _nodeLight0Dir: NodeSocketVector = tree_interface.new_socket(
-            "Light0Dir", socket_type="NodeSocketVector", in_out="OUTPUT"
-        )
-        _nodeLight0Size: NodeSocketFloat = tree_interface.new_socket(
-            "Light0Size", socket_type="NodeSocketFloat", in_out="OUTPUT"
-        )
-        _nodeLight1Color: NodeSocketColor = tree_interface.new_socket(
-            "Light1Color", socket_type="NodeSocketColor", in_out="OUTPUT"
-        )
-        _nodeLight1Dir: NodeSocketVector = tree_interface.new_socket(
-            "Light1Dir", socket_type="NodeSocketVector", in_out="OUTPUT"
-        )
-        _nodeLight1Size: NodeSocketFloat = tree_interface.new_socket(
-            "Light1Size", socket_type="NodeSocketFloat", in_out="OUTPUT"
-        )
+        def add_new_socket(socket_type: str, name: str, in_out: str = "OUTPUT"):
+            if socket_type == "NodeSocketInt":
+                socket_type = "NodeSocketFloat"
+            return new_group.interface.new_socket(name, socket_type=socket_type, in_out=in_out)
 
     else:
-        _nodeFogEnable: NodeSocketInt = new_group.outputs.new("NodeSocketInt", "FogEnable")
-        _nodeFogColor: NodeSocketColor = new_group.outputs.new("NodeSocketColor", "FogColor")
-        _nodeF3D_NearClip: NodeSocketFloat = new_group.outputs.new("NodeSocketFloat", "F3D_NearClip")
-        _nodeF3D_FarClip: NodeSocketFloat = new_group.outputs.new("NodeSocketFloat", "F3D_FarClip")
-        _nodeBlender_Game_Scale: NodeSocketFloat = new_group.outputs.new("NodeSocketFloat", "Blender_Game_Scale")
-        _nodeFogNear: NodeSocketInt = new_group.outputs.new("NodeSocketInt", "FogNear")
-        _nodeFogFar: NodeSocketInt = new_group.outputs.new("NodeSocketInt", "FogFar")
 
-        _nodeAmbientColor: NodeSocketColor = new_group.outputs.new("NodeSocketColor", "AmbientColor")
-        _nodeLight0Color: NodeSocketColor = new_group.outputs.new("NodeSocketColor", "Light0Color")
-        _nodeLight0Dir: NodeSocketVectorDirection = new_group.outputs.new("NodeSocketVectorDirection", "Light0Dir")
-        _nodeLight0Size: NodeSocketInt = new_group.outputs.new("NodeSocketInt", "Light0Size")
-        _nodeLight1Color: NodeSocketColor = new_group.outputs.new("NodeSocketColor", "Light1Color")
-        _nodeLight1Dir: NodeSocketVectorDirection = new_group.outputs.new("NodeSocketVectorDirection", "Light1Dir")
-        _nodeLight1Size: NodeSocketInt = new_group.outputs.new("NodeSocketInt", "Light1Size")
+        def add_new_socket(socket_type: str, name: str, in_out: str = "OUTPUT"):
+            return getattr(new_group, in_out.lower() + "s").new(socket_type, name)
+
+    add_new_socket("NodeSocketInt", "FogEnable")
+    add_new_socket("NodeSocketColor", "FogColor")
+    add_new_socket("NodeSocketFloat", "NearClip")
+    add_new_socket("NodeSocketFloat", "FarClip")
+    add_new_socket("NodeSocketFloat", "BlenderGameScale")
+    add_new_socket("NodeSocketInt", "FogNear")
+    add_new_socket("NodeSocketInt", "FogFar")
+
+    add_new_socket("NodeSocketColor", "AmbientColor")
+    add_new_socket("NodeSocketColor", "Light0Color")
+    add_new_socket("NodeSocketVectorDirection", "Light0Dir")
+    add_new_socket("NodeSocketInt", "Light0Size")
+    add_new_socket("NodeSocketColor", "Light1Color")
+    add_new_socket("NodeSocketVectorDirection", "Light1Dir")
+    add_new_socket("NodeSocketInt", "Light1Size")
 
     # Set outputs from render settings
     sceneOutputs: NodeGroupOutput = new_group.nodes["Group Output"]
@@ -2466,21 +2364,21 @@ def createScenePropertiesForMaterial(material: Material):
     # create a new group node to hold the tree
     scene_props = node_tree.nodes.new(type="ShaderNodeGroup")
     scene_props.name = "SceneProperties"
-    scene_props.location = (-320, -23)
+    scene_props.location = (-43.1418, 2391.7041)
     scene_props.node_tree = bpy.data.node_groups["SceneProperties"]
 
     # Fog links to reroutes and the CalcFog block
     node_tree.links.new(scene_props.outputs["FogEnable"], node_tree.nodes["FogEnable"].inputs[0])
     node_tree.links.new(scene_props.outputs["FogColor"], node_tree.nodes["FogColor"].inputs[0])
-    node_tree.links.new(scene_props.outputs["F3D_NearClip"], node_tree.nodes["CalcFog"].inputs["F3D_NearClip"])
-    node_tree.links.new(scene_props.outputs["F3D_FarClip"], node_tree.nodes["CalcFog"].inputs["F3D_FarClip"])
+    node_tree.links.new(scene_props.outputs["NearClip"], node_tree.nodes["CalcFog"].inputs["F3D_NearClip"])
+    node_tree.links.new(scene_props.outputs["FarClip"], node_tree.nodes["CalcFog"].inputs["F3D_FarClip"])
     node_tree.links.new(
-        scene_props.outputs["Blender_Game_Scale"], node_tree.nodes["CalcFog"].inputs["Blender_Game_Scale"]
+        scene_props.outputs["BlenderGameScale"], node_tree.nodes["CalcFog"].inputs["Blender_Game_Scale"]
     )
     node_tree.links.new(scene_props.outputs["FogNear"], node_tree.nodes["CalcFog"].inputs["FogNear"])
     node_tree.links.new(scene_props.outputs["FogFar"], node_tree.nodes["CalcFog"].inputs["FogFar"])
 
-    # Lighting links to reroutes. The colors are connected to other reroutes for update_light_colors,
+    # Lighting links to reroutes. The colors arrrrrrrrrrrrrrrrre connected to other reroutes for update_light_colors,
     # the others go directly to the Shade Color block.
     node_tree.links.new(scene_props.outputs["AmbientColor"], node_tree.nodes["AmbientColor"].inputs[0])
     node_tree.links.new(scene_props.outputs["Light0Color"], node_tree.nodes["Light0Color"].inputs[0])
@@ -2542,13 +2440,15 @@ def convertColorAttribute(mesh: Mesh, attr_name="Col"):
     attr_index = mesh.attributes.find(attr_name)
     if attr_index < 0:
         raise PluginError(f"Failed to find the index for mesh attr {attr_name}. Attribute conversion has failed!")
-
+    cur_attr = mesh.attributes[attr_name]
+    if cur_attr.data_type == "FLOAT_COLOR" and cur_attr.domain == "CORNER":
+        return
     mesh.attributes.active_index = attr_index
     bpy.ops.geometry.attribute_convert(mode="GENERIC", domain="CORNER", data_type="FLOAT_COLOR")
     mesh.attributes.active_index = prev_index
 
 
-def addColorAttributesToModel(obj: Object):
+def add_fast64_attributes(obj: Object):
     if obj.type != "MESH":
         return
 
@@ -2572,6 +2472,16 @@ def addColorAttributesToModel(obj: Object):
     elif not has_alpha:
         mesh.color_attributes.new("Alpha", "FLOAT_COLOR", "CORNER")
 
+    fast64_geo_nodes = None
+    for mod in obj.modifiers:
+        if mod.type == "NODES" and mod.get("fast64_owned"):
+            fast64_geo_nodes = mod
+            break
+    else:
+        fast64_geo_nodes = obj.modifiers.new("Fast64 Geometry Nodes", "NODES")
+    fast64_geo_nodes["fast64_owned"] = True
+    fast64_geo_nodes.node_group = bpy.data.node_groups["Fast64GeoNodes"]
+
     if prevMode != "OBJECT":
         bpy.ops.object.mode_set(mode=get_mode_set_from_context_mode(prevMode))
 
@@ -2579,7 +2489,7 @@ def addColorAttributesToModel(obj: Object):
 def add_f3d_mat_to_obj(obj: bpy.types.Object, material, index=None):
     # add material to object
     if obj is not None:
-        addColorAttributesToModel(obj)
+        add_fast64_attributes(obj)
         if index is None:
             obj.data.materials.append(material)
             if bpy.context.object is not None:
@@ -2603,7 +2513,6 @@ def createF3DMat(obj: Object | None, preset="Shaded Solid", index=None):
     bpy.data.materials.remove(mat)
 
     createScenePropertiesForMaterial(material)
-
     add_f3d_mat_to_obj(obj, material, index)
 
     material.is_f3d = True
@@ -2761,7 +2670,6 @@ def update_tex_field_prop(self: Property, context: Context):
 
         if tex_size[0] > 0 and tex_size[1] > 0:
             update_tex_values_field(material, tex_property, tex_size, tex_index)
-        set_texture_settings_node(material)
 
 
 def toggle_auto_prop(self, context: Context):
@@ -2775,8 +2683,6 @@ def toggle_auto_prop(self, context: Context):
             tex_size = tuple([s for s in tex_property.size])
             if tex_size[0] > 0 and tex_size[1] > 0:
                 update_tex_values_field(material, tex_property, tex_size, tex_index)
-
-        set_texture_settings_node(material)
 
 
 class TextureFieldProperty(PropertyGroup):
@@ -2941,10 +2847,7 @@ class TextureProperty(PropertyGroup):
     T: bpy.props.PointerProperty(type=TextureFieldProperty)
 
     menu: bpy.props.BoolProperty()
-    tex_set: bpy.props.BoolProperty(
-        default=True,
-        update=update_node_values_with_preset,
-    )
+    tex_set: bpy.props.BoolProperty(default=True, update=update_tex_values)
     autoprop: bpy.props.BoolProperty(
         name="Autoprop",
         update=toggle_auto_prop,
@@ -3716,6 +3619,10 @@ class RDPSettings(PropertyGroup):
         yield from self.blend_color_inputs
         yield from self.blend_alpha_inputs
 
+    @property
+    def uses_tex_gen(self):
+        return self.g_lighting and self.g_tex_gen
+
     def get_rdp_othermode(self, prop: str, rdp_defaults: "RDPSettings" = None):
         value = getattr(self, prop, "NONE")
         if value == "NONE" or value == "":
@@ -4341,7 +4248,7 @@ class F3DMaterialProperty(PropertyGroup):
     uv_basis: bpy.props.EnumProperty(
         name="UV Basis",
         items=lambda self, context: [
-            (str(i), f"Texture {i}", f"Use the size of texture {i} for UVs") for i in self.set_textures.keys()
+            (str(i), f"Texture {i}", f"Use the size of texture {i} for UVs") for i in self.used_textures.keys()
         ]
         or [(str(-1), "", "")],
         update=update_tex_values,

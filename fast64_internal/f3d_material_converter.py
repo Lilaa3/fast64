@@ -30,10 +30,10 @@ def upgrade_f3d_version_all_meshes() -> None:
 
 
 def upgradeF3DVersionOneObject(obj, materialDict, f3d_node_tree: bpy.types.NodeTree):
-    for index in range(len(obj.material_slots)):
-        material = obj.material_slots[index].material
+    for slot in obj.material_slots:
+        material = slot.material
         if material is not None and material.is_f3d and material not in materialDict:
-            convertF3DtoNewVersion(obj, index, material, f3d_node_tree)
+            convertF3DtoNewVersion(obj, material, f3d_node_tree)
             materialDict[material] = material
 
 
@@ -132,9 +132,7 @@ def set_best_draw_layer_for_materials():
             finished_mats.add(mat.name)
 
 
-def convertF3DtoNewVersion(
-    obj: bpy.types.Object | bpy.types.Bone, index: int, material, f3d_node_tree: bpy.types.NodeTree
-):
+def convertF3DtoNewVersion(obj: bpy.types.Object, material, f3d_node_tree: bpy.types.NodeTree):
     try:
         if not has_valid_mat_ver(material):
             return
@@ -158,6 +156,9 @@ def convertF3DtoNewVersion(
         createScenePropertiesForMaterial(material)
         with bpy.context.temp_override(material=material):
             update_all_node_values(material, bpy.context)  # Reload everything
+
+        add_fast64_attributes(obj)
+        print("Upgraded", material.name)
 
     except Exception as exc:
         print("Failed to upgrade", material.name)

@@ -23,6 +23,7 @@ from .flipbook import TextureFlipbook
 
 from ..utility import *
 
+
 def UVtoSTLarge(obj, loopIndex, uv_data, texDimensions):
     uv = uv_data[loopIndex].uv.copy()
     uv[1] = 1 - uv[1]
@@ -439,7 +440,7 @@ class TexInfo:
                 values.append(self.main_image.name)
         values.append(self.imageDims)
         return hash(tuple(values))
-    
+
     @property
     def palDependencies(self):
         return {self.main_pal} if self.main_pal is not None else {} | self._palDependencies
@@ -596,7 +597,11 @@ WHITE_YUV = np.ones((3,)) @ YUV_MATRIX.T
 
 
 def ihq_calc_best_i(
-    width: int, height: int, yuv_base: np.ndarray[np.float32, (Any, 3)], yuv_target: np.ndarray[np.float32, (Any, 3)], ifactor: float
+    width: int,
+    height: int,
+    yuv_base: np.ndarray[np.float32, (Any, 3)],
+    yuv_target: np.ndarray[np.float32, (Any, 3)],
+    ifactor: float,
 ) -> tuple[np.ndarray[np.float32, (WIDTH_T, HEIGHT_T)], float]:
     yuv_base_ref = yuv_base * (1.0 - ifactor)
     yuv_ifactor = WHITE_YUV * ifactor
@@ -675,7 +680,9 @@ def generate_ihq(pixels: FloatPixels):
         else:
             assert False, "What the fuck"
         down_scale = shrink_box(pixels, width_div=width_div, height_div=height_div)
-        bilinear_upscale = bilinear_resize(down_scale[:, :, :3], width_multiplier=width_div, height_multiplier=height_div)
+        bilinear_upscale = bilinear_resize(
+            down_scale[:, :, :3], width_multiplier=width_div, height_multiplier=height_div
+        )
         yuv_base = bilinear_upscale.reshape(-1, 3) @ YUV_MATRIX.T
         for ifactor in range(1, 11):
             ifactor *= 0.05
@@ -754,7 +761,7 @@ class MultitexManager:
         base_tex.main_image = FloatPixelsImage(base_tex.main_image.name + "_ihq_i", intensity)
         base_tex.texFormat = "IA4" if uses_alpha else "I4"
         base_tex.values_from_dims(intensity.shape[0], intensity.shape[1])
-        
+
         rgba_tex.main_image = FloatPixelsImage(rgba_tex.main_image.name + "_ihq_rgba", rgba)
         rgba_tex.texFormat = "RGBA16"
         rgba_tex.shift = (rgba_tex.shift[0] + 1, rgba_tex.shift[1] + 1)

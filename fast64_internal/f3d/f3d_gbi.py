@@ -2366,8 +2366,10 @@ def get_pixels_from_image(image: bpy.types.Image) -> FloatPixels:
     pixels[:, :, :channel_count] = bpy_pixels  # copy, if channel count is 3 all alpha channels will stay 1
     return pixels
 
+
 def get_numpy_image(image: bpy.types.Image) -> FloatPixelsImage:
     return FloatPixelsImage(image.name, get_pixels_from_image(image))
+
 
 class FModel:
     def __init__(

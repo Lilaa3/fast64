@@ -181,8 +181,8 @@ def checkObjectReference(obj, title):
 
 
 def selectSingleObject(obj: bpy.types.Object):
-    bpy.ops.object.select_all(action="DESELECT")
-    obj.select_set(True)
+    for o in bpy.context.scene.objects:
+        o.select_set(o == obj)
     bpy.context.view_layer.objects.active = obj
 
 
