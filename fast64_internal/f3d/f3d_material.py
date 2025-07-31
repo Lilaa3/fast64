@@ -2473,14 +2473,14 @@ def add_fast64_attributes(obj: Object):
         mesh.color_attributes.new("Alpha", "FLOAT_COLOR", "CORNER")
 
     fast64_geo_nodes = None
+    node_group = bpy.data.node_groups["Fast64GeoNodes"]
     for mod in obj.modifiers:
-        if mod.type == "NODES" and mod.get("fast64_owned"):
+        if mod.type == "NODES" and mod.node_group == node_group:
             fast64_geo_nodes = mod
             break
-    else:
+    if fast64_geo_nodes is None:
         fast64_geo_nodes = obj.modifiers.new("Fast64 Geometry Nodes", "NODES")
-    fast64_geo_nodes["fast64_owned"] = True
-    fast64_geo_nodes.node_group = bpy.data.node_groups["Fast64GeoNodes"]
+        fast64_geo_nodes.node_group = bpy.data.node_groups["Fast64GeoNodes"]
 
     if prevMode != "OBJECT":
         bpy.ops.object.mode_set(mode=get_mode_set_from_context_mode(prevMode))
