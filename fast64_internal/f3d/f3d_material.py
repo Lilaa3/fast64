@@ -2166,7 +2166,7 @@ def update_tex_values_manual(material: Material, context, prop_path=None):
     texture_selector.inputs["Clamp"].default_value = int(text_detail == "G_TD_CLAMP")
     texture_selector.inputs["Detail"].default_value = int(text_detail == "G_TD_DETAIL")
     texture_selector.inputs["Min LoD"].default_value = f3d_mat.prim_lod_min
-    texture_selector.inputs["Mip Count"].default_value = f3d_mat.get_num_textures_mipmapped()
+    texture_selector.inputs["Mip Count"].default_value = f3d_mat.get_num_textures_mipmapped() - 1
 
 
 def shift_num(num: int, amt: int):
@@ -2314,6 +2314,8 @@ def createOrUpdateSceneProperties():
         def add_new_socket(socket_type: str, name: str, in_out: str = "OUTPUT"):
             if socket_type == "NodeSocketInt":
                 socket_type = "NodeSocketFloat"
+            if socket_type == "NodeSocketVectorDirection":
+                socket_type = "NodeSocketVector"
             return new_group.interface.new_socket(name, socket_type=socket_type, in_out=in_out)
 
     else:
@@ -2359,15 +2361,15 @@ def createScenePropertiesForMaterial(material: Material):
     # Fog links to reroutes and the CalcFog block
     node_tree.links.new(scene_props.outputs["FogEnable"], node_tree.nodes["FogEnable"].inputs[0])
     node_tree.links.new(scene_props.outputs["FogColor"], node_tree.nodes["FogColor"].inputs[0])
-    node_tree.links.new(scene_props.outputs["NearClip"], node_tree.nodes["CalcFog"].inputs["F3D_NearClip"])
-    node_tree.links.new(scene_props.outputs["FarClip"], node_tree.nodes["CalcFog"].inputs["F3D_FarClip"])
+    node_tree.links.new(scene_props.outputs["NearClip"], node_tree.nodes["NearClip"].inputs[0])
+    node_tree.links.new(scene_props.outputs["FarClip"], node_tree.nodes["FarClip"].inputs[0])
     node_tree.links.new(
-        scene_props.outputs["BlenderGameScale"], node_tree.nodes["CalcFog"].inputs["Blender_Game_Scale"]
+        scene_props.outputs["BlenderGameScale"], node_tree.nodes["GameScale"].inputs[0]
     )
     node_tree.links.new(scene_props.outputs["FogNear"], node_tree.nodes["CalcFog"].inputs["FogNear"])
     node_tree.links.new(scene_props.outputs["FogFar"], node_tree.nodes["CalcFog"].inputs["FogFar"])
 
-    # Lighting links to reroutes. The colors arrrrrrrrrrrrrrrrre connected to other reroutes for update_light_colors,
+    # Lighting links to reroutes. The colors are connected to other reroutes for update_light_colors,
     # the others go directly to the Shade Color block.
     node_tree.links.new(scene_props.outputs["AmbientColor"], node_tree.nodes["AmbientColor"].inputs[0])
     node_tree.links.new(scene_props.outputs["Light0Color"], node_tree.nodes["Light0Color"].inputs[0])
