@@ -245,6 +245,7 @@ del make_callback
 
 def on_update_render_settings(self, context: bpy.types.Context):
     sceneProps = bpy.data.node_groups.get("SceneProperties")
+    renderSettings: "Fast64RenderSettings_Properties" = context.scene.fast64.renderSettings
     if sceneProps == None:
         print("Could not locate sceneProps!")
         return
@@ -259,7 +260,7 @@ def on_update_render_settings(self, context: bpy.types.Context):
 
     sceneOutputs = getSceneOutputs()
     if sceneOutputs is not None:
-        update_scene_props_from_render_settings(sceneOutputs, self)
+        update_scene_props_from_render_settings(sceneOutputs, renderSettings)
 
 
 def poll_sm64_area(self, object):
