@@ -511,6 +511,8 @@ class TexInfo:
         s_high_mask, t_high_mask = calculate_high_mask(tex_prop.S, width), calculate_high_mask(tex_prop.T, height)
         self.high = (s_high_mask[1], t_high_mask[1])
         self.mask = (s_high_mask[0], t_high_mask[0])
+        if self.texFormat == "YUV16":
+            self.imageDims = (width, height * 2)
 
     def error_checking(self):
         if self.has_tex:
@@ -701,8 +703,8 @@ def generate_ihq(pixels: FloatPixels):
 class MultitexManager:
     is_ci: bool = False
     textures: dict[int, TexInfo] = field(default_factory=dict)
-    main_tex: int = 0
     dithering_method: DITHER_MODES = "FLOYD"
+    tex_dimensions: tuple[int, int] = (0, 0)
 
     @property
     def mip_levels(self):
@@ -771,19 +773,32 @@ class MultitexManager:
         rgba_tex.indexInMat = 1
         self.textures[1] = rgba_tex
 
-    def from_mat(self, mat: bpy.types.Material, pseudo_format: str, f_material: FMaterial, fModel: FModel):
+    def from_mat(self, mat: bpy.types.Material, f_material: FMaterial, fModel: FModel, convert_texture_data: bool):
         f3d_mat: "F3DMaterialProperty" = mat.f3d_mat
+        pseudo_format = f3d_mat.pseudo_format
         self.is_ci = f3d_mat.is_ci
         for i, tex_prop in f3d_mat.set_textures.items():
             tex = TexInfo()
             tex.from_prop(tex_prop, i, mat, fModel, False, False, pseudo_format != "NONE")
             self.textures[i] = tex
 
-    def convert():
+        uv_basis_index = f3d_mat.uv_basis_index
+        main_tex = self.textures[uv_basis_index]
+        self.tex_dimensions = main_tex.imageDims
+
+        match pseudo_format:
+            case "IHQ":
+                self.generate_ihq()
+        if f3d_mat.gen_auto_mips:
+            self.generate_mipmaps(fModel)
+        if convert_texture_data:
+            self.convert()
+
+    def convert(self):
         pass
 
     def getTexDimensions(self):
-        return self.texDimensions
+        return self.tex_dimensions
 
 
 # Functions for writing texture and palette DLs

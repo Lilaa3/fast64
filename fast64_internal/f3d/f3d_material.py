@@ -2109,12 +2109,13 @@ def update_tex_values_manual(material: Material, context, prop_path=None):
     nodes = material.node_tree.nodes
     texture_settings = nodes["UVScaleValues"]
 
-    used_textures = f3d_mat.used_textures
+    set_textures = f3d_mat.set_textures
     if f3d_mat.uv_basis == "":  # out of bounds enum
-        f3d_mat.uv_basis = str(max(used_textures.keys()) if len(used_textures) > 0 else -1)
+        f3d_mat.uv_basis = str(max(set_textures.keys()) if len(set_textures) > 0 else -1)
 
     uv_basis_index = f3d_mat.uv_basis_index
     tex_size = (0, 0)
+    used_textures = f3d_mat.used_textures
     for i, tex in enumerate(f3d_mat.all_textures):
         if not prop_path or f"tex{i}" in prop_path:
             set_texture_nodes_settings(material, tex, i, i in used_textures)
@@ -2363,9 +2364,7 @@ def createScenePropertiesForMaterial(material: Material):
     node_tree.links.new(scene_props.outputs["FogColor"], node_tree.nodes["FogColor"].inputs[0])
     node_tree.links.new(scene_props.outputs["NearClip"], node_tree.nodes["NearClip"].inputs[0])
     node_tree.links.new(scene_props.outputs["FarClip"], node_tree.nodes["FarClip"].inputs[0])
-    node_tree.links.new(
-        scene_props.outputs["BlenderGameScale"], node_tree.nodes["GameScale"].inputs[0]
-    )
+    node_tree.links.new(scene_props.outputs["BlenderGameScale"], node_tree.nodes["GameScale"].inputs[0])
     node_tree.links.new(scene_props.outputs["FogNear"], node_tree.nodes["CalcFog"].inputs["FogNear"])
     node_tree.links.new(scene_props.outputs["FogFar"], node_tree.nodes["CalcFog"].inputs["FogFar"])
 
@@ -4241,7 +4240,7 @@ class F3DMaterialProperty(PropertyGroup):
     uv_basis: bpy.props.EnumProperty(
         name="UV Basis",
         items=lambda self, context: [
-            (str(i), f"Texture {i}", f"Use the size of texture {i} for UVs") for i in self.used_textures.keys()
+            (str(i), f"Texture {i}", f"Use the size of texture {i} for UVs") for i in self.set_textures.keys()
         ]
         or [(str(-1), "", "")],
         update=update_tex_values,

@@ -1429,15 +1429,7 @@ def saveOrGetF3DMaterial(material, fModel, obj, drawLayer, convertTextureData):
         )
 
     multitexManager = MultitexManager()
-    pseudo_format = f3dMat.pseudo_format
-    multitexManager.from_mat(material, pseudo_format, f3dMat, fModel)
-    match pseudo_format:
-        case "IHQ":
-            multitexManager.generate_ihq()
-    if f3dMat.gen_auto_mips:
-        multitexManager.generate_mipmaps(fModel)
-    if convertTextureData:
-        multitexManager.convert()
+    multitexManager.from_mat(material, f3dMat, fModel, convertTextureData)
     print(multitexManager)
     # Set othermode
     if drawLayer is not None:
