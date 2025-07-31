@@ -1959,32 +1959,21 @@ def iter_tex_nodes(node_tree: NodeTree, tex_index: int) -> Generator[TextureNode
             yield node_tree.nodes[name]
 
 
-def toggle_texture_node_muting(material: Material, texIndex: int, isUsed: bool):
+def toggle_texture_node_muting(material: Material, tex_index: int, is_used: bool):
     node_tree = material.node_tree
     f3dMat: "F3DMaterialProperty" = material.f3d_mat
 
-    # Enforce typing from generator
-    texNode: None | TextureNodeImage = None
+    should_mute = not is_used
 
-    node_3point_key = "3 Point Lerp" if texIndex == 0 else "3 Point Lerp.001"
-    node_3point = node_tree.nodes.get(node_3point_key)
+    for node in (*iter_tex_nodes(node_tree, tex_index), node_tree.nodes.get(f"SamplePositions{tex_index}")):
+        if node.mute != should_mute:
+            node.mute = should_mute
 
-    node_tex_color_conv_key = f"Tex{texIndex}_I"
-    node_tex_color_conv = node_tree.nodes.get(node_tex_color_conv_key)
-
-    # flip bool for clarity
-    shouldMute = not isUsed
-
-    for texNode in iter_tex_nodes(node_tree, texIndex):
-        if texNode.mute != shouldMute:
-            texNode.mute = shouldMute
-
-    if node_tex_color_conv and node_tex_color_conv.mute != shouldMute:
-        node_tex_color_conv.mute = shouldMute
-
-    mute_3point = shouldMute or f3dMat.get_rdp_othermode("g_mdsft_text_filt") != "G_TF_BILERP"
-    if node_3point and node_3point.mute != mute_3point:
-        node_3point.mute = mute_3point
+    mute_3point = should_mute or f3dMat.get_rdp_othermode("g_mdsft_text_filt") != "G_TF_BILERP"
+    node_lerp = node_tree.nodes.get(f"LerpTexture{tex_index}")
+    assert node_lerp
+    if node_lerp.mute != mute_3point:
+        node_lerp.mute = mute_3point
 
 
 def set_texture_nodes_settings(
@@ -2127,7 +2116,7 @@ def update_tex_values_manual(material: Material, context, prop_path=None):
     uv_basis_index = f3d_mat.uv_basis_index
     tex_size = (0, 0)
     for i, tex in enumerate(f3d_mat.all_textures):
-        if not prop_path or "tex0" in prop_path:
+        if not prop_path or f"tex{i}" in prop_path:
             set_texture_nodes_settings(material, tex, i, i in used_textures)
         if i == uv_basis_index:
             tex_size = tex.size
@@ -2929,8 +2918,9 @@ def update_combiner_connections_and_preset(self, context: Context):
 
         update_combiner_connections(material, context, combiner=combiner)
 
-        toggle_texture_node_muting(material, 0, f3d_mat.tex0.tex and combiner_uses_tex0(material.f3d_mat))
-        toggle_texture_node_muting(material, 1, f3d_mat.tex1.tex and combiner_uses_tex1(material.f3d_mat))
+        used_textures = f3d_mat.used_textures
+        for i in range(8):
+            toggle_texture_node_muting(material, i, i in used_textures)
 
 
 def ui_image(
@@ -3436,6 +3426,7 @@ class RDPSettings(PropertyGroup):
         min=2,
         max=8,
         description="Number of mipmaps when Texture LOD set to `LOD`. First cycle combiner should be ((Tex1 - Tex0) * LOD Frac) + Tex0",
+        update=update_node_values_with_preset,
     )
     g_mdsft_textdetail: bpy.props.EnumProperty(
         name="Texture Detail",
