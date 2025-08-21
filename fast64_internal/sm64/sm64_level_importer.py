@@ -1423,7 +1423,7 @@ class GeoLayout(GraphNodes):
         self.col.objects.link(self.obj)
         # keep? I don't like this formulation
         if parent_obj:
-            parentObject(parent_obj, self.obj, keep=0)
+            parentObject(parent_obj, self.obj)
         return self.obj
 
     def setup_geo_obj(self, obj_name: str, geo_cmd: str, layer: int = None, mesh: bpy.types.Mesh = None):
