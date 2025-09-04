@@ -1,16 +1,9 @@
 from pathlib import Path
-from math import radians
+import shutil, copy, bpy, re, os
 from io import BytesIO
-from typing import Tuple, TYPE_CHECKING
-import shutil
-import copy
-import re
-import os
-
-import bpy
+from math import ceil, log, radians
 from mathutils import Matrix, Vector
 from bpy.utils import register_class, unregister_class
-
 from ..panels import SM64_Panel
 from ..f3d.f3d_writer import exportF3DCommon, saveModeSetting
 from ..f3d.f3d_texture_writer import TexInfo
@@ -30,11 +23,11 @@ from .sm64_utility import (
     update_actor_includes,
     write_or_delete_if_found,
     write_material_headers,
-    draw_export_dir,
-    get_export_dirs,
 )
 from .sm64_level_parser import parse_level_binary
 from .sm64_rom_tweaks import ExtendBank0x04
+from typing import Tuple
+
 from ..f3d.f3d_bleed import BleedGraphics
 
 from ..f3d.f3d_gbi import (
@@ -78,9 +71,11 @@ from ..utility import (
     toAlnum,
     checkIfPathExists,
     overwriteData,
+    getExportDir,
     writeMaterialFiles,
     get64bitAlignedAddr,
     writeInsertableFile,
+    getPathAndLevel,
     applyBasicTweaks,
     tempName,
     getAddressFromRAMAddress,
@@ -88,14 +83,12 @@ from ..utility import (
     customExportWarning,
     decompFolderMessage,
     makeWriteInfoBox,
+    writeBoxExportType,
     create_or_get_world,
-    as_posix,
 )
 
 from .sm64_constants import defaultExtendSegment4, bank0Segment, insertableBinaryTypes
 
-if TYPE_CHECKING:
-    from .settings.properties import SM64_Properties
 
 enumHUDExportLocation = [
     ("HUD", "HUD", "Exports to src/game/hud.c"),
@@ -356,7 +349,6 @@ def exportTexRectCommon(texProp, name, convertTextureData):
 
 
 def sm64ExportF3DtoC(
-    sm64_props: "SM64_Properties",
     basePath,
     obj,
     DLFormat,
@@ -371,8 +363,7 @@ def sm64ExportF3DtoC(
     customExport,
     headerType,
 ):
-    name = toAlnum(name) or ""
-    dirPath, texDir = get_export_dirs(sm64_props, customExport, basePath, headerType, levelName, texDir, name)
+    dirPath, texDir = getExportDir(customExport, basePath, headerType, levelName, texDir, name)
 
     inline = bpy.context.scene.exportInlineF3D
     fModel = SM64Model(
@@ -386,7 +377,7 @@ def sm64ExportF3DtoC(
         bleed_gfx = BleedGraphics()
         bleed_gfx.bleed_fModel(fModel, fMeshes)
 
-    modelDirPath = os.path.join(dirPath, name)
+    modelDirPath = os.path.join(dirPath, toAlnum(name))
 
     if not os.path.exists(modelDirPath):
         os.mkdir(modelDirPath)
@@ -407,21 +398,14 @@ def sm64ExportF3DtoC(
     scrollData = fModel.to_c_scroll(scrollName, gfxFormatter)
     modifyTexScrollFiles(basePath, modelDirPath, scrollData)
 
-    if headerType == "Actor":
-        actor_folder = Path(sm64_props.actors_folder, name)
-    elif headerType == "Level":
-        actor_folder = Path(sm64_props.levels_folder, levelName, name)
-    else:
-        actor_folder = Path(name)
-
     if DLFormat == DLFormat.Static:
         staticData.append(dynamicData)
     else:
         geoString = writeMaterialFiles(
             basePath,
             modelDirPath,
-            f'#include "{as_posix(actor_folder / "header.h")}',
-            f'#include "{as_posix(actor_folder / "material.inc.h")}"',
+            '#include "actors/' + toAlnum(name) + '/header.h"',
+            '#include "actors/' + toAlnum(name) + '/material.inc.h"',
             dynamicData.header,
             dynamicData.source,
             "",
@@ -444,29 +428,37 @@ def sm64ExportF3DtoC(
     cDefFile.close()
 
     update_actor_includes(
-        sm64_props, headerType, groupName, Path(dirPath), name, levelName, [Path("model.inc.c")], [Path("header.h")]
+        headerType, groupName, Path(dirPath), name, levelName, [Path("model.inc.c")], [Path("header.h")]
     )
     fileStatus = None
     if not customExport:
         if headerType == "Actor":
             if DLFormat != DLFormat.Static:  # Change this
-                write_material_headers(Path(basePath), actor_folder / "material.inc.c", actor_folder / "material.inc.h")
+                write_material_headers(
+                    Path(basePath),
+                    Path("actors", toAlnum(name), "material.inc.c"),
+                    Path("actors", toAlnum(name), "material.inc.h"),
+                )
 
+            texscrollIncludeC = '#include "actors/' + name + '/texscroll.inc.c"'
+            texscrollIncludeH = '#include "actors/' + name + '/texscroll.inc.h"'
             texscrollGroup = groupName
-            texscrollGroupInclude = f'#include "{as_posix(Path(sm64_props.actors_folder, f"{groupName}.h"))}"'
+            texscrollGroupInclude = '#include "actors/' + groupName + '.h"'
 
         elif headerType == "Level":
             if DLFormat != DLFormat.Static:  # Change this
-                write_material_headers(basePath, actor_folder / "material.inc.c", actor_folder / "material.inc.h")
+                write_material_headers(
+                    basePath,
+                    Path("actors", levelName, toAlnum(name), "material.inc.c"),
+                    Path("actors", levelName, toAlnum(name), "material.inc.h"),
+                )
 
+            texscrollIncludeC = '#include "levels/' + levelName + "/" + name + '/texscroll.inc.c"'
+            texscrollIncludeH = '#include "levels/' + levelName + "/" + name + '/texscroll.inc.h"'
             texscrollGroup = levelName
-            texscrollGroupInclude = f'#include "{as_posix(Path(sm64_props.levels_folder, levelName, "header.h"))}"'
-        else:
-            raise PluginError(f"Unknown header type: {headerType}")
-        include_c, include_h = actor_folder / "texscroll.inc.c", actor_folder / "texscroll.inc.h"
-        texscrollIncludeC, texscrollIncludeH = f'#include "{as_posix(include_c)}"', f'#include "{as_posix(include_h)}"'
+            texscrollGroupInclude = '#include "levels/' + levelName + '/header.h"'
+
         fileStatus = modifyTexScrollHeadersGroup(
-            sm64_props,
             basePath,
             texscrollIncludeC,
             texscrollIncludeH,
@@ -585,8 +577,7 @@ class SM64_ExportDL(bpy.types.Operator):
     def execute(self, context):
         romfileOutput = None
         tempROM = None
-        sm64_props: SM64_Properties = context.scene.fast64.sm64
-        props = sm64_props.combined_export
+        props = context.scene.fast64.sm64.combined_export
         try:
             if context.mode != "OBJECT":
                 raise PluginError("Operator can only be used in object mode.")
@@ -607,11 +598,15 @@ class SM64_ExportDL(bpy.types.Operator):
         try:
             applyRotation([obj], radians(90), "X")
             if context.scene.fast64.sm64.export_type == "C":
-                exportPath, levelName = props.get_path_and_level(sm64_props)
+                exportPath, levelName = getPathAndLevel(
+                    props.is_actor_custom_export,
+                    props.actor_custom_path,
+                    props.export_level_name,
+                    props.level_name,
+                )
                 if not props.is_actor_custom_export:
                     applyBasicTweaks(exportPath)
                 fileStatus = sm64ExportF3DtoC(
-                    sm64_props,
                     exportPath,
                     obj,
                     DLFormat.Static if context.scene.DLExportisStatic else DLFormat.Dynamic,
@@ -727,10 +722,9 @@ class SM64_ExportDLPanel(SM64_Panel):
     def draw(self, context):
         col = self.layout.column()
         propsDLE = col.operator(SM64_ExportDL.bl_idname)
-        sm64_props: SM64_Properties = context.scene.fast64.sm64
-        props = sm64_props.combined_export
+        props = context.scene.fast64.sm64.combined_export
 
-        if sm64_props.export_type == "C":
+        if context.scene.fast64.sm64.export_type == "C":
             col.prop(context.scene, "DLExportisStatic")
 
             prop_split(col, props, "export_header_type", "Export Type")
@@ -755,16 +749,15 @@ class SM64_ExportDLPanel(SM64_Panel):
 
                 decompFolderMessage(col)
                 writeBox = makeWriteInfoBox(col)
-                draw_export_dir(
+                writeBoxExportType(
                     writeBox,
-                    sm64_props,
                     props.export_header_type,
                     context.scene.DLName,
                     props.export_level_name,
                     props.level_name,
                 )
 
-        elif sm64_props.export_type == "Insertable Binary":
+        elif context.scene.fast64.sm64.export_type == "Insertable Binary":
             col.prop(context.scene, "DLInsertableBinaryPath")
         else:
             prop_split(col, context.scene, "DLExportStart", "Start Address")

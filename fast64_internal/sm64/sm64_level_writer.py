@@ -1,7 +1,7 @@
 from pathlib import Path
 import bpy, os, math, re, shutil, mathutils
 from collections import defaultdict
-from typing import NamedTuple, TYPE_CHECKING
+from typing import NamedTuple
 from dataclasses import dataclass, field
 from bpy.utils import register_class, unregister_class
 from ..panels import SM64_Panel
@@ -34,7 +34,6 @@ from ..utility import (
     applyRotation,
     raisePluginError,
     writeMaterialFiles,
-    as_posix,
 )
 
 from ..f3d.f3d_gbi import (
@@ -43,9 +42,6 @@ from ..f3d.f3d_gbi import (
     TextureExportSettings,
     DLFormat,
 )
-
-if TYPE_CHECKING:
-    from .settings.properties import SM64_Properties
 
 
 levelDefineArgs = {
@@ -330,7 +326,7 @@ class LevelScript:
             result += sub_script.sub_script_to_c(result, root_persistent_block)
         return result
 
-    def to_c(self, areaString, levels_dir: str):
+    def to_c(self, areaString):
         if self.marioStart is not None:
             mario_start_macro = f"\t{self.marioStart.to_c()},"
         else:
@@ -349,10 +345,10 @@ class LevelScript:
                     '#include "segment_symbols.h"',
                     '#include "level_commands.h"\n',
                     '#include "game/level_update.h"\n',
-                    f'#include "{as_posix(Path(levels_dir, "scripts.h"))}"\n',
+                    '#include "levels/scripts.h"\n',
                     "\n".join(self.actorIncludes),
                     '#include "make_const_nonconst.h"',
-                    f'#include "{as_posix(Path(levels_dir, self.name, "header.h"))}"\n',
+                    f'#include "levels/{self.name}/header.h"\n',
                     # persistent block
                     f"{self.get_persistent_block(PersistentBlocks.scripts)}\n",
                     # sub scripts referenced in previous level script in the same file
@@ -534,8 +530,8 @@ def macrosToString(macro_cmds, tabDepth=1, comma=True):
     return "\n".join([f"{tabs}{macroToString(macro_cmd, comma = comma)}" for macro_cmd in macro_cmds])
 
 
-def setStartLevel(basePath, levels_folder: str, levelEnum):
-    filepath = Path(basePath, levels_folder, "menu", "script.c")
+def setStartLevel(basePath, levelEnum):
+    filepath = os.path.join(basePath, "levels/menu/script.c")
     data = getDataFromFile(filepath)
 
     newData = re.sub("SET\_REG\((((?!\)).)*)\)", "SET_REG(" + levelEnum + ")", data, count=1)
@@ -746,17 +742,7 @@ class SM64OptionalFileStatus:
 
 
 def export_area_c(
-    level_directory: Path,
-    obj,
-    level_data,
-    area_root,
-    prev_level_script,
-    transformMatrix,
-    level_name,
-    level_dir,
-    fModel,
-    DLFormat,
-    savePNG,
+    obj, level_data, area_root, prev_level_script, transformMatrix, level_name, level_dir, fModel, DLFormat, savePNG
 ):
     areaName = f"area_{area_root.areaIndex}"
     areaDir = os.path.join(level_dir, areaName)
@@ -767,8 +753,7 @@ def export_area_c(
     uses_env_fx = envOption != "ENVFX_MODE_NONE"
 
     def include_proto(file_name):
-        path = level_directory / areaName / file_name
-        return f'#include "{as_posix(path)}"\n'
+        return f'#include "levels/{level_name}/{areaName}/{file_name}"\n'
 
     # Write geolayout
     geolayoutGraph, fModel = convertObjectToGeolayout(
@@ -835,10 +820,8 @@ def export_area_c(
     return level_data, fModel, uses_env_fx
 
 
-def export_level_script_c(
-    sm64_props: "SM64_Properties", obj, prev_level_script, level_name, level_data, level_dir, uses_env_fx
-):
-    compressionFmt = sm64_props.compression_format
+def export_level_script_c(obj, prev_level_script, level_name, level_data, level_dir, uses_env_fx):
+    compressionFmt = bpy.context.scene.fast64.sm64.compression_format
 
     def replace_compressed_segment_load(name: str, segment: int, add_compression_fmt=True):
         compression_fmts = [compressionFmt.upper()] + list({"MIO0", "YAY0", "RAW"} - {compressionFmt.upper()})
@@ -882,47 +865,33 @@ def export_level_script_c(
         replaceScriptLoads(prev_level_script, obj)
 
     # write data
-    saveDataToFile(
-        os.path.join(level_dir, "script.c"), prev_level_script.to_c(level_data.area_data, sm64_props.levels_folder)
-    )
+    saveDataToFile(os.path.join(level_dir, "script.c"), prev_level_script.to_c(level_data.area_data))
 
     return level_data
 
 
-def exportLevelC(
-    sm64_props: "SM64_Properties",
-    obj,
-    transformMatrix,
-    level_name,
-    exportDir,
-    savePNG,
-    customExport,
-    levelCameraVolumeName,
-    DLFormat,
-):
+def exportLevelC(obj, transformMatrix, level_name, exportDir, savePNG, customExport, levelCameraVolumeName, DLFormat):
     fileStatus = SM64OptionalFileStatus()
 
-    levels_path = Path(exportDir, sm64_props.levels_folder)
     if customExport:
-        level_dir = Path(exportDir, level_name)
+        level_dir = os.path.join(exportDir, level_name)
     else:
-        level_dir = levels_path / level_name
-    level_directory = Path(sm64_props.levels_folder, level_name)
+        level_dir = os.path.join(exportDir, "levels/" + level_name)
 
-    if not (level_dir / "script.c").exists():
+    if not os.path.exists(os.path.join(level_dir, "script.c")):
         prev_level_script = LevelScript(level_name)
     else:
         prev_level_script = parseLevelScript(level_dir, level_name)
 
-    if not level_dir.exists():
-        level_dir.mkdir(parents=True)
+    if not os.path.exists(level_dir):
+        os.mkdir(level_dir)
 
     level_data = LevelData(camera_data=f"struct CameraTrigger {levelCameraVolumeName}[] = {{\n")
 
     fModel = SM64Model(
         level_name + "_dl",
         DLFormat,
-        sm64_props.gfx_write_method,
+        bpy.context.scene.fast64.sm64.gfx_write_method,
     )
     childAreas = [child for child in obj.children if child.type == "EMPTY" and child.sm64_obj_type == "Area Root"]
     if len(childAreas) == 0:
@@ -938,7 +907,7 @@ def exportLevelC(
             prev_level_script.custom_cmds.append(
                 custom_props.get_final_cmd(
                     obj,
-                    sm64_props.blender_to_sm64_scale,
+                    bpy.context.scene.fast64.sm64.blender_to_sm64_scale,
                     child.matrix_world @ yUpToZUp,
                     child.matrix_local,
                     name=obj.name,
@@ -968,7 +937,6 @@ def exportLevelC(
 
         # write area specific files
         level_data, fModel, uses_env_fx = export_area_c(
-            level_directory,
             obj,
             level_data,
             area_root,
@@ -984,7 +952,7 @@ def exportLevelC(
     level_data.camera_data += "\tNULL_TRIGGER\n};"
 
     # Generate levelscript string
-    export_level_script_c(sm64_props, obj, prev_level_script, level_name, level_data, level_dir, uses_env_fx)
+    export_level_script_c(obj, prev_level_script, level_name, level_data, level_dir, uses_env_fx)
 
     if bpy.context.scene.exportHiddenGeometry:
         restoreHiddenState(hiddenState)
@@ -1000,8 +968,7 @@ def exportLevelC(
                 shutil.rmtree(os.path.join(level_dir, folder))
 
     def include_proto(file_name, new_line_first=False):
-        path = Path(sm64_props.levels_folder, level_name, file_name)
-        include = f'#include "{as_posix(path)}"'
+        include = f'#include "levels/{level_name}/{file_name}"'
         if new_line_first:
             include = "\n" + include
         else:
@@ -1011,15 +978,13 @@ def exportLevelC(
     def write_include(path: Path, include: Path, before_endif=False):
         return write_or_delete_if_found(
             path,
-            [to_include_descriptor(include, Path(sm64_props.levels_folder, level_name, include))],
+            [to_include_descriptor(include, Path("levels", level_name, include))],
             path_must_exist=True,
             footer=END_IF_FOOTER if before_endif else None,
         )
 
     gfxFormatter = SM64GfxFormatter(ScrollMethod.Vertex)
-    exportData = fModel.to_c(
-        TextureExportSettings(savePNG, savePNG, as_posix(level_directory), level_dir), gfxFormatter
-    )
+    exportData = fModel.to_c(TextureExportSettings(savePNG, savePNG, f"levels/{level_name}", level_dir), gfxFormatter)
     staticData = exportData.staticData
     dynamicData = exportData.dynamicData
     texC = exportData.textureData
@@ -1058,13 +1023,11 @@ def exportLevelC(
     saveDataToFile(os.path.join(level_dir, "leveldata.inc.c"), level_data.script_data)
     saveDataToFile(os.path.join(level_dir, "header.inc.h"), level_data.header_data)
 
-    levelDefinesPath = levels_path / "level_defines.h"
-
     if customExport:
         level_data.camera_data = "\n".join(
             [
                 "// Replace the level specific camera volume struct in src/game/camera.c with this.",
-                f"// Make sure to also add the struct name to the LEVEL_DEFINE in {as_posix(levelDefinesPath)}.",
+                "// Make sure to also add the struct name to the LEVEL_DEFINE in levels/level_defines.h.",
                 level_data.camera_data,
             ]
         )
@@ -1085,7 +1048,9 @@ def exportLevelC(
         if DLFormat != DLFormat.Static:
             # Write material headers
             write_material_headers(
-                Path(exportDir), level_directory / "material.inc.c", level_directory / "material.inc.h"
+                Path(exportDir),
+                Path("levels", level_name, "material.inc.c"),
+                Path("levels", level_name, "material.inc.h"),
             )
 
         # Export camera triggers
@@ -1107,7 +1072,8 @@ def exportLevelC(
         if os.path.exists(puppycamAnglesPath) and level_data.puppycam_data != "":
             overwritePuppycamData(puppycamAnglesPath, levelIDNames[level_name], level_data.puppycam_data)
 
-        levelHeadersPath = levels_path / "level_headers.h.in"
+        levelHeadersPath = os.path.join(exportDir, "levels/level_headers.h.in")
+        levelDefinesPath = os.path.join(exportDir, "levels/level_defines.h")
         levelDefines = parseLevelDefines(levelDefinesPath)
         levelDefineMacro = levelDefines.getOrMakeMacroByLevelName(level_name)
         levelIndex = levelDefines.defineMacros.index(levelDefineMacro)
@@ -1121,7 +1087,7 @@ def exportLevelC(
 
         levelDefines.write(levelDefinesPath, levelHeadersPath)
 
-        courseDefinesPath = levels_path / "course_defines.h"
+        courseDefinesPath = os.path.join(exportDir, "levels/course_defines.h")
         courseDefines = parseCourseDefines(courseDefinesPath)
         courseEnum = levelDefineMacro[1][levelDefineArgs["course name"]]
         courseMacro = courseDefines.getOrMakeMacroByCourseName(courseEnum, False)
@@ -1140,7 +1106,7 @@ def exportLevelC(
             removeActSelectorIgnore(exportDir, levelEnum)
 
         if obj.setAsStartLevel:
-            setStartLevel(exportDir, sm64_props.levels_folder, levelEnum)
+            setStartLevel(exportDir, levelEnum)
 
         geoPath = os.path.join(level_dir, "geo.c")
         levelDataPath = os.path.join(level_dir, "leveldata.c")
@@ -1159,7 +1125,7 @@ def exportLevelC(
         write_include(Path(levelDataPath), Path("leveldata.inc.c"))
         write_include(Path(headerPath), Path("header.inc.h"), before_endif=True)
 
-        old_include = to_include_descriptor(level_directory / "texture_include.inc.c")
+        old_include = to_include_descriptor(Path("levels", level_name, "texture_include.inc.c"))
         if fModel.texturesSavedLastExport == 0:
             textureIncludePath = os.path.join(level_dir, "texture_include.inc.c")
             if os.path.exists(textureIncludePath):
@@ -1176,7 +1142,6 @@ def exportLevelC(
         texscrollGroupInclude = include_proto("header.h")
 
         texScrollFileStatus = modifyTexScrollHeadersGroup(
-            sm64_props,
             exportDir,
             texscrollIncludeC,
             texscrollIncludeH,
@@ -1192,6 +1157,52 @@ def exportLevelC(
     return fileStatus
 
 
+def addGeoC(levelName):
+    header = (
+        "#include <ultra64.h>\n"
+        '#include "sm64.h"\n'
+        '#include "geo_commands.h"\n'
+        "\n"
+        '#include "game/level_geo.h"\n'
+        '#include "game/geo_misc.h"\n'
+        '#include "game/camera.h"\n'
+        '#include "game/moving_texture.h"\n'
+        '#include "game/screen_transition.h"\n'
+        '#include "game/paintings.h"\n\n'
+    )
+
+    header += '#include "levels/' + levelName + '/header.h"\n'
+    return header
+
+
+def addLevelDataC(levelName):
+    header = (
+        "#include <ultra64.h>\n"
+        '#include "sm64.h"\n'
+        '#include "surface_terrains.h"\n'
+        '#include "moving_texture_macros.h"\n'
+        '#include "level_misc_macros.h"\n'
+        '#include "macro_preset_names.h"\n'
+        '#include "special_preset_names.h"\n'
+        '#include "textures.h"\n'
+        '#include "dialog_ids.h"\n'
+        "\n"
+        '#include "make_const_nonconst.h"\n'
+    )
+
+    return header
+
+
+def addHeaderC(levelName):
+    header = (
+        "#ifndef " + levelName.upper() + "_HEADER_H\n" + "#define " + levelName.upper() + "_HEADER_H\n" + "\n"
+        '#include "types.h"\n'
+        '#include "game/moving_texture.h"\n\n'
+    )
+
+    return header
+
+
 class SM64_ExportLevel(ObjectDataExporter):
     # set bl_ properties
     bl_idname = "object.sm64_export_level"
@@ -1201,7 +1212,6 @@ class SM64_ExportLevel(ObjectDataExporter):
     def execute(self, context):
         if context.mode != "OBJECT":
             raise PluginError("Operator can only be used in object mode.")
-        sm64_props: SM64_Properties = context.scene.fast64.sm64
         obj: bpy.types.Object = None
         try:
             try:
@@ -1223,7 +1233,7 @@ class SM64_ExportLevel(ObjectDataExporter):
                     raise PluginError("Cannot find level empty.")
                 selectSingleObject(obj)
 
-            scaleValue = sm64_props.blender_to_sm64_scale
+            scaleValue = context.scene.fast64.sm64.blender_to_sm64_scale
             final_transform = mathutils.Matrix.Diagonal(mathutils.Vector((scaleValue, scaleValue, scaleValue))).to_4x4()
 
         except Exception as e:
@@ -1234,7 +1244,7 @@ class SM64_ExportLevel(ObjectDataExporter):
 
             applyRotation([obj], math.radians(90), "X")
 
-            props = sm64_props.combined_export
+            props = context.scene.fast64.sm64.combined_export
             export_path, level_name = props.base_level_path, props.export_level_name
             if props.is_custom_level:
                 triggerName = "sCam" + level_name.title().replace(" ", "").replace("_", "")
@@ -1244,7 +1254,6 @@ class SM64_ExportLevel(ObjectDataExporter):
             if not props.non_decomp_level:
                 applyBasicTweaks(export_path)
             fileStatus = exportLevelC(
-                sm64_props,
                 obj,
                 final_transform,
                 level_name,
