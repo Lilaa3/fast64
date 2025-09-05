@@ -50,9 +50,10 @@ class GfxMatWriteMethod(enum.Enum):
 WIDTH_T = TypeVar("WIDTH_T")
 HEIGHT_T = TypeVar("HEIGHT_T")
 CHANNELS_T = TypeVar("CHANNELS_T")
-FloatPixels = np.ndarray[np.float32, (WIDTH_T, HEIGHT_T, 4)]  # unflattened pixels
-FlatPixels = np.ndarray[np.float32, (WIDTH_T, HEIGHT_T)]  # flattened (height * width) pixels (n64 order)
-N64Pixels = np.ndarray[TypeVar("T", bound=int), (Any)]  # flattened, n64 order, packed (only one channel) pixels
+TYPE_T = TypeVar("TYPE_T")
+FloatPixels = np.ndarray[np.float32, (WIDTH_T, HEIGHT_T, 4)]
+FlatPixels = np.ndarray[TYPE_T, (Any, 4)]
+N64Pixels = np.ndarray[TYPE_T, (Any)]
 
 DITHER_MODES = Literal["NONE", "DITHER", "RANDOM", "FLOYD"]
 
@@ -2407,6 +2408,7 @@ class FModel:
         self.global_data: FGlobalData = FGlobalData()
         self.texturesSavedLastExport: int = 0  # hacky
         self.raw_images: dict[str, FloatPixelsImage] = {}
+        self.raw_images_fmt: dict[(FloatPixelsImage, str), FloatPixels] = {}
 
     def writeTexRefNonCITextures(self, obj, texFmt: str):
         """

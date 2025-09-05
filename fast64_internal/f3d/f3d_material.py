@@ -1903,17 +1903,19 @@ def update_node_values_of_material(material: Material, context):
     update_fog_nodes(material, context)
 
 
-def calculate_high_mask(field: "TextureFieldProperty", pixel_length: int):
+def calculate_high_mask(clamp: bool, repeats: int, low: int, pixel_length: int):
     high = pixel_length
-    if field.clamp:
-        high *= field.repeats
-    high += field.low
+    if clamp:
+        high *= repeats
+    high += low
     high -= 1
+    if pixel_length == 0:
+        return 0, high
     return log2iRoundUp(pixel_length), high
 
 
 def setAutoProp(field: "TextureFieldProperty", pixel_length: int):
-    field.mask, field.high = calculate_high_mask(field, pixel_length)
+    field.mask, field.high = calculate_high_mask(field.clamp, field.repeats, field.low, pixel_length)
 
 
 def trunc_10_2(val: float):
@@ -2833,6 +2835,8 @@ class TextureProperty(PropertyGroup):
         default=16,
     )
 
+    other_tab: bpy.props.BoolProperty(name="Other Properties", default=False)
+
     S: bpy.props.PointerProperty(type=TextureFieldProperty)
     T: bpy.props.PointerProperty(type=TextureFieldProperty)
 
@@ -2983,8 +2987,11 @@ def ui_image(
 
         if not forced_fmt:
             fmt_row = prop_input.row()
-            fmt_row.prop(tex_prop, "auto_fmt", text="Auto Format")
-            draw_forced(fmt_row, tex_prop, "tex_format", tex_prop.auto_fmt, "", "TODO", split=False)
+            if has_tex:
+                fmt_row.prop(tex_prop, "auto_fmt", text="Auto Format")
+                draw_forced(fmt_row, tex_prop, "tex_format", tex_prop.auto_fmt, "", "TODO", split=False)
+            else:
+                prop_split(prop_input, tex_prop, "tex_format", "Texture Format")
 
         # TODO: auto fmt/pseudo fmt proper word usage
         if canUseLargeTextures:  # TODO: rework how this works, we want multi texture large textures to be a thing
@@ -3004,43 +3011,43 @@ def ui_image(
             tmemUsageUI(prop_input, tex_prop)
         prop_input.separator(factor=0.5)
 
-        if tex_prop.is_ci:
-            if not always_load:
-                row = prop_input.row()
-                row.prop(tex_prop, "load_pal")
-                if tex_prop.load_pal:
-                    if is_rdpq:
-                        row = prop_input.row() if tex_prop.use_pal_reference else row
-                        row.prop(tex_prop, "use_pal_reference", text="Placeholder")
-                        if tex_prop.use_pal_reference:
-                            row.prop(tex_prop, "pal_placeholder_slot", text="")
-                    else:
-                        row.prop(tex_prop, "use_pal_reference")
-                        if tex_prop.use_pal_reference and tex_prop.load_pal:
-                            prop_split(prop_input, tex_prop, "pal_reference", "Palette Reference")
-                            if tex_prop.pal is None:
-                                prop_split(prop_input, tex_prop, "pal_reference_size", "Palette Size")
+        if tex_prop.is_ci and not always_load and not tex_prop.auto_fmt:
+            row = prop_input.row()
+            row.prop(tex_prop, "load_pal")
+            if tex_prop.load_pal:
+                if is_rdpq:
+                    row = prop_input.row() if tex_prop.use_pal_reference else row
+                    row.prop(tex_prop, "use_pal_reference", text="Placeholder")
+                    if tex_prop.use_pal_reference:
+                        row.prop(tex_prop, "pal_placeholder_slot", text="")
                 else:
-                    prop_split(prop_input, tex_prop, "pal_index", "Palette Index")
-                if not tex_prop.has_pal:
-                    prop_input.template_ID(tex_prop, "pal", new="image.new", open="image.open")
-                    if has_tex:
-                        if tex_prop.pal:
-                            multilineLabel(
-                                prop_input,
-                                text="Reference pallete, the texture will be quantized and indexed\n"
-                                "against this palette.",
-                                icon="INFO",
-                            )
-                        else:
-                            multilineLabel(
-                                prop_input,
-                                text="No reference pallete set, a greyscale version of the\n"
-                                "texture will be used as indices to the pallete",
-                                icon="INFO",
-                            )
-            if not forced_fmt:
-                prop_split(prop_input, tex_prop, "ci_format", name="CI Format")
+                    row.prop(tex_prop, "use_pal_reference")
+                    if tex_prop.use_pal_reference and tex_prop.load_pal:
+                        prop_split(prop_input, tex_prop, "pal_reference", "Palette Reference")
+                        if tex_prop.pal is None:
+                            prop_split(prop_input, tex_prop, "pal_reference_size", "Palette Size")
+            else:
+                prop_split(prop_input, tex_prop, "pal_index", "Palette Index")
+            if not tex_prop.has_pal:
+                prop_input.template_ID(tex_prop, "pal", new="image.new", open="image.open")
+                if has_tex:
+                    if tex_prop.pal:
+                        multilineLabel(
+                            prop_input,
+                            text="Reference pallete, the texture will be quantized and indexed\n"
+                            "against this palette.",
+                            icon="INFO",
+                        )
+                    else:
+                        multilineLabel(
+                            prop_input,
+                            text="No reference pallete set, a greyscale version of the\n"
+                            "texture will be used as indices to the pallete",
+                            icon="INFO",
+                        )
+        if tex_prop.is_ci:
+            if not forced_fmt and has_tex:
+                draw_forced(prop_input, tex_prop, "ci_format", tex_prop.auto_fmt, "CI Format", "TODO", split=True)
             prop_input.separator(factor=0.5)
 
         if not isLarge:
@@ -3064,6 +3071,9 @@ def ui_image(
                         "Clamping required for non-power-of-2 image\ndimensions. Enable clamp or set mask to 0.",
                         icon="ERROR",
                     )
+
+            if not draw_and_check_tab(prop_input, tex_prop, "other_tab"):
+                return
 
             def draw_s_t_field(layout: UILayout, text: str, prop: str, field_text=False):
                 split = layout.split(factor=0.2)

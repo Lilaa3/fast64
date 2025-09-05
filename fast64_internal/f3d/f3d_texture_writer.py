@@ -20,6 +20,16 @@ from .f3d_material import (
 from .f3d_gbi import *
 from .f3d_gbi import _DPLoadTextureBlock
 from .flipbook import TextureFlipbook
+from .texture_algorithms import (
+    flatten_pixels,
+    generate_ihq,
+    generate_palette_kmeans,
+    get_rgba_colors_float,
+    color_to_luminance_np,
+    check_if_greyscale,
+    analyze_best_bit_depth,
+    shrink_box,
+)
 
 from ..utility import *
 
@@ -301,8 +311,8 @@ def getImageName(image: bpy.types.Image):
         return getNameFromPath(image.filepath, True)
 
 
-def getTextureNamesFromImage(image: bpy.types.Image, texFormat: str, parent: Union[FModel, FTexRect]):
-    return getTextureNamesFromBasename(getImageName(image), texFormat, parent, False)
+def getTextureNamesFromImage(image: bpy.types.Image, fmt: str, parent: Union[FModel, FTexRect]):
+    return getTextureNamesFromBasename(getImageName(image), fmt, parent, False)
 
 
 def getTextureNamesFromProp(texProp: TextureProperty, parent: Union[FModel, FTexRect]):
@@ -327,7 +337,7 @@ def saveOrGetPaletteDefinition(
     is_pal_reference: bool,
     images: list[bpy.types.Image],
     palBaseName: str,
-    palLen: int,
+    pal_length: int,
 ) -> tuple[FPaletteKey, FImage]:
     texFmt = texProp.tex_format
     palFmt = texProp.ci_format
@@ -335,7 +345,7 @@ def saveOrGetPaletteDefinition(
     paletteKey = FPaletteKey(palFmt, images)
 
     if is_pal_reference:
-        fPalette = FImage(texProp.pal_reference, None, None, 1, palLen, None)
+        fPalette = FImage(texProp.pal_reference, None, None, 1, pal_length, None)
         return paletteKey, fPalette
 
     # If palette already loaded, return that data.
@@ -345,7 +355,7 @@ def saveOrGetPaletteDefinition(
         return paletteKey, fPalette
 
     paletteName, filename = getTextureNamesFromBasename(palBaseName, palFmt, parent, True)
-    fPalette = FImage(paletteName, palFormat, "G_IM_SIZ_16b", 1, palLen, filename)
+    fPalette = FImage(paletteName, palFormat, "G_IM_SIZ_16b", 1, pal_length, filename)
 
     parent.addTexture(paletteKey, fPalette, fMaterial)
     return paletteKey, fPalette
@@ -387,37 +397,43 @@ def saveOrGetTextureDefinition(
 class TexInfo:
     load_tex: bool = False
     tex_reference: Optional[str] = None
-    texFormat: str = ""
+    fmt: str | None = None
+    _auto_fmt: bool = False
     main_image: Optional[FloatPixelsImage] = None
     _imDependencies: set[FloatPixelsImage] = field(default_factory=set)
     imageDims: tuple[int, int] = (0, 0)
 
     load_pal: bool = False
     pal_reference: Optional[str] = None
-    palFormat: str = ""
+    pal_fmt: str = ""
     main_pal: Optional[FloatPixelsImage] = None
     _palDependencies: set[FloatPixelsImage] = field(default_factory=set)
 
     tmemSize: int = 0
-    palLen: int = 0
+    pal_length: int = -1
 
     mirror: tuple[bool, bool] = (False, False)
     clamp: tuple[bool, bool] = (False, False)
     shift: tuple[int, int] = (0, 0)
     low: tuple[float, float] = (0.0, 0.0)
+    repeats: tuple[int, int] = (1, 1)
+    auto_other_props: bool = False
     high: tuple[float, float] = (0.0, 0.0)
     mask: tuple[int, int] = (0, 0)
+
+    # Auto format values
+    recommended_alpha_bits: int = -1
+    recommended_color_bits: int = -1
+    is_greyscale: bool = False
 
     # Parameters computed by MultitexManager.writeAll
     texAddr: int = 0
     palAddr: int = 0
-    palIndex: int = 0
+    pal_index: int = 0
     palBaseName: str = ""
     doTexTile: bool = True
 
     # Internal parameters--copies of passed parameters
-    texProp: Optional[TextureProperty] = None
-    tex: Optional[bpy.types.Image] = None
     indexInMat: int = -1
 
     @property
@@ -425,8 +441,20 @@ class TexInfo:
         return self.load_tex and self.tex_reference is None
 
     @property
+    def auto_fmt(self) -> bool:
+        return self._auto_fmt and self.has_tex
+
+    @property
     def is_ci(self) -> bool:
-        return self.texFormat.startswith("CI")
+        return self.fmt and self.fmt.startswith("CI")
+
+    @property
+    def tlut_mode(self) -> bool:
+        return self.pal_fmt if self.is_ci else None
+
+    @property
+    def is_ia(self) -> bool:
+        return self.fmt and self.fmt.startswith("I")
 
     @property
     def has_pal(self) -> bool:
@@ -434,7 +462,7 @@ class TexInfo:
 
     @property
     def tmem_hash(self):
-        values = [self.tex_reference, self.tmemSize, self.texFormat]
+        values = [self.tex_reference, self.tmemSize, self.fmt]
         if self.tex_reference is None:
             if self.main_image is not None:
                 values.append(self.main_image.name)
@@ -443,11 +471,11 @@ class TexInfo:
 
     @property
     def palDependencies(self):
-        return {self.main_pal} if self.main_pal is not None else {} | self._palDependencies
+        return {self.main_pal} if self.main_pal is not None else self._palDependencies
 
     @property
     def imDependencies(self):
-        return {self.main_image} if self.main_image is not None else {} | self._imDependencies
+        return {self.main_image} if self.main_image is not None else self._imDependencies
 
     def copy(self):
         new = copy.copy(self)
@@ -467,20 +495,22 @@ class TexInfo:
     ) -> None:
         if not tex_prop.tex_set and not ignore_tex_set:
             return None
-        self.texProp = tex_prop
         self.indexInMat = index
-
-        self.useTex = True
-        self.texFormat = "RGBA32" if pseudo_fmt else tex_prop.tex_format
-        self.palFormat = tex_prop.ci_format if self.is_ci else ""
-
-        self.values_from_dims(*tex_prop.size)
 
         self.mirror = (tex_prop.S.mirror, tex_prop.T.mirror)
         self.clamp = (tex_prop.S.clamp, tex_prop.T.clamp)
         self.shift = (tex_prop.S.shift, tex_prop.T.shift)
         self.low = (tex_prop.S.low, tex_prop.T.low)
+        self.repeats = (tex_prop.S.repeats, tex_prop.T.repeats)
+        self.auto_other_props = tex_prop.autoprop
+        if self.auto_other_props:
+            self.high = (tex_prop.S.high, tex_prop.T.high)
+            self.mask = (tex_prop.S.mask, tex_prop.T.mask)
 
+        if not pseudo_fmt:
+            self.fmt = tex_prop.tex_format
+            self.pal_fmt = tex_prop.ci_format if self.is_ci else ""
+            self._auto_fmt = tex_prop.auto_fmt
         self.load_tex = tex_prop.load_tex or base_texture
         self.tex_reference = tex_prop.tex_reference if (tex_prop.use_tex_reference and not base_texture) else None
         img_deps = fModel.gather_images(material, tex_prop, self.tex_reference is not None, base_texture)
@@ -490,6 +520,7 @@ class TexInfo:
                 self.main_image = list(img_deps)[0]
             else:
                 self._imDependencies = img_deps
+
         if self.is_ci:
             self.load_pal = tex_prop.load_pal or base_texture
             self.pal_reference = tex_prop.pal_reference if (tex_prop.use_pal_reference and not base_texture) else None
@@ -501,17 +532,27 @@ class TexInfo:
                         image = tex_prop.pal
                         self.main_pal = fModel.gather_pixels(image)
                         self._palDependencies = {self.main_pal}
+            else:
+                if self.pal_reference is None:
+                    self.pal_index = tex_prop.pal_index
+                else:
+                    self.pal_length = tex_prop.pal_reference_size
+
+        self.values_from_dims(*tex_prop.size)
 
         return self
 
     def values_from_dims(self, width: int, height: int):
         self.imageDims = (width, height)
-        self.tmemSize = getTmemWordUsage(self.texFormat, width, height)
-        tex_prop = self.texProp
-        s_high_mask, t_high_mask = calculate_high_mask(tex_prop.S, width), calculate_high_mask(tex_prop.T, height)
-        self.high = (s_high_mask[1], t_high_mask[1])
-        self.mask = (s_high_mask[0], t_high_mask[0])
-        if self.texFormat == "YUV16":
+        if self.fmt is not None:
+            self.tmemSize = getTmemWordUsage(self.fmt, width, height)
+        if self.auto_other_props:
+            high_mask = [[0, 0], [0, 0]]
+            for i in range(2):
+                high_mask[i] = calculate_high_mask(self.clamp[i], self.repeats[i], self.low[i], height)
+            self.high = (high_mask[0][1], high_mask[1][1])
+            self.mask = (high_mask[0][0], high_mask[1][0])
+        if self.fmt == "YUV16":
             self.imageDims = (width, height * 2)
 
     def error_checking(self):
@@ -548,19 +589,19 @@ class TexInfo:
                 self.is_pal_reference,
                 self.palDependencies,
                 self.palBaseName,
-                self.palLen,
+                self.pal_length,
             )
 
         # Write loads
         loadGfx = fMaterial.texture_DL
         f3d = fModel.f3d
         if self.load_pal:
-            savePaletteLoad(loadGfx, fPalette, self.palFormat, self.palAddr, self.palLen, 5 - self.indexInMat, f3d)
+            savePaletteLoad(loadGfx, fPalette, self.pal_fmt, self.palAddr, self.pal_length, 5 - self.indexInMat, f3d)
         if self.load_tex:
             saveTextureLoadOnly(fImage, loadGfx, self.texProp, None, 7 - self.indexInMat, self.texAddr, f3d)
         if self.doTexTile:
             saveTextureTile(
-                fImage, fMaterial, loadGfx, self.texProp, None, self.indexInMat, self.texAddr, self.palIndex, f3d
+                fImage, fMaterial, loadGfx, self.texProp, None, self.indexInMat, self.texAddr, self.pal_index, f3d
             )
 
         # Write texture data
@@ -570,138 +611,61 @@ class TexInfo:
             if self.is_tex_reference:
                 if self.is_ci:
                     fModel.writeTexRefCITextures(
-                        self.flipbook, fMaterial, self.imDependencies, self.pal, self.texFormat, self.palFormat
+                        self.flipbook, fMaterial, self.imDependencies, self.pal, self.fmt, self.pal_fmt
                     )
                 else:
-                    fModel.writeTexRefNonCITextures(self.flipbook, self.texFormat)
+                    fModel.writeTexRefNonCITextures(self.flipbook, self.fmt)
             else:
                 if self.is_ci:
                     assert (
                         self.pal is not None
                     ), "self.pal is None, either moreSetupFromModel or materialless_setup must be called beforehand"
-                    writeCITextureData(self.texProp.tex, fImage, self.pal, self.palFormat, self.texFormat)
+                    writeCITextureData(self.texProp.tex, fImage, self.pal, self.pal_fmt, self.fmt)
                 else:
-                    writeNonCITextureData(self.texProp.tex, fImage, self.texFormat)
+                    writeNonCITextureData(self.texProp.tex, fImage, self.fmt)
 
 
 MAX_IMAGES = 8
 
 
-def shrink_box(pixels: np.ndarray[np.float32, (WIDTH_T, HEIGHT_T, Any)], width_div: int, height_div: int):
-    assert width_div > 1 and height_div > 1
-    width, height, channels = pixels.shape
-    n_width, n_height = width // width_div, height // height_div
-    return pixels.reshape(n_width, width_div, n_height, height_div, channels).mean(axis=(1, 3))
+def get_fmt_size(fmt: str):
+    return texBitSizeF3D[fmt]
 
 
-YUV_MATRIX = np.array([[0.299, 0.587, 0.114], [-0.14713, -0.28886, 0.436], [0.615, -0.51499, -0.10001]])
-WHITE_YUV = np.ones((3,)) @ YUV_MATRIX.T
+def get_candidate_formats(texture: TexInfo, allow_ci=False):
+    """
+    Returns recommended formats for a given texture, in order of best to worst
+    """
+    candidates = []
+    needs_alpha = texture.recommended_alpha_bits > 0
 
+    if allow_ci:
+        if texture.recommended_color_bits > 4:
+            candidates.append("CI8")
+        candidates.append("CI4")
+        return candidates
 
-def ihq_calc_best_i(
-    width: int,
-    height: int,
-    yuv_base: np.ndarray[np.float32, (Any, 3)],
-    yuv_target: np.ndarray[np.float32, (Any, 3)],
-    ifactor: float,
-) -> tuple[np.ndarray[np.float32, (WIDTH_T, HEIGHT_T)], float]:
-    yuv_base_ref = yuv_base * (1.0 - ifactor)
-    yuv_ifactor = WHITE_YUV * ifactor
-
-    num = np.sum((yuv_target - yuv_base_ref) * yuv_ifactor, axis=1)
-    den = np.sum(np.square(yuv_ifactor))
-    best_i_flat = np.clip(num / np.maximum(den, 1e-9), 0.0, 1.0)
-
-    final = yuv_base_ref + best_i_flat[:, None] * yuv_ifactor[None, :]
-    errs_flat = np.sum((final - yuv_target) ** 2, axis=1)
-
-    return best_i_flat.reshape(width, height), np.sum(errs_flat)
-
-
-def bilinear_resize(
-    pixels: np.ndarray[np.float32, (Any, Any, Any)], width_multiplier: int, height_multiplier: int
-) -> np.ndarray[np.float32, (WIDTH_T, HEIGHT_T, Any)]:
-    assert (
-        width_multiplier > 1 and height_multiplier > 1
-    ), "width_multiplier and height_multiplier must be an integer > 1."
-
-    old_width, old_height, _ = pixels.shape
-    new_height = old_height * height_multiplier
-    new_width = old_width * width_multiplier
-
-    y_new = np.arange(new_height)
-    x_new = np.arange(new_width)
-
-    y_old = y_new / height_multiplier  # 1 becomes 0.5
-    x_old = x_new / width_multiplier
-
-    # get the top-left integer coordinates
-    y0 = np.floor(y_old).astype(np.uint32)
-    x0 = np.floor(x_old).astype(np.uint32)
-
-    # get the bottom-right integer coordinates
-    y1 = np.clip(y0 + 1, 0, old_height - 1)
-    x1 = np.clip(x0 + 1, 0, old_width - 1)
-
-    p00 = pixels[x0, :][:, y0]  # top-left
-    p10 = pixels[x1, :][:, y0]  # top-right
-    p01 = pixels[x0, :][:, y1]  # bottom-left
-    p11 = pixels[x1, :][:, y1]  # bottom-right
-
-    # fractional parts
-    yf = y_old - y0
-    xf = x_old - x0
-    # reshape for broadcasting
-    yf = yf.reshape(1, new_height, 1)
-    xf = xf.reshape(new_width, 1, 1)
-
-    interp_top = p00 * (1 - xf) + p10 * xf
-    interp_bottom = p01 * (1 - xf) + p11 * xf
-    new_image = interp_top * (1 - yf) + interp_bottom * yf
-
-    return new_image
-
-
-def generate_ihq(pixels: FloatPixels):
-    width, height, _ = pixels.shape
-    if width % 4 != 0 and height % 4 != 0:
-        raise ValueError("Image width or height must be a multiple of 4")
-
-    alpha_channel = pixels[:, :, 3]
-    color_channels = pixels[:, :, :3]
-    uses_alpha = np.any(alpha_channel < 0.5)
-    yuv_target = color_channels.reshape(-1, 3) @ YUV_MATRIX.T
-
-    best_err = np.inf
-    best_i_pixels, best_rgba_pixels = None, None
-    for dir in range(2):
-        if dir == 0 and width % 4 == 0:
-            width_div, height_div = 4, 2
-        elif dir == 1 and height % 4 == 0:
-            width_div, height_div = 2, 4
+    if texture.is_greyscale:
+        if needs_alpha:
+            if texture.recommended_color_bits > 4 or texture.recommended_alpha_bits > 4:
+                candidates.append("IA16")
+            if texture.recommended_color_bits > 2 or texture.recommended_alpha_bits > 2:
+                candidates.append("IA8")
+            candidates.append("IA4")
         else:
-            assert False, "What the fuck"
-        down_scale = shrink_box(pixels, width_div=width_div, height_div=height_div)
-        bilinear_upscale = bilinear_resize(
-            down_scale[:, :, :3], width_multiplier=width_div, height_multiplier=height_div
-        )
-        yuv_base = bilinear_upscale.reshape(-1, 3) @ YUV_MATRIX.T
-        for ifactor in range(1, 11):
-            ifactor *= 0.05
-            i_pixels, error = ihq_calc_best_i(width, height, yuv_base, yuv_target, ifactor)
+            if texture.recommended_color_bits > 4:
+                candidates.append("I8")
+            candidates.append("I4")
+        return candidates
 
-            if error < best_err:
-                best_err = error
-                if uses_alpha:
-                    i_pixels[:, :, 3] = alpha_channel
-                best_i_pixels, best_rgba_pixels = i_pixels, down_scale
-
-    return best_i_pixels, best_rgba_pixels, uses_alpha
+    if texture.recommended_color_bits > 5 or (texture.recommended_alpha_bits > 1):
+        candidates.append("RGBA32")
+    candidates.append("RGBA16")
+    return candidates
 
 
 @dataclass
 class MultitexManager:
-    is_ci: bool = False
     textures: dict[int, TexInfo] = field(default_factory=dict)
     dithering_method: DITHER_MODES = "FLOYD"
     tex_dimensions: tuple[int, int] = (0, 0)
@@ -710,21 +674,150 @@ class MultitexManager:
     def mip_levels(self):
         return max((i for i in self.textures.keys()), default=0)
 
-    def __repr__(self):
-        return f"MultitexManager(is_ci={self.is_ci}, textures={self.textures}, dithering_method={self.dithering_method}, mip_levels={self.mip_levels})"
+    @property
+    def auto_textures(self):
+        return [tex for tex in self.textures.values() if tex.auto_fmt]
+
+    @property
+    def non_auto_textures(self):
+        return [tex for tex in self.textures.values() if not tex.auto_fmt]
+
+    @property
+    def is_ci(self):
+        cis = [tex.is_ci for tex in self.non_auto_textures]
+        return any(cis) if cis else None
+
+    @property
+    def max_tmem_size(self):
+        return 256 if self.is_ci else 256 * 2
+
+    @property
+    def tlut_mode(self):
+        modes = list(set(tex.tlut_mode for tex in self.non_auto_textures))
+        if modes:
+            return modes[0]
+        return None
+
+    @property
+    def texture_list(self):
+        return list(self.textures.values())
+
+    def calculate_tmem_allocations(self, texture_list=None):
+        """
+        Calculate which textures will fill each space in TMEM, this will be used to calculate usage and addresses
+        """
+
+        class TexAlloc(NamedTuple):
+            start: int
+            end: int
+            tex: TexInfo
+            lower: bool
+
+            def __str__(self):
+                return f"({self.start}, {self.end}): ({self.tex.indexInMat} - {self.lower})"
+
+            def __repr__(self):
+                return str(self)
+
+        if texture_list is None:
+            texture_list = self.texture_list
+        textures = sorted(texture_list, key=lambda tex: tex.tmemSize and tex.fmt not in {"RGBA32"})
+        allocations: list[TexAlloc] = []  # (start, end, tex, lower)
+
+        for tex in textures:
+            if tex.fmt == "RGBA32":
+                half_size = tex.tmemSize // 2
+                new_allocations = [(half_size, tex, False), (half_size, tex, True)]
+            else:
+                new_allocations = [(tex.tmemSize, tex, None)]
+
+            for tmem_size, tex, lower in new_allocations:
+                if any(t.tmem_hash == tex.tmem_hash and l == lower for _, _, t, l in allocations):
+                    continue  # check if already present
+
+                for i in range(len(allocations) - 1):
+                    gap_start = allocations[i][1]
+                    gap_end = allocations[i + 1][0]
+                    gap_size = gap_end - gap_start
+
+                    if (gap_start <= self.max_tmem_size // 2) == lower:
+                        continue
+
+                    if gap_size >= tmem_size:  # fits in this gap
+                        allocations.append(TexAlloc(gap_start, gap_start + tmem_size, tex, lower))
+                        allocations.sort(key=lambda x: x[0])  # ensure sorted
+                        break
+                else:  # place at the end
+                    starting_end = self.max_tmem_size // 2 if lower == True else 0
+                    last_end = max((end for _, end, *_ in allocations if end > starting_end), default=starting_end)
+                    allocations.append(TexAlloc(last_end, last_end + tmem_size, tex, lower))
+                    allocations.sort(key=lambda x: x[1])  # ensure sorted
+
+        return allocations
 
     def get_tmem_size(self):
-        tmem_size = 0
-        added_tex = set()
-        for i, tex in self.textures.items():
-            tmem_hash = tex.tmem_hash
-            if tmem_hash not in added_tex:
-                added_tex.add(tmem_hash)
-                tmem_size += tex.tmemSize
-        return tmem_size
+        return sum(end - start for start, end, *_ in self.calculate_tmem_allocations())
 
-    def generate_mipmaps(self, fModel: FModel):
-        tmem_size = self.get_tmem_size()
+    def get_free_tmem_spaces(self, allocs=None):
+        if allocs is None:
+            allocs = self.calculate_tmem_allocations()
+        free_spaces = []
+        for i in range(len(allocs) - 1):
+            start = allocs[i][1]
+            end = allocs[i + 1][0]
+            if end - start > 0:
+                free_spaces.append((start, end))
+        return free_spaces
+
+    def get_available_tmem(self, allocs=None):
+        if allocs is None:
+            allocs = self.calculate_tmem_allocations()
+        end = max((end for _, end, *_ in allocs), default=0)
+        if end > self.max_tmem_size:
+            remaining_tmem = -1
+        else:
+            remaining_tmem = self.max_tmem_size - end
+
+        biggest_gap = max(
+            (end - start for start, end in self.get_free_tmem_spaces(allocs) if end <= self.max_tmem_size), default=-1
+        )
+        return max(remaining_tmem, biggest_gap)
+
+    def __repr__(self):
+        return (
+            f"MultitexManager(\n\ttlut_mode={self.tlut_mode}, \n"
+            f"\ttotal_tmem={self.get_tmem_size()}/{self.max_tmem_size}, available_tmem={self.get_available_tmem()}, \n"
+            f"\tallocations={self.calculate_tmem_allocations()}, \n"
+            f"\ttextures={self.textures}, \n\tdithering_method={self.dithering_method}, \n\tmip_levels={self.mip_levels}\n)"
+        )
+
+    def generate_mip(self, base: TexInfo, mips: int, i: int, ignore_restrictions: bool = False):
+        divisor = (mips + 1) * 2
+        width, height = base.imageDims
+        n_width, n_height = width // divisor, height // divisor
+        if (n_width < 4) or (n_height < 4):
+            return False
+
+        new = base.copy()
+        new.values_from_dims(n_width, n_height)
+        # create tmem allocations and see if tmem exceeds n64 boundaries (-1)
+        if (
+            not ignore_restrictions
+            and self.get_available_tmem(self.calculate_tmem_allocations(self.texture_list + [new])) < 0
+        ):
+            return False
+
+        new.main_image = FloatPixelsImage(
+            base.main_image.name + f"_mip{mips}", shrink_box(base.main_image.pixels, divisor, divisor)
+        )
+        # print(n_width, n_height, new.main_image.pixels)
+        if base.main_image == base.main_pal:
+            new.main_pal = new.main_image
+        new.indexInMat = i + 1
+        self.textures[i] = new
+        return True
+
+    def generate_mipmaps(self, ignore_restrictions: bool = False):
         prev, mips = None, 0
         for i in range(MAX_IMAGES):
             if i in self.textures:
@@ -732,40 +825,26 @@ class MultitexManager:
                 continue
             elif prev is None:
                 continue
-            divisor = (mips + 1) * 2
             assert prev.main_image is not None, "prev.main_image is None"
-            width, height = prev.imageDims
-            n_width, n_height = width // divisor, height // divisor
-            if (n_width < 4) or (n_height < 4):
+            if not self.generate_mip(prev, mips, i, ignore_restrictions):
                 break
-            tmem_size += getTmemWordUsage(prev.texFormat, n_width, n_height)
-            if tmem_size >= 256 * (1 if self.is_ci else 2):
-                break
-
-            new = prev.copy()
-            new.main_image = FloatPixelsImage(
-                prev.main_image.name + f"_mip{mips}", shrink_box(prev.main_image.pixels, divisor, divisor)
-            )
-            # print(n_width, n_height, new.main_image.pixels)
-            if prev.main_image == prev.main_pal:
-                new.main_pal = new.main_image
-            new.values_from_dims(n_width, n_height)
-            new.indexInMat = i
-            self.textures[i] = new
-            divisor *= 2
+            mips += 1
 
     def generate_ihq(self):
-        assert len(self.textures) == 1 and list(self.textures.keys())[0] == 0
-        base_tex = list(self.textures.values())[0]
+        assert len(self.textures) == 1 and 0 in self.textures, "Only one (first) texture is supported for IHQ."
+        base_tex = self.texture_list[0]
+        i4_tex = base_tex.copy()
         rgba_tex = base_tex.copy()
 
-        intensity, rgba, uses_alpha = generate_ihq(base_tex.main_image.pixels)
-        base_tex.main_image = FloatPixelsImage(base_tex.main_image.name + "_ihq_i", intensity)
-        base_tex.texFormat = "IA4" if uses_alpha else "I4"
-        base_tex.values_from_dims(intensity.shape[0], intensity.shape[1])
+        starting_img = base_tex.main_image
+        intensity, rgba, uses_alpha = generate_ihq(starting_img.pixels)
+        i4_tex.main_image = FloatPixelsImage(starting_img.name + "_ihq_i", intensity)
+        i4_tex.fmt = "IA4" if uses_alpha else "I4"
+        i4_tex.values_from_dims(intensity.shape[0], intensity.shape[1])
+        self.textures[0] = i4_tex
 
-        rgba_tex.main_image = FloatPixelsImage(rgba_tex.main_image.name + "_ihq_rgba", rgba)
-        rgba_tex.texFormat = "RGBA16"
+        rgba_tex.main_image = FloatPixelsImage(starting_img.name + "_ihq_rgba", rgba)
+        rgba_tex.fmt = "RGBA16"
         rgba_tex.shift = (rgba_tex.shift[0] + 1, rgba_tex.shift[1] + 1)
         if rgba_tex.shift[0] > 10 or rgba_tex.shift[1] > 10:
             raise PluginError("Shift is too large for IHQ.")
@@ -773,29 +852,96 @@ class MultitexManager:
         rgba_tex.indexInMat = 1
         self.textures[1] = rgba_tex
 
-    def from_mat(self, mat: bpy.types.Material, f_material: FMaterial, fModel: FModel, convert_texture_data: bool):
+        for mips in range(0, MAX_IMAGES - 2):
+            if not self.generate_mip(base_tex, mips, mips + 2):
+                break
+
+    def from_mat(
+        self,
+        mat: bpy.types.Material,
+        f_material: FMaterial,
+        fModel: FModel,
+        convert_texture_data: bool,
+        ignore_restrictions: bool = False,
+    ):
         f3d_mat: "F3DMaterialProperty" = mat.f3d_mat
         pseudo_format = f3d_mat.pseudo_format
-        self.is_ci = f3d_mat.is_ci
         for i, tex_prop in f3d_mat.set_textures.items():
             tex = TexInfo()
             tex.from_prop(tex_prop, i, mat, fModel, False, False, pseudo_format != "NONE")
             self.textures[i] = tex
 
         uv_basis_index = f3d_mat.uv_basis_index
-        main_tex = self.textures[uv_basis_index]
-        self.tex_dimensions = main_tex.imageDims
+        if uv_basis_index in self.textures:
+            main_tex = self.textures[uv_basis_index]
+            self.tex_dimensions = main_tex.imageDims
 
         match pseudo_format:
             case "IHQ":
                 self.generate_ihq()
-        if f3d_mat.gen_auto_mips:
-            self.generate_mipmaps(fModel)
+        self.figure_out_auto()
+        if pseudo_format == "NONE" and f3d_mat.gen_auto_mips:
+            self.generate_mipmaps(ignore_restrictions)
+        self.figure_out_auto(ignore_restrictions)
         if convert_texture_data:
             self.convert()
 
-    def convert(self):
+    def figure_out_auto(self, ignore_restrictions=False):
+        # check if all are greyscale
+        if not any(tex.auto_fmt for tex in self.textures.values()):
+            return
+        for tex in self.textures.values():
+            if tex.auto_fmt:
+                continue
+            flat_pixels = flatten_pixels(tex.main_image.pixels)
+            tex.is_greyscale = check_if_greyscale(flat_pixels)
+            tex.recommended_alpha_bits = analyze_best_bit_depth(flat_pixels[..., 3])
+            if tex.is_greyscale:
+                # TODO: cache lum for i/ia?
+                tex.recommended_color_bits = analyze_best_bit_depth(color_to_luminance_np(flat_pixels))
+            else:
+                tex.recommended_color_bits = analyze_best_bit_depth(flat_pixels[..., :3])
+        tlut_mode = self.tlut_mode
+        if tlut_mode is None:  # tlut not defined (no non auto textures)
+            sizes = sum(tex.imageDims[0] * tex.imageDims[1] for tex in self.textures.values())
+            if not any(tex.is_greyscale for tex in self.textures.values()) and (sizes > 16 * 32):
+                tlut_mode = "RGBA16"
         pass
+
+    def create_pallete(self, ignore_restrictions=False):
+        assert self.is_ci, "Can only create palette for CI textures"
+
+        num_colors_used = 0
+        for tex in self.textures.values():
+            if tex.is_ci and tex.load_tex and tex.pal_reference:
+                num_colors_used += tex.pal_length
+
+        remaining_colors = 256 - num_colors_used
+        ci4_texs = [tex for tex in self.textures.values() if tex.fmt == "CI4"]
+        ci8_texs = [tex for tex in self.textures.values() if tex.fmt == "CI8"]
+
+        rgba_16 = {}
+
+        # TODO: calculate rgba16 versions
+        # figure out which ones already fit within their limited colors and reduce
+        # for those that don´t asign an amount depending on how many colors are left
+
+        for tex in ci4_texs:
+            rgba_16_palletes = []
+            palletes = tex.palDependencies
+            for pallete in palletes:
+                if pallete not in rgba_16:
+                    rgba_16[pallete] = get_rgba_colors_float(pallete.pixels)
+                rgba_16_palletes.append(rgba_16[pallete])
+            # join together, flattened
+            joined_palletes = flatten_pixels(np.vstack(rgba_16_palletes)).round()
+            pal, labels = generate_palette_kmeans(joined_palletes, min(16, remaining_colors))
+            if not ignore_restrictions:
+                remaining_colors -= len(pal)
+
+    def convert(self, ignore_restrictions=False):
+        if self.is_ci:
+            self.create_pallete(ignore_restrictions)
 
     def getTexDimensions(self):
         return self.tex_dimensions
@@ -961,13 +1107,13 @@ def saveTextureTile(
 
 
 # palAddr is the address within the second half of tmem (0-255), normally 16*palette num
-# palLen is the number of colors
+# pal_length is the number of colors
 def savePaletteLoad(
     gfxOut: GfxList,
     fPalette: FImage,
     palFormat: str,
     palAddr: int,
-    palLen: int,
+    pal_length: int,
     loadtile: int,
     f3d: F3D,
 ):
@@ -978,7 +1124,7 @@ def savePaletteLoad(
         [
             DPSetTextureImage(palFmt, "G_IM_SIZ_16b", 1, fPalette),
             DPSetTile("0", "0", 0, 256 + palAddr, loadtile, 0, nocm, 0, 0, nocm, 0, 0),
-            DPLoadTLUTCmd(loadtile, palLen - 1),
+            DPLoadTLUTCmd(loadtile, pal_length - 1),
         ]
     )
 

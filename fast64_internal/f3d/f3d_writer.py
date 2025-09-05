@@ -209,15 +209,13 @@ def getSTUVRepeats(tex_prop: "TextureProperty") -> tuple[float, float]:
     return (SShift * sMirrorScale, TShift * tMirrorScale)
 
 
-def getUVInterval(f3dMat):
-    useDict = all_combiner_uses(f3dMat)
-
-    if useDict["Texture 0"] and f3dMat.tex0.tex_set:
+def getUVInterval(f3dMat, use_dict: dict[str, bool]):
+    if use_dict["Texture 0"] and f3dMat.tex0.tex_set:
         tex0UVInterval = getSTUVRepeats(f3dMat.tex0)
     else:
         tex0UVInterval = (1.0, 1.0)
 
-    if useDict["Texture 1"] and f3dMat.tex1.tex_set:
+    if use_dict["Texture 1"] and f3dMat.tex1.tex_set:
         tex1UVInterval = getSTUVRepeats(f3dMat.tex1)
     else:
         tex1UVInterval = (1.0, 1.0)
@@ -244,6 +242,7 @@ def fixLargeUVs(obj):
         # Don't get tex dimensions here, as it also processes unused materials.
         # texSizeDict[material] = getTexDimensions(material)
 
+    use_dicts: dict[bpy.types.Material, dict[str, bool]] = {}
     for polygon in mesh.polygons:
         material = obj.material_slots[polygon.material_index].material
         if material is None:
@@ -252,6 +251,8 @@ def fixLargeUVs(obj):
                 " that are assigned to an empty material slot."
             )
 
+        if material not in use_dicts:
+            use_dicts[material] = all_combiner_uses(material.f3d_mat)
         if material not in texSizeDict:
             texSizeDict[material] = getTexDimensions(material)
         if material.f3d_mat.use_large_textures:
@@ -259,7 +260,7 @@ def fixLargeUVs(obj):
 
         # To prevent wrong UVs when wrapping UVs into valid bounds,
         # we need to account for the highest texture shift and if mirroring is active.
-        UVinterval = getUVInterval(material.f3d_mat)
+        UVinterval = getUVInterval(material.f3d_mat, use_dicts[material])
 
         size = texSizeDict[material]
         if size[0] == 0 or size[1] == 0:
@@ -1429,7 +1430,7 @@ def saveOrGetF3DMaterial(material, fModel, obj, drawLayer, convertTextureData):
         )
 
     multitexManager = MultitexManager()
-    multitexManager.from_mat(material, f3dMat, fModel, convertTextureData)
+    multitexManager.from_mat(material, f3dMat, fModel, convertTextureData, bpy.context.scene.ignoreTextureRestrictions)
     print(multitexManager)
     # Set othermode
     if drawLayer is not None:

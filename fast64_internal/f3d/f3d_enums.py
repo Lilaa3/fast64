@@ -167,6 +167,8 @@ def add_do_not_set(enum_list: list[tuple[str, str, str]]):
 
     def run(self, context):
         if getattr(context, "material", None) is None:
+            if context.region and context.region_data:
+                return enum_list + [("NONE", "", "", index)]
             return enum_list
         return with_no_set
 
