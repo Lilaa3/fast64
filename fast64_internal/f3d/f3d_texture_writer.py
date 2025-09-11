@@ -1,3 +1,4 @@
+from itertools import combinations
 from typing import Literal, Union, Optional
 from dataclasses import dataclass, field
 import numpy as np
@@ -27,7 +28,7 @@ from .texture_algorithms import (
     get_rgba_colors_float,
     color_to_luminance_np,
     check_if_greyscale,
-    analyze_best_bit_depth,
+    get_bit_depth_entropy,
     shrink_box,
 )
 
@@ -393,6 +394,30 @@ def saveOrGetTextureDefinition(
     return imageKey, fImage
 
 
+class AutoFormatInfo(NamedTuple):
+    color_depth: int
+    alpha_depth: int
+
+
+RGBA_FORMAT_PROPS = {
+    "RGBA32": AutoFormatInfo(8, 8),
+    "RGBA16": AutoFormatInfo(5, 1),
+}
+IA_FORMAT_PROPS = {
+    "IA16": AutoFormatInfo(8, 8),
+    "IA8": AutoFormatInfo(4, 4),
+    "IA4": AutoFormatInfo(4, 4),
+}
+I_FORMAT_PROPS = {
+    "I8": AutoFormatInfo(8, 0),
+    "I4": AutoFormatInfo(4, 0),
+}
+CI_FORMAT_PROPS = {
+    "CI8": AutoFormatInfo(8, 1),
+    "CI4": AutoFormatInfo(4, 1),
+}
+
+
 @dataclass
 class TexInfo:
     load_tex: bool = False
@@ -409,7 +434,6 @@ class TexInfo:
     main_pal: Optional[FloatPixelsImage] = None
     _palDependencies: set[FloatPixelsImage] = field(default_factory=set)
 
-    tmemSize: int = 0
     pal_length: int = -1
 
     mirror: tuple[bool, bool] = (False, False)
@@ -422,8 +446,8 @@ class TexInfo:
     mask: tuple[int, int] = (0, 0)
 
     # Auto format values
-    recommended_alpha_bits: int = -1
-    recommended_color_bits: int = -1
+    alpha_depth_entropies: Optional[tuple[dict[int, float], float]] = field(default_factory=dict)
+    color_depth_entropies: Optional[tuple[dict[int, float], float]] = field(default_factory=dict)
     is_greyscale: bool = False
 
     # Parameters computed by MultitexManager.writeAll
@@ -450,7 +474,7 @@ class TexInfo:
 
     @property
     def tlut_mode(self) -> bool:
-        return self.pal_fmt if self.is_ci else None
+        return self.pal_fmt if self.is_ci else "NONE"
 
     @property
     def is_ia(self) -> bool:
@@ -461,13 +485,31 @@ class TexInfo:
         return self.is_ci and self.load_pal and self.pal_reference is None
 
     @property
+    def pixel_count(self):
+        return self.imageDims[0] * self.imageDims[1]
+
+    @property
+    def tmem_size(self) -> int:
+        if self.fmt:
+            return getTmemWordUsage(self.fmt, self.imageDims[0], self.imageDims[1])
+        return -1
+
+    @property
     def tmem_hash(self):
-        values = [self.tex_reference, self.tmemSize, self.fmt]
+        values = [self.tex_reference, self.tmem_size, self.fmt]
         if self.tex_reference is None:
             if self.main_image is not None:
                 values.append(self.main_image.name)
         values.append(self.imageDims)
         return hash(tuple(values))
+
+    @property
+    def recommended_color_bits(self):
+        return max(self.color_depth_entropies[0].keys(), default=0)
+
+    @property
+    def recommended_alpha_bits(self):
+        return max(self.alpha_depth_entropies[0].keys(), default=0)
 
     @property
     def palDependencies(self):
@@ -476,6 +518,39 @@ class TexInfo:
     @property
     def imDependencies(self):
         return {self.main_image} if self.main_image is not None else self._imDependencies
+
+    def get_fmts_with_penalty(self, is_ci: bool):
+        if is_ci:
+            info = CI_FORMAT_PROPS
+        else:
+            info = RGBA_FORMAT_PROPS
+            if self.is_greyscale:
+                info = IA_FORMAT_PROPS
+                if self.recommended_alpha_bits == 0:
+                    info = I_FORMAT_PROPS
+
+        best_col = self.color_depth_entropies[1]
+        best_alpha = self.alpha_depth_entropies[1]
+
+        def pick_eff(ent_dict, bits):
+            if not ent_dict:
+                return 0
+            for bit, eff in ent_dict.items():
+                if bit >= bits:
+                    return eff
+            return ent_dict[max(ent_dict.keys())]
+
+        fmt_penalties = {}
+        for fmt, props in info.items():
+            col_eff = pick_eff(self.color_depth_entropies[0], props.color_depth)
+            alpha_eff = pick_eff(self.alpha_depth_entropies[0], props.alpha_depth)
+
+            col_penalty = max(best_col - col_eff, 0)
+            alpha_penalty = max(best_alpha - alpha_eff, 0)
+
+            fmt_penalties[fmt] = col_penalty + alpha_penalty
+
+        return fmt_penalties
 
     def copy(self):
         new = copy.copy(self)
@@ -514,6 +589,8 @@ class TexInfo:
         self.load_tex = tex_prop.load_tex or base_texture
         self.tex_reference = tex_prop.tex_reference if (tex_prop.use_tex_reference and not base_texture) else None
         img_deps = fModel.gather_images(material, tex_prop, self.tex_reference is not None, base_texture)
+        # TODO: find way to skip gather pixels if we don´t need it? with caching it is the slowest operation by far
+        # (with caching ihq, kmeans, etc are all a one time cost)
         img_deps = set(fModel.gather_pixels(image) for image in img_deps)
         if self.has_tex:
             if len(img_deps) == 1:
@@ -544,8 +621,6 @@ class TexInfo:
 
     def values_from_dims(self, width: int, height: int):
         self.imageDims = (width, height)
-        if self.fmt is not None:
-            self.tmemSize = getTmemWordUsage(self.fmt, width, height)
         if self.auto_other_props:
             high_mask = [[0, 0], [0, 0]]
             for i in range(2):
@@ -632,36 +707,7 @@ def get_fmt_size(fmt: str):
     return texBitSizeF3D[fmt]
 
 
-def get_candidate_formats(texture: TexInfo, allow_ci=False):
-    """
-    Returns recommended formats for a given texture, in order of best to worst
-    """
-    candidates = []
-    needs_alpha = texture.recommended_alpha_bits > 0
-
-    if allow_ci:
-        if texture.recommended_color_bits > 4:
-            candidates.append("CI8")
-        candidates.append("CI4")
-        return candidates
-
-    if texture.is_greyscale:
-        if needs_alpha:
-            if texture.recommended_color_bits > 4 or texture.recommended_alpha_bits > 4:
-                candidates.append("IA16")
-            if texture.recommended_color_bits > 2 or texture.recommended_alpha_bits > 2:
-                candidates.append("IA8")
-            candidates.append("IA4")
-        else:
-            if texture.recommended_color_bits > 4:
-                candidates.append("I8")
-            candidates.append("I4")
-        return candidates
-
-    if texture.recommended_color_bits > 5 or (texture.recommended_alpha_bits > 1):
-        candidates.append("RGBA32")
-    candidates.append("RGBA16")
-    return candidates
+GLOBAL_ENTROPY_CACHE = {}
 
 
 @dataclass
@@ -672,7 +718,7 @@ class MultitexManager:
 
     @property
     def mip_levels(self):
-        return max((i for i in self.textures.keys()), default=0)
+        return max((i for i in self.textures.keys()), default=-1) + 1
 
     @property
     def auto_textures(self):
@@ -693,7 +739,7 @@ class MultitexManager:
 
     @property
     def tlut_mode(self):
-        modes = list(set(tex.tlut_mode for tex in self.non_auto_textures))
+        modes = list(set(tex.tlut_mode for tex in self.texture_list))
         if modes:
             return modes[0]
         return None
@@ -721,17 +767,19 @@ class MultitexManager:
 
         if texture_list is None:
             texture_list = self.texture_list
-        textures = sorted(texture_list, key=lambda tex: tex.tmemSize and tex.fmt not in {"RGBA32"})
+        textures = sorted(texture_list, key=lambda tex: tex.tmem_size and tex.fmt not in {"RGBA32"})
         allocations: list[TexAlloc] = []  # (start, end, tex, lower)
 
         for tex in textures:
             if tex.fmt == "RGBA32":
-                half_size = tex.tmemSize // 2
+                half_size = tex.tmem_size // 2
                 new_allocations = [(half_size, tex, False), (half_size, tex, True)]
             else:
-                new_allocations = [(tex.tmemSize, tex, None)]
+                new_allocations = [(tex.tmem_size, tex, False)]
 
             for tmem_size, tex, lower in new_allocations:
+                if tmem_size == -1:
+                    continue
                 if any(t.tmem_hash == tex.tmem_hash and l == lower for _, _, t, l in allocations):
                     continue  # check if already present
 
@@ -774,24 +822,27 @@ class MultitexManager:
             allocs = self.calculate_tmem_allocations()
         end = max((end for _, end, *_ in allocs), default=0)
         if end > self.max_tmem_size:
-            remaining_tmem = -1
+            return -1
         else:
             remaining_tmem = self.max_tmem_size - end
-
-        biggest_gap = max(
-            (end - start for start, end in self.get_free_tmem_spaces(allocs) if end <= self.max_tmem_size), default=-1
-        )
-        return max(remaining_tmem, biggest_gap)
+            biggest_gap = max(
+                (end - start for start, end in self.get_free_tmem_spaces(allocs) if end <= self.max_tmem_size),
+                default=-1,
+            )
+            return max(remaining_tmem, biggest_gap)
 
     def __repr__(self):
         return (
             f"MultitexManager(\n\ttlut_mode={self.tlut_mode}, \n"
-            f"\ttotal_tmem={self.get_tmem_size()}/{self.max_tmem_size}, available_tmem={self.get_available_tmem()}, \n"
+            f"\ttotal_tmem={self.get_tmem_size()}/{self.max_tmem_size}, available_tmem={self.get_available_tmem()}, "
+            f"free_spaces={self.get_free_tmem_spaces()},\n"
             f"\tallocations={self.calculate_tmem_allocations()}, \n"
             f"\ttextures={self.textures}, \n\tdithering_method={self.dithering_method}, \n\tmip_levels={self.mip_levels}\n)"
         )
 
-    def generate_mip(self, base: TexInfo, mips: int, i: int, ignore_restrictions: bool = False):
+    def generate_mip(
+        self, base: TexInfo, mips: int, i: int, ignore_restrictions: bool = False, img: FloatPixelsImage | None = None
+    ):
         divisor = (mips + 1) * 2
         width, height = base.imageDims
         n_width, n_height = width // divisor, height // divisor
@@ -807,13 +858,13 @@ class MultitexManager:
         ):
             return False
 
-        new.main_image = FloatPixelsImage(
-            base.main_image.name + f"_mip{mips}", shrink_box(base.main_image.pixels, divisor, divisor)
-        )
+        if img is None:
+            img = base.main_image
+        new.main_image = FloatPixelsImage(img.name + f"_mip{mips}", shrink_box(img, divisor, divisor))
         # print(n_width, n_height, new.main_image.pixels)
-        if base.main_image == base.main_pal:
+        if img == base.main_pal:
             new.main_pal = new.main_image
-        new.indexInMat = i + 1
+        new.indexInMat = i
         self.textures[i] = new
         return True
 
@@ -830,14 +881,14 @@ class MultitexManager:
                 break
             mips += 1
 
-    def generate_ihq(self):
+    def generate_ihq(self, ignore_restrictions: bool = False):
         assert len(self.textures) == 1 and 0 in self.textures, "Only one (first) texture is supported for IHQ."
-        base_tex = self.texture_list[0]
+        base_tex = self.textures[0]
         i4_tex = base_tex.copy()
         rgba_tex = base_tex.copy()
-
         starting_img = base_tex.main_image
-        intensity, rgba, uses_alpha = generate_ihq(starting_img.pixels)
+
+        intensity, rgba, uses_alpha = generate_ihq(starting_img)
         i4_tex.main_image = FloatPixelsImage(starting_img.name + "_ihq_i", intensity)
         i4_tex.fmt = "IA4" if uses_alpha else "I4"
         i4_tex.values_from_dims(intensity.shape[0], intensity.shape[1])
@@ -853,7 +904,7 @@ class MultitexManager:
         self.textures[1] = rgba_tex
 
         for mips in range(0, MAX_IMAGES - 2):
-            if not self.generate_mip(base_tex, mips, mips + 2):
+            if not self.generate_mip(rgba_tex, mips, mips + 2, ignore_restrictions, starting_img):
                 break
 
     def from_mat(
@@ -878,66 +929,156 @@ class MultitexManager:
 
         match pseudo_format:
             case "IHQ":
-                self.generate_ihq()
-        self.figure_out_auto()
+                self.generate_ihq(ignore_restrictions)
+        self.figure_out_auto(ignore_restrictions)
         if pseudo_format == "NONE" and f3d_mat.gen_auto_mips:
             self.generate_mipmaps(ignore_restrictions)
-        self.figure_out_auto(ignore_restrictions)
         if convert_texture_data:
             self.convert()
 
     def figure_out_auto(self, ignore_restrictions=False):
-        # check if all are greyscale
-        if not any(tex.auto_fmt for tex in self.textures.values()):
+        if not any(tex.auto_fmt for tex in self.texture_list):
             return
-        for tex in self.textures.values():
-            if tex.auto_fmt:
+        if ignore_restrictions:
+            for tex in self.texture_list:
+                tex.fmt = "RGBA32"
+            return
+
+        texture_list = sorted(self.texture_list, key=lambda tex: tex.pixel_count)
+        auto_textures = [tex for tex in texture_list if tex.auto_fmt]
+        set_textures = [tex for tex in texture_list if not tex.auto_fmt]
+
+        for tex in auto_textures:  # figure out important properties
+            if not tex.auto_fmt:
+                continue
+            if tex.main_image.pixel_hash in GLOBAL_ENTROPY_CACHE:
+                tex.is_greyscale, tex.alpha_depth_entropies, tex.color_depth_entropies = GLOBAL_ENTROPY_CACHE[
+                    tex.main_image.pixel_hash
+                ]
                 continue
             flat_pixels = flatten_pixels(tex.main_image.pixels)
             tex.is_greyscale = check_if_greyscale(flat_pixels)
-            tex.recommended_alpha_bits = analyze_best_bit_depth(flat_pixels[..., 3])
+            tex.alpha_depth_entropies = get_bit_depth_entropy(flat_pixels[..., 3])
             if tex.is_greyscale:
-                # TODO: cache lum for i/ia?
-                tex.recommended_color_bits = analyze_best_bit_depth(color_to_luminance_np(flat_pixels))
+                tex.color_depth_entropies = get_bit_depth_entropy(color_to_luminance_np(flat_pixels))
             else:
-                tex.recommended_color_bits = analyze_best_bit_depth(flat_pixels[..., :3])
+                tex.color_depth_entropies = get_bit_depth_entropy(flat_pixels[..., :3])
+            GLOBAL_ENTROPY_CACHE[tex.main_image.pixel_hash] = (
+                tex.is_greyscale,
+                tex.alpha_depth_entropies,
+                tex.color_depth_entropies,
+            )
+
         tlut_mode = self.tlut_mode
-        if tlut_mode is None:  # tlut not defined (no non auto textures)
-            sizes = sum(tex.imageDims[0] * tex.imageDims[1] for tex in self.textures.values())
-            if not any(tex.is_greyscale for tex in self.textures.values()) and (sizes > 16 * 32):
-                tlut_mode = "RGBA16"
-        pass
+        if tlut_mode is None:  # tlut not defined (no non auto textures). figure out if we should use ci mode
+            tlut_mode = "NONE"
+            sizes = sum(tex.pixel_count for tex in self.texture_list)
+            any_is_greyscale = any(tex.is_greyscale for tex in self.texture_list)
+            tex_count = len(self.texture_list)
+            if tex_count > 0:
+                average_hor = sum(tex.imageDims[0] for tex in self.texture_list) // tex_count
+                average_color_entropy = sum(tex.color_depth_entropies[1] for tex in self.texture_list) / tex_count
+                significant_alpha = any(tex.recommended_alpha_bits > 2 for tex in self.texture_list)
+                if (
+                    not significant_alpha
+                    and (not any_is_greyscale and (average_hor >= 16) and average_color_entropy <= 3)
+                ) or ((sizes > 32 * 64 and sizes <= 64 * 64) and not any_is_greyscale):
+                    tlut_mode = "RGBA16"
+        use_ci = tlut_mode != "NONE"
+
+        for tex in auto_textures:  # assign initial recommended texture format
+            fmt_penalties = tex.get_fmts_with_penalty(use_ci)
+            tex.fmt = min(fmt_penalties.keys(), key=lambda fmt: fmt_penalties[fmt])
+            if use_ci:
+                tex.pal_fmt = "RGBA16"
+
+        while self.get_available_tmem() < 0:  # keep downgrading until texxtures fit in tmem
+            best_choice = None
+            smallest_penalty_increase = math.inf
+
+            for tex in auto_textures:
+                fmt_penalties = tex.get_fmts_with_penalty(use_ci)
+
+                current_penalty = fmt_penalties[tex.fmt]
+                next_penalty, next_fmt = math.inf, None
+
+                for fmt, penalty in fmt_penalties.items():
+                    if fmt != tex.fmt and penalty > current_penalty:
+                        next_penalty, next_fmt = penalty, fmt
+                if next_fmt is None:
+                    continue  # can't downgrade further
+
+                penalty_increase = next_penalty - current_penalty
+                best_fmt = next_fmt
+
+                if penalty_increase < smallest_penalty_increase:
+                    smallest_penalty_increase = penalty_increase
+                    best_choice = (tex, best_fmt)
+
+            if best_choice is None:  # if can´t downgrade more, break
+                break
+            else:  # downgrade the texture with smallest penalty increase
+                tex, fmt = best_choice
+                tex.fmt = fmt
 
     def create_pallete(self, ignore_restrictions=False):
-        assert self.is_ci, "Can only create palette for CI textures"
+        assert self.is_ci == True, "Can only create palette for CI textures"
 
         num_colors_used = 0
-        for tex in self.textures.values():
-            if tex.is_ci and tex.load_tex and tex.pal_reference:
+        for tex in self.texture_list:
+            if tex.is_ci and not tex.load_pal and tex.pal_reference:
                 num_colors_used += tex.pal_length
 
         remaining_colors = 256 - num_colors_used
-        ci4_texs = [tex for tex in self.textures.values() if tex.fmt == "CI4"]
-        ci8_texs = [tex for tex in self.textures.values() if tex.fmt == "CI8"]
+        ci4_texs = [tex for tex in self.texture_list if tex.fmt == "CI4"]
+        ci8_texs = [tex for tex in self.texture_list if tex.fmt == "CI8"]
 
-        rgba_16 = {}
+        rgba_palettes = {}
+        for tex in ci4_texs + ci8_texs:
+            if tex.load_pal:
+                palletes = tex.palDependencies
+                for pallete in palletes:
+                    if pallete.pixel_hash not in rgba_palettes:
+                        rgba16 = get_rgba_colors_float(pallete.pixels)
+                        rgba_palettes[pallete.pixel_hash] = rgba16, flatten_pixels(rgba16.round())
 
-        # TODO: calculate rgba16 versions
-        # figure out which ones already fit within their limited colors and reduce
-        # for those that don´t asign an amount depending on how many colors are left
+        # try to merge ci4's together
+        ci4_to_merge = [tex for tex in self.texture_list if tex.fmt == "CI4" and tex.load_pal]
+        failed_combinations: set[tuple[int]] = set()
+        merge_results: dict[tuple[int], tuple[np.ndarray, np.ndarray, float]] = {}
 
-        for tex in ci4_texs:
-            rgba_16_palletes = []
-            palletes = tex.palDependencies
-            for pallete in palletes:
-                if pallete not in rgba_16:
-                    rgba_16[pallete] = get_rgba_colors_float(pallete.pixels)
-                rgba_16_palletes.append(rgba_16[pallete])
-            # join together, flattened
-            joined_palletes = flatten_pixels(np.vstack(rgba_16_palletes)).round()
-            pal, labels = generate_palette_kmeans(joined_palletes, min(16, remaining_colors))
-            if not ignore_restrictions:
-                remaining_colors -= len(pal)
+        for tex in ci4_to_merge:  # baseline error for each texture
+            tex_id = (tuple(tex.palDependencies),)
+
+            palette_pixels = [rgba_palettes[pal.pixel_hash][1] for pal in tex.palDependencies]
+            joined_pixels = np.vstack(palette_pixels)
+            pal, labels, error = generate_palette_kmeans(joined_pixels, min(16, remaining_colors))
+            merge_results[tex_id] = (pal, labels, error)
+
+        for r in range(2, len(ci4_to_merge) + 1):
+            for texture_group in combinations(ci4_to_merge, r):
+                current_ids = tuple(tuple(t.palDependencies) for t in texture_group)
+                # bad combo already tried
+                if any(set(failed).issubset(current_ids) for failed in failed_combinations):
+                    continue
+                all_palettes = [
+                    rgba_palettes[pal.pixel_hash][1] for tex in texture_group for pal in tex.palDependencies
+                ]
+                # join together, flattened
+                joined_pixels = np.vstack(all_palettes)
+                pal, labels, error = generate_palette_kmeans(joined_pixels, min(16, remaining_colors))
+
+                biggest_error = max(
+                    merge_results.get((tuple(tex.palDependencies),), (None, None, float("inf")))[2]
+                    for tex in texture_group
+                )
+
+                if error > biggest_error:
+                    failed_combinations.add(current_ids)
+                else:
+                    merge_results[current_ids] = (pal, labels, error)
+
+        pass
 
     def convert(self, ignore_restrictions=False):
         if self.is_ci:

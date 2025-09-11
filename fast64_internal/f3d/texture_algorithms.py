@@ -1,14 +1,21 @@
+import hashlib
 import math
 from typing import Literal, Any
 import numpy as np
 
 from ..utility import RGB_TO_LUM_COEF
-from .f3d_gbi import HEIGHT_T, WIDTH_T, FlatPixels, FloatPixels, N64Pixels
+from .f3d_gbi import HEIGHT_T, WIDTH_T, FlatPixels, FloatPixels, N64Pixels, FloatPixelsImage
 
 
-def shrink_box(pixels: np.ndarray[np.float32, (WIDTH_T, HEIGHT_T, Any)], width_div: int, height_div: int):
+GLOBAL_SHRINK_BOX_CACHE: dict[tuple[str, int, int], FloatPixels] = {}
+
+
+def shrink_box(img: FloatPixels, width_div: int, height_div: int):
+    if (img.pixel_hash, width_div, height_div) in GLOBAL_SHRINK_BOX_CACHE:
+        return GLOBAL_SHRINK_BOX_CACHE[(img.pixel_hash, width_div, height_div)]
     assert width_div > 1 and height_div > 1
-    width, height, channels = pixels.shape
+    pixels = img.pixels
+    height, width, channels = pixels.shape
 
     n_width = math.ceil(width / width_div)
     n_height = math.ceil(height / height_div)
@@ -18,9 +25,16 @@ def shrink_box(pixels: np.ndarray[np.float32, (WIDTH_T, HEIGHT_T, Any)], width_d
 
     # pad if needed
     if pad_width > 0 or pad_height > 0:
-        pixels = np.pad(pixels, ((0, pad_width), (0, pad_height), (0, 0)), mode="edge")  # repeat edge pixels
+        pixels = np.pad(pixels, ((0, pad_height), (0, pad_width), (0, 0)), mode="edge")  # repeat edge pixels
 
-    return pixels.reshape(n_width, width_div, n_height, height_div, channels).mean(axis=(1, 3))
+    pixels = pixels.reshape(n_height, height_div, n_width, width_div, channels).mean(axis=(1, 3))
+
+    GLOBAL_SHRINK_BOX_CACHE[(img.pixel_hash, width_div, height_div)] = pixels
+    return pixels
+
+
+def flatten_pixels(pixels: FloatPixels) -> FlatPixels:
+    return pixels.reshape((np.prod(pixels.shape[:-1]), pixels.shape[-1]))
 
 
 YUV_MATRIX = np.array([[0.299, 0.587, 0.114], [-0.14713, -0.28886, 0.436], [0.615, -0.51499, -0.10001]])
@@ -48,53 +62,51 @@ def ihq_calc_best_i(
 
 
 def bilinear_resize(
-    pixels: np.ndarray[np.float32, (Any, Any, Any)], width_multiplier: int, height_multiplier: int
+    pixels: np.ndarray[np.float32, (Any, Any, Any)], target_size: tuple[int, int]
 ) -> np.ndarray[np.float32, (WIDTH_T, HEIGHT_T, Any)]:
-    assert (
-        width_multiplier > 1 and height_multiplier > 1
-    ), "width_multiplier and height_multiplier must be an integer > 1."
+    old_height, old_width, _ = pixels.shape
+    target_width, target_height = target_size
 
-    old_width, old_height, _ = pixels.shape
-    new_height = old_height * height_multiplier
-    new_width = old_width * width_multiplier
+    j, i = np.meshgrid(np.arange(target_height), np.arange(target_width), indexing="ij")
 
-    y_new = np.arange(new_height)
-    x_new = np.arange(new_width)
+    # source coordinates
+    y_ratio = (old_height - 1) / max(target_height - 1, 1)
+    x_ratio = (old_width - 1) / max(target_width - 1, 1)
+    y_old = j * y_ratio
+    x_old = i * x_ratio
 
-    y_old = y_new / height_multiplier  # 1 becomes 0.5
-    x_old = x_new / width_multiplier
+    # integer coordinates
+    y0 = np.floor(y_old).astype(np.int32)
+    x0 = np.floor(x_old).astype(np.int32)
+    y1 = np.minimum(y0 + 1, old_height - 1)
+    x1 = np.minimum(x0 + 1, old_width - 1)
 
-    # get the top-left integer coordinates
-    y0 = np.floor(y_old).astype(np.uint32)
-    x0 = np.floor(x_old).astype(np.uint32)
+    p00 = pixels[y0, x0]  # top-left
+    p10 = pixels[y1, x0]  # bottom-left
+    p01 = pixels[y0, x1]  # top-right
+    p11 = pixels[y1, x1]  # bottom-right
 
-    # get the bottom-right integer coordinates
-    y1 = np.clip(y0 + 1, 0, old_height - 1)
-    x1 = np.clip(x0 + 1, 0, old_width - 1)
+    # fractions
+    dy = y_old - y0
+    dx = x_old - x0
+    dy = dy[:, :, np.newaxis]
+    dx = dx[:, :, np.newaxis]
 
-    p00 = pixels[x0, :][:, y0]  # top-left
-    p10 = pixels[x1, :][:, y0]  # top-right
-    p01 = pixels[x0, :][:, y1]  # bottom-left
-    p11 = pixels[x1, :][:, y1]  # bottom-right
+    # bilinear interpolation
+    interpolated = p00 * (1 - dx) * (1 - dy) + p01 * dx * (1 - dy) + p10 * (1 - dx) * dy + p11 * dx * dy
 
-    # fractional parts
-    yf = y_old - y0
-    xf = x_old - x0
-    # reshape for broadcasting
-    yf = yf.reshape(1, new_height, 1)
-    xf = xf.reshape(new_width, 1, 1)
-
-    interp_top = p00 * (1 - xf) + p10 * xf
-    interp_bottom = p01 * (1 - xf) + p11 * xf
-    new_image = interp_top * (1 - yf) + interp_bottom * yf
-
-    return new_image
+    return interpolated
 
 
-def generate_ihq(pixels: FloatPixels):
-    width, height, _ = pixels.shape
-    if width % 4 != 0 and height % 4 != 0:
-        raise ValueError("Image width or height must be a multiple of 4")
+GLOBAL_IHQ_CACHE: dict[str, tuple] = {}
+
+
+def generate_ihq(img: FloatPixelsImage):
+    if img.pixel_hash in GLOBAL_IHQ_CACHE:
+        return GLOBAL_IHQ_CACHE[img.pixel_hash]
+
+    pixels = img.pixels
+    height, width, _ = pixels.shape
 
     alpha_channel = pixels[:, :, 3]
     color_channels = pixels[:, :, :3]
@@ -105,12 +117,12 @@ def generate_ihq(pixels: FloatPixels):
     best_i_pixels, best_rgba_pixels = None, None
     for dir in range(2):
         width_div, height_div = 4, 2
-        if dir == 1 and height % 4 == 0:
+        if dir == 0 and width % 4 == 0:
+            width_div, height_div = 4, 2
+        elif dir == 1 and height % 4 == 0:
             width_div, height_div = 2, 4
-        down_scale = shrink_box(pixels, width_div=width_div, height_div=height_div)
-        bilinear_upscale = bilinear_resize(
-            down_scale[:, :, :3], width_multiplier=width_div, height_multiplier=height_div
-        )
+        down_scale = shrink_box(img, width_div=width_div, height_div=height_div)
+        bilinear_upscale = bilinear_resize(down_scale[:, :, :3], target_size=(width, height))
         yuv_base = bilinear_upscale.reshape(-1, 3) @ YUV_MATRIX.T
         for ifactor in range(1, 11):
             ifactor *= 0.05
@@ -118,15 +130,15 @@ def generate_ihq(pixels: FloatPixels):
 
             if error < best_err:
                 best_err = error
-                if uses_alpha:
-                    i_pixels[:, :, 3] = alpha_channel
                 best_i_pixels, best_rgba_pixels = i_pixels, down_scale
 
+    if uses_alpha:
+        best_i_pixels = np.stack([best_i_pixels, best_i_pixels, best_i_pixels, alpha_channel], axis=2)  # to rgb
+    else:
+        best_i_pixels = np.stack([best_i_pixels, best_i_pixels, best_i_pixels], axis=2)
+
+    GLOBAL_IHQ_CACHE[img.pixel_hash] = best_i_pixels, best_rgba_pixels, uses_alpha
     return best_i_pixels, best_rgba_pixels, uses_alpha
-
-
-def flatten_pixels(pixels: FloatPixels) -> FlatPixels:
-    return pixels.reshape((np.prod(pixels.shape[:-1]), pixels.shape[-1]))
 
 
 def kmeans_plusplus(pixels: FlatPixels, n_colors: int):
@@ -156,14 +168,15 @@ def kmeans_plusplus(pixels: FlatPixels, n_colors: int):
     return centroids
 
 
-def generate_palette_kmeans(pixels_flat: FlatPixels, n_colors: int, max_iter: int = 32, tolerance: float = 1e-4):
+def generate_palette_kmeans(pixels_flat: FlatPixels, n_colors: int, max_iter: int = 32, tolerance: float = 1 / 255):
+    """Quantize pallete using kmeans++. Returns pallete, texture and error"""
     assert n_colors >= 1, "n_colors < 1"
     assert tolerance >= 0, "tolerance < 0"
     assert n_colors <= 255 or n_colors < 0, "n_colors > 255 or n_colors < 0"
 
     unique_colors, inverse_indices = np.unique(pixels_flat, axis=0, return_inverse=True)
     if len(unique_colors) <= n_colors:
-        return unique_colors, inverse_indices
+        return unique_colors, inverse_indices, 0
 
     centroids = kmeans_plusplus(pixels_flat, n_colors)
 
@@ -186,7 +199,7 @@ def generate_palette_kmeans(pixels_flat: FlatPixels, n_colors: int, max_iter: in
         if converged:
             break
 
-    return centroids, labels
+    return centroids, labels, math.sqrt(np.sum(np.square(pixels_flat - centroids[labels])))
 
 
 def compact_nibble_np(pixels: N64Pixels[np.uint8]) -> N64Pixels[np.uint8]:
@@ -276,19 +289,18 @@ def check_if_greyscale(pixels: FloatPixels, threshold: int = 1 / 255) -> bool:
     return np.all(diffs <= threshold)
 
 
-def analyze_best_bit_depth(image: FloatPixels, efficiency_threshold: float = 0.6):
+def get_bit_depth_entropy(image: FloatPixels, efficiency_threshold: float = 0.6):
     """
     Figure out a resonable bit depth by calculating its entropy change in a quantized step.
     (by selling your soul to the devil)
+    This returns a dict of bit depths as the key, highest being recommended, with their entropies as the values.
+    And the original entropy as the second value.
     """
 
     def calculate_quantized_entropy(target_bits: int) -> float:
-        if target_bits >= 8:
-            hist = np.histogram(image, bins=256, range=(0.0, 1.00001))[0]  # add a small epsilon
-        else:
-            levels = 2**target_bits
-            quantized_image = np.round(image * (levels - 1))
-            hist = np.histogram(quantized_image, bins=levels, range=(0, levels))[0]
+        levels = 2**target_bits
+        quantized_image = np.round(image * (levels - 1)).astype(np.uint8)
+        hist = np.histogram(quantized_image, bins=levels, range=(0, levels))[0]
 
         total_pixels = hist.sum()
         if total_pixels == 0:
@@ -301,22 +313,21 @@ def analyze_best_bit_depth(image: FloatPixels, efficiency_threshold: float = 0.6
         return -np.sum(nonzero_probs * np.log2(nonzero_probs))
 
     if image.size == 0:
-        return 8
+        return 0, 0
 
     original_entropy = calculate_quantized_entropy(8)
 
     if original_entropy < 0.1:
-        return 0
+        return {}, original_entropy
 
+    entropies = {}
     for bits in [1, 2, 4, 5]:
         quantized_entropy = calculate_quantized_entropy(bits)
 
-        if original_entropy > 0:
-            efficiency = quantized_entropy / original_entropy
-        else:
-            efficiency = 0
-
+        efficiency = quantized_entropy / original_entropy
+        entropies[bits] = quantized_entropy
         if efficiency >= efficiency_threshold:
-            return bits
+            return entropies, original_entropy
 
-    return 8
+    entropies[8] = original_entropy
+    return entropies, original_entropy

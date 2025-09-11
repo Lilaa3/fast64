@@ -1,6 +1,8 @@
 from typing import Union, Optional, Callable, Any, List
 from dataclasses import dataclass
 import functools
+import cProfile
+
 import bpy, mathutils, os, re, copy, math
 from mathutils import Vector
 from math import ceil
@@ -1429,8 +1431,12 @@ def saveOrGetF3DMaterial(material, fModel, obj, drawLayer, convertTextureData):
             ]
         )
 
-    multitexManager = MultitexManager()
-    multitexManager.from_mat(material, f3dMat, fModel, convertTextureData, bpy.context.scene.ignoreTextureRestrictions)
+    with cProfile.Profile() as prof:
+        multitexManager = MultitexManager()
+        multitexManager.from_mat(
+            material, f3dMat, fModel, convertTextureData, bpy.context.scene.ignoreTextureRestrictions
+        )
+        prof.print_stats(sort="cumulative")
     print(multitexManager)
     # Set othermode
     if drawLayer is not None:

@@ -1,6 +1,7 @@
 # Macros are all copied over from gbi.h
 from __future__ import annotations
 
+import hashlib
 from typing import Literal, Sequence, Union, Tuple
 from dataclasses import dataclass, fields, field
 import bpy, os, enum, copy
@@ -63,8 +64,14 @@ class FloatPixelsImage:
     name: str
     pixels: FloatPixels
 
+    def __post_init__(self):
+        self.update_hash()
+
+    def update_hash(self):
+        self.pixel_hash = hashlib.sha256(self.pixels.data, usedforsecurity=False).hexdigest()
+
     def __hash__(self):
-        return hash(self.name)
+        return hash((self.name, self.pixel_hash))
 
     def __repr__(self):
         return self.name
@@ -2363,7 +2370,8 @@ def get_pixels_from_image(image: bpy.types.Image) -> FloatPixels:
     width, height = image.size
 
     bpy_pixels = np.array(image.pixels, dtype=np.float32).reshape((height, width, channel_count)).clip(0.0, 1.0)
-    pixels = np.ones((image.size[1], image.size[0], 4), dtype=np.float32)  # default to white opaque
+    pixels = np.empty((image.size[1], image.size[0], 4), dtype=np.float32)
+    pixels[:, :, channel_count:] = 1
     pixels[:, :, :channel_count] = bpy_pixels  # copy, if channel count is 3 all alpha channels will stay 1
     return pixels
 
