@@ -26,6 +26,7 @@ from .texture_algorithms import (
     generate_ihq,
     generate_palette_kmeans,
     get_rgba_colors_float,
+    get_ia_colors_float,
     color_to_luminance_np,
     check_if_greyscale,
     get_bit_depth_entropy,
@@ -1021,38 +1022,37 @@ class MultitexManager:
                 tex.fmt = fmt
 
     def find_optimal_ci4_merges(
-        self,
-        ci4_to_merge: list,
-        rgba_palettes: dict[int, tuple[FloatPixels, FlatPixels]],
-        remaining_colors: int,
-        ignore_restrictions=False,
+        self, ci4_to_merge: list, converted_palettes: dict[int, tuple[FloatPixels, FlatPixels]], pal_size: int
     ):
-        TEXTURE_ID = TypeVar("TEXTURE_ID", frozenset[FloatPixelsImage, ...])
+        TEXTURE_ID = frozenset[FloatPixelsImage, ...]
         failed_combinations: set[TEXTURE_ID] = set()
 
         class MergeResult(NamedTuple):
             palette: np.ndarray
             labels: np.ndarray
             rmse: float
-            slice_map: dict[TEXTURE_ID, slice]
+            slice_map: dict[int, slice]
 
         merge_results: dict[TEXTURE_ID, MergeResult] = {}
-
-        if ignore_restrictions:
-            pal_size = 16
-        else:
-            pal_count = len(set(frozenset(tex.palDependencies) for tex in ci4_to_merge))
-            pal_size = max(min(remaining_colors / pal_count, 0), 16)
 
         for tex in ci4_to_merge:
             tex_id: TEXTURE_ID = frozenset(tex.palDependencies)
 
-            palette_pixels = [rgba_palettes[pal.pixel_hash][1] for pal in tex.palDependencies]
-            joined_pixels = np.vstack(palette_pixels)
+            all_pixels_to_join = []
+            slice_map = {}
+            current_offset = 0
+            sorted_pals = sorted(tex.palDependencies, key=lambda p: p.pixel_hash)
+
+            for pal in sorted_pals:
+                pixels = converted_palettes[pal.pixel_hash][1]
+                all_pixels_to_join.append(pixels)
+                slice_map[pal.pixel_hash] = slice(current_offset, current_offset + len(pixels))
+                current_offset += len(pixels)
+
+            joined_pixels = np.vstack(all_pixels_to_join)
             pal, labels, inertia = generate_palette_kmeans(joined_pixels, pal_size)
             num_pixels = len(joined_pixels)
             rmse = np.sqrt(inertia / num_pixels) if num_pixels > 0 else 0
-            slice_map = {tex_id: slice(0, num_pixels)}
 
             merge_results[tex_id] = MergeResult(pal, labels, rmse, slice_map)
 
@@ -1067,15 +1067,15 @@ class MultitexManager:
                 if any(frozenset(failed).issubset(group_id) for failed in failed_combinations):
                     continue
 
-                pixel_data_map = {
-                    tid: np.vstack([rgba_palettes[p.pixel_hash][1] for p in tid]) for tid in current_ids_list
-                }
                 all_pixels_to_join = []
                 slice_map = {}
                 current_offset = 0
-                for tid, pixels in pixel_data_map.items():
+                sorted_pals = sorted(group_id, key=lambda p: p.pixel_hash)
+
+                for pal in sorted_pals:
+                    pixels = converted_palettes[pal.pixel_hash][1]
                     all_pixels_to_join.append(pixels)
-                    slice_map[tid] = slice(current_offset, current_offset + len(pixels))
+                    slice_map[pal.pixel_hash] = slice(current_offset, current_offset + len(pixels))
                     current_offset += len(pixels)
 
                 joined_pixels = np.vstack(all_pixels_to_join)
@@ -1093,8 +1093,8 @@ class MultitexManager:
                 else:
                     merge_results[group_id] = MergeResult(pal, labels, merged_rmse, slice_map)
 
-        all_original_ids = {frozenset(t.palDependencies) for t in ci4_to_merge}
-        assigned_ids = set()
+        all_original_pixel_hashes = {p.pixel_hash for t in ci4_to_merge for p in t.palDependencies}
+        assigned_pixel_hashes = set()
         final_merges: dict[TEXTURE_ID, MergeResult] = {}
 
         sorted_merges = sorted(
@@ -1105,11 +1105,11 @@ class MultitexManager:
 
         # assign non overlapping merges
         for group_id, result_tuple in sorted_merges:
-            member_ids = set(result_tuple[3].keys())
-            if assigned_ids.isdisjoint(member_ids):
+            member_pixel_hashes = set(result_tuple.slice_map.keys())
+            if assigned_pixel_hashes.isdisjoint(member_pixel_hashes):
                 final_merges[group_id] = result_tuple
-                assigned_ids.update(member_ids)
-            if assigned_ids == all_original_ids:
+                assigned_pixel_hashes.update(member_pixel_hashes)
+            if assigned_pixel_hashes == all_original_pixel_hashes:
                 break
 
         return final_merges
@@ -1126,21 +1126,50 @@ class MultitexManager:
         ci4_texs = [tex for tex in self.texture_list if tex.fmt == "CI4"]
         ci8_texs = [tex for tex in self.texture_list if tex.fmt == "CI8"]
 
-        rgba_palettes = {}
+        converted_palettes = {}
         for tex in ci4_texs + ci8_texs:
             if tex.load_pal:
                 palletes = tex.palDependencies
                 for pallete in palletes:
-                    if pallete.pixel_hash not in rgba_palettes:
-                        rgba16 = get_rgba_colors_float(pallete.pixels)
-                        rgba_palettes[pallete.pixel_hash] = rgba16, flatten_pixels(rgba16.round())
+                    if pallete.pixel_hash not in converted_palettes:
+                        if self.tlut_mode == "RGBA16":
+                            quantized = get_rgba_colors_float(pallete.pixels)
+                        elif self.tlut_mode == "IA16":
+                            quantized = get_ia_colors_float(pallete.pixels)
+                        else:
+                            assert False, f"Invalid tlut mode, oops! {self.tlut_mode}"
+                        converted_palettes[pallete.pixel_hash] = quantized, flatten_pixels(quantized.round())
+
+        if ignore_restrictions:
+            ci4_pal_size = 16
+        else:
+            ci4_pal_count = len(set(frozenset(tex.palDependencies) for tex in ci4_texs))
+            ci8_pal_count = len(set(frozenset(tex.palDependencies) for tex in ci8_texs))
+            ci4_remaining_colors = remaining_colors
+            if ci8_pal_count:
+                ci4_remaining_colors //= 2
+            ci4_pal_size = max(min(ci4_remaining_colors / ci4_pal_count, 0), 16)
 
         ci4 = self.find_optimal_ci4_merges(
-            [tex for tex in self.texture_list if tex.fmt == "CI4" and tex.load_pal],
-            rgba_palettes,
-            remaining_colors,
-            ignore_restrictions,
+            [tex for tex in self.texture_list if tex.fmt == "CI4" and tex.load_pal], converted_palettes, ci4_pal_size
         )
+        joined_ci4 = np.vstack((pal.palette for pal in ci4.values()))
+
+        if ci8_texs:
+            all_pixels_to_join = []
+            slice_map = {}
+            current_offset = 0
+            sorted_pals = sorted((pal for tex in ci8_texs for pal in tex.palDependencies), key=lambda p: p.pixel_hash)
+
+            for pal in sorted_pals:
+                pixels = converted_palettes[pal.pixel_hash][1]
+                all_pixels_to_join.append(pixels)
+                slice_map[pal.pixel_hash] = slice(current_offset, current_offset + len(pixels))
+                current_offset += len(pixels)
+
+            joined_pixels = np.vstack(all_pixels_to_join)
+
+            pal, labels, _error = generate_palette_kmeans(joined_pixels, min(256, remaining_colors), required_centroids=joined_ci4)
         pass
 
     def convert(self, ignore_restrictions=False):

@@ -1,6 +1,6 @@
 import hashlib
 import math
-from typing import Literal, Any
+from typing import Literal, Any, NamedTuple
 import numpy as np
 
 from ..utility import RGB_TO_LUM_COEF
@@ -141,18 +141,27 @@ def generate_ihq(img: FloatPixelsImage):
     return best_i_pixels, best_rgba_pixels, uses_alpha
 
 
-def kmeans_plusplus(pixels: FlatPixels, n_colors: int):
+def kmeans_plusplus(pixels: FlatPixels, n_colors: int, required_centroids: np.ndarray | None = None):
     """Fancier way to initialize kmeans, basically insures initial centroids are already decent"""
     pixel_count = pixels.shape[0]
     np.random.seed(pixel_count * n_colors)  # make deterministic
     centroids = np.empty_like(pixels, shape=(n_colors, pixels.shape[1]))
 
-    centroids[0] = pixels[np.random.randint(pixel_count)]
+    n_required = 0
+    if required_centroids is not None and len(required_centroids) > 0:
+        n_required = len(required_centroids)
+        if n_required >= n_colors:
+            return np.array(required_centroids[:n_colors], dtype=pixels.dtype)
 
-    closest_dist_sq = np.full(pixel_count, np.inf)
+        centroids[:n_required] = required_centroids
+        distances_sq_to_required = np.linalg.norm(pixels[:, np.newaxis] - required_centroids, axis=-1) ** 2
+        closest_dist_sq = np.min(distances_sq_to_required, axis=-1)
+    else:
+        centroids[0] = pixels[np.random.randint(pixel_count)]
+        closest_dist_sq = np.full(pixel_count, np.inf)
 
-    for i in range(1, n_colors):
-        # squared distance of previous centroid
+    start_index = n_required if n_required > 0 else 1
+    for i in range(start_index, n_colors):
         dist_sq = np.sum((pixels - centroids[i - 1]) ** 2, axis=1)
         closest_dist_sq = np.minimum(closest_dist_sq, dist_sq)
 
@@ -168,17 +177,34 @@ def kmeans_plusplus(pixels: FlatPixels, n_colors: int):
     return centroids
 
 
-def generate_palette_kmeans(pixels_flat: FlatPixels, n_colors: int, max_iter: int = 32, tolerance: float = 1 / 255):
-    """Quantize pallete using kmeans++. Returns pallete, texture and error"""
+def generate_palette_kmeans(
+    pixels_flat: FlatPixels,
+    n_colors: int,
+    required_centroids: np.ndarray | None = None,
+    max_iter: int = 32,
+    tolerance: float = 1 / 255,
+):
+    """
+    Quantize pallete using kmeans++ initialization. Returns pallete, labels, and error.
+    """
+
+    class KmeansResult(NamedTuple):
+        centroids: np.ndarray
+        labels: FlatPixels[np.uint8]
+        error: float
+
     assert n_colors >= 1, "n_colors < 1"
     assert tolerance >= 0, "tolerance < 0"
-    assert n_colors <= 255 or n_colors < 0, "n_colors > 255 or n_colors < 0"
+
+    n_required = 0
+    if required_centroids is not None and len(required_centroids) > 0:
+        n_required = len(required_centroids)
 
     unique_colors, inverse_indices = np.unique(pixels_flat, axis=0, return_inverse=True)
-    if len(unique_colors) <= n_colors:
-        return unique_colors, inverse_indices, 0
+    if len(unique_colors) + n_required <= n_colors:
+        return KmeansResult(np.vstack([required_centroids, unique_colors]), inverse_indices + n_required, 0.0)
 
-    centroids = kmeans_plusplus(pixels_flat, n_colors)
+    centroids = kmeans_plusplus(pixels_flat, n_colors, required_centroids)
 
     converged = False
     for _ in range(max_iter):
@@ -187,19 +213,21 @@ def generate_palette_kmeans(pixels_flat: FlatPixels, n_colors: int, max_iter: in
 
         new_centroids = np.empty_like(centroids)
         for i in range(n_colors):
+            new_centroids[i] = centroids[i]
+            if i < n_required:
+                continue
             cluster_pixels = pixels_flat[labels == i]
             if cluster_pixels.size > 0:
                 new_centroids[i] = cluster_pixels.mean(axis=0)
-            else:
-                new_centroids[i] = centroids[i]
 
         if np.linalg.norm(new_centroids - centroids) < 1e-4:  # check for convergence
             converged = True
         centroids = new_centroids
         if converged:
             break
+    error = math.sqrt(np.sum((pixels_flat - centroids[labels]) ** 2))
 
-    return centroids, labels, math.sqrt(np.sum(np.square(pixels_flat - centroids[labels])))
+    return KmeansResult(centroids.round(), labels, error)
 
 
 def compact_nibble_np(pixels: N64Pixels[np.uint8]) -> N64Pixels[np.uint8]:
