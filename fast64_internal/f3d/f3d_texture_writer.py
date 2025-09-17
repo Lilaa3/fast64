@@ -1021,23 +1021,40 @@ class MultitexManager:
                 tex.fmt = fmt
 
     def find_optimal_ci4_merges(
-        self, ci4_to_merge: list, rgba_palettes: dict[int, tuple[FloatPixels, FlatPixels]], remaining_colors: int
+        self,
+        ci4_to_merge: list,
+        rgba_palettes: dict[int, tuple[FloatPixels, FlatPixels]],
+        remaining_colors: int,
+        ignore_restrictions=False,
     ):
-        TEXTURE_ID = frozenset[FloatPixelsImage, ...]
+        TEXTURE_ID = TypeVar("TEXTURE_ID", frozenset[FloatPixelsImage, ...])
         failed_combinations: set[TEXTURE_ID] = set()
-        merge_results: dict[TEXTURE_ID, tuple[np.ndarray, np.ndarray, float, dict]] = {}
+
+        class MergeResult(NamedTuple):
+            palette: np.ndarray
+            labels: np.ndarray
+            rmse: float
+            slice_map: dict[TEXTURE_ID, slice]
+
+        merge_results: dict[TEXTURE_ID, MergeResult] = {}
+
+        if ignore_restrictions:
+            pal_size = 16
+        else:
+            pal_count = len(set(frozenset(tex.palDependencies) for tex in ci4_to_merge))
+            pal_size = max(min(remaining_colors / pal_count, 0), 16)
 
         for tex in ci4_to_merge:
             tex_id: TEXTURE_ID = frozenset(tex.palDependencies)
 
             palette_pixels = [rgba_palettes[pal.pixel_hash][1] for pal in tex.palDependencies]
             joined_pixels = np.vstack(palette_pixels)
-            pal, labels, inertia = generate_palette_kmeans(joined_pixels, min(16, remaining_colors))
+            pal, labels, inertia = generate_palette_kmeans(joined_pixels, pal_size)
             num_pixels = len(joined_pixels)
             rmse = np.sqrt(inertia / num_pixels) if num_pixels > 0 else 0
             slice_map = {tex_id: slice(0, num_pixels)}
 
-            merge_results[tex_id] = (pal, labels, rmse, slice_map)
+            merge_results[tex_id] = MergeResult(pal, labels, rmse, slice_map)
 
         # try to merge ci4's together, 2 at a time, then 3 at a time, etc
         # skip bad combinations
@@ -1062,27 +1079,27 @@ class MultitexManager:
                     current_offset += len(pixels)
 
                 joined_pixels = np.vstack(all_pixels_to_join)
-                pal, labels, inertia = generate_palette_kmeans(joined_pixels, min(16, remaining_colors))
+                pal, labels, inertia = generate_palette_kmeans(joined_pixels, pal_size)
                 num_pixels_total = len(joined_pixels)
                 merged_rmse = np.sqrt(inertia / num_pixels_total) if num_pixels_total > 0 else 0
 
                 # get the smallest individual error from the textures in this group
                 max_individual_rmse = min(
-                    merge_results.get(tid, (None, None, float("inf"), None))[2] for tid in current_ids_list
+                    merge_results.get(tid, MergeResult(None, None, float("inf"), None))[2] for tid in current_ids_list
                 )
 
                 if merged_rmse > max_individual_rmse:
                     failed_combinations.add(group_id)
                 else:
-                    merge_results[group_id] = (pal, labels, merged_rmse, slice_map)
+                    merge_results[group_id] = MergeResult(pal, labels, merged_rmse, slice_map)
 
         all_original_ids = {frozenset(t.palDependencies) for t in ci4_to_merge}
         assigned_ids = set()
-        final_merges: dict[frozenset[FloatPixelsImage, ...], tuple[np.ndarray, np.ndarray, float, dict]] = {}
+        final_merges: dict[TEXTURE_ID, MergeResult] = {}
 
         sorted_merges = sorted(
             merge_results.items(),
-            key=lambda item: len(item[1][3]),  # sort by biggest groups
+            key=lambda item: len(item[1].slice_map),  # sort by biggest groups
             reverse=True,  # descending order
         )
 
@@ -1119,7 +1136,10 @@ class MultitexManager:
                         rgba_palettes[pallete.pixel_hash] = rgba16, flatten_pixels(rgba16.round())
 
         ci4 = self.find_optimal_ci4_merges(
-            [tex for tex in self.texture_list if tex.fmt == "CI4" and tex.load_pal], rgba_palettes, remaining_colors
+            [tex for tex in self.texture_list if tex.fmt == "CI4" and tex.load_pal],
+            rgba_palettes,
+            remaining_colors,
+            ignore_restrictions,
         )
         pass
 
