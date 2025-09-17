@@ -1020,6 +1020,83 @@ class MultitexManager:
                 tex, fmt = best_choice
                 tex.fmt = fmt
 
+    def find_optimal_ci4_merges(
+        self, ci4_to_merge: list, rgba_palettes: dict[int, tuple[FloatPixels, FlatPixels]], remaining_colors: int
+    ):
+        TEXTURE_ID = frozenset[FloatPixelsImage, ...]
+        failed_combinations: set[TEXTURE_ID] = set()
+        merge_results: dict[TEXTURE_ID, tuple[np.ndarray, np.ndarray, float, dict]] = {}
+
+        for tex in ci4_to_merge:
+            tex_id: TEXTURE_ID = frozenset(tex.palDependencies)
+
+            palette_pixels = [rgba_palettes[pal.pixel_hash][1] for pal in tex.palDependencies]
+            joined_pixels = np.vstack(palette_pixels)
+            pal, labels, inertia = generate_palette_kmeans(joined_pixels, min(16, remaining_colors))
+            num_pixels = len(joined_pixels)
+            rmse = np.sqrt(inertia / num_pixels) if num_pixels > 0 else 0
+            slice_map = {tex_id: slice(0, num_pixels)}
+
+            merge_results[tex_id] = (pal, labels, rmse, slice_map)
+
+        # try to merge ci4's together, 2 at a time, then 3 at a time, etc
+        # skip bad combinations
+        for r in range(2, len(ci4_to_merge) + 1):
+            for texture_group in combinations(ci4_to_merge, r):
+                current_ids_list: list[TEXTURE_ID] = [frozenset(t.palDependencies) for t in texture_group]
+                group_id: TEXTURE_ID = frozenset.union(*current_ids_list)
+
+                # this combo is already known to be bad
+                if any(frozenset(failed).issubset(group_id) for failed in failed_combinations):
+                    continue
+
+                pixel_data_map = {
+                    tid: np.vstack([rgba_palettes[p.pixel_hash][1] for p in tid]) for tid in current_ids_list
+                }
+                all_pixels_to_join = []
+                slice_map = {}
+                current_offset = 0
+                for tid, pixels in pixel_data_map.items():
+                    all_pixels_to_join.append(pixels)
+                    slice_map[tid] = slice(current_offset, current_offset + len(pixels))
+                    current_offset += len(pixels)
+
+                joined_pixels = np.vstack(all_pixels_to_join)
+                pal, labels, inertia = generate_palette_kmeans(joined_pixels, min(16, remaining_colors))
+                num_pixels_total = len(joined_pixels)
+                merged_rmse = np.sqrt(inertia / num_pixels_total) if num_pixels_total > 0 else 0
+
+                # get the smallest individual error from the textures in this group
+                max_individual_rmse = min(
+                    merge_results.get(tid, (None, None, float("inf"), None))[2] for tid in current_ids_list
+                )
+
+                if merged_rmse > max_individual_rmse:
+                    failed_combinations.add(group_id)
+                else:
+                    merge_results[group_id] = (pal, labels, merged_rmse, slice_map)
+
+        all_original_ids = {frozenset(t.palDependencies) for t in ci4_to_merge}
+        assigned_ids = set()
+        final_merges: dict[frozenset[FloatPixelsImage, ...], tuple[np.ndarray, np.ndarray, float, dict]] = {}
+
+        sorted_merges = sorted(
+            merge_results.items(),
+            key=lambda item: len(item[1][3]),  # sort by biggest groups
+            reverse=True,  # descending order
+        )
+
+        # assign non overlapping merges
+        for group_id, result_tuple in sorted_merges:
+            member_ids = set(result_tuple[3].keys())
+            if assigned_ids.isdisjoint(member_ids):
+                final_merges[group_id] = result_tuple
+                assigned_ids.update(member_ids)
+            if assigned_ids == all_original_ids:
+                break
+
+        return final_merges
+
     def create_pallete(self, ignore_restrictions=False):
         assert self.is_ci == True, "Can only create palette for CI textures"
 
@@ -1041,87 +1118,9 @@ class MultitexManager:
                         rgba16 = get_rgba_colors_float(pallete.pixels)
                         rgba_palettes[pallete.pixel_hash] = rgba16, flatten_pixels(rgba16.round())
 
-        # TODO: for the love of god CACHE THIS BEFORE PR
-        # try to merge ci4's together
-        ci4_to_merge = [tex for tex in self.texture_list if tex.fmt == "CI4" and tex.load_pal]
-        TEXTURE_ID = frozenset[FloatPixelsImage, ...]
-        failed_combinations: set[TEXTURE_ID] = set()
-        merge_results: dict[TEXTURE_ID, tuple[np.ndarray, np.ndarray, float, dict]] = {}
-
-        for tex in ci4_to_merge:  # baseline error for each texture
-            tex_id: TEXTURE_ID = frozenset(tex.palDependencies)
-
-            palette_pixels = [rgba_palettes[pal.pixel_hash][1] for pal in tex.palDependencies]
-            joined_pixels = np.vstack(palette_pixels)
-
-            pal, labels, inertia = generate_palette_kmeans(joined_pixels, min(16, remaining_colors))
-
-            num_pixels = len(joined_pixels)
-            rmse = np.sqrt(inertia / num_pixels) if num_pixels > 0 else 0
-
-            slice_map = {tex_id: slice(0, num_pixels)}
-            merge_results[tex_id] = (pal, labels, rmse, slice_map)
-
-        # try to merge ci4's together, 2 at a time, then 3 at a time, etc
-        # skip bad combinations
-        for r in range(2, len(ci4_to_merge) + 1):
-            for texture_group in combinations(ci4_to_merge, r):
-                current_ids_list: list[TEXTURE_ID] = [frozenset(t.palDependencies) for t in texture_group]
-                group_id: TEXTURE_ID = frozenset.union(*current_ids_list)
-
-                # this combo is already known to be bad
-                if any(frozenset(failed).issubset(group_id) for failed in failed_combinations):
-                    continue
-
-                pixel_data_map = {
-                    tid: np.vstack([rgba_palettes[p.pixel_hash][1] for p in tid]) for tid in current_ids_list
-                }
-
-                all_pixels_to_join = []
-                slice_map = {}
-                current_offset = 0
-                for tid, pixels in pixel_data_map.items():
-                    all_pixels_to_join.append(pixels)
-                    slice_map[tid] = slice(current_offset, current_offset + len(pixels))
-                    current_offset += len(pixels)
-
-                joined_pixels = np.vstack(all_pixels_to_join)
-                pal, labels, inertia = generate_palette_kmeans(joined_pixels, min(16, remaining_colors))
-
-                num_pixels_total = len(joined_pixels)
-                merged_rmse = np.sqrt(inertia / num_pixels_total) if num_pixels_total > 0 else 0
-
-                # get the highest individual error from the textures in this group
-                max_individual_rmse = min(
-                    merge_results.get(tid, (None, None, float("inf"), None))[2] for tid in current_ids_list
-                )
-
-                if merged_rmse > max_individual_rmse:
-                    failed_combinations.add(group_id)
-                else:
-                    merge_results[group_id] = (pal, labels, merged_rmse, slice_map)
-
-        all_original_ids = {frozenset(t.palDependencies) for t in ci4_to_merge}
-        assigned_ids = set()
-        final_merges = []
-
-        sorted_merges = sorted(
-            merge_results.items(),
-            key=lambda item: len(item[1][3]),  # sort by biggest groups
-            reverse=True,  # descending order
+        ci4 = self.find_optimal_ci4_merges(
+            [tex for tex in self.texture_list if tex.fmt == "CI4" and tex.load_pal], rgba_palettes, remaining_colors
         )
-
-        # assign non overlapping merges
-        for group_id, result_tuple in sorted_merges:
-            member_ids = set(result_tuple[3].keys())
-
-            if assigned_ids.isdisjoint(member_ids):
-                final_merges.append((group_id, result_tuple))
-                assigned_ids.update(member_ids)
-
-            if assigned_ids == all_original_ids:
-                break
-
         pass
 
     def convert(self, ignore_restrictions=False):
