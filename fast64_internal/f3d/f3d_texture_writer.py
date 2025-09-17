@@ -756,11 +756,11 @@ class MultitexManager:
         class TexAlloc(NamedTuple):
             start: int
             end: int
-            tex: TexInfo
+            tex_hash: int
             lower: bool
 
             def __str__(self):
-                return f"({self.start}, {self.end}): ({self.tex.indexInMat} - {self.lower})"
+                return f"({self.start}, {self.end}): ({self.tex_hash} - {self.lower})"
 
             def __repr__(self):
                 return str(self)
@@ -773,14 +773,14 @@ class MultitexManager:
         for tex in textures:
             if tex.fmt == "RGBA32":
                 half_size = tex.tmem_size // 2
-                new_allocations = [(half_size, tex, False), (half_size, tex, True)]
+                new_allocations = [(half_size, tex.tmem_hash, False), (half_size, tex.tmem_hash, True)]
             else:
-                new_allocations = [(tex.tmem_size, tex, False)]
+                new_allocations = [(tex.tmem_size, tex.tmem_hash, False)]
 
-            for tmem_size, tex, lower in new_allocations:
+            for tmem_size, tmem_hash, lower in new_allocations:
                 if tmem_size == -1:
                     continue
-                if any(t.tmem_hash == tex.tmem_hash and l == lower for _, _, t, l in allocations):
+                if any(other_hash == tmem_hash and l == lower for _, _, other_hash, l in allocations):
                     continue  # check if already present
 
                 for i in range(len(allocations) - 1):
@@ -792,13 +792,13 @@ class MultitexManager:
                         continue
 
                     if gap_size >= tmem_size:  # fits in this gap
-                        allocations.append(TexAlloc(gap_start, gap_start + tmem_size, tex, lower))
+                        allocations.append(TexAlloc(gap_start, gap_start + tmem_size, tmem_hash, lower))
                         allocations.sort(key=lambda x: x[0])  # ensure sorted
                         break
                 else:  # place at the end
                     starting_end = self.max_tmem_size // 2 if lower == True else 0
                     last_end = max((end for _, end, *_ in allocations if end > starting_end), default=starting_end)
-                    allocations.append(TexAlloc(last_end, last_end + tmem_size, tex, lower))
+                    allocations.append(TexAlloc(last_end, last_end + tmem_size, tmem_hash, lower))
                     allocations.sort(key=lambda x: x[1])  # ensure sorted
 
         return allocations
@@ -946,7 +946,6 @@ class MultitexManager:
 
         texture_list = sorted(self.texture_list, key=lambda tex: tex.pixel_count)
         auto_textures = [tex for tex in texture_list if tex.auto_fmt]
-        set_textures = [tex for tex in texture_list if not tex.auto_fmt]
 
         for tex in auto_textures:  # figure out important properties
             if not tex.auto_fmt:
@@ -1042,41 +1041,86 @@ class MultitexManager:
                         rgba16 = get_rgba_colors_float(pallete.pixels)
                         rgba_palettes[pallete.pixel_hash] = rgba16, flatten_pixels(rgba16.round())
 
+        # TODO: for the love of god CACHE THIS BEFORE PR
         # try to merge ci4's together
         ci4_to_merge = [tex for tex in self.texture_list if tex.fmt == "CI4" and tex.load_pal]
-        failed_combinations: set[tuple[int]] = set()
-        merge_results: dict[tuple[int], tuple[np.ndarray, np.ndarray, float]] = {}
+        TEXTURE_ID = frozenset[FloatPixelsImage, ...]
+        failed_combinations: set[TEXTURE_ID] = set()
+        merge_results: dict[TEXTURE_ID, tuple[np.ndarray, np.ndarray, float, dict]] = {}
 
         for tex in ci4_to_merge:  # baseline error for each texture
-            tex_id = (tuple(tex.palDependencies),)
+            tex_id: TEXTURE_ID = frozenset(tex.palDependencies)
 
             palette_pixels = [rgba_palettes[pal.pixel_hash][1] for pal in tex.palDependencies]
             joined_pixels = np.vstack(palette_pixels)
-            pal, labels, error = generate_palette_kmeans(joined_pixels, min(16, remaining_colors))
-            merge_results[tex_id] = (pal, labels, error)
 
+            pal, labels, inertia = generate_palette_kmeans(joined_pixels, min(16, remaining_colors))
+
+            num_pixels = len(joined_pixels)
+            rmse = np.sqrt(inertia / num_pixels) if num_pixels > 0 else 0
+
+            slice_map = {tex_id: slice(0, num_pixels)}
+            merge_results[tex_id] = (pal, labels, rmse, slice_map)
+
+        # try to merge ci4's together, 2 at a time, then 3 at a time, etc
+        # skip bad combinations
         for r in range(2, len(ci4_to_merge) + 1):
             for texture_group in combinations(ci4_to_merge, r):
-                current_ids = tuple(tuple(t.palDependencies) for t in texture_group)
-                # bad combo already tried
-                if any(set(failed).issubset(current_ids) for failed in failed_combinations):
-                    continue
-                all_palettes = [
-                    rgba_palettes[pal.pixel_hash][1] for tex in texture_group for pal in tex.palDependencies
-                ]
-                # join together, flattened
-                joined_pixels = np.vstack(all_palettes)
-                pal, labels, error = generate_palette_kmeans(joined_pixels, min(16, remaining_colors))
+                current_ids_list: list[TEXTURE_ID] = [frozenset(t.palDependencies) for t in texture_group]
+                group_id: TEXTURE_ID = frozenset.union(*current_ids_list)
 
-                biggest_error = max(
-                    merge_results.get((tuple(tex.palDependencies),), (None, None, float("inf")))[2]
-                    for tex in texture_group
+                # this combo is already known to be bad
+                if any(frozenset(failed).issubset(group_id) for failed in failed_combinations):
+                    continue
+
+                pixel_data_map = {
+                    tid: np.vstack([rgba_palettes[p.pixel_hash][1] for p in tid]) for tid in current_ids_list
+                }
+
+                all_pixels_to_join = []
+                slice_map = {}
+                current_offset = 0
+                for tid, pixels in pixel_data_map.items():
+                    all_pixels_to_join.append(pixels)
+                    slice_map[tid] = slice(current_offset, current_offset + len(pixels))
+                    current_offset += len(pixels)
+
+                joined_pixels = np.vstack(all_pixels_to_join)
+                pal, labels, inertia = generate_palette_kmeans(joined_pixels, min(16, remaining_colors))
+
+                num_pixels_total = len(joined_pixels)
+                merged_rmse = np.sqrt(inertia / num_pixels_total) if num_pixels_total > 0 else 0
+
+                # get the highest individual error from the textures in this group
+                max_individual_rmse = min(
+                    merge_results.get(tid, (None, None, float("inf"), None))[2] for tid in current_ids_list
                 )
 
-                if error > biggest_error:
-                    failed_combinations.add(current_ids)
+                if merged_rmse > max_individual_rmse:
+                    failed_combinations.add(group_id)
                 else:
-                    merge_results[current_ids] = (pal, labels, error)
+                    merge_results[group_id] = (pal, labels, merged_rmse, slice_map)
+
+        all_original_ids = {frozenset(t.palDependencies) for t in ci4_to_merge}
+        assigned_ids = set()
+        final_merges = []
+
+        sorted_merges = sorted(
+            merge_results.items(),
+            key=lambda item: len(item[1][3]),  # sort by biggest groups
+            reverse=True,  # descending order
+        )
+
+        # assign non overlapping merges
+        for group_id, result_tuple in sorted_merges:
+            member_ids = set(result_tuple[3].keys())
+
+            if assigned_ids.isdisjoint(member_ids):
+                final_merges.append((group_id, result_tuple))
+                assigned_ids.update(member_ids)
+
+            if assigned_ids == all_original_ids:
+                break
 
         pass
 
