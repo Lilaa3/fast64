@@ -63,6 +63,7 @@ DITHER_MODES = Literal["NONE", "DITHER", "RANDOM", "FLOYD"]
 class FloatPixelsImage:
     name: str
     pixels: FloatPixels
+    file_path: str|None = None
 
     def __post_init__(self):
         self.update_hash()
@@ -2352,17 +2353,18 @@ def getImageKey(texProp: "TextureProperty", useList) -> FImageKey:
 
 
 class FPaletteKey:
-    def __init__(self, palFormat: str, imagesSharingPalette: list[bpy.types.Image] = []):
-        self.palFormat = palFormat
-        self.imagesSharingPalette = tuple(imagesSharingPalette)
+    def __init__(self, ci4_images: frozenset, ci8_images: frozenset, num_colors_used: int):
+        self.ci4_images = ci4_images
+        self.ci8_images = ci8_images
+        self.num_colors_used = num_colors_used
 
     def __hash__(self) -> int:
-        return hash((self.palFormat, self.imagesSharingPalette))
+        return hash((self.ci4_images, self.ci8_images, self.num_colors_used))
 
     def __eq__(self, __o: object) -> bool:
         if not isinstance(__o, FPaletteKey):
             return False
-        return self.palFormat == __o.palFormat and self.imagesSharingPalette == __o.imagesSharingPalette
+        return self.ci4_images == __o.ci4_images and self.ci8_images == __o.ci8_images and self.num_colors_used == __o.num_colors_used
 
 
 def get_pixels_from_image(image: bpy.types.Image) -> FloatPixels:
@@ -2377,7 +2379,11 @@ def get_pixels_from_image(image: bpy.types.Image) -> FloatPixels:
 
 
 def get_numpy_image(image: bpy.types.Image) -> FloatPixelsImage:
-    return FloatPixelsImage(image.name, get_pixels_from_image(image))
+    if image.filepath == "":
+        name = image.name
+    else:
+        name = getNameFromPath(image.filepath, True)
+    return FloatPixelsImage(name, get_pixels_from_image(image), image.filepath)
 
 
 class FModel:

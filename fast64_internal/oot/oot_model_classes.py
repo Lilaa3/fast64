@@ -7,18 +7,13 @@ from ..f3d.flipbook import TextureFlipbook, FlipbookProperty, usesFlipbook, ootF
 
 from ..f3d.f3d_writer import VertexGroupInfo, TriangleConverterInfo
 from ..f3d.f3d_texture_writer import (
-    getColorsUsedInImage,
-    mergePalettes,
     writeCITextureData,
     writeNonCITextureData,
-    getTextureNamesFromImage,
 )
 from ..f3d.f3d_gbi import (
     FModel,
     FMaterial,
-    FImage,
     FImageKey,
-    FPaletteKey,
     GfxMatWriteMethod,
     SPDisplayList,
     GfxList,

@@ -912,7 +912,7 @@ class MultitexManager:
         self,
         mat: bpy.types.Material,
         f_material: FMaterial,
-        fModel: FModel,
+        f_model: FModel,
         convert_texture_data: bool,
         ignore_restrictions: bool = False,
     ):
@@ -920,7 +920,7 @@ class MultitexManager:
         pseudo_format = f3d_mat.pseudo_format
         for i, tex_prop in f3d_mat.set_textures.items():
             tex = TexInfo()
-            tex.from_prop(tex_prop, i, mat, fModel, False, False, pseudo_format != "NONE")
+            tex.from_prop(tex_prop, i, mat, f_model, False, False, pseudo_format != "NONE")
             self.textures[i] = tex
 
         uv_basis_index = f3d_mat.uv_basis_index
@@ -935,9 +935,10 @@ class MultitexManager:
         if pseudo_format == "NONE" and f3d_mat.gen_auto_mips:
             self.generate_mipmaps(ignore_restrictions)
         if convert_texture_data:
-            self.convert()
+            self.convert(f_model)
 
     def figure_out_auto(self, ignore_restrictions=False):
+        """Figure out auto format textures using entropy, greyscale and resolutions"""
         if not any(tex.auto_fmt for tex in self.texture_list):
             return
         if ignore_restrictions:
@@ -1114,8 +1115,9 @@ class MultitexManager:
 
         return final_merges
 
-    def create_pallete(self, ignore_restrictions=False):
+    def create_pallete(self, f_material: FMaterial, f_model: FModel, ignore_restrictions=False):
         assert self.is_ci == True, "Can only create palette for CI textures"
+        assert self.tlut_mode in ("RGBA16", "IA16"), f"Invalid tlut mode, oops! {self.tlut_mode}"
 
         num_colors_used = 0
         for tex in self.texture_list:
@@ -1125,6 +1127,14 @@ class MultitexManager:
         remaining_colors = 256 - num_colors_used
         ci4_texs = [tex for tex in self.texture_list if tex.fmt == "CI4"]
         ci8_texs = [tex for tex in self.texture_list if tex.fmt == "CI8"]
+
+        CACHE_KEY = (
+            frozenset(frozenset(tex.palDependencies) for tex in ci4_texs),
+            frozenset(frozenset(tex.palDependencies) for tex in ci8_texs),
+            self.tlut_mode,
+            num_colors_used,
+            ignore_restrictions,
+        )
 
         converted_palettes = {}
         for tex in ci4_texs + ci8_texs:
@@ -1137,8 +1147,11 @@ class MultitexManager:
                         elif self.tlut_mode == "IA16":
                             quantized = get_ia_colors_float(pallete.pixels)
                         else:
-                            assert False, f"Invalid tlut mode, oops! {self.tlut_mode}"
+                            raise NotImplementedError
                         converted_palettes[pallete.pixel_hash] = quantized, flatten_pixels(quantized.round())
+
+        ci4_pal_dependencies = frozenset(pal for tex in ci4_texs for pal in tex.palDependencies)
+        ci8_pal_dependencies = frozenset(pal for tex in ci8_texs for pal in tex.palDependencies)
 
         if ignore_restrictions:
             ci4_pal_size = 16
@@ -1169,12 +1182,35 @@ class MultitexManager:
 
             joined_pixels = np.vstack(all_pixels_to_join)
 
-            pal, labels, _error = generate_palette_kmeans(joined_pixels, min(256, remaining_colors), required_centroids=joined_ci4)
-        pass
+            pal, labels, _error = generate_palette_kmeans(
+                joined_pixels, min(256, remaining_colors), required_centroids=joined_ci4
+            )
 
-    def convert(self, ignore_restrictions=False):
+        # TODO: we need to do this independently if no ci8 texs exist
+        key = FPaletteKey(ci4_pal_dependencies, ci8_pal_dependencies, num_colors_used)
+        f_palette = f_model.getTextureAndHandleShared(key)
+        if f_palette is None:
+            base_name = ""
+            if ci4_pal_dependencies:
+                base_name += "ci4"
+                for i, pal in enumerate(ci4_pal_dependencies):
+                    if i > 0:
+                        base_name += "_x"
+                    base_name += f"_{pal.name}"
+            base_name += "ci8"
+            for i, pal in enumerate(ci8_pal_dependencies):
+                if i > 0:
+                    base_name += "_x"
+                base_name += f"_{pal.name}"
+            name = checkDuplicateTextureName(f_model, toAlnum(f"pal_{f_model.name}_{base_name}"))
+            filename = f"{base_name}.pal"
+            f_palette = FImage(name, self.tlut_mode, "G_IM_SIZ_16b", 1, pal_length, filename)
+            f_palette.data = pal.to_bytes(pal_length, "big")
+            f_model.addTexture(key, f_palette, f_material)
+
+    def convert(self, f_model: FModel, ignore_restrictions=False):
         if self.is_ci:
-            self.create_pallete(ignore_restrictions)
+            self.create_pallete(f_model, ignore_restrictions)
 
     def getTexDimensions(self):
         return self.tex_dimensions
