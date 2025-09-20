@@ -63,7 +63,7 @@ DITHER_MODES = Literal["NONE", "DITHER", "RANDOM", "FLOYD"]
 class FloatPixelsImage:
     name: str
     pixels: FloatPixels
-    file_path: str|None = None
+    file_path: str | None = None
 
     def __post_init__(self):
         self.update_hash()
@@ -2364,7 +2364,11 @@ class FPaletteKey:
     def __eq__(self, __o: object) -> bool:
         if not isinstance(__o, FPaletteKey):
             return False
-        return self.ci4_images == __o.ci4_images and self.ci8_images == __o.ci8_images and self.num_colors_used == __o.num_colors_used
+        return (
+            self.ci4_images == __o.ci4_images
+            and self.ci8_images == __o.ci8_images
+            and self.num_colors_used == __o.num_colors_used
+        )
 
 
 def get_pixels_from_image(image: bpy.types.Image) -> FloatPixels:

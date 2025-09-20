@@ -30,6 +30,7 @@ from .texture_algorithms import (
     color_to_luminance_np,
     check_if_greyscale,
     get_bit_depth_entropy,
+    rounded_rgba_to_n64,
     shrink_box,
 )
 
@@ -452,8 +453,8 @@ class TexInfo:
     is_greyscale: bool = False
 
     # Parameters computed by MultitexManager.writeAll
-    texAddr: int = 0
-    palAddr: int = 0
+    tex_addr: int = 0
+    pal_addr: int = 0
     pal_index: int = 0
     palBaseName: str = ""
     doTexTile: bool = True
@@ -513,12 +514,12 @@ class TexInfo:
         return max(self.alpha_depth_entropies[0].keys(), default=0)
 
     @property
-    def palDependencies(self):
-        return {self.main_pal} if self.main_pal is not None else self._palDependencies
+    def palDependencies(self) -> set[FloatPixelsImage]:
+        return self._palDependencies | (set() if self.main_pal is None else {self.main_pal})
 
     @property
-    def imDependencies(self):
-        return {self.main_image} if self.main_image is not None else self._imDependencies
+    def imDependencies(self) -> set[FloatPixelsImage]:
+        return self._imDependencies | (set() if self.main_image is None else {self.main_image})
 
     def get_fmts_with_penalty(self, is_ci: bool):
         if is_ci:
@@ -596,8 +597,7 @@ class TexInfo:
         if self.has_tex:
             if len(img_deps) == 1:
                 self.main_image = list(img_deps)[0]
-            else:
-                self._imDependencies = img_deps
+            self._imDependencies = img_deps
 
         if self.is_ci:
             self.load_pal = tex_prop.load_pal or base_texture
@@ -605,11 +605,9 @@ class TexInfo:
             if self.has_pal:
                 if self.has_tex:
                     self._palDependencies = img_deps
-                else:
-                    if tex_prop.pal is not None:
-                        image = tex_prop.pal
-                        self.main_pal = fModel.gather_pixels(image)
-                        self._palDependencies = {self.main_pal}
+                elif tex_prop.pal is not None:
+                    self.main_pal = fModel.gather_pixels(tex_prop.pal)
+                    self._palDependencies = {self.main_pal}
             else:
                 if self.pal_reference is None:
                     self.pal_index = tex_prop.pal_index
@@ -702,11 +700,7 @@ class TexInfo:
 
 
 MAX_IMAGES = 8
-
-
-def get_fmt_size(fmt: str):
-    return texBitSizeF3D[fmt]
-
+TEXTURE_ID = frozenset[FloatPixelsImage, ...]
 
 GLOBAL_ENTROPY_CACHE = {}
 
@@ -935,7 +929,7 @@ class MultitexManager:
         if pseudo_format == "NONE" and f3d_mat.gen_auto_mips:
             self.generate_mipmaps(ignore_restrictions)
         if convert_texture_data:
-            self.convert(f_model)
+            self.convert(f_material, f_model, ignore_restrictions)
 
     def figure_out_auto(self, ignore_restrictions=False):
         """Figure out auto format textures using entropy, greyscale and resolutions"""
@@ -1025,7 +1019,11 @@ class MultitexManager:
     def find_optimal_ci4_merges(
         self, ci4_to_merge: list, converted_palettes: dict[int, tuple[FloatPixels, FlatPixels]], pal_size: int
     ):
-        TEXTURE_ID = frozenset[FloatPixelsImage, ...]
+        """
+        Find optimal ci4 palette merge combinations, this saves a good amount of pallete space,"""
+        """realistically most people won´t see the benifit but performance is so good now it doesn't matter. Hooray numpy!
+        Code complexity tho...
+        """
         failed_combinations: set[TEXTURE_ID] = set()
 
         class MergeResult(NamedTuple):
@@ -1116,17 +1114,22 @@ class MultitexManager:
         return final_merges
 
     def create_pallete(self, f_material: FMaterial, f_model: FModel, ignore_restrictions=False):
+        """Create optimal palletes for CI textures"""
         assert self.is_ci == True, "Can only create palette for CI textures"
         assert self.tlut_mode in ("RGBA16", "IA16"), f"Invalid tlut mode, oops! {self.tlut_mode}"
 
+        # calculate how many colors are used outside fast64
         num_colors_used = 0
+        allocated_pal_indices = set()
         for tex in self.texture_list:
-            if tex.is_ci and not tex.load_pal and tex.pal_reference:
+            if tex.is_ci and not tex.load_pal and isinstance(tex.pal_reference, (str, None)):
                 num_colors_used += tex.pal_length
+                if tex.pal_index is not None:
+                    allocated_pal_indices.add(tex.pal_index)
 
         remaining_colors = 256 - num_colors_used
-        ci4_texs = [tex for tex in self.texture_list if tex.fmt == "CI4"]
-        ci8_texs = [tex for tex in self.texture_list if tex.fmt == "CI8"]
+        ci4_texs = [tex for tex in self.texture_list if tex.fmt == "CI4" and tex.load_pal]
+        ci8_texs = [tex for tex in self.texture_list if tex.fmt == "CI8" and tex.load_pal]
 
         CACHE_KEY = (
             frozenset(frozenset(tex.palDependencies) for tex in ci4_texs),
@@ -1136,19 +1139,19 @@ class MultitexManager:
             ignore_restrictions,
         )
 
+        # convert all textures ahead of time
         converted_palettes = {}
         for tex in ci4_texs + ci8_texs:
-            if tex.load_pal:
-                palletes = tex.palDependencies
-                for pallete in palletes:
-                    if pallete.pixel_hash not in converted_palettes:
-                        if self.tlut_mode == "RGBA16":
-                            quantized = get_rgba_colors_float(pallete.pixels)
-                        elif self.tlut_mode == "IA16":
-                            quantized = get_ia_colors_float(pallete.pixels)
-                        else:
-                            raise NotImplementedError
-                        converted_palettes[pallete.pixel_hash] = quantized, flatten_pixels(quantized.round())
+            palletes = tex.palDependencies
+            for pallete in palletes:
+                if pallete.pixel_hash not in converted_palettes:
+                    if self.tlut_mode == "RGBA16":
+                        quantized = get_rgba_colors_float(pallete.pixels)
+                    elif self.tlut_mode == "IA16":
+                        quantized = get_ia_colors_float(pallete.pixels)
+                    else:
+                        raise NotImplementedError
+                    converted_palettes[pallete.pixel_hash] = quantized, flatten_pixels(quantized.round())
 
         ci4_pal_dependencies = frozenset(pal for tex in ci4_texs for pal in tex.palDependencies)
         ci8_pal_dependencies = frozenset(pal for tex in ci8_texs for pal in tex.palDependencies)
@@ -1161,18 +1164,32 @@ class MultitexManager:
             ci4_remaining_colors = remaining_colors
             if ci8_pal_count:
                 ci4_remaining_colors //= 2
-            ci4_pal_size = max(min(ci4_remaining_colors / ci4_pal_count, 0), 16)
+            ci4_pal_size = max(min(ci4_remaining_colors // ci4_pal_count, 16), 0) if ci4_pal_count > 0 else 0
 
-        ci4 = self.find_optimal_ci4_merges(
-            [tex for tex in self.texture_list if tex.fmt == "CI4" and tex.load_pal], converted_palettes, ci4_pal_size
-        )
-        joined_ci4 = np.vstack((pal.palette for pal in ci4.values()))
+        ci4 = self.find_optimal_ci4_merges(ci4_texs, converted_palettes, ci4_pal_size)
 
         if ci8_texs:
+            # if we have ci8 textures, we only have one "global" pallete, which ci4 and ci8 will merge into
+            # this is the cleanest solution, and the ci8 textures get access to the ci4 pallete colors too!
+            sorted_ci4_merges = sorted(ci4.items(), key=lambda item: min(p.pixel_hash for p in item[0]))
+
+            ci4_palettes = []
+            ci4_group_offsets = {}
+            current_offset = 0
+            for group_id, result in sorted_ci4_merges:
+                ci4_palettes.append(result.palette)
+                ci4_group_offsets[group_id] = current_offset
+                current_offset += len(result.palette)
+
+            required_centroids = (
+                np.vstack(ci4_palettes) if ci4_palettes else np.array([], dtype=np.float32).reshape(0, 4)
+            )
+
+            # join all CI8 pixels for k-means.
             all_pixels_to_join = []
             slice_map = {}
             current_offset = 0
-            sorted_pals = sorted((pal for tex in ci8_texs for pal in tex.palDependencies), key=lambda p: p.pixel_hash)
+            sorted_pals = sorted(ci8_pal_dependencies, key=lambda p: p.pixel_hash)
 
             for pal in sorted_pals:
                 pixels = converted_palettes[pal.pixel_hash][1]
@@ -1182,35 +1199,40 @@ class MultitexManager:
 
             joined_pixels = np.vstack(all_pixels_to_join)
 
-            pal, labels, _error = generate_palette_kmeans(
-                joined_pixels, min(256, remaining_colors), required_centroids=joined_ci4
+            # generate the palette
+            pal, labels, _ = generate_palette_kmeans(
+                joined_pixels, min(256, remaining_colors), required_centroids=required_centroids
             )
+            pal_length = len(pal)
 
-        # TODO: we need to do this independently if no ci8 texs exist
-        key = FPaletteKey(ci4_pal_dependencies, ci8_pal_dependencies, num_colors_used)
-        f_palette = f_model.getTextureAndHandleShared(key)
-        if f_palette is None:
-            base_name = ""
-            if ci4_pal_dependencies:
-                base_name += "ci4"
-                for i, pal in enumerate(ci4_pal_dependencies):
+            # create the shared palette
+            key = FPaletteKey(ci4_pal_dependencies, ci8_pal_dependencies, num_colors_used)
+            f_palette = f_model.getTextureAndHandleShared(key)
+            if f_palette is None:
+                base_name = ""
+                if ci4_pal_dependencies:
+                    base_name += "ci4"
+                    for i, pal in enumerate(ci4_pal_dependencies):
+                        if i > 0:
+                            base_name += "_x"
+                        base_name += f"_{pal.name}"
+                base_name += "ci8"
+                for i, pal in enumerate(ci8_pal_dependencies):
                     if i > 0:
                         base_name += "_x"
                     base_name += f"_{pal.name}"
-            base_name += "ci8"
-            for i, pal in enumerate(ci8_pal_dependencies):
-                if i > 0:
-                    base_name += "_x"
-                base_name += f"_{pal.name}"
-            name = checkDuplicateTextureName(f_model, toAlnum(f"pal_{f_model.name}_{base_name}"))
-            filename = f"{base_name}.pal"
-            f_palette = FImage(name, self.tlut_mode, "G_IM_SIZ_16b", 1, pal_length, filename)
-            f_palette.data = pal.to_bytes(pal_length, "big")
-            f_model.addTexture(key, f_palette, f_material)
+                name = checkDuplicateTextureName(f_model, toAlnum(f"pal_{f_model.name}_{base_name}"))
+                filename = f"{name}.pal"
+                f_palette = FImage(name, self.tlut_mode, "G_IM_SIZ_16b", 1, pal_length, filename)
+                f_palette.data = rounded_rgba_to_n64(pal).tobytes()
+                f_model.addTexture(key, f_palette, f_material)
 
-    def convert(self, f_model: FModel, ignore_restrictions=False):
+        else:  # only CI4 textures exist. create separate palettes for each optimal group.
+            pass
+
+    def convert(self, f_material: FMaterial, f_model: FModel, ignore_restrictions=False):
         if self.is_ci:
-            self.create_pallete(f_model, ignore_restrictions)
+            self.create_pallete(f_material, f_model, ignore_restrictions)
 
     def getTexDimensions(self):
         return self.tex_dimensions

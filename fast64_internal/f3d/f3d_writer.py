@@ -1434,7 +1434,7 @@ def saveOrGetF3DMaterial(material, fModel, obj, drawLayer, convertTextureData):
     with cProfile.Profile() as prof:
         multitexManager = MultitexManager()
         multitexManager.from_mat(
-            material, f3dMat, fModel, convertTextureData, bpy.context.scene.ignoreTextureRestrictions
+            material, fMaterial, fModel, convertTextureData, bpy.context.scene.ignoreTextureRestrictions
         )
         prof.print_stats(sort="cumulative")
     print(multitexManager)
