@@ -11,7 +11,6 @@ from bpy.utils import register_class, unregister_class
 from .f3d_enums import *
 from .f3d_material import (
     all_combiner_uses,
-    getMaterialScrollDimensions,
     isTexturePointSampled,
     F3DMaterialProperty,
     RDPSettings,
@@ -1259,35 +1258,11 @@ defaultLighting = [
 
 
 def getTexDimensions(material):
-    f3dMat = material.f3d_mat
-
-    texDimensions0 = None
-    texDimensions1 = None
-    useDict = all_combiner_uses(f3dMat)
-    if useDict["Texture 0"] and f3dMat.tex0.tex_set:
-        if f3dMat.tex0.use_tex_reference:
-            texDimensions0 = f3dMat.tex0.tex_reference_size
-        else:
-            if f3dMat.tex0.tex is None:
-                raise PluginError('In material "' + material.name + '", a texture has not been set.')
-            texDimensions0 = f3dMat.tex0.tex.size[0], f3dMat.tex0.tex.size[1]
-    if useDict["Texture 1"] and f3dMat.tex1.tex_set:
-        if f3dMat.tex1.use_tex_reference:
-            texDimensions1 = f3dMat.tex1.tex_reference_size
-        else:
-            if f3dMat.tex1.tex is None:
-                raise PluginError('In material "' + material.name + '", a texture has not been set.')
-            texDimensions1 = f3dMat.tex1.tex.size[0], f3dMat.tex1.tex.size[1]
-
-    if texDimensions0 is not None and texDimensions1 is not None:
-        texDimensions = texDimensions0 if f3dMat.uv_basis == "TEXEL0" else texDimensions1
-    elif texDimensions0 is not None:
-        texDimensions = texDimensions0
-    elif texDimensions1 is not None:
-        texDimensions = texDimensions1
-    else:
-        texDimensions = [32, 32]
-    return texDimensions
+    f3d_mat: F3DMaterialProperty = material.f3d_mat
+    tex = f3d_mat.set_textures.get(f3d_mat.uv_basis_index)
+    if tex is None:
+        return [32, 32]
+    return tex.size
 
 
 @wrap_func_with_error_message(lambda args: (f"In material '{args['material'].name}': "))
@@ -1339,8 +1314,6 @@ def saveOrGetF3DMaterial(material, fModel, obj, drawLayer, convertTextureData):
 
     fMaterial.mat_only_DL.commands.append(DPPipeSync())
     fMaterial.revert.commands.append(DPPipeSync())
-
-    fMaterial.getScrollData(material, getMaterialScrollDimensions(f3dMat))
 
     if f3dMat.set_combiner:
         if f3dMat.rdp_settings.g_mdsft_cycletype == "G_CYC_2CYCLE":
@@ -1438,6 +1411,9 @@ def saveOrGetF3DMaterial(material, fModel, obj, drawLayer, convertTextureData):
         )
         prof.print_stats(sort="cumulative")
     print(multitexManager)
+    # TODO: reimplement this using the multitexManager
+    # fMaterial.getScrollData(material, getMaterialScrollDimensions(f3dMat))
+
     # Set othermode
     if drawLayer is not None:
         defaultRM = fModel.getRenderMode(drawLayer)

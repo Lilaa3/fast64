@@ -359,3 +359,59 @@ def get_bit_depth_entropy(image: FloatPixels, efficiency_threshold: float = 0.6)
 
     entropies[8] = original_entropy
     return entropies, original_entropy
+
+
+def floyd_dither(old: FloatPixels, new: FloatPixels) -> FloatPixels:
+    height, width = old.shape[:2]
+    errors = old - new
+    up_left_error = errors * 3 / 8
+    up_right_error = errors * 1 / 8
+    up_error = errors * 5 / 8
+    right_error = errors * 7 / 8
+    result = np.copy(new)
+    for y in range(0, height - 1):
+        for x in range(1, width - 1):
+            result[y, x + 1] += right_error[y, x]  # 7 / 16
+            result[y + 1, x - 1] += up_left_error[y, x]  # 3 / 16
+            result[y + 1, x] += up_error[y, x]  # 5 / 16
+            result[y + 1, x + 1] += up_right_error[y, x]  # 1 / 16
+    return result
+
+
+DITHER_MODES = Literal["NONE", "DITHER", "RANDOM", "FLOYD"]
+
+
+def apply_dither(old: FloatPixels, new: FloatPixels, dither_mode: DITHER_MODES) -> FloatPixels:
+    match dither_mode:
+        case "FLOYD":
+            return floyd_dither(old, new)
+    return old
+
+
+EMU64_SWIZZLE_SIZES = {"G_IM_SIZ_4b": (8, 8), "G_IM_SIZ_8b": (8, 4), "G_IM_SIZ_16b": (4, 4), "G_IM_SIZ_32b": (2, 2)}
+
+
+def emu64_swizzle_pixels(pixels: FloatPixels, fmt: str) -> FloatPixels:
+    height, width = pixels.shape[:2]
+    block_w, block_h = EMU64_SWIZZLE_SIZES[texBitSizeF3D[fmt]]
+    block_x_count = width // block_w
+    block_y_count = height // block_h
+
+    return pixels.reshape(block_y_count, block_h, block_x_count, block_w, 4).transpose(0, 2, 1, 3, 4).reshape(-1, 4)
+
+
+def process_float_pixels(
+    unrounded_pixels: FloatPixels, emu64: bool, dither_mode: DITHER_MODES, palette: np.ndarray[np.uint8] | None = None
+) -> FlatPixels[float]:
+    """Rounds the pixels to the nearest integer (optionally dither) and swizzle on emu64 exports"""
+    rounded_pixels = unrounded_pixels.round()
+
+    if dither_mode is not None:
+        rounded_pixels = apply_dither(unrounded_pixels, rounded_pixels, dither_mode).round()
+    if emu64:
+        rounded_pixels = emu64_swizzle_pixels(rounded_pixels, "RGBA")
+
+    if palette is not None:
+        return np.searchsorted(palette, rounded_pixels)
+
+    return flatten_pixels(np.flip(rounded_pixels, 0))  # N64 is -Y, Blender is +Y

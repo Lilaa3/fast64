@@ -421,21 +421,27 @@ CI_FORMAT_PROPS = {
 
 
 @dataclass
+class TexHolder:
+    image: Optional[FloatPixelsImage] = None
+    palette: Optional[FloatPixelsImage] = None  # set pallete only if to convert against or to directly load
+
+    def __hash__(self):
+        return hash((self.image, self.palette))
+
+
+@dataclass
 class TexInfo:
     load_tex: bool = False
     tex_reference: Optional[str] = None
     fmt: str | None = None
     _auto_fmt: bool = False
-    main_image: Optional[FloatPixelsImage] = None
-    _imDependencies: set[FloatPixelsImage] = field(default_factory=set)
     imageDims: tuple[int, int] = (0, 0)
 
     load_pal: bool = False
     pal_reference: Optional[str] = None
     pal_fmt: str = ""
-    main_pal: Optional[FloatPixelsImage] = None
-    _palDependencies: set[FloatPixelsImage] = field(default_factory=set)
 
+    im_deps: set[TexHolder] = field(default_factory=set)
     pal_length: int = -1
 
     mirror: tuple[bool, bool] = (False, False)
@@ -497,11 +503,16 @@ class TexInfo:
         return -1
 
     @property
+    def main_image(self):
+        if self.has_tex and len(self.im_deps) == 1:
+            return list(self.im_deps)[0]
+
+    @property
     def tmem_hash(self):
         values = [self.tex_reference, self.tmem_size, self.fmt]
         if self.tex_reference is None:
             if self.main_image is not None:
-                values.append(self.main_image.name)
+                values.append(self.main_image)
         values.append(self.imageDims)
         return hash(tuple(values))
 
@@ -513,15 +524,10 @@ class TexInfo:
     def recommended_alpha_bits(self):
         return max(self.alpha_depth_entropies[0].keys(), default=0)
 
-    @property
-    def palDependencies(self) -> set[FloatPixelsImage]:
-        return self._palDependencies | (set() if self.main_pal is None else {self.main_pal})
-
-    @property
-    def imDependencies(self) -> set[FloatPixelsImage]:
-        return self._imDependencies | (set() if self.main_image is None else {self.main_image})
-
     def get_fmts_with_penalty(self, is_ci: bool):
+        """Get formats and their given penalty"""
+        assert self.alpha_depth_entropies and self.color_depth_entropies, "Must have entropies"
+
         if is_ci:
             info = CI_FORMAT_PROPS
         else:
@@ -556,8 +562,7 @@ class TexInfo:
 
     def copy(self):
         new = copy.copy(self)
-        new._palDependencies = copy.copy(new._palDependencies)
-        new._imDependencies = copy.copy(new._imDependencies)
+        new.im_deps = copy.copy(new.im_deps)
         return new
 
     def from_prop(
@@ -570,6 +575,7 @@ class TexInfo:
         base_texture=False,
         pseudo_fmt=False,
     ) -> None:
+        # TODO: Use a list of error instead of a seperate error checking function
         if not tex_prop.tex_set and not ignore_tex_set:
             return None
         self.indexInMat = index
@@ -590,29 +596,29 @@ class TexInfo:
             self._auto_fmt = tex_prop.auto_fmt
         self.load_tex = tex_prop.load_tex or base_texture
         self.tex_reference = tex_prop.tex_reference if (tex_prop.use_tex_reference and not base_texture) else None
-        img_deps = fModel.gather_images(material, tex_prop, self.tex_reference is not None, base_texture)
         # TODO: find way to skip gather pixels if we don´t need it? with caching it is the slowest operation by far
         # (with caching ihq, kmeans, etc are all a one time cost)
-        img_deps = set(fModel.gather_pixels(image) for image in img_deps)
+        # simply checking the id is probably not enough because of texture paint
+        # could we also skip some more complex operations with restrictions off?
+        img_deps = fModel.gather_images(material, tex_prop, self.tex_reference is not None, base_texture)
+        img_deps = set(TexHolder(fModel.gather_pixels(image)) for image in img_deps)
         if self.has_tex:
-            if len(img_deps) == 1:
-                self.main_image = list(img_deps)[0]
-            self._imDependencies = img_deps
+            self.im_deps = img_deps
 
         if self.is_ci:
             self.load_pal = tex_prop.load_pal or base_texture
             self.pal_reference = tex_prop.pal_reference if (tex_prop.use_pal_reference and not base_texture) else None
-            if self.has_pal:
-                if self.has_tex:
-                    self._palDependencies = img_deps
-                elif tex_prop.pal is not None:
-                    self.main_pal = fModel.gather_pixels(tex_prop.pal)
-                    self._palDependencies = {self.main_pal}
-            else:
-                if self.pal_reference is None:
-                    self.pal_index = tex_prop.pal_index
-                else:
-                    self.pal_length = tex_prop.pal_reference_size
+            if tex_prop.pal is not None:
+                pal = fModel.gather_pixels(tex_prop.pal)
+                for img in self.im_deps:
+                    if img.palette is None:
+                        img.palette = pal
+                if self.has_pal and len(self.im_deps) == 0:  # no texture but needs to export pallete
+                    self.im_deps.add(TexHolder(None, pal))
+            if self.pal_reference is None:
+                self.pal_index = tex_prop.pal_index
+            elif self.load_pal:
+                self.pal_length = tex_prop.pal_reference_size
 
         self.values_from_dims(*tex_prop.size)
 
@@ -630,11 +636,14 @@ class TexInfo:
             self.imageDims = (width, height * 2)
 
     def error_checking(self):
+        """TODO: remove"""
         if self.has_tex:
             if self.main_image is None:
                 raise PluginError("No texture is selected.")
-            elif len(self.main_image.pixels) == 0:
-                raise PluginError(f"Image {self.tex.name} is missing on disk.")
+            for im in self.im_deps:
+                for tex in [im.image, im.palette]:
+                    if tex is not None and len(tex.pixels) == 0:
+                        raise PluginError(f"Image {tex.name} is missing on disk.")
         if self.imageDims[0] > 1024 or self.imageDims[1] > 1024:
             raise PluginError("Image size (even large textures) limited to 1024 in each dimension.")
         if abs(self.shift[0]) > 10 or abs(self.shift[1]) > 10:
@@ -710,6 +719,7 @@ class MultitexManager:
     textures: dict[int, TexInfo] = field(default_factory=dict)
     dithering_method: DITHER_MODES = "FLOYD"
     tex_dimensions: tuple[int, int] = (0, 0)
+    scheduled_errors: list[str] = field(default_factory=list)
 
     @property
     def mip_levels(self):
@@ -946,7 +956,12 @@ class MultitexManager:
         for tex in auto_textures:  # figure out important properties
             if not tex.auto_fmt:
                 continue
-            if tex.main_image.pixel_hash in GLOBAL_ENTROPY_CACHE:
+            if tex.main_image is None:
+                tex.is_greyscale = False
+                tex.alpha_depth_entropies = ({}, 0.0)
+                tex.color_depth_entropies = ({}, 0.0)
+                continue
+            if tex.main_image in GLOBAL_ENTROPY_CACHE:
                 tex.is_greyscale, tex.alpha_depth_entropies, tex.color_depth_entropies = GLOBAL_ENTROPY_CACHE[
                     tex.main_image.pixel_hash
                 ]
@@ -958,7 +973,7 @@ class MultitexManager:
                 tex.color_depth_entropies = get_bit_depth_entropy(color_to_luminance_np(flat_pixels))
             else:
                 tex.color_depth_entropies = get_bit_depth_entropy(flat_pixels[..., :3])
-            GLOBAL_ENTROPY_CACHE[tex.main_image.pixel_hash] = (
+            GLOBAL_ENTROPY_CACHE[tex.main_image] = (
                 tex.is_greyscale,
                 tex.alpha_depth_entropies,
                 tex.color_depth_entropies,
@@ -1087,7 +1102,7 @@ class MultitexManager:
                     merge_results.get(tid, MergeResult(None, None, float("inf"), None))[2] for tid in current_ids_list
                 )
 
-                if merged_rmse > max_individual_rmse:
+                if merged_rmse > max_individual_rmse * (110 / 100):  # max 10% error increase
                     failed_combinations.add(group_id)
                 else:
                     merge_results[group_id] = MergeResult(pal, labels, merged_rmse, slice_map)
@@ -1118,11 +1133,13 @@ class MultitexManager:
         assert self.is_ci == True, "Can only create palette for CI textures"
         assert self.tlut_mode in ("RGBA16", "IA16"), f"Invalid tlut mode, oops! {self.tlut_mode}"
 
+        # TODO: we need to add support for palletes without an texture, in which we just quantize the pallete and check if it doesnt exceed it's formats max count
+
         # calculate how many colors are used outside fast64
         num_colors_used = 0
         allocated_pal_indices = set()
         for tex in self.texture_list:
-            if tex.is_ci and not tex.load_pal and isinstance(tex.pal_reference, (str, None)):
+            if tex.is_ci and not tex.load_pal and tex.pal_reference is not None:
                 num_colors_used += tex.pal_length
                 if tex.pal_index is not None:
                     allocated_pal_indices.add(tex.pal_index)
@@ -1229,6 +1246,8 @@ class MultitexManager:
 
         else:  # only CI4 textures exist. create separate palettes for each optimal group.
             pass
+
+        # TODO: create the textures, make sure to run process_float_pixels
 
     def convert(self, f_material: FMaterial, f_model: FModel, ignore_restrictions=False):
         if self.is_ci:

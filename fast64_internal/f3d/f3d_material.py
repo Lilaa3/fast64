@@ -2003,88 +2003,10 @@ def set_texture_nodes_settings(
     update_tex_values_field(material, texProperty, tex_size, texIndex)
 
 
-def get_color_info_from_tex(tex: bpy.types.Image):
-    is_greyscale, has_alpha_4_bit, has_alpha_1_bit = True, False, False
-    rgba_colors: set[int] = set()
-
-    pixels, channel_count = tex.pixels, tex.channels
-
-    for x in range(tex.size[0]):
-        for y in range(tex.size[1]):  # N64 is -Y, Blender is +Y, in this context this doesn´t matter
-            pixel_color = [1, 1, 1, 1]
-            for field in range(channel_count):
-                pixel_color[field] = pixels[(y * tex.size[0] + x) * channel_count + field]
-            rgba_colors.add(getRGBA16Tuple(pixel_color))
-
-            if not (pixel_color[0] == pixel_color[1] and pixel_color[1] == pixel_color[2]):
-                is_greyscale = False
-
-            if pixel_color[3] < 0.9375:
-                has_alpha_4_bit = True
-            if pixel_color[3] < 0.5:
-                has_alpha_1_bit = True
-
-    return is_greyscale, has_alpha_1_bit, has_alpha_4_bit, rgba_colors
-
-
-def get_optimal_format(tex: bpy.types.Image | None, prefer_rgba_over_ci: bool):
-    if not tex:
-        return "RGBA16"
-
-    n_size = tex.size[0] * tex.size[1]
-    if n_size > 8192:  # Image is too big
-        return "RGBA16"
-
-    is_greyscale, has_alpha_1_bit, has_alpha_4_bit, rgba_colors = get_color_info_from_tex(tex)
-
-    if is_greyscale:
-        if n_size > 4096:
-            if has_alpha_1_bit:
-                return "IA4"
-            return "I4"
-
-        if has_alpha_4_bit:
-            return "IA8"
-
-        return "I8"
-    else:
-        if len(rgba_colors) <= 16 and (not prefer_rgba_over_ci or n_size > 2048):
-            return "CI4"
-        if not prefer_rgba_over_ci and len(rgba_colors) <= 256:
-            return "CI8"
-
-    return "RGBA16"
-
-
 def update_tex_values_and_formats(self, context):
     with F3DMaterial_UpdateLock(get_material_from_context(context)) as material:
         if not material:
             return
-
-        settings_props = context.scene.fast64.settings
-        if not settings_props.auto_pick_texture_format:
-            update_tex_values_manual(material, context)
-            return
-
-        f3d_mat: F3DMaterialProperty = material.f3d_mat
-        useDict = all_combiner_uses(f3d_mat)
-        tex0_props = f3d_mat.tex0
-        tex1_props = f3d_mat.tex1
-
-        tex0, tex1 = tex0_props.tex if useDict["Texture 0"] else None, (
-            tex1_props.tex if useDict["Texture 1"] else None
-        )
-
-        if tex0:
-            tex0_props.tex_format = get_optimal_format(tex0, settings_props.prefer_rgba_over_ci)
-        if tex1:
-            tex1_props.tex_format = get_optimal_format(tex1, settings_props.prefer_rgba_over_ci)
-
-        if tex0 and tex1:
-            if tex0_props.tex_format.startswith("CI") and not tex1_props.tex_format.startswith("CI"):
-                tex0_props.tex_format = "RGBA16"
-            elif tex1_props.tex_format.startswith("CI") and not tex0_props.tex_format.startswith("CI"):
-                tex1_props.tex_format = "RGBA16"
 
         update_tex_values_manual(material, context)
 
@@ -2183,36 +2105,6 @@ def shift_dimensions(tex_prop: "TextureProperty", dimensions: tuple[int, int]):
     s_mirror_scale = 2 if tex_prop.S.mirror else 1
     t_mirror_scale = 2 if tex_prop.T.mirror else 1
     return (shifted[0] * s_mirror_scale, shifted[1] * t_mirror_scale)
-
-
-def getMaterialScrollDimensions(f3dMat):
-    texDimensions0 = None
-    texDimensions1 = None
-    useDict = all_combiner_uses(f3dMat)
-
-    if useDict["Texture 0"] and f3dMat.tex0.tex_set:
-        if f3dMat.tex0.use_tex_reference:
-            texDimensions0 = f3dMat.tex0.tex_reference_size
-        elif f3dMat.tex0.tex:
-            texDimensions0 = (f3dMat.tex0.tex.size[0], f3dMat.tex0.tex.size[1])
-
-    if useDict["Texture 1"] and f3dMat.tex1.tex_set:
-        if f3dMat.tex1.use_tex_reference:
-            texDimensions1 = f3dMat.tex1.tex_reference_size
-        elif f3dMat.tex0.tex:
-            texDimensions1 = (f3dMat.tex1.tex.size[0], f3dMat.tex1.tex.size[1])
-
-    if texDimensions0 is not None:
-        texDimensions0 = shift_dimensions(f3dMat.tex0, texDimensions0)
-    else:
-        texDimensions0 = (1, 1)
-
-    if texDimensions1 is not None:
-        texDimensions1 = shift_dimensions(f3dMat.tex1, texDimensions1)
-    else:
-        texDimensions1 = (1, 1)
-
-    return (max(1, texDimensions0[0], texDimensions1[0]), max(1, texDimensions0[1], texDimensions1[1]))
 
 
 def update_preset_manual(material, context):
@@ -3028,7 +2920,7 @@ def ui_image(
                             prop_split(prop_input, tex_prop, "pal_reference_size", "Palette Size")
             else:
                 prop_split(prop_input, tex_prop, "pal_index", "Palette Index")
-            if not tex_prop.has_pal:
+            if not tex_prop.has_pal and tex_prop.has_tex:
                 prop_input.template_ID(tex_prop, "pal", new="image.new", open="image.open")
                 if has_tex:
                     if tex_prop.pal:

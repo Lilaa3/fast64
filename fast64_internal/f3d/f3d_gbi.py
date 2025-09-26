@@ -2444,7 +2444,9 @@ class FModel:
         """
         return set() if tex_prop.tex is None else {tex_prop.tex}
 
-    def gather_pixels(self, image: bpy.types.Image):
+    def gather_pixels(self, image: bpy.types.Image | None):
+        if image is None:
+            return
         if image.name_full in self.raw_images:
             return self.raw_images[image.name_full]
         img = self.raw_images[image.name_full] = get_numpy_image(image)
