@@ -1462,24 +1462,17 @@ class F3DPanel(Panel):
 class F3DMeshPanel(Panel):
     bl_label = "F3D Mesh Inspector"
     bl_idname = "F3D_PT_Mesh_Inspector"
+    bl_parent_id = "OBJECT_PT_context_object"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "object"
-    bl_options = {"HIDE_HEADER"}
 
     @classmethod
     def poll(cls, context):
         return context.object.type == "MESH"
 
     def draw(self, context):
-        new_gbi = not get_F3D_GBI().F3D_OLD_GBI
-        col = self.layout.box().column()
-        col.box().label(text=self.bl_label, icon="MESH_DATA")
-        row = col.row()
-        row.enabled = new_gbi
-        row.prop(context.object, "use_f3d_culling")
-        if not new_gbi:
-            col.label(text="Only available in F3DEX and up", icon="INFO")
+        context.object.fast64.f3d.draw_props(self.layout, context.scene.fast64.f3d, get_F3D_GBI())
 
 
 def ui_tileScroll(tex, name, layout):
@@ -3986,6 +3979,7 @@ def draw_rdp_world_defaults(layout: UILayout, scene: Scene):
     rdp_defaults = world.rdp_defaults
     col = layout.column()
     col.box().label(text="RDP Default Settings", icon="WORLD")
+    col.label(text="Saved to Repo Settings file", icon="PROPERTIES")
     multilineLabel(
         col,
         text="If a material setting is the same as the default setting\n"

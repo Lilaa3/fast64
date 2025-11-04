@@ -1,10 +1,20 @@
 from typing import Union, Optional, Callable, Any, List
 from dataclasses import dataclass
 import functools
+
 import bpy, mathutils, os, re, copy, math
 from mathutils import Vector
 from math import ceil
 from bpy.utils import register_class, unregister_class
+
+from .culling.properties import (
+    F3D_DefaultCullingProperties,
+    F3D_CullingProperties,
+    register_culling_props,
+    unregister_culling_props,
+)
+from .culling.operators import register_culling_ops, unregister_culling_ops
+from .culling.export import add_cull_vertices
 
 from .f3d_enums import *
 from .f3d_material import (
@@ -460,7 +470,16 @@ def saveStaticModel(
             fMeshes[drawLayer] = fMesh
 
             if obj.use_f3d_culling and not fModel.f3d.F3D_OLD_GBI:
-                addCullCommand(obj, fMesh, transformMatrix, fModel.matWriteMethod)
+                add_cull_vertices(
+                    drawLayerField,
+                    drawLayer,
+                    obj,
+                    bpy.context.scene.fast64.f3d.culling,
+                    fMesh,
+                    transformMatrix,
+                    fModel,
+                    convertTextureData,
+                )
         else:
             fMesh = fMeshes[drawLayer]
 
@@ -504,48 +523,6 @@ def saveStaticModel(
         else:
             fModel.endDraw(fMesh, obj)
     return fMeshes
-
-
-def addCullCommand(obj, fMesh, transformMatrix, matWriteMethod):
-    fMesh.add_cull_vtx()
-    # if the object has a specifically set culling bounds, use that instead
-    for vertexPos in obj.get("culling_bounds", obj.bound_box):
-        fMesh.cullVertexList.vertices.append(
-            F3DVert(
-                Vector(vertexPos),
-                [0, 0],
-                Vector([0, 0, 0]),
-                None,
-                0.0,
-            ).toVtx(
-                obj.data,
-                [32, 32],
-                transformMatrix,
-                True,
-            )
-        )
-
-    if matWriteMethod == GfxMatWriteMethod.WriteDifferingAndRevert:
-        defaults = create_or_get_world(bpy.context.scene).rdp_defaults
-        if defaults.g_lighting:
-            cullCommands = [
-                SPClearGeometryMode({"G_LIGHTING"}),
-                SPVertex(fMesh.cullVertexList, 0, 8, 0),
-                SPSetGeometryMode({"G_LIGHTING"}),
-                SPCullDisplayList(0, 7),
-            ]
-        else:
-            cullCommands = [SPVertex(fMesh.cullVertexList, 0, 8, 0), SPCullDisplayList(0, 7)]
-    elif matWriteMethod == GfxMatWriteMethod.WriteAll:
-        cullCommands = [
-            SPClearGeometryMode({"G_LIGHTING"}),
-            SPVertex(fMesh.cullVertexList, 0, 8, 0),
-            SPSetGeometryMode({"G_LIGHTING"}),
-            SPCullDisplayList(0, 7),
-        ]
-    else:
-        raise PluginError("Unhandled material write method for f3d culling: " + str(matWriteMethod))
-    fMesh.draw.commands = cullCommands + fMesh.draw.commands
 
 
 def exportF3DCommon(obj, fModel, transformMatrix, includeChildren, name, DLFormat, convertTextureData):
@@ -771,75 +748,6 @@ def getNewIndices(existingIndices, bufferStart):
         else:
             newIndices.append(index)
     return newIndices
-
-
-class F3DVert:
-    def __init__(
-        self,
-        position: Vector,
-        uv: Vector,
-        rgb: Optional[Vector],
-        normal: Optional[Vector],
-        alpha: float,
-    ):
-        self.position: Vector = position
-        self.uv: Vector = uv
-        self.stOffset: Optional[tuple(int, int)] = None
-        self.rgb: Optional[Vector] = rgb
-        self.normal: Optional[Vector] = normal
-        self.alpha: float = alpha
-
-    def __eq__(self, other):
-        if not isinstance(other, F3DVert):
-            return False
-        return (
-            self.position == other.position
-            and self.uv == other.uv
-            and self.stOffset == other.stOffset
-            and self.rgb == other.rgb
-            and self.normal == other.normal
-            and self.alpha == other.alpha
-        )
-
-    def toVtx(self, mesh, texDimensions, transformMatrix, isPointSampled: bool, tex_scale=(1, 1)) -> Vtx:
-        # Position (8 bytes)
-        position = [int(round(floatValue)) for floatValue in (transformMatrix @ self.position)]
-
-        # UV (4 bytes)
-        # For F3D, Bilinear samples the point from the center of the pixel.
-        # However, Point samples from the corner.
-        # Thus we add 0.5 to the UV only if bilinear filtering.
-        # see section 13.7.5.3 in programming manual.
-        pixelOffset = (
-            (0, 0)
-            if (isPointSampled or tex_scale[0] == 0 or tex_scale[1] == 0)
-            else (0.5 / tex_scale[0], 0.5 / tex_scale[1])
-        )
-        pixelOffset = self.stOffset if self.stOffset is not None else pixelOffset
-
-        uv = [
-            convertFloatToFixed16(self.uv[0] * texDimensions[0] - pixelOffset[0]),
-            convertFloatToFixed16(self.uv[1] * texDimensions[1] - pixelOffset[1]),
-        ]
-
-        packedNormal = 0
-        if self.normal is not None:
-            # normal transformed correctly.
-            normal = (transformMatrix.inverted().transposed() @ self.normal).normalized()
-            if self.rgb is not None:
-                packedNormal = packNormal(normal)
-
-        if self.rgb is not None:
-            colorOrNormal = [scaleToU8(c).to_bytes(1, "big")[0] for c in self.rgb]
-        else:
-            colorOrNormal = [
-                int(round(normal[0] * 127)).to_bytes(1, "big", signed=True)[0],
-                int(round(normal[1] * 127)).to_bytes(1, "big", signed=True)[0],
-                int(round(normal[2] * 127)).to_bytes(1, "big", signed=True)[0],
-            ]
-        colorOrNormal.append(scaleToU8(self.alpha).to_bytes(1, "big")[0])
-
-        return Vtx(position, uv, colorOrNormal, packedNormal)
 
 
 # groupIndex is either a vertex group (writing), or name of c variable identifying a transform group, like a limb (parsing)
@@ -1875,6 +1783,49 @@ def removeDL(sourcePath, headerPath, DLName):
         writeFile(headerPath, DLDataH)
 
 
+class F3D_Properties(bpy.types.PropertyGroup):
+    culling: bpy.props.PointerProperty(type=F3D_DefaultCullingProperties)
+
+    def to_dict(self):
+        return {
+            "culling": self.culling.to_dict(),
+        }
+
+    def from_dict(self, data: dict):
+        self.culling.from_dict(data.get("culling", {}))
+
+    def draw_culling(self, layout: bpy.types.UILayout, f3d: F3D):
+        col = layout.column()
+        new_gbi = not f3d.F3D_OLD_GBI
+        if not new_gbi:
+            col.label(text="Culling only available in F3DEX and up", icon="CAMERA_DATA")
+            return
+        draw_and_check_tab(col, self.culling.shared, "tab", "Default Culling Properties")
+        if self.culling.shared.tab:
+            self.culling.draw_props(col, new_gbi, show_debug=True)
+
+    def draw_props(self, layout: bpy.types.UILayout, f3d: F3D):
+        self.draw_culling(layout, f3d)
+
+
+class F3D_ObjectProperties(bpy.types.PropertyGroup):
+    culling: bpy.props.PointerProperty(type=F3D_CullingProperties)
+
+    def draw_culling(self, layout: bpy.types.UILayout, f3d_props: F3D_Properties, f3d: F3D):
+        col = layout.column()
+        new_gbi = not f3d.F3D_OLD_GBI
+        if not new_gbi:
+            col.label(text="Culling only available in F3DEX and up", icon="CAMERA_DATA")
+            return
+        draw_and_check_tab(col, self.culling.shared, "tab", "Culling Properties")
+        if self.culling.shared.tab:
+            self.culling.draw_props(col, f3d_props.culling, new_gbi)
+
+    def draw_props(self, layout: bpy.types.UILayout, f3d_props: F3D_Properties, f3d: F3D):
+        col = layout.column()
+        self.draw_culling(col, f3d_props, f3d)
+
+
 class F3D_ExportDL(bpy.types.Operator):
     # set bl_ properties
     bl_idname = "object.f3d_export_dl"
@@ -1966,13 +1917,12 @@ class F3D_ExportDLPanel(bpy.types.Panel):
             col.prop(context.scene, "DLSeparateTextureDef")
 
 
-f3d_writer_classes = (
-    F3D_ExportDL,
-    F3D_ExportDLPanel,
-)
+f3d_writer_classes = (F3D_Properties, F3D_ObjectProperties, F3D_ExportDL, F3D_ExportDLPanel)
 
 
 def f3d_writer_register():
+    register_culling_props()
+    register_culling_ops()
     for cls in f3d_writer_classes:
         register_class(cls)
 
@@ -1982,6 +1932,8 @@ def f3d_writer_register():
 
 
 def f3d_writer_unregister():
+    unregister_culling_ops()
+    unregister_culling_props()
     for cls in reversed(f3d_writer_classes):
         unregister_class(cls)
 

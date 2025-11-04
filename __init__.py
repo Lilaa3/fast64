@@ -36,7 +36,13 @@ from .fast64_internal.f3d.f3d_material import (
     mat_unregister,
     check_or_ask_color_management,
 )
-from .fast64_internal.f3d.f3d_writer import f3d_writer_register, f3d_writer_unregister
+from .fast64_internal.f3d.f3d_gbi import get_F3D_GBI
+from .fast64_internal.f3d.f3d_writer import (
+    f3d_writer_register,
+    f3d_writer_unregister,
+    F3D_Properties,
+    F3D_ObjectProperties,
+)
 from .fast64_internal.f3d.f3d_parser import f3d_parser_register, f3d_parser_unregister
 from .fast64_internal.f3d.flipbook import flipbook_register, flipbook_unregister
 from .fast64_internal.f3d.op_largetexture import op_largetexture_register, op_largetexture_unregister, ui_oplargetexture
@@ -101,11 +107,17 @@ class F3D_GlobalSettingsPanel(bpy.types.Panel):
     def draw(self, context):
         col = self.layout.column()
         col.scale_y = 1.1  # extra padding
+
+        col.prop(context.scene, "f3d_simple", text="Simple Material UI")
+        col.separator()
+
+        col.label(text="Saved to Repo Settings file", icon="PROPERTIES")
         prop_split(col, context.scene, "f3d_type", "Microcode")
+        gbi = get_F3D_GBI()
+
         if context.scene.f3d_type in {"F3DEX3", "T3D"}:
             prop_split(col, context.scene, "packed_normals_algorithm", "Packed normals alg")
         col.prop(context.scene, "saveTextures")
-        col.prop(context.scene, "f3d_simple", text="Simple Material UI")
         col.prop(context.scene, "exportInlineF3D", text="Bleed and Inline Material Exports")
         if context.scene.exportInlineF3D:
             multilineLabel(
@@ -116,6 +128,8 @@ class F3D_GlobalSettingsPanel(bpy.types.Panel):
         col.prop(context.scene, "ignoreTextureRestrictions")
         if context.scene.ignoreTextureRestrictions:
             col.box().label(text="Width/height must be < 1024. Must be png format.")
+
+        context.scene.fast64.f3d.draw_props(col, gbi)
 
 
 class Fast64_GlobalSettingsPanel(bpy.types.Panel):
@@ -140,14 +154,16 @@ class Fast64_GlobalSettingsPanel(bpy.types.Panel):
         prop_split(col, scene, "gameEditorMode", "Game")
         col.prop(scene, "exportHiddenGeometry")
         col.prop(scene, "fullTraceback")
-
         prop_split(col, fast64_settings, "anim_range_choice", "Anim Range")
+        col.separator()
 
-        draw_repo_settings(col.box(), context)
-        if not fast64_settings.repo_settings_tab:
-            col.prop(fast64_settings, "auto_pick_texture_format")
-            if fast64_settings.auto_pick_texture_format:
-                col.prop(fast64_settings, "prefer_rgba_over_ci")
+        col.label(text="Saved to Repo Settings file", icon="PROPERTIES")
+        col.prop(fast64_settings, "auto_pick_texture_format")
+        if fast64_settings.auto_pick_texture_format:
+            col.prop(fast64_settings, "prefer_rgba_over_ci")
+        col.separator()
+
+        draw_repo_settings(col, context)
 
 
 class Fast64_GlobalToolsPanel(bpy.types.Panel):
@@ -223,7 +239,7 @@ class Fast64Settings_Properties(bpy.types.PropertyGroup):
     repo_settings_path: bpy.props.StringProperty(name="Path", subtype="FILE_PATH", update=repo_path_update)
     auto_repo_load_settings: bpy.props.BoolProperty(
         name="Auto Load Repo's Settings",
-        description="When enabled, this will make fast64 automatically load repo settings if they are found after picking a decomp path",
+        description="When enabled, this will make fast64 automatically load repo settings if they are found after picking a decomp path and during file load",
         default=True,
     )
     internal_fixed_4_2: bpy.props.BoolProperty(default=False)
@@ -255,6 +271,7 @@ class Fast64_Properties(bpy.types.PropertyGroup):
     mk64: bpy.props.PointerProperty(type=MK64_Properties, name="MK64 Properties")
     settings: bpy.props.PointerProperty(type=Fast64Settings_Properties, name="Fast64 Settings")
     renderSettings: bpy.props.PointerProperty(type=Fast64RenderSettings_Properties, name="Fast64 Render Settings")
+    f3d: bpy.props.PointerProperty(type=F3D_Properties, name="F3D Properties")
 
 
 class Fast64_ActionProperties(bpy.types.PropertyGroup):
@@ -280,6 +297,7 @@ class Fast64_ObjectProperties(bpy.types.PropertyGroup):
     All new object properties should be children of this property group.
     """
 
+    f3d: bpy.props.PointerProperty(type=F3D_ObjectProperties, name="F3D Object Properties")
     sm64: bpy.props.PointerProperty(type=SM64_ObjectProperties, name="SM64 Object Properties")
     oot: bpy.props.PointerProperty(type=OOT_ObjectProperties, name="Z64 Object Properties")  # TODO: rename oot to z64
 
@@ -458,14 +476,14 @@ def register():
 
     repo_settings_operators_register()
 
-    for cls in classes:
-        register_class(cls)
-
     bsdf_conv_panel_regsiter()
     f3d_writer_register()
     flipbook_register()
     f3d_parser_register()
     op_largetexture_register()
+
+    for cls in classes:
+        register_class(cls)
 
     # ROM
 
@@ -494,6 +512,9 @@ def register():
 
 # called on add-on disabling
 def unregister():
+    for cls in classes:
+        unregister_class(cls)
+
     utility_anim_unregister()
     op_largetexture_unregister()
     flipbook_unregister()
@@ -521,9 +542,6 @@ def unregister():
     del bpy.types.Action.fast64
 
     repo_settings_operators_unregister()
-
-    for cls in classes:
-        unregister_class(cls)
 
     bpy.app.handlers.load_post.remove(after_load)
 

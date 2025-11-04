@@ -22,6 +22,8 @@ from ...utility import (
     set_prop_if_in_data,
     upgrade_old_prop,
     get_first_set_prop,
+    multilineLabel,
+    as_posix,
 )
 from ..sm64_constants import defaultExtendSegment4, OLD_BINARY_LEVEL_ENUMS
 from ..sm64_objects import SM64_CombinedObjectProperties
@@ -43,7 +45,7 @@ def decomp_path_update(self, context: Context):
     if fast64_settings.repo_settings_path and Path(abspath(fast64_settings.repo_settings_path)).exists():
         return
     directory_path_checks(self.abs_decomp_path)
-    fast64_settings.repo_settings_path = str(self.abs_decomp_path / "fast64.json")
+    fast64_settings.repo_settings_path = as_posix(self.abs_repo_file_path)
 
 
 class SM64_Properties(PropertyGroup):
@@ -53,7 +55,7 @@ class SM64_Properties(PropertyGroup):
     cur_version = 6  # version after property migration
 
     # UI Selection
-    show_importing_menus: BoolProperty(name="Show Importing Menus", default=False)
+    show_importing_menus: BoolProperty(name="Show Importing Menus", default=True)
     export_type: EnumProperty(items=enum_export_type, name="Export Type", default="C")
     goal: EnumProperty(items=enum_sm64_goal_type, name="Goal", default="All")
     combined_export: bpy.props.PointerProperty(type=SM64_CombinedObjectProperties)
@@ -118,8 +120,12 @@ class SM64_Properties(PropertyGroup):
         return self.export_type in {"Binary", "Insertable Binary"}
 
     @property
-    def abs_decomp_path(self) -> Path:
+    def abs_decomp_path(self):
         return Path(abspath(self.decomp_path))
+
+    @property
+    def abs_repo_file_path(self):
+        return self.abs_decomp_path / "fast64.json"
 
     @property
     def hackersm64(self) -> bool:
@@ -128,6 +134,10 @@ class SM64_Properties(PropertyGroup):
     @property
     def designated(self) -> bool:
         return self.designated_prop or self.hackersm64
+
+    @property
+    def use_matstack_fix(self):
+        return self.matstack_fix or self.hackersm64
 
     @property
     def gfx_write_method(self):
@@ -201,11 +211,11 @@ class SM64_Properties(PropertyGroup):
         data["refresh_version"] = self.refresh_version
         data["compression_format"] = self.compression_format
         data["force_extended_ram"] = self.force_extended_ram
-        data["matstack_fix"] = self.matstack_fix
-        if self.matstack_fix:
+        if self.use_matstack_fix:
             data["lighting_engine_presets"] = self.lighting_engine_presets
         data["write_all"] = self.write_all
         if not self.hackersm64:
+            data["matstack_fix"] = self.use_matstack_fix
             data["designated"] = self.designated_prop
         if self.custom_cmds:
             data["custom_cmds"] = [preset.to_dict("PRESET_EDIT") for preset in self.custom_cmds]
@@ -225,17 +235,41 @@ class SM64_Properties(PropertyGroup):
                 self.custom_cmds.add()
                 self.custom_cmds[-1].from_dict(preset_data)
 
-    def draw_repo_settings(self, layout: UILayout):
+    def draw_repo_settings(self, layout: UILayout, context: Context):
+        from ...repo_settings import draw_repo_settings
+
         col = layout.column()
+        path = self.abs_repo_file_path
+        if path is None:
+            return
+        draw_repo_settings(col, context, path=path, game="SM64", draw_tab=False)
+        col.separator()
+
+        self.draw_repo_settings_props(col)
+
+    def draw_repo_settings_props(self, layout: UILayout):
+        col = layout.column()
+
         if not self.binary_export:
             col.prop(self, "disable_scroll")
             prop_split(col, self, "compression_format", "Compression Format")
             prop_split(col, self, "refresh_version", "Refresh (Function Map)")
             col.prop(self, "force_extended_ram")
-        col.prop(self, "matstack_fix")
-        if self.matstack_fix:
+            col.separator()
+
+        # it is CONCERNING how many people feel the need to tick random checkboxes without reading the tooltip
+        warning_for_idiots = col.column()
+        warning_for_idiots.alert = True
+        multilineLabel(warning_for_idiots, text="Only enable these if you know what\nyou're doing.", icon="ERROR")
+        warning_for_idiots.prop(self, "write_all")
+        if not self.hackersm64:
+            warning_for_idiots.prop(self, "matstack_fix")
+        col.separator()
+
+        if self.use_matstack_fix:
             col.prop(self, "lighting_engine_presets")
-        col.prop(self, "write_all")
+        col.separator()
+
         draw_custom_cmd_presets(self, col.box())
 
     def draw_props(self, layout: UILayout, show_repo_settings: bool = True):
@@ -258,7 +292,7 @@ class SM64_Properties(PropertyGroup):
         col.separator()
 
         if show_repo_settings:
-            self.draw_repo_settings(col)
+            self.draw_repo_settings_props(col)
             col.separator()
 
         col.prop(self, "show_importing_menus")

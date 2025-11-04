@@ -2115,6 +2115,75 @@ class Vtx:
         return "{{ " + ", ".join([spc(self.position), flag, spc(self.uv), spc(self.colorOrNormal)]) + " }}"
 
 
+class F3DVert:
+    def __init__(
+        self,
+        position: Vector,
+        uv: Vector,
+        rgb: Optional[Vector],
+        normal: Optional[Vector],
+        alpha: float,
+    ):
+        self.position: Vector = position
+        self.uv: Vector = uv
+        self.stOffset: Optional[tuple(int, int)] = None
+        self.rgb: Optional[Vector] = rgb
+        self.normal: Optional[Vector] = normal
+        self.alpha: float = alpha
+
+    def __eq__(self, other):
+        if not isinstance(other, F3DVert):
+            return False
+        return (
+            self.position == other.position
+            and self.uv == other.uv
+            and self.stOffset == other.stOffset
+            and self.rgb == other.rgb
+            and self.normal == other.normal
+            and self.alpha == other.alpha
+        )
+
+    def toVtx(self, mesh, texDimensions, transformMatrix, isPointSampled: bool, tex_scale=(1, 1)) -> Vtx:
+        # Position (8 bytes)
+        position = [int(round(floatValue)) for floatValue in (transformMatrix @ self.position)]
+
+        # UV (4 bytes)
+        # For F3D, Bilinear samples the point from the center of the pixel.
+        # However, Point samples from the corner.
+        # Thus we add 0.5 to the UV only if bilinear filtering.
+        # see section 13.7.5.3 in programming manual.
+        pixelOffset = (
+            (0, 0)
+            if (isPointSampled or tex_scale[0] == 0 or tex_scale[1] == 0)
+            else (0.5 / tex_scale[0], 0.5 / tex_scale[1])
+        )
+        pixelOffset = self.stOffset if self.stOffset is not None else pixelOffset
+
+        uv = [
+            convertFloatToFixed16(self.uv[0] * texDimensions[0] - pixelOffset[0]),
+            convertFloatToFixed16(self.uv[1] * texDimensions[1] - pixelOffset[1]),
+        ]
+
+        packedNormal = 0
+        if self.normal is not None:
+            # normal transformed correctly.
+            normal = (transformMatrix.inverted().transposed() @ self.normal).normalized()
+            if self.rgb is not None:
+                packedNormal = packNormal(normal)
+
+        if self.rgb is not None:
+            colorOrNormal = [scaleToU8(c).to_bytes(1, "big")[0] for c in self.rgb]
+        else:
+            colorOrNormal = [
+                int(round(normal[0] * 127)).to_bytes(1, "big", signed=True)[0],
+                int(round(normal[1] * 127)).to_bytes(1, "big", signed=True)[0],
+                int(round(normal[2] * 127)).to_bytes(1, "big", signed=True)[0],
+            ]
+        colorOrNormal.append(scaleToU8(self.alpha).to_bytes(1, "big")[0])
+
+        return Vtx(position, uv, colorOrNormal, packedNormal)
+
+
 class VtxList:
     def __init__(self, name):
         self.vertices = []
