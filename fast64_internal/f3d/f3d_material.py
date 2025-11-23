@@ -2615,8 +2615,13 @@ def link_f3d_material_library():
                 bpy.ops.wm.link(filepath=os.path.join(dirMat, mat), directory=dirMat, filename=mat)
 
         # linking is SUPER slow, this only links if the scene hasnt been linked yet
-        # in future updates, this will likely need to be something numerated so if more nodes are added then they will be linked
-        if bpy.context.scene.get("f3d_lib_dir") != dirNode:
+        # Verify node groups actually exist before skipping
+        needs_linking = bpy.context.scene.get("f3d_lib_dir") != dirNode
+        if not needs_linking:
+            # Check if critical node groups are actually present
+            needs_linking = "TextureSettings_Lite" not in bpy.data.node_groups
+
+        if needs_linking:
             # link groups after to bring extra node_groups
             for node_group in data_from.node_groups:
                 if node_group is not None:

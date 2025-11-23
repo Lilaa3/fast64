@@ -3,10 +3,9 @@ import copy
 import bpy
 from bpy.utils import register_class, unregister_class
 from bpy.props import EnumProperty, BoolProperty
-from bpy.types import Context, Object, Material, UILayout
+from bpy.types import Context, Object, Material, Operator, UILayout
 
-from ...operators import OperatorBase
-from ...utility import PluginError
+from ...utility import PluginError, raisePluginError
 
 from .converter import obj_to_f3d, obj_to_bsdf
 
@@ -30,7 +29,7 @@ def draw_generic_converter_props(owner, layout: UILayout, direction: str, contex
             layout.prop(owner, "set_rendermode_without_fog")
 
 
-class F3D_ConvertBSDF(OperatorBase):
+class F3D_ConvertBSDF(Operator):
     bl_idname = "scene.f3d_convert_to_bsdf"
     bl_label = "BSDF Converter (F3D To BSDF or BSDF To F3D)"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
@@ -50,6 +49,22 @@ class F3D_ConvertBSDF(OperatorBase):
         layout = self.layout.column()
         layout.prop(self, "direction")
         draw_generic_converter_props(self, layout, self.direction, context)
+
+    @classmethod
+    def draw_props(cls, layout: UILayout, icon: str = "", text: str | None = None, **op_values):
+        icon_name = icon if icon else cls.icon
+        op = layout.operator(cls.bl_idname, icon=icon_name, text=text or "")
+        for key, value in op_values.items():
+            setattr(op, key, value)
+        return op
+
+    def execute(self, context: Context):
+        try:
+            self.execute_operator(context)
+            return {"FINISHED"}
+        except Exception as exc:
+            raisePluginError(self, exc)
+            return {"CANCELLED"}
 
     def execute_operator(self, context: Context):
         collection = context.scene.collection
@@ -126,7 +141,6 @@ class F3D_ConvertBSDF(OperatorBase):
                 if self.backup:
                     old_obj.name = f"{name}_backup"
                     backup_collection.objects.link(old_obj)
-                    view_layer.objects.active = old_obj
                 else:
                     bpy.data.objects.remove(old_obj)
             if self.backup:
