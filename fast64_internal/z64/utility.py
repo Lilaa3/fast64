@@ -8,8 +8,11 @@ from ast import parse, Expression, Constant, UnaryOp, USub, Invert, BinOp
 from mathutils import Vector
 from bpy.types import Object
 from typing import Callable, Optional, TYPE_CHECKING, List
-from .constants import ootSceneIDToName
 from dataclasses import dataclass
+
+from ..game_data import game_data
+from .constants import ootSceneIDToName
+
 
 from ..utility import (
     PluginError,
@@ -296,6 +299,9 @@ class ExportInfo:
     hackerootBootOption: "OOTBootupSceneOptions"
     """ Options for setting the bootup scene in HackerOoT."""
 
+    auto_add_room_objects: bool
+    """ Whether to enable the automatic room object addition feature """
+
 
 @dataclass
 class RemoveInfo:
@@ -313,15 +319,15 @@ class RemoveInfo:
 
 class OOTObjectCategorizer:
     def __init__(self):
-        self.sceneObj = None
-        self.roomObjs = []
-        self.actors = []
-        self.transitionActors = []
-        self.meshes = []
-        self.entrances = []
-        self.waterBoxes = []
+        self.sceneObj: Optional[Object] = None
+        self.roomObjs: list[Object] = []
+        self.actors: list[Object] = []
+        self.transitionActors: list[Object] = []
+        self.meshes: list[Object] = []
+        self.entrances: list[Object] = []
+        self.waterBoxes: list[Object] = []
 
-    def sortObjects(self, allObjs):
+    def sortObjects(self, allObjs: list[Object]):
         for obj in allObjs:
             if obj.type == "EMPTY":
                 if obj.ootEmptyType == "Actor":
@@ -340,8 +346,36 @@ class OOTObjectCategorizer:
                 self.meshes.append(obj)
 
 
+def clear_mesh_children(scene_obj: Object, scene_objs: list[Object]):
+    """Forces objects to not be parented to a mesh object to avoid transform issues, default is the scene object but this tries to parent to the room object if present in the hierarchy"""
+    room_list = getObjectList(scene_objs, "EMPTY", "Room")
+
+    def assign_new_parent(obj: Object, new_parent: Object):
+        """Updates the parent and the matrix inverse to keep the transform"""
+        matrix = obj.matrix_world.copy()
+        obj.parent = new_parent
+        obj.matrix_parent_inverse = new_parent.matrix_world.inverted()
+        obj.matrix_local = new_parent.matrix_world.inverted() @ matrix
+
+    for obj in scene_objs:
+        assign_scene = True
+
+        if obj.parent is not None and obj.parent.type == "MESH":
+            # assign the object to the first matching room empty, assign to the scene object by default
+            for room_obj in room_list:
+                if obj in room_obj.children_recursive:
+                    assign_new_parent(obj, room_obj)
+                    assign_scene = False
+                    break
+
+            if assign_scene:
+                assign_new_parent(obj, scene_obj)
+
+
 # This also sets all origins relative to the scene object.
-def ootDuplicateHierarchy(obj, ignoreAttr, includeEmpties, objectCategorizer) -> tuple[Object, list[Object]]:
+def ootDuplicateHierarchy(
+    obj: Object, ignoreAttr: Optional[str], includeEmpties: bool, objectCategorizer: OOTObjectCategorizer
+) -> tuple[Object, list[Object]]:
     # Duplicate objects to apply scale / modifiers / linked data
     deselectAllObjects()
     ootSelectMeshChildrenOnly(obj, includeEmpties)
@@ -354,6 +388,10 @@ def ootDuplicateHierarchy(obj, ignoreAttr, includeEmpties, objectCategorizer) ->
         bpy.ops.object.make_single_user(obdata=True)
 
         objectCategorizer.sortObjects(allObjs)
+
+        # parent any children of a mesh to the mesh's parent to prevent said children to be misplaced because of `setOrigin` moving the mesh
+        clear_mesh_children(objectCategorizer.sceneObj, allObjs)
+
         meshObjs = objectCategorizer.meshes
         deselectAllObjects()
         for selectedObj in meshObjs:
@@ -492,7 +530,9 @@ def ootGetObjectHeaderPath(isCustomExport: bool, exportPath: str, folderName: st
     return filepath
 
 
-def ootGetPath(exportPath, isCustomExport, subPath, folderName, makeIfNotExists, useFolderForCustom):
+def ootGetPath(
+    exportPath, isCustomExport, subPath, folderName, makeIfNotExists, useFolderForCustom, is_import: bool = False
+):
     if isCustomExport:
         path = bpy.path.abspath(os.path.join(exportPath, (folderName if useFolderForCustom else "")))
     else:
@@ -501,7 +541,7 @@ def ootGetPath(exportPath, isCustomExport, subPath, folderName, makeIfNotExists,
         path = bpy.path.abspath(os.path.join(os.path.join(bpy.context.scene.ootDecompPath, subPath), folderName))
 
     if not os.path.exists(path):
-        if isCustomExport or makeIfNotExists:
+        if not is_import and isCustomExport or makeIfNotExists:
             os.makedirs(path)
         else:
             raise PluginError(path + " does not exist.")
@@ -566,7 +606,9 @@ class CullGroup:
         self.cullDepth = abs(int(round(scale[0] * emptyScale)))
 
 
-def setCustomProperty(data: any, prop: str, value: str, enumList: list[tuple[str, str, str]] | None):
+def setCustomProperty(
+    data: any, prop: str, value: str, enumList: list[tuple[str, str, str]] | None, custom_name: Optional[str] = None
+):
     if enumList is not None:
         if value in [enumItem[0] for enumItem in enumList]:
             setattr(data, prop, value)
@@ -582,7 +624,7 @@ def setCustomProperty(data: any, prop: str, value: str, enumList: list[tuple[str
                 pass
 
     setattr(data, prop, "Custom")
-    setattr(data, prop + str("Custom"), value)
+    setattr(data, custom_name if custom_name is not None else f"{prop}Custom", value)
 
 
 def getCustomProperty(data, prop):
@@ -742,6 +784,17 @@ def onMenuTabChange(self, context: bpy.types.Context):
     onHeaderPropertyChange(self, context, callback)
 
 
+def on_alt_menu_tab_change(self, context: bpy.types.Context):
+    if self.headerMenuTab == "Child Night":
+        self.childNightHeader.internal_header_index = 1
+    elif self.headerMenuTab == "Adult Day":
+        self.adultDayHeader.internal_header_index = 2
+    elif self.headerMenuTab == "Adult Night":
+        self.adultNightHeader.internal_header_index = 3
+    elif self.headerMenuTab == "Cutscene" and (self.currentCutsceneIndex - 4) < len(self.cutsceneHeaders):
+        self.cutsceneHeaders[self.currentCutsceneIndex - 4].internal_header_index = 4
+
+
 def onHeaderMenuTabChange(self, context: bpy.types.Context):
     def callback(thisHeader, otherObj: bpy.types.Object):
         if otherObj.ootEmptyType == "Scene":
@@ -753,6 +806,11 @@ def onHeaderMenuTabChange(self, context: bpy.types.Context):
         header.currentCutsceneIndex = thisHeader.currentCutsceneIndex
 
     onHeaderPropertyChange(self, context, callback)
+
+    active_obj = context.view_layer.objects.active
+    if active_obj is not None and active_obj.ootEmptyType == "Scene":
+        # not using `self` is intended
+        on_alt_menu_tab_change(context.view_layer.objects.active.ootAlternateSceneHeaders, context)
 
 
 def onHeaderPropertyChange(self, context: bpy.types.Context, callback: Callable[[any, bpy.types.Object], None]):
@@ -981,3 +1039,24 @@ def get_actor_prop_from_obj(actor_obj: Object) -> "OOTActorProperty":
         raise PluginError(f"ERROR: Empty type not supported: {actor_obj.ootEmptyType}")
 
     return actor_prop
+
+
+def get_list_tab_text(base_text: str, list_length: int):
+    if list_length > 0:
+        items_amount = f"{list_length} Item{'s' if list_length > 1 else ''}"
+    else:
+        items_amount = "Empty"
+
+    return f"{base_text} ({items_amount})"
+
+
+def is_oot_features():
+    return (
+        game_data.z64.is_oot()
+        and not bpy.context.scene.fast64.oot.mm_features
+        and bpy.context.scene.fast64.oot.feature_set == "default"
+    )
+
+
+def is_hackeroot():
+    return game_data.z64.is_oot() and bpy.context.scene.fast64.oot.feature_set == "hackeroot"

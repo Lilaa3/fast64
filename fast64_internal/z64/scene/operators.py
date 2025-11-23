@@ -1,5 +1,4 @@
 import bpy
-import os
 
 from bpy.path import abspath
 from bpy.types import Operator
@@ -7,12 +6,12 @@ from bpy.props import EnumProperty, IntProperty, StringProperty
 from bpy.utils import register_class, unregister_class
 from bpy.ops import object
 from mathutils import Matrix, Vector
-from ...f3d.f3d_gbi import TextureExportSettings, DLFormat
+
 from ...utility import PluginError, raisePluginError, ootGetSceneOrRoomHeader
-from ..utility import ExportInfo, RemoveInfo, sceneNameFromID
+from ..utility import ExportInfo, RemoveInfo, sceneNameFromID, is_hackeroot
 from ..constants import ootEnumMusicSeq, ootEnumSceneID
 from ..importer import parseScene
-from ..exporter.decomp_edit.config import Config
+
 from ..exporter import SceneExport, Files
 
 
@@ -87,17 +86,6 @@ class OOT_SearchMusicSeqEnumOperator(Operator):
         return {"RUNNING_MODAL"}
 
 
-class OOT_ClearBootupScene(Operator):
-    bl_idname = "object.oot_clear_bootup_scene"
-    bl_label = "Undo Boot To Scene"
-    bl_options = {"REGISTER", "UNDO", "PRESET"}
-
-    def execute(self, context):
-        Config.clearBootupScene(os.path.join(abspath(context.scene.ootDecompPath), "include/config/config_debug.h"))
-        self.report({"INFO"}, "Success!")
-        return {"FINISHED"}
-
-
 class OOT_ImportScene(Operator):
     """Import an OOT scene from C."""
 
@@ -155,7 +143,7 @@ class OOT_ExportScene(Operator):
             option = settings.option
 
             bootOptions = context.scene.fast64.oot.bootupSceneOptions
-            hackerFeaturesEnabled = context.scene.fast64.oot.hackerFeaturesEnabled
+            is_hackeroot_features = is_hackeroot()
 
             if settings.customExport:
                 isCustomExport = True
@@ -178,8 +166,9 @@ class OOT_ExportScene(Operator):
                 option,
                 bpy.context.scene.saveTextures,
                 settings.singleFile,
-                context.scene.fast64.oot.useDecompFeatures if not hackerFeaturesEnabled else hackerFeaturesEnabled,
-                bootOptions if hackerFeaturesEnabled else None,
+                context.scene.fast64.oot.useDecompFeatures if not is_hackeroot_features else is_hackeroot_features,
+                bootOptions if is_hackeroot_features else None,
+                settings.auto_add_room_objects,
             )
 
             SceneExport.export(
@@ -252,7 +241,6 @@ class OOT_RemoveScene(Operator):
 classes = (
     OOT_SearchMusicSeqEnumOperator,
     OOT_SearchSceneEnumOperator,
-    OOT_ClearBootupScene,
     OOT_ImportScene,
     OOT_ExportScene,
     OOT_RemoveScene,
