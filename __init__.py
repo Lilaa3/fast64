@@ -519,8 +519,6 @@ def unregister():
     mat_unregister()
     mat_updater_unregister()
     gltf_extension_unregister()
-    bsdf_conv_unregister()
-    bsdf_conv_panel_unregsiter()
     unregister_class(Matrix4x4Property)
 
     del bpy.types.Scene.fullTraceback
