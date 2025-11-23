@@ -72,7 +72,7 @@ class F3D_ConvertBSDF(Operator):
         scene = context.scene
 
         def exclude_non_mesh(objs: list[Object]) -> list[Object]:
-            return [obj for obj in objs if obj.type == "MESH" and not scene.name.startswith("fast64")]
+            return [obj for obj in objs if obj.type == "MESH" and not obj.library]
 
         if self.converter_type == "Object":
             objs = exclude_non_mesh(context.selected_objects)
@@ -115,7 +115,6 @@ class F3D_ConvertBSDF(Operator):
                 if old_obj.data not in mesh_data_map:
                     mesh_data_map[old_obj.data] = old_obj.data
                     obj.data = mesh_data_map[old_obj.data]
-                    view_layer.objects.active = obj
                     if self.direction == "F3D":
                         converted_something |= obj_to_f3d(
                             obj, materials, lights_for_colors, default_to_fog, set_rendermode_without_fog
@@ -141,10 +140,6 @@ class F3D_ConvertBSDF(Operator):
             for old_obj, obj, name in zip(objs, new_objs, original_names):
                 for collection in copy.copy(old_obj.users_collection):
                     collection.objects.unlink(old_obj)  # remove old object from current collection
-                view_layer.objects.active = obj
-                obj.select_set(True)
-                bpy.ops.object.make_single_user(type="SELECTED_OBJECTS")
-                obj.select_set(False)
 
                 obj.name = name
                 if self.backup:
