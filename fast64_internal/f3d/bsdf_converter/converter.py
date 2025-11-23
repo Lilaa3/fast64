@@ -251,8 +251,13 @@ def f3d_mat_to_abstracted(material: Material):
 
 def material_to_bsdf(material: Material, put_alpha_into_color=False):
     abstracted_mat = f3d_mat_to_abstracted(material)
+    target_name = material.name.replace("f3d_", "")
+    existing = bpy.data.materials.get(target_name)
+    if existing is not None and existing.use_nodes:
+        print(f"Reusing existing BSDF material '{target_name}'")
+        return existing
 
-    new_material = bpy.data.materials.new(name=material.name.replace("f3d_", ""))
+    new_material = bpy.data.materials.new(name=target_name)
     new_material.use_nodes = True
     nodes = new_material.node_tree.nodes
     links = new_material.node_tree.links
@@ -778,10 +783,16 @@ def material_to_f3d(
     link_f3d_material_library()
 
     abstracted_mat = bsdf_mat_to_abstracted(material)
+    # If a matching F3D material already exists in the file, reuse it
+    target_name = f"f3d_{material.name}"
+    existing = bpy.data.materials.get(target_name)
+    if existing is not None and is_mat_f3d(existing):
+        print(f"Reusing existing F3D material '{target_name}'")
+        return existing, abstracted_mat
 
     preset = getDefaultMaterialPreset("Shaded Solid")
     new_material = createF3DMat(obj, preset=preset, append=False)
-    new_material.name = f"f3d_{material.name}"
+    new_material.name = target_name
     f3d_mat: F3DMaterialProperty = new_material.f3d_mat
     rdp: RDPSettings = f3d_mat.rdp_settings
 
