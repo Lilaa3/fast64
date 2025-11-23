@@ -72,7 +72,7 @@ class F3D_ConvertBSDF(Operator):
         scene = context.scene
 
         def exclude_non_mesh(objs: list[Object]) -> list[Object]:
-            return [obj for obj in objs if obj.type == "MESH"]
+            return [obj for obj in objs if obj.type == "MESH" and not scene.name.startswith("fast64")]
 
         if self.converter_type == "Object":
             objs = exclude_non_mesh(context.selected_objects)
@@ -104,19 +104,28 @@ class F3D_ConvertBSDF(Operator):
 
         try:
             materials: dict[Material, Material] = {}
+            mesh_data_map: dict = {}  # Track copied mesh data to preserve sharing
             converted_something = False
             for old_obj in objs:  # make copies and convert them
                 obj = old_obj.copy()
-                obj.data = old_obj.data.copy()
-                scene.collection.objects.link(obj)
-                view_layer.objects.active = obj
+                # Link to same collections as original
+                for collection in old_obj.users_collection:
+                    collection.objects.link(obj)
+                # Only assign and convert mesh data once per shared mesh
+                if old_obj.data not in mesh_data_map:
+                    mesh_data_map[old_obj.data] = old_obj.data
+                    obj.data = mesh_data_map[old_obj.data]
+                    view_layer.objects.active = obj
+                    if self.direction == "F3D":
+                        converted_something |= obj_to_f3d(
+                            obj, materials, lights_for_colors, default_to_fog, set_rendermode_without_fog
+                        )
+                    elif self.direction == "BSDF":
+                        converted_something |= obj_to_bsdf(obj, materials, self.put_alpha_into_color)
+                else:
+                    # Reuse already converted mesh data
+                    obj.data = mesh_data_map[old_obj.data]
                 new_objs.append(obj)
-                if self.direction == "F3D":
-                    converted_something |= obj_to_f3d(
-                        obj, materials, lights_for_colors, default_to_fog, set_rendermode_without_fog
-                    )
-                elif self.direction == "BSDF":
-                    converted_something |= obj_to_bsdf(obj, materials, self.put_alpha_into_color)
             if not converted_something:  # nothing converted
                 raise PluginError("No materials to convert.")
 
