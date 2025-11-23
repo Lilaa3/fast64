@@ -252,7 +252,7 @@ def f3d_mat_to_abstracted(material: Material):
 def material_to_bsdf(material: Material, put_alpha_into_color=False):
     abstracted_mat = f3d_mat_to_abstracted(material)
 
-    new_material = bpy.data.materials.new(name=material.name)
+    new_material = bpy.data.materials.new(name=material.name.replace("f3d_", ""))
     new_material.use_nodes = True
     nodes = new_material.node_tree.nodes
     links = new_material.node_tree.links
@@ -781,7 +781,7 @@ def material_to_f3d(
 
     preset = getDefaultMaterialPreset("Shaded Solid")
     new_material = createF3DMat(obj, preset=preset, append=False)
-    new_material.name = material.name
+    new_material.name = f"f3d_{material.name}"
     f3d_mat: F3DMaterialProperty = new_material.f3d_mat
     rdp: RDPSettings = f3d_mat.rdp_settings
 
