@@ -8,6 +8,7 @@ from bpy.types import Context, Object, Material, Operator, UILayout
 from ...utility import PluginError, raisePluginError
 
 from .converter import obj_to_f3d, obj_to_bsdf
+from ..f3d_material import is_mat_f3d
 
 converter_enum = [("Object", "Selected Objects", "Object"), ("Scene", "Scene", "Scene"), ("All", "All", "All")]
 RECOGNISED_GAMEMODES = ["SM64", "OOT", "MK64"]
@@ -98,6 +99,31 @@ class F3D_ConvertBSDF(Operator):
                 self.default_to_fog,
                 self.set_rendermode_without_fog,
             )
+        # Skip objects that already only contain F3D or BSDF materials (depending on direction)
+        def _has_f3d_material(o: Object) -> bool:
+            for slot in o.material_slots:
+                mat = slot.material
+                if mat is not None and is_mat_f3d(mat):
+                    return True
+            return False
+
+        candidates = list(objs)
+        if self.direction == "F3D":
+            objs = [o for o in objs if not _has_f3d_material(o)]
+            skipped = [o for o in candidates if o not in objs]
+            if skipped:
+                names = ", ".join([s.name for s in skipped[:8]])
+                self.report({"INFO"}, f"Skipped {len(skipped)} objects with only F3D materials: {names}{'...' if len(skipped) > 8 else ''}")
+            if not objs:
+                raise PluginError("No objects with non-F3D materials to convert.")
+        else:
+            objs = [o for o in objs if _has_f3d_material(o)]
+            skipped = [o for o in candidates if o not in objs]
+            if skipped:
+                names = ", ".join([s.name for s in skipped[:8]])
+                self.report({"INFO"}, f"Skipped {len(skipped)} objects without F3D materials: {names}{'...' if len(skipped) > 8 else ''}")
+            if not objs:
+                raise PluginError("No objects with F3D materials to convert.")
         original_names = [obj.name for obj in objs]
         new_objs: list[Object] = []
         backup_collection = None
