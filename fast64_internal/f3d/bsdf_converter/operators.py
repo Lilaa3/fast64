@@ -151,7 +151,6 @@ class F3D_ConvertBSDF(Operator):
                     # Reuse already converted mesh data
                     obj.data = mesh_data_map[old_obj.data]
                 new_objs.append(obj)
-                obj.select_set(False)
             if not converted_something:  # nothing converted
                 raise PluginError("No materials to convert.")
 
@@ -165,15 +164,25 @@ class F3D_ConvertBSDF(Operator):
                     scene.collection.children.link(backup_collection)
 
             for old_obj, obj, name in zip(objs, new_objs, original_names):
-                for collection in copy.copy(old_obj.users_collection):
-                    collection.objects.unlink(old_obj)  # remove old object from current collection
-
-                obj.name = name
+                # Move or remove the original object first so the new copy can
+                # take the original name without Blender auto-suffixing it.
                 if self.backup:
                     old_obj.name = f"{name}_backup"
-                    backup_collection.objects.link(old_obj)
+
+                    if backup_collection is not None:
+                        backup_collection.objects.link(old_obj)
+
+                    for col in list(old_obj.users_collection):
+                        if col is backup_collection:
+                            continue
+                        col.objects.unlink(old_obj)
                 else:
-                    bpy.data.objects.remove(old_obj)
+                    try:
+                        bpy.data.objects.remove(old_obj)
+                    except Exception:
+                        for col in list(old_obj.users_collection):
+                            col.objects.unlink(old_obj)
+                obj.name = name
             if self.backup:
                 for layer_collection in view_layer.layer_collection.children:
                     if layer_collection.collection == backup_collection:
