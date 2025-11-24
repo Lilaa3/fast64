@@ -251,7 +251,7 @@ def f3d_mat_to_abstracted(material: Material):
 
 def material_to_bsdf(material: Material, put_alpha_into_color=False):
     abstracted_mat = f3d_mat_to_abstracted(material)
-    target_name = material.name.replace("f3d_", "")
+    target_name = material.name.replace("f3dlite_", "")
     existing = bpy.data.materials.get(target_name)
     if existing is not None and existing.use_nodes:
         print(f"Reusing existing BSDF material '{target_name}'")
@@ -784,7 +784,7 @@ def material_to_f3d(
 
     abstracted_mat = bsdf_mat_to_abstracted(material)
     # If a matching F3D material already exists in the file, reuse it
-    target_name = f"f3d_{material.name}"
+    target_name = f"f3dlite_{material.name}"
     existing = bpy.data.materials.get(target_name)
     if existing is not None and is_mat_f3d(existing):
         print(f"Reusing existing F3D material '{target_name}'")
