@@ -151,6 +151,7 @@ class F3D_ConvertBSDF(Operator):
                     # Reuse already converted mesh data
                     obj.data = mesh_data_map[old_obj.data]
                 new_objs.append(obj)
+                obj.select_set(False)
             if not converted_something:  # nothing converted
                 raise PluginError("No materials to convert.")
 
