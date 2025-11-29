@@ -36,6 +36,7 @@ from ..f3d_material import (
     trunc_10_2,
     update_all_node_values,
     convertColorAttribute,
+    link_f3d_material_library,
     F3DMaterialProperty,
     RDPSettings,
     TextureProperty,
@@ -207,7 +208,7 @@ def f3d_tex_to_abstracted(f3d_tex: TextureProperty, set_color: bool, set_alpha: 
         print("No texture set")
 
     abstracted_tex = AbstractedN64Texture(f3d_tex.tex, repeat=not f3d_tex.S.clamp or not f3d_tex.T.clamp)
-    size = f3d_tex.get_tex_size()
+    size = f3d_tex.tex_size
     if size != [0, 0]:
         abstracted_tex.offset = (to_offset(f3d_tex.S.low, size[0]), to_offset(f3d_tex.T.low, size[1]))
     abstracted_tex.scale = (2.0 ** (f3d_tex.S.shift * -1.0), 2.0 ** (f3d_tex.T.shift * -1.0))
@@ -250,8 +251,13 @@ def f3d_mat_to_abstracted(material: Material):
 
 def material_to_bsdf(material: Material, put_alpha_into_color=False):
     abstracted_mat = f3d_mat_to_abstracted(material)
+    target_name = material.name.replace("f3dlite_", "")
+    existing = bpy.data.materials.get(target_name)
+    if existing is not None and existing.use_nodes:
+        print(f"Reusing existing BSDF material '{target_name}'")
+        return existing
 
-    new_material = bpy.data.materials.new(name=material.name)
+    new_material = bpy.data.materials.new(name=target_name)
     new_material.use_nodes = True
     nodes = new_material.node_tree.nodes
     links = new_material.node_tree.links
@@ -773,11 +779,20 @@ def material_to_f3d(
 ):
     print(f"Converting BSDF material {material.name}")
 
+    # Ensure the F3D material library is linked before creating materials
+    link_f3d_material_library()
+
     abstracted_mat = bsdf_mat_to_abstracted(material)
+    # If a matching F3D material already exists in the file, reuse it
+    target_name = f"f3dlite_{material.name}"
+    existing = bpy.data.materials.get(target_name)
+    if existing is not None and is_mat_f3d(existing):
+        print(f"Reusing existing F3D material '{target_name}'")
+        return existing, abstracted_mat
 
     preset = getDefaultMaterialPreset("Shaded Solid")
     new_material = createF3DMat(obj, preset=preset, append=False)
-    new_material.name = material.name
+    new_material.name = target_name
     f3d_mat: F3DMaterialProperty = new_material.f3d_mat
     rdp: RDPSettings = f3d_mat.rdp_settings
 
@@ -983,5 +998,6 @@ def obj_to_bsdf(obj: Object, converted_materials: dict[Material, Material], put_
         if material in converted_materials:
             obj.material_slots[index].material = converted_materials[material]
         else:
-            obj.material_slots[index].material = material_to_bsdf(material, put_alpha_into_color)
+            converted_materials[material] = material_to_bsdf(material, put_alpha_into_color)
+            obj.material_slots[index].material = converted_materials[material]
     return True

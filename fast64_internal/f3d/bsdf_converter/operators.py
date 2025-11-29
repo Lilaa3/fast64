@@ -3,12 +3,12 @@ import copy
 import bpy
 from bpy.utils import register_class, unregister_class
 from bpy.props import EnumProperty, BoolProperty
-from bpy.types import Context, Object, Material, UILayout
+from bpy.types import Context, Object, Material, Operator, UILayout
 
-from ...operators import OperatorBase
-from ...utility import PluginError
+from ...utility import PluginError, raisePluginError
 
 from .converter import obj_to_f3d, obj_to_bsdf
+from ..f3d_material import is_mat_f3d
 
 converter_enum = [("Object", "Selected Objects", "Object"), ("Scene", "Scene", "Scene"), ("All", "All", "All")]
 RECOGNISED_GAMEMODES = ["SM64", "OOT", "MK64"]
@@ -30,7 +30,7 @@ def draw_generic_converter_props(owner, layout: UILayout, direction: str, contex
             layout.prop(owner, "set_rendermode_without_fog")
 
 
-class F3D_ConvertBSDF(OperatorBase):
+class F3D_ConvertBSDF(Operator):
     bl_idname = "scene.f3d_convert_to_bsdf"
     bl_label = "BSDF Converter (F3D To BSDF or BSDF To F3D)"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
@@ -51,13 +51,29 @@ class F3D_ConvertBSDF(OperatorBase):
         layout.prop(self, "direction")
         draw_generic_converter_props(self, layout, self.direction, context)
 
+    @classmethod
+    def draw_props(cls, layout: UILayout, icon: str = "", text: str | None = None, **op_values):
+        icon_name = icon if icon else cls.icon
+        op = layout.operator(cls.bl_idname, icon=icon_name, text=text or "")
+        for key, value in op_values.items():
+            setattr(op, key, value)
+        return op
+
+    def execute(self, context: Context):
+        try:
+            self.execute_operator(context)
+            return {"FINISHED"}
+        except Exception as exc:
+            raisePluginError(self, exc)
+            return {"CANCELLED"}
+
     def execute_operator(self, context: Context):
         collection = context.scene.collection
         view_layer = context.view_layer
         scene = context.scene
 
         def exclude_non_mesh(objs: list[Object]) -> list[Object]:
-            return [obj for obj in objs if obj.type == "MESH"]
+            return [obj for obj in objs if obj.type == "MESH" and not obj.library]
 
         if self.converter_type == "Object":
             objs = exclude_non_mesh(context.selected_objects)
@@ -83,25 +99,58 @@ class F3D_ConvertBSDF(OperatorBase):
                 self.default_to_fog,
                 self.set_rendermode_without_fog,
             )
+        # Skip objects that already only contain F3D or BSDF materials (depending on direction)
+        def _has_f3d_material(o: Object) -> bool:
+            for slot in o.material_slots:
+                mat = slot.material
+                if mat is not None and is_mat_f3d(mat):
+                    return True
+            return False
+
+        candidates = list(objs)
+        if self.direction == "F3D":
+            objs = [o for o in objs if not _has_f3d_material(o)]
+            skipped = [o for o in candidates if o not in objs]
+            if skipped:
+                names = ", ".join([s.name for s in skipped[:8]])
+                self.report({"INFO"}, f"Skipped {len(skipped)} objects with only F3D materials: {names}{'...' if len(skipped) > 8 else ''}")
+            if not objs:
+                raise PluginError("No objects with non-F3D materials to convert.")
+        else:
+            objs = [o for o in objs if _has_f3d_material(o)]
+            skipped = [o for o in candidates if o not in objs]
+            if skipped:
+                names = ", ".join([s.name for s in skipped[:8]])
+                self.report({"INFO"}, f"Skipped {len(skipped)} objects without F3D materials: {names}{'...' if len(skipped) > 8 else ''}")
+            if not objs:
+                raise PluginError("No objects with F3D materials to convert.")
         original_names = [obj.name for obj in objs]
         new_objs: list[Object] = []
         backup_collection = None
 
         try:
             materials: dict[Material, Material] = {}
+            mesh_data_map: dict = {}  # Track copied mesh data to preserve sharing
             converted_something = False
             for old_obj in objs:  # make copies and convert them
                 obj = old_obj.copy()
-                obj.data = old_obj.data.copy()
-                scene.collection.objects.link(obj)
-                view_layer.objects.active = obj
+                # Link to same collections as original
+                for collection in old_obj.users_collection:
+                    collection.objects.link(obj)
+                # Only assign and convert mesh data once per shared mesh
+                if old_obj.data not in mesh_data_map:
+                    mesh_data_map[old_obj.data] = old_obj.data
+                    obj.data = mesh_data_map[old_obj.data]
+                    if self.direction == "F3D":
+                        converted_something |= obj_to_f3d(
+                            obj, materials, lights_for_colors, default_to_fog, set_rendermode_without_fog
+                        )
+                    elif self.direction == "BSDF":
+                        converted_something |= obj_to_bsdf(obj, materials, self.put_alpha_into_color)
+                else:
+                    # Reuse already converted mesh data
+                    obj.data = mesh_data_map[old_obj.data]
                 new_objs.append(obj)
-                if self.direction == "F3D":
-                    converted_something |= obj_to_f3d(
-                        obj, materials, lights_for_colors, default_to_fog, set_rendermode_without_fog
-                    )
-                elif self.direction == "BSDF":
-                    converted_something |= obj_to_bsdf(obj, materials, self.put_alpha_into_color)
             if not converted_something:  # nothing converted
                 raise PluginError("No materials to convert.")
 
@@ -115,20 +164,25 @@ class F3D_ConvertBSDF(OperatorBase):
                     scene.collection.children.link(backup_collection)
 
             for old_obj, obj, name in zip(objs, new_objs, original_names):
-                for collection in copy.copy(old_obj.users_collection):
-                    collection.objects.unlink(old_obj)  # remove old object from current collection
-                view_layer.objects.active = obj
-                obj.select_set(True)
-                bpy.ops.object.make_single_user(type="SELECTED_OBJECTS")
-                obj.select_set(False)
-
-                obj.name = name
+                # Move or remove the original object first so the new copy can
+                # take the original name without Blender auto-suffixing it.
                 if self.backup:
                     old_obj.name = f"{name}_backup"
-                    backup_collection.objects.link(old_obj)
-                    view_layer.objects.active = old_obj
+
+                    if backup_collection is not None:
+                        backup_collection.objects.link(old_obj)
+
+                    for col in list(old_obj.users_collection):
+                        if col is backup_collection:
+                            continue
+                        col.objects.unlink(old_obj)
                 else:
-                    bpy.data.objects.remove(old_obj)
+                    try:
+                        bpy.data.objects.remove(old_obj)
+                    except Exception:
+                        for col in list(old_obj.users_collection):
+                            col.objects.unlink(old_obj)
+                obj.name = name
             if self.backup:
                 for layer_collection in view_layer.layer_collection.children:
                     if layer_collection.collection == backup_collection:
