@@ -134,6 +134,9 @@ class OOT_Properties(bpy.types.PropertyGroup):
     hackeroot_settings: bpy.props.PointerProperty(type=HackerOoTSettings)
     anim_mats_export_settings: bpy.props.PointerProperty(type=Z64_AnimatedMaterialExportSettings)
     anim_mats_import_settings: bpy.props.PointerProperty(type=Z64_AnimatedMaterialImportSettings)
+    export_cutscene_obj: bpy.props.PointerProperty(
+        type=bpy.types.Object, poll=lambda self, obj: obj.type == "EMPTY" and obj.ootEmptyType == "Cutscene"
+    )
 
     def get_extracted_path(self):
         version = self.oot_version if game_data.z64.is_oot() else self.mm_version
@@ -215,6 +218,8 @@ def oot_panel_unregister():
 
 
 def oot_register(registerPanels):
+    hackeroot_props_register()
+    hackeroot_ops_register()
     oot_operator_register()
     collections_register()
     collision_ops_register()  # register first, so panel goes above mat panel
@@ -237,8 +242,6 @@ def oot_register(registerPanels):
     f3d_ops_register()
     file_register()
     anim_props_register()
-    hackeroot_props_register()
-    hackeroot_ops_register()
 
     csMotion_ops_register()
     csMotion_props_register()
@@ -270,8 +273,6 @@ def oot_unregister(unregisterPanels):
     csMotion_props_unregister()
     csMotion_ops_unregister()
 
-    hackeroot_ops_unregister()
-    hackeroot_props_unregister()
     anim_props_unregister()
     file_unregister()
     f3d_ops_unregister()
@@ -294,3 +295,5 @@ def oot_unregister(unregisterPanels):
     collision_ops_unregister()
     collections_unregister()
     oot_operator_unregister()
+    hackeroot_ops_unregister()
+    hackeroot_props_unregister()
