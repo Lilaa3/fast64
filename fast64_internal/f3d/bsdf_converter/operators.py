@@ -136,7 +136,8 @@ class F3D_ConvertBSDF(Operator):
                 obj = old_obj.copy()
                 # Link to same collections as original
                 for collection in old_obj.users_collection:
-                    collection.objects.link(obj)
+                    if obj.name not in collection.objects: #PATCH: Prevent adding duplicates
+                        collection.objects.link(obj)
                 # Only assign and convert mesh data once per shared mesh
                 if old_obj.data not in mesh_data_map:
                     mesh_data_map[old_obj.data] = old_obj.data
@@ -153,6 +154,24 @@ class F3D_ConvertBSDF(Operator):
                 new_objs.append(obj)
             if not converted_something:  # nothing converted
                 raise PluginError("No materials to convert.")
+
+            # Build mapping from old objects to new objects for parent remapping
+            old_to_new: dict[Object, Object] = dict(zip(objs, new_objs))
+
+            # Remap parent relationships to point to new objects
+            for old_obj, obj in zip(objs, new_objs):
+                if old_obj.parent is not None:
+                    if old_obj.parent in old_to_new:
+                        # Parent was also converted, point to the new version
+                        obj.parent = old_to_new[old_obj.parent]
+                    else:
+                        # Parent wasn't converted, keep the original parent
+                        obj.parent = old_obj.parent
+                    # Preserve parent type and bone (for armature parenting)
+                    obj.parent_type = old_obj.parent_type
+                    obj.parent_bone = old_obj.parent_bone
+                    # Preserve the matrix_parent_inverse to maintain transform
+                    obj.matrix_parent_inverse = old_obj.matrix_parent_inverse.copy()
 
             bpy.ops.object.select_all(action="DESELECT")
             if self.backup:
@@ -177,21 +196,47 @@ class F3D_ConvertBSDF(Operator):
                             continue
                         col.objects.unlink(old_obj)
                 else:
-                    try:
-                        bpy.data.objects.remove(old_obj)
-                    except Exception:
-                        for col in list(old_obj.users_collection):
+                    # Rename the original first so the name becomes available,
+                    # then unlink from all collections so it becomes orphan data.
+                    # We'll purge orphans after the loop instead of deleting
+                    # directly (which can crash if Blender is still drawing).
+                    old_obj.name = f"{name}_pending_delete"
+                    for col in list(old_obj.users_collection):
+                        try:
                             col.objects.unlink(old_obj)
+                        except Exception:
+                            pass
                 obj.name = name
+
+            # Purge orphan data (objects with no users) — safe alternative to
+            # bpy.data.objects.remove() which can crash during active drawing.
+            if not self.backup:
+                try:
+                    bpy.ops.outliner.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)
+                except Exception:
+                    pass
+
             if self.backup:
                 for layer_collection in view_layer.layer_collection.children:
                     if layer_collection.collection == backup_collection:
                         layer_collection.exclude = True
         except Exception as exc:
+            # Clean up newly created objects safely — unlink first, then remove.
             for obj in new_objs:
-                bpy.data.objects.remove(obj)
+                try:
+                    for col in list(obj.users_collection):
+                        try:
+                            col.objects.unlink(obj)
+                        except Exception:
+                            pass
+                    bpy.data.objects.remove(obj, do_unlink=True)
+                except Exception:
+                    pass
             if backup_collection is not None:
-                bpy.data.collections.remove(backup_collection)
+                try:
+                    bpy.data.collections.remove(backup_collection)
+                except Exception:
+                    pass
             raise exc
         self.report({"INFO"}, "Done.")
 
