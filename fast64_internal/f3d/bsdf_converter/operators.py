@@ -156,6 +156,24 @@ class F3D_ConvertBSDF(Operator):
                 raise PluginError("No materials to convert.")
 
             bpy.ops.object.select_all(action="DESELECT")
+            # Build mapping from old objects to new objects for parent remapping
+            old_to_new: dict[Object, Object] = dict(zip(objs, new_objs))
+
+            # Remap parent relationships to point to new objects
+            for old_obj, obj in zip(objs, new_objs):
+                if old_obj.parent is not None:
+                    if old_obj.parent in old_to_new:
+                        # Parent was also converted, point to the new version
+                        obj.parent = old_to_new[old_obj.parent]
+                    else:
+                        # Parent wasn't converted, keep the original parent
+                        obj.parent = old_obj.parent
+                    # Preserve parent type and bone (for armature parenting)
+                    obj.parent_type = old_obj.parent_type
+                    obj.parent_bone = old_obj.parent_bone
+                    # Preserve the matrix_parent_inverse to maintain transform
+                    obj.matrix_parent_inverse = old_obj.matrix_parent_inverse.copy()
+
             if self.backup:
                 name = "BSDF -> F3D Backup" if self.direction == "F3D" else "F3D -> BSDF Backup"
                 if name in bpy.data.collections:
