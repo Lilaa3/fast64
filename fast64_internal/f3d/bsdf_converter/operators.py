@@ -138,6 +138,8 @@ class F3D_ConvertBSDF(OperatorBase):
                     obj.data = mesh_data_map[old_obj.data]
                 new_objs.append(obj)
             if not converted_something:  # nothing converted
+                for obj in new_objs:
+                    bpy.data.objects.remove(obj)
                 raise PluginError("No materials to convert.")
 
             bpy.ops.object.select_all(action="DESELECT")
@@ -192,6 +194,19 @@ class F3D_ConvertBSDF(OperatorBase):
                 for layer_collection in view_layer.layer_collection.children:
                     if layer_collection.collection == backup_collection:
                         layer_collection.exclude = True
+
+            # Rename materials similar to objects - new material gets original name
+            for old_mat, conversion_result in materials.items():
+                # F3D direction stores (new_mat, abstracted_mat) tuple, BSDF direction stores just new_mat
+                new_mat = conversion_result[0] if isinstance(conversion_result, tuple) else conversion_result
+                original_mat_name = old_mat.name
+                # Always rename old material first to free up the name for the new one
+                if self.backup:
+                    old_mat.name = f"{original_mat_name}_backup"
+                else:
+                    # Rename to temp name, it will become orphaned and can be purged later
+                    old_mat.name = f"{original_mat_name}_old"
+                new_mat.name = original_mat_name
         except Exception as exc:
             for obj in new_objs:
                 bpy.data.objects.remove(obj)
