@@ -201,7 +201,7 @@ def saveTranslationFrame(frameData, translation):
         frameData[i].frames.append(min(int(round(translation[i])), 2**16 - 1))
 
 
-def getFrameInterval(action: bpy.types.Action, slot: Optional[bpy.types.ActionSlot] = None):
+def getFrameInterval(action: bpy.types.Action, slot: Optional["ActionSlot"] = None):
     scene = bpy.context.scene
 
     fast64_props = scene.fast64  # type: Fast64_Properties
