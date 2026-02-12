@@ -201,11 +201,13 @@ class F3D_ConvertBSDF(OperatorBase):
                 new_mat = conversion_result[0] if isinstance(conversion_result, tuple) else conversion_result
                 original_mat_name = old_mat.name
                 # Always rename old material first to free up the name for the new one
-                if self.backup:
-                    old_mat.name = f"{original_mat_name}_backup"
-                else:
-                    # Rename to temp name, it will become orphaned and can be purged later
-                    old_mat.name = f"{original_mat_name}_old"
+                # Skip renaming if the material is read-only (e.g., from linked library)
+                if not old_mat.library:
+                    if self.backup:
+                        old_mat.name = f"{original_mat_name}_backup"
+                    else:
+                        # Rename to temp name, it will become orphaned and can be purged later
+                        old_mat.name = f"{original_mat_name}_old"
                 new_mat.name = original_mat_name
         except Exception as exc:
             for obj in new_objs:
