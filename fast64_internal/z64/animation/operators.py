@@ -3,7 +3,7 @@ from bpy.types import Scene, Operator, Armature
 from bpy.props import StringProperty, BoolProperty
 from bpy.utils import register_class, unregister_class
 from bpy.ops import object
-from ...utility import PluginError, toAlnum, writeCData, raisePluginError
+from ...utility import PluginError, ExportUtils, toAlnum, writeCData, raisePluginError
 from .properties import OOTAnimExportSettingsProperty, OOTAnimImportSettingsProperty
 from ..exporter.animation import ootExportLinkAnimation, ootExportNonLinkAnimation
 from .importer import ootImportLinkAnimationC, ootImportNonLinkAnimationC
@@ -95,10 +95,14 @@ def ootImportAnimationC(
                 basePath,
                 f"{bpy.context.scene.fast64.oot.get_extracted_path()}/assets/misc/link_animetion/link_animetion.c",
             )
-            animHeaderFilepath = os.path.join(
-                basePath,
-                f"{bpy.context.scene.fast64.oot.get_extracted_path()}/assets/objects/gameplay_keep/gameplay_keep.c",
-            )
+
+            # starting with zeldaret/oot dbe1a80541173652c344f20226310a8bf90f3086 gameplay_keep is split and committed
+            animHeaderFilepath = f"{basePath}/assets/objects/gameplay_keep/player_anim_headers.c"
+            if not os.path.exists(animHeaderFilepath):
+                animHeaderFilepath = os.path.join(
+                    basePath,
+                    f"{bpy.context.scene.fast64.oot.get_extracted_path()}/assets/objects/gameplay_keep/gameplay_keep.c",
+                )
         else:
             animFilepath = filepath
             animHeaderFilepath = filepath
@@ -123,26 +127,27 @@ class OOT_ExportAnim(Operator):
     # Called on demand (i.e. button press, menu item)
     # Can also be called from operator search menu (Spacebar)
     def execute(self, context):
-        try:
-            if len(context.selected_objects) == 0 or not isinstance(context.selected_objects[0].data, Armature):
-                raise PluginError("Armature not selected.")
-            if len(context.selected_objects) > 1:
-                raise PluginError("Multiple objects selected, make sure to select only one.")
-            armatureObj = context.selected_objects[0]
-            if context.mode != "OBJECT":
-                object.mode_set(mode="OBJECT")
-        except Exception as e:
-            raisePluginError(self, e)
-            return {"CANCELLED"}
+        with ExportUtils() as export_utils:
+            try:
+                if len(context.selected_objects) == 0 or not isinstance(context.selected_objects[0].data, Armature):
+                    raise PluginError("Armature not selected.")
+                if len(context.selected_objects) > 1:
+                    raise PluginError("Multiple objects selected, make sure to select only one.")
+                armatureObj = context.selected_objects[0]
+                if context.mode != "OBJECT":
+                    object.mode_set(mode="OBJECT")
+            except Exception as e:
+                raisePluginError(self, e)
+                return {"CANCELLED"}
 
-        try:
-            settings = context.scene.fast64.oot.animExportSettings
-            exportAnimationC(armatureObj, settings)
-            self.report({"INFO"}, "Success!")
+            try:
+                settings = context.scene.fast64.oot.animExportSettings
+                exportAnimationC(armatureObj, settings)
+                self.report({"INFO"}, "Success!")
 
-        except Exception as e:
-            raisePluginError(self, e)
-            return {"CANCELLED"}  # must return a set
+            except Exception as e:
+                raisePluginError(self, e)
+                return {"CANCELLED"}  # must return a set
 
         return {"FINISHED"}  # must return a set
 
