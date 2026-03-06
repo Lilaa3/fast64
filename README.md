@@ -1,5 +1,5 @@
-# Fast64
-
+# Fast64 API
+## **EXPERIMENTAL** fork with a hookable api. See [blender-addon-api-creator](https://github.com/Lilaa3/blender-addon-api-creator)
 This requires Blender 3.2 - 5.0.1. Blender 4.0+ is recommended.
 
 Forked from [kurethedead/fast64 on BitBucket](https://bitbucket.org/kurethedead/fast64/src).

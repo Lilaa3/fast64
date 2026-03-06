@@ -1,7 +1,18 @@
+import sys
+
 import bpy
 
 from bpy.utils import register_class, unregister_class
 from bpy.path import abspath
+
+from .blender_api_lib.blender_api_lib.registry import register_registry
+from .blender_api_lib.blender_api_lib.client import (
+    get_or_create_system,
+    register_addon,
+    register_system,
+    unregister_addon,
+    unregister_system,
+)
 
 from . import addon_updater_ops
 
@@ -66,6 +77,8 @@ from .fast64_internal.gltf_extension import (
     gltf_extension_register,
     gltf_extension_unregister,
 )
+
+base_system = get_or_create_system(None)
 
 # info about add on
 bl_info = {
@@ -435,10 +448,17 @@ def gameEditorUpdate(scene: bpy.types.Scene, _context):
     set_game_defaults(scene)
 
 
+base_system.expose_all(sys.modules[__name__], exclude=["*blender_api_lib*"], starting_prefix="unstable.")
+
+
 # called on add-on enabling
 # register operators and panels here
 # append menu layout drawing function to an existing window
 def register():
+    register_registry(reload=True)
+    register_addon("Fast64", bl_info)
+    register_system(base_system)
+
     if bpy.app.version < (3, 2, 0):
         msg = "\n".join(
             (
@@ -502,6 +522,8 @@ def register():
     bpy.types.Action.fast64 = bpy.props.PointerProperty(type=Fast64_ActionProperties, name="Fast64 Action Properties")
     bpy.app.handlers.load_post.append(after_load)
 
+    base_system.finalize_system()
+
 
 # called on add-on disabling
 def unregister():
@@ -540,3 +562,4 @@ def unregister():
 
     addon_updater_ops.unregister()
     unregister_class(ExampleAddonPreferences)
+    unregister_addon()
