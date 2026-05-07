@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001aa4" readable_name="Bowser Flame">
+    <tags>
+        <tag>FIRE</tag>
+        <tag>HURT</tag>
+        <tag>BOWSER</tag>
+    </tags>
+    <models>
+        <model>red_flame</model>
+    </models>
+</behavior>

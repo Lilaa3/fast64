@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<behavior name="0x130031dc" readable_name="Bob-omb Buddy">
+    <tags>
+        <tag>NPC</tag>
+        <tag>FRIENDLY</tag>
+        <tag>DIALOGUE</tag>
+    </tags>
+    <fields>
+        <field name="Dialogue ID" type="dialogue_id" bparam="2" default="0"/>
+    </fields>
+    <models>
+        <model>bobomb_buddy</model>
+    </models>
+</behavior>

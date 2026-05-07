@@ -1,0 +1,16 @@
+<?xml version="1.0" ?>
+<behavior name="0x130048e0" readable_name="Wiggler Body">
+    <description>A body segment of a Wiggler. It follows the movement of its parent Wiggler dictates in oWigglerSegments.</description>
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>PART</tag>
+    </tags>
+    <fields>
+        <field name="Segment Index" type="int" bparam="2" default="0">
+            <enums/>
+        </field>
+    </fields>
+    <models>
+        <model>wiggler_body</model>
+    </models>
+</behavior>

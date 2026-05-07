@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<animation_table address="0x6012354" name="Bub">
+    <names>
+        <name>Swimming</name>
+    </names>
+</animation_table>

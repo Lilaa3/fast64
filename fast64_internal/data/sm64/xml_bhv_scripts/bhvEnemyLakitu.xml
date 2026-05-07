@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13004918" readable_name="Enemy Lakitu">
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>SPAWNER</tag>
+        <tag>MOVING</tag>
+    </tags>
+    <models>
+        <model>lakitu_enemy</model>
+    </models>
+</behavior>

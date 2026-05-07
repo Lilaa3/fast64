@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Cap Switch">
+    <geolayout>0xc000048</geolayout>
+    <group>group8</group>
+    <ids>
+        <id value="0x55" name="MODEL_CAP_SWITCH"/>
+    </ids>
+    <collisions>
+        <collision name="Cap Switch (Top)" c_name="capswitch_collision_050033D0"/>
+    </collisions>
+</model>

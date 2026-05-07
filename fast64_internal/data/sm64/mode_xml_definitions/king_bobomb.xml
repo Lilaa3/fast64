@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="King Bobomb">
+    <geolayout>0xc000000</geolayout>
+    <group>group3</group>
+    <ids>
+        <id value="0x56" name="MODEL_KING_BOBOMB"/>
+    </ids>
+    <animation_tables>
+        <table>king_bobomb</table>
+    </animation_tables>
+</model>

@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<animation_table address="0x501c504" name="Peach">
+    <names>
+        <name>Listen Everybody</name>
+        <name>Turning Away</name>
+        <name>Walking away</name>
+        <name>Walking away 2</name>
+        <name>Descend</name>
+        <name>Descend And Look Down</name>
+        <name>Look Up And Open Eyes</name>
+        <name>Mario</name>
+        <name>Power Of The Stars</name>
+        <name>Thanks To You</name>
+        <name>Kiss</name>
+        <name>Waving</name>
+    </names>
+</animation_table>

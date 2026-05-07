@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001e04" readable_name="LLL Wood Piece">
+    <description>It is destroyed when its parent bridge manager resets.</description>
+    <tags>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>SURFACE</tag>
+        <tag>MOVING</tag>
+        <tag>SUB_OBJECT</tag>
+        <tag>LLL</tag>
+    </tags>
+    <models>
+        <model>lll_wood_bridge</model>
+    </models>
+</behavior>

@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001b88" readable_name="Checkerboard Platform Sub">
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>PLATFORM</tag>
+    </tags>
+    <fields>
+        <field name="Initial Direction" type="int" bparam="2" default="0">
+            <enums>
+                <enum value="0" name="Up"/>
+                <enum value="1" name="Down"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>checkerboard_platform</model>
+    </models>
+</behavior>

@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13000118" readable_name="WF Giant Pole">
+    <description>A large pole that spawns a bhvYellowBall. The height is <game_unit value="2100"/>.</description>
+    <tags>
+        <tag>POLE</tag>
+        <tag>WF</tag>
+    </tags>
+    <models>
+        <model>wf_giant_pole</model>
+    </models>
+</behavior>

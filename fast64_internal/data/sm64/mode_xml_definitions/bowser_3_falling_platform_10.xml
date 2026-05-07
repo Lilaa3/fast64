@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Bowser 3 Falling Platform 10">
+    <geolayout>0xe000368</geolayout>
+    <level>BOWSER_3</level>
+    <ids>
+        <id value="0x3f" name="MODEL_BOWSER_3_FALLING_PLATFORM_10"/>
+    </ids>
+    <collisions>
+        <collision c_name="bowser_3_seg7_collision_07005038" address="0x07005038"/>
+    </collisions>
+</model>

@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003910" readable_name="Small Bomp">
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>WF</tag>
+    </tags>
+    <models>
+        <model>wf_small_bomp</model>
+    </models>
+</behavior>

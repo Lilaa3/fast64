@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Bitfs Tumbling Platform Part">
+    <geolayout>0xe0006d8</geolayout>
+    <level>BITFS</level>
+    <ids>
+        <id value="0x40" name="MODEL_BITFS_TUMBLING_PLATFORM_PART"/>
+    </ids>
+    <collisions>
+        <collision c_name="bitfs_seg7_collision_07015288" address="0x07015288"/>
+    </collisions>
+</model>

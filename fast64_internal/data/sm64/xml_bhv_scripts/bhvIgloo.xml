@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x130016b8" readable_name="Igloo">
+    <description>A static barrier object using the INTERACT_IGLOO_BARRIER interaction type to block Mario.</description>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>SNOW</tag>
+    </tags>
+</behavior>

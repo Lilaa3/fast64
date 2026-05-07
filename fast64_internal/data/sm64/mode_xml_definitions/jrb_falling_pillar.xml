@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Jrb Falling Pillar">
+    <geolayout>0xe000900</geolayout>
+    <level>JRB</level>
+    <ids>
+        <id value="0x3d" name="MODEL_JRB_FALLING_PILLAR"/>
+    </ids>
+</model>

@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002a48" readable_name="Static Object">
+    <description>A static object that does nothing.</description>
+    <tags>
+        <tag>ENVIRONMENTAL</tag>
+    </tags>
+    <models>
+        <model>klepto</model>
+        <model>springboard_bottom</model>
+        <model>star</model>
+        <model>ttm_blue_smiley</model>
+        <model>ttm_moon_smiley</model>
+        <model>ttm_star_smiley</model>
+        <model>ttm_yellow_smiley</model>
+        <model>unknown_b8</model>
+        <model>warp_pipe</model>
+        <model>yellow_sphere_bowser_1</model>
+    </models>
+</behavior>

@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Menu Main Menu Green Score Button">
+    <geolayout>main_menu_geo_000308</geolayout>
+    <level>MENU</level>
+    <ids>
+        <id value="0x7" name="MODEL_MAIN_MENU_GREEN_SCORE_BUTTON"/>
+    </ids>
+</model>

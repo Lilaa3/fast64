@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<behavior name="0x1300525c" readable_name="Horizontal Grindel">
+    <description>A Grindel that moves horizontally. It rotates toward a target yaw; if it reaches the target and is more than <game_unit value="300"/> from home, it reverses direction.</description>
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>SURFACE</tag>
+        <tag>MOVING</tag>
+        <tag>SSL</tag>
+    </tags>
+    <models>
+        <model>ssl_grindel</model>
+    </models>
+</behavior>

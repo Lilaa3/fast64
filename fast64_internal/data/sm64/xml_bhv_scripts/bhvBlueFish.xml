@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001b2c" readable_name="Blue Fish">
+    <description>Blue fish that swim in patterns.</description>
+    <tags>
+        <tag>NPC</tag>
+        <tag>FISH</tag>
+    </tags>
+    <models>
+        <model>fish</model>
+    </models>
+</behavior>

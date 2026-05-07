@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13004a78" readable_name="Monty Mole Rock">
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>TTM</tag>
+        <tag>SUB_OBJECT</tag>
+    </tags>
+    <models>
+        <model>pebble</model>
+    </models>
+</behavior>

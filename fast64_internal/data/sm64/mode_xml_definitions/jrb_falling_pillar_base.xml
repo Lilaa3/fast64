@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Jrb Falling Pillar Base">
+    <geolayout>0xe000918</geolayout>
+    <level>JRB</level>
+    <ids>
+        <id value="0x3e" name="MODEL_JRB_FALLING_PILLAR_BASE"/>
+    </ids>
+    <collisions>
+        <collision name="jrb_seg7_collision_pillar_base" address="0x700d198"/>
+    </collisions>
+</model>

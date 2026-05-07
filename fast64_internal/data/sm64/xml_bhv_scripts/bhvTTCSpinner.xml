@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13004d90" readable_name="TTC Spinner">
+    <tags>
+        <tag>PLATFORM</tag>
+        <tag>TTC</tag>
+    </tags>
+    <models>
+        <model>ttc_spinner</model>
+    </models>
+</behavior>

@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x130043a0" readable_name="JRB Falling Pillar">
+    <description>Stone pillars in the JRB chest area. Uses Falling Pillar Hitbox.</description>
+    <tags>
+        <tag>JRB</tag>
+        <tag>SURFACE</tag>
+        <tag>HURT</tag>
+    </tags>
+    <models>
+        <model>jrb_falling_pillar</model>
+    </models>
+</behavior>

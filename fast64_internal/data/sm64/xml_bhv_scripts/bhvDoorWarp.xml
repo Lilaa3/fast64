@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<behavior name="0x13000afc" readable_name="Warp Door">
+    <description>A warp door that inherits most of its functionality from bhvDoor but uses INTERACT_WARP_DOOR for interaction. This triggers warp-specific door animations and camera events (CAM_EVENT_DOOR_WARP).</description>
+    <tags>
+        <tag>DOOR</tag>
+        <tag>INTERACTIVE</tag>
+        <tag>SURFACE</tag>
+        <tag>WARP</tag>
+    </tags>
+    <fields>
+        <field name="Warp ID" type="int" bparam="2" default="0"/>
+        <field name="Door Type" type="int" bparam="3" default="0">
+            <enums>
+                <enum value="0" name="Generic"/>
+                <enum value="1" name="Upstairs"/>
+                <enum value="2" name="Downstairs"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>castle_door</model>
+        <model>key_door</model>
+        <model>metal_door</model>
+        <model>unknown_door_28</model>
+        <model>unknown_door_2a</model>
+        <model>unknown_door_2b</model>
+        <model>wooden_door</model>
+    </models>
+</behavior>

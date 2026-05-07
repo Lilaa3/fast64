@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Springboard Top">
+    <geolayout>0xc000000</geolayout>
+    <group>group8</group>
+    <ids>
+        <id value="0xb5" name="MODEL_TRAMPOLINE"/>
+    </ids>
+    <collisions>
+        <collision name="springboard_collision_05001A28"/>
+    </collisions>
+</model>

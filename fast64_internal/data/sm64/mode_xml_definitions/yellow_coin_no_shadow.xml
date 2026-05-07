@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Yellow Coin (No Shadow)">
+    <geolayout>0x160001a0</geolayout>
+    <group>common1</group>
+    <ids>
+        <id value="0x75" name="MODEL_YELLOW_COIN_NO_SHADOW"/>
+    </ids>
+</model>

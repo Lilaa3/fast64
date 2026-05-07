@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Bookend Part">
+    <geolayout>0xc000000</geolayout>
+    <group>group9</group>
+    <ids>
+        <id value="0x58" name="MODEL_BOOKEND_PART"/>
+    </ids>
+    <animation_tables>
+        <table>bookend_part</table>
+    </animation_tables>
+</model>

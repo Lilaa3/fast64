@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Yoshi">
+    <geolayout>0xc000468</geolayout>
+    <group>group10</group>
+    <ids>
+        <id value="0x55" name="MODEL_YOSHI"/>
+    </ids>
+    <animation_tables>
+        <table>yoshi</table>
+    </animation_tables>
+</model>

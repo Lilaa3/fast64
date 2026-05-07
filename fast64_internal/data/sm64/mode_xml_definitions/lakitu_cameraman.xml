@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Lakitu (Cameraman)">
+    <geolayout>0xd000000</geolayout>
+    <group>group15</group>
+    <ids>
+        <id value="0x66" name="MODEL_LAKITU"/>
+    </ids>
+    <animation_tables>
+        <table>lakitu_cameraman</table>
+    </animation_tables>
+</model>

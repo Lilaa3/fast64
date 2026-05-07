@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Wf Tower Trapezoid Platorm">
+    <geolayout>0xe000af8</geolayout>
+    <level>WF</level>
+    <ids>
+        <id value="0x2c" name="MODEL_WF_TOWER_TRAPEZOID_PLATORM"/>
+    </ids>
+</model>

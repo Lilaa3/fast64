@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Chain Chomp">
+    <geolayout>0xd0005ec</geolayout>
+    <group>group14</group>
+    <ids>
+        <id value="0x66" name="MODEL_CHAIN_CHOMP"/>
+    </ids>
+    <animation_tables>
+        <table>chain_chomp</table>
+    </animation_tables>
+</model>

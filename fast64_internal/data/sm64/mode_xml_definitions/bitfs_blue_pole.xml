@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Bitfs Blue Pole">
+    <geolayout>0xe0006a8</geolayout>
+    <level>BITFS</level>
+    <ids>
+        <id value="0x39" name="MODEL_BITFS_BLUE_POLE"/>
+    </ids>
+</model>

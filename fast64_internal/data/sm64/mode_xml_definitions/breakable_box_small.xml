@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Breakable Box (Small)">
+    <geolayout>0xf000610</geolayout>
+    <group>common0</group>
+    <ids>
+        <id value="0x82" name="MODEL_BREAKABLE_BOX_SMALL"/>
+    </ids>
+</model>

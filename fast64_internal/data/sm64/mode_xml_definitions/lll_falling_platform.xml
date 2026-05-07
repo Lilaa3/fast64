@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Lll Falling Platform">
+    <geolayout>0xe000b80</geolayout>
+    <level>LLL</level>
+    <ids>
+        <id value="0x3c" name="MODEL_LLL_FALLING_PLATFORM"/>
+    </ids>
+    <collisions>
+        <collision c_name="lll_seg7_collision_0701D21C" address="0x0701D21C"/>
+    </collisions>
+</model>

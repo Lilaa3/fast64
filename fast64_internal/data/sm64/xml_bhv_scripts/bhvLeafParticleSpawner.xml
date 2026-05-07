@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001390" readable_name="Leaf Particle Spawner">
+    <description>Spawns leaf or snow particles based on the nearest tree's model.</description>
+    <particle>PARTICLE_LEAF</particle>
+    <tags>
+        <tag>SPAWNER</tag>
+        <tag>PARTICLE</tag>
+        <tag>ENVIRONMENTAL</tag>
+    </tags>
+</behavior>

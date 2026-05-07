@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003738" readable_name="Jet Stream Ring Spawner">
+    <description>Spawns a star and mist particles once 5 rings have been collected (checked with oWaterRingSpawnerRingsCollected which gets increased by its children).</description>
+    <tags>
+        <tag>SPAWNER</tag>
+        <tag>MANAGER</tag>
+        <tag>COLLECTABLE</tag>
+        <tag>STAR</tag>
+        <tag>DDD</tag>
+    </tags>
+    <models>
+        <model>water_ring</model>
+    </models>
+    <comment>Another unused param in the level script.</comment>
+</behavior>

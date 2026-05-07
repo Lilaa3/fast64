@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x130055dc" readable_name="Bubba">
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>FISH</tag>
+        <tag>WATER</tag>
+        <tag>THI</tag>
+    </tags>
+    <models>
+        <model>bubba</model>
+    </models>
+</behavior>

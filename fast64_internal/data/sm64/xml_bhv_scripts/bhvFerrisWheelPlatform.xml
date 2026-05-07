@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<behavior name="0x13004b6c" readable_name="Ferris Wheel Platform">
+    <description>A platform that orbits a bhvFerrisWheelAxle. Position is relative to the parent's + rool.</description>
+    <tags>
+        <tag>PLATFORM</tag>
+        <tag>SURFACE</tag>
+    </tags>
+    <fields>
+        <field name="Platform Index" type="int" bparam="2" max="3" default="0">
+            <description>Index of the platform (0-3), used to set the relative angle (multiplied by 90 degrees).</description>
+        </field>
+    </fields>
+    <collisions>
+        <collision c_name="bits_seg7_collision_0701AC28" address="0x0701AC28"/>
+        <collision c_name="bitdw_seg7_collision_0700F898" address="0x0700F898"/>
+    </collisions>
+</behavior>

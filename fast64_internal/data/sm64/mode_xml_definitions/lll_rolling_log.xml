@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Lll Rolling Log">
+    <geolayout>0xe000de8</geolayout>
+    <level>LLL</level>
+    <ids>
+        <id value="0x39" name="MODEL_LLL_ROLLING_LOG"/>
+    </ids>
+    <collisions>
+        <collision name="lll_seg7_collision_pitoune" address="0x701d608"/>
+    </collisions>
+</model>

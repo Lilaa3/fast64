@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x130029e4" readable_name="Static Checkered Platform">
+    <description>A stationary platform.</description>
+    <tags>
+        <tag>PLATFORM</tag>
+        <tag>UNUSED</tag>
+    </tags>
+    <collisions>
+        <collision c_name="checkerboard_platform_seg8_collision_platform" address="0x0800D710"/>
+    </collisions>
+</behavior>

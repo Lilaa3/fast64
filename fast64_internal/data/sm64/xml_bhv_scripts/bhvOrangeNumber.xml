@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<behavior name="0x13004348" readable_name="Orange Number">
+    <tags>
+        <tag>PARTICLE</tag>
+        <tag>UI</tag>
+        <tag>SUB_OBJECT</tag>
+    </tags>
+    <fields>
+        <field name="Number" type="int" bparam="2" default="0">
+            <enums>
+                <enum value="0" name="0" c_name="ORANGE_NUMBER_0"/>
+                <enum value="1" name="1" c_name="ORANGE_NUMBER_1"/>
+                <enum value="2" name="2" c_name="ORANGE_NUMBER_2"/>
+                <enum value="3" name="3" c_name="ORANGE_NUMBER_3"/>
+                <enum value="4" name="4" c_name="ORANGE_NUMBER_4"/>
+                <enum value="5" name="5" c_name="ORANGE_NUMBER_5"/>
+                <enum value="6" name="6" c_name="ORANGE_NUMBER_6"/>
+                <enum value="7" name="7" c_name="ORANGE_NUMBER_7"/>
+                <enum value="8" name="8" c_name="ORANGE_NUMBER_8"/>
+                <enum value="9" name="9" c_name="ORANGE_NUMBER_9"/>
+                <enum value="10" name="A" c_name="ORANGE_NUMBER_A"/>
+                <enum value="11" name="B" c_name="ORANGE_NUMBER_B"/>
+                <enum value="12" name="C" c_name="ORANGE_NUMBER_C"/>
+                <enum value="13" name="D" c_name="ORANGE_NUMBER_D"/>
+                <enum value="14" name="E" c_name="ORANGE_NUMBER_E"/>
+                <enum value="15" name="F" c_name="ORANGE_NUMBER_F"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>orange_numbers</model>
+    </models>
+</behavior>

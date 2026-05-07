@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001650" readable_name="Jumping Box">
+    <description>A holdable box that can be thrown or dropped. If Mario stops riding it, it explodes and spawns yellow coins.</description>
+    <tags>
+        <tag>HOLDABLE</tag>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>COLLECTABLE</tag>
+    </tags>
+    <models>
+        <model>breakable_box</model>
+        <model>breakable_box_small</model>
+    </models>
+</behavior>

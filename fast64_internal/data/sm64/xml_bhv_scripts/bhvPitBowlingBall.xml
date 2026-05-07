@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003a08" readable_name="BOB Pit Bowling Ball">
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>BOB</tag>
+    </tags>
+    <models>
+        <model>bowling_ball</model>
+    </models>
+</behavior>

@@ -1,0 +1,21 @@
+<?xml version="1.0" ?>
+<behavior name="0x13004b44" readable_name="Ferris Wheel Axle">
+    <description>The center axle of the Ferris wheels in the bowser stages. Spawns its plataform.</description>
+    <tags>
+        <tag>PLATFORM</tag>
+        <tag>SURFACE</tag>
+    </tags>
+    <fields>
+        <field name="Wheel Index" type="int" bparam="2" default="0">
+            <description>Index into sFerrisWheelProperties for properties.</description>
+            <enums>
+                <enum value="0" name="BITS"/>
+                <enum value="1" name="BITDW"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>bitdw_ferris_wheel_axle</model>
+        <model>bits_ferris_wheel_axle</model>
+    </models>
+</behavior>

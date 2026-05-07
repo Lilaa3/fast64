@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<animation_table address="0x600a4d4" name="Seaweed" size="1">
+    <names>
+        <name>Wave</name>
+    </names>
+</animation_table>

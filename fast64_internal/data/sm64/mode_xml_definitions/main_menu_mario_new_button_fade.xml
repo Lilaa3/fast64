@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Main Menu Mario New Button Fade">
+    <geolayout>0x0E000260</geolayout>
+    <level>MENU</level>
+    <ids>
+        <id value="0x0A" name="MODEL_MAIN_MENU_MARIO_NEW_BUTTON_FADE"/>
+    </ids>
+</model>

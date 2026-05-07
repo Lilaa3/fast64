@@ -1,0 +1,16 @@
+<?xml version="1.0" ?>
+<behavior name="0x13000bc8" readable_name="Thwomp">
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>SURFACE</tag>
+    </tags>
+    <fields>
+        <field name="Rising Duration Offset" type="frames" bparam="2" offset="40" default="0"/>
+    </fields>
+    <models>
+        <model>thwomp</model>
+    </models>
+    <collisions>
+        <collision c_name="thwomp_seg5_collision_0500B7D0" address="0x500b7d0"/>
+    </collisions>
+</behavior>

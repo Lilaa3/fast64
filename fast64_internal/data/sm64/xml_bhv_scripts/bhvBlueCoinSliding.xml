@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x130030d4" readable_name="Sliding Blue Coin">
+    <description>A blue coin that slides away from Mario.</description>
+    <tags>
+        <tag>COLLECTIBLE</tag>
+        <tag>COINS</tag>
+    </tags>
+    <models>
+        <model>blue_coin</model>
+    </models>
+</behavior>

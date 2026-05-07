@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003274" readable_name="Closed Cannon">
+    <description>Cannon door that opens when the course cannon unlock flag is set in the save file. Spawns bhvCannon upon opening.</description>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>INTERACTIVE</tag>
+    </tags>
+    <models>
+        <model>cannon_lid</model>
+    </models>
+</behavior>

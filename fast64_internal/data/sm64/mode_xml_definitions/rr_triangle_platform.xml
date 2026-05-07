@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Rr Triangle Platform">
+    <geolayout>0xe0008d8</geolayout>
+    <level>RR</level>
+    <ids>
+        <id value="0x3a" name="MODEL_RR_TRIANGLE_PLATFORM"/>
+    </ids>
+</model>

@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="(Beta) Boo Key">
+    <geolayout>0xc000188</geolayout>
+    <group>group9</group>
+    <ids>
+        <id value="0x55" name="MODEL_BETA_BOO_KEY"/>
+    </ids>
+</model>

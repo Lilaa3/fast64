@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Jrb Ship Right Half Part">
+    <geolayout>0xe0009e8</geolayout>
+    <level>JRB</level>
+    <ids>
+        <id value="0x37" name="MODEL_JRB_SHIP_RIGHT_HALF_PART"/>
+    </ids>
+</model>

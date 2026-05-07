@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Thi Tiny Island Top">
+    <geolayout>0xe0005c8</geolayout>
+    <level>THI</level>
+    <ids>
+        <id value="0x37" name="MODEL_THI_TINY_ISLAND_TOP"/>
+    </ids>
+</model>

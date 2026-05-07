@@ -1,0 +1,21 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001408" readable_name="BITDW Squarish Path Moving Platform">
+    <description>A platform that moves in a square path. The starting direction is determined by its parameters.</description>
+    <tags>
+        <tag>PLATFORM</tag>
+        <tag>BITDW</tag>
+    </tags>
+    <fields>
+        <field name="Starting Direction" type="int" bparam="2" mask="0x03" default="0">
+            <enums>
+                <enum value="0" name="0º"/>
+                <enum value="1" name="90º"/>
+                <enum value="2" name="180º"/>
+                <enum value="3" name="270º"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>bitdw_square_platform</model>
+    </models>
+</behavior>

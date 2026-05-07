@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Treasure Chest Lid">
+    <geolayout>0xd000468</geolayout>
+    <group>group13</group>
+    <ids>
+        <id value="0x66" name="MODEL_TREASURE_CHEST_LID"/>
+    </ids>
+</model>

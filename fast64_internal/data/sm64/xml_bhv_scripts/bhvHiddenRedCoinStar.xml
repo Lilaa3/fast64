@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003e8c" readable_name="Hidden Red Coin Star">
+    <description>A star that spawns once a required number of red coins are collected. The requirement is either automatically calculated by counting all red coins in the level or specified manually.</description>
+    <tags>
+        <tag>COLLECTABLE</tag>
+        <tag>LEVEL</tag>
+        <tag>STAR</tag>
+    </tags>
+    <fields>
+        <field name="Required Red Coins" type="int" bparam="2" default="0"/>
+    </fields>
+</behavior>

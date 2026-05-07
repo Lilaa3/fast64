@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13004f28" readable_name="Water Bubbles Cannon Barrel">
+    <tags>
+        <tag>SPAWNER</tag>
+        <tag>WATER</tag>
+        <tag>BOB</tag>
+    </tags>
+    <models>
+        <model>cannon_barrel</model>
+    </models>
+</behavior>

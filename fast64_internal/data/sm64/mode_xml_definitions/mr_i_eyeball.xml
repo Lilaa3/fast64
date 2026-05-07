@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Mr. I Eyeball">
+    <geolayout>0xd000000</geolayout>
+    <group>group16</group>
+    <ids>
+        <id value="0x67" name="MODEL_MR_I"/>
+    </ids>
+</model>

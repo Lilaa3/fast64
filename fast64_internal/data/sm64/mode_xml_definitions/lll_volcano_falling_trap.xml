@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Lll Volcano Falling Trap">
+    <geolayout>0xe000ea8</geolayout>
+    <level>LLL</level>
+    <ids>
+        <id value="0x53" name="MODEL_LLL_VOLCANO_FALLING_TRAP"/>
+    </ids>
+    <collisions>
+        <collision name="lll_seg7_collision_falling_wall" address="0x70284dc"/>
+    </collisions>
+</model>

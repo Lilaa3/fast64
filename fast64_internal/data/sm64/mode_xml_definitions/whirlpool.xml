@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Whirlpool">
+    <displaylist address="0x5013cb8">whirlpool_seg5_dl_05013CB8</displaylist>
+    <group>group4</group>
+    <ids>
+        <id value="0x57" name="MODEL_DL_WHIRLPOOL"/>
+    </ids>
+</model>

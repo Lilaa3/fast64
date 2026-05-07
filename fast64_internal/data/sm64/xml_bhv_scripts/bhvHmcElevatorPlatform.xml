@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<behavior name="0x13000d30" readable_name="HMC Elevator Platform">
+    <tags>
+        <tag>ELAVATOR</tag>
+        <tag>SURFACE</tag>
+        <tag>HMC</tag>
+    </tags>
+    <fields>
+        <field name="Height Index" type="int" bparam="2" default="0">
+            <description>Index into the internal elevator heights table to determine movement range.</description>
+            <enums>
+                <enum value="0" name="BBH (bhvMeshElevator) and HMC (bhvHmcElevatorPlatform)"/>
+                <enum value="1" name="HMC (bhvHmcElevatorPlatform)"/>
+                <enum value="2" name="HMC (bhvHmcElevatorPlatform)"/>
+                <enum value="3" name="HMC (bhvHmcElevatorPlatform)"/>
+                <enum value="5" name="RR"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>hmc_elevator_platform</model>
+    </models>
+</behavior>

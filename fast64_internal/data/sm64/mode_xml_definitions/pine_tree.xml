@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Pine Tree">
+    <geolayout>0x16001000</geolayout>
+    <group>common1</group>
+    <ids>
+        <id value="0x18" name="MODEL_COURTYARD_SPIKY_TREE" level="common1"/>
+    </ids>
+</model>

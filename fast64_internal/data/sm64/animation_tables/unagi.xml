@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<animation_table address="0x5012824" name="Unagi" size="7">
+    <names>
+        <name>Yawn</name>
+        <name>Bite</name>
+        <name>Swimming</name>
+        <name>Static Straight</name>
+        <name>Idle</name>
+        <name>Open Mouth</name>
+        <name>Idle 2</name>
+    </names>
+</animation_table>

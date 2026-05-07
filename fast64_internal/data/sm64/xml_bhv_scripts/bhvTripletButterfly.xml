@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<behavior name="0x13005598" readable_name="Triplet Butterfly">
+    <description>
+        A butterfly that wanders near its home position. If it is the master butterfly (index 0), it spawns two companion butterflies. 
+        Depending on random selection, children may spawn a 1-Up mushroom when activated.
+        If TRIPLET_BUTTERFLY_BP_NO_BOMBS is set, the non selected butterflys won't turn into bombs.
+    </description>
+    <tags>
+        <tag>NPC</tag>
+        <tag>SPAWNER</tag>
+        <tag>ENVIRONMENTAL</tag>
+    </tags>
+    <fields>
+        <field name="Butterfly Index" type="int" bparam="2" mask="0x3" default="0">
+            <enums>
+                <enum value="0" name="Master" c_name="TRIPLET_BUTTERFLY_BP_0"/>
+                <enum value="1" name="Child 1"/>
+                <enum value="2" name="Child 2"/>
+            </enums>
+        </field>
+        <field name="No Bombs" type="bool" bparam="2" shift="2" default="TRUE">
+    </fields>
+    <models>
+        <model>butterfly</model>
+    </models>
+</behavior>

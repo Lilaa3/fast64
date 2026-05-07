@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<behavior name="0x130042e4" readable_name="JRB Aflot Platform">
+    <description>A platform that floats on water.</description>
+    <tags>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>SURFACE</tag>
+        <tag>MOVING</tag>
+        <tag>WATER</tag>
+        <tag>JRB</tag>
+    </tags>
+    <models>
+        <model>jrb_floating_platform</model>
+    </models>
+</behavior>

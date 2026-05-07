@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003f1c" readable_name="Hidden Star Trigger">
+    <description>An invisible trigger that increments the oHiddenStarTriggerCounter of the nearest bhvHiddenStar object when collided with by Mario. An example of this being used is BOB for the wing cap star.</description>
+    <tags>
+        <tag>INTERACTIVE</tag>
+        <tag>COLLECTABLE</tag>
+        <tag>STAR</tag>
+    </tags>
+</behavior>

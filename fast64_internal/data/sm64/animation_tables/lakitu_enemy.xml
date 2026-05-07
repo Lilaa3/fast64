@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<animation_table address="0x50144d4" name="Lakitu (Enemy)">
+    <names>
+        <name>Flying</name>
+        <name>No Spiny</name>
+        <name>Throw Spiny</name>
+        <name>Hold Spiny</name>
+    </names>
+</animation_table>

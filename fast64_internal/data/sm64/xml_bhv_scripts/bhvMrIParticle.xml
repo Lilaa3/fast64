@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x130000ac" readable_name="Mr. I Particle">
+    <description>A small damaging projectile spawned by Mr. I.</description>
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>PROJECTILE</tag>
+        <tag>SUB_OBJECT</tag>
+    </tags>
+    <models>
+        <model>bubble_marble</model>
+    </models>
+</behavior>

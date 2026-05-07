@@ -1,0 +1,21 @@
+<?xml version="1.0" ?>
+<behavior name="bhvBooStaircase" readable_name="Boo Staircase">
+    <description>A staircase step that rises when activated.</description>
+    <tags>
+        <tag>PLATAFORM</tag>
+        <tag>PUZZLE</tag>
+        <tag>BBH</tag>
+    </tags>
+    <fields>
+        <field name="Step Index" type="int" bparam="2" default="0">
+            <enums>
+                <enum value="0" name="First"/>
+                <enum value="1" name="Second (-206.0f)"/>
+                <enum value="2" name="Third (-413.0f)"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>bbh_staircase_step</model>
+    </models>
+</behavior>

@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001318" readable_name="WF Sliding Tower Platform">
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>MOVING</tag>
+        <tag>PLATFORM</tag>
+        <tag>WF</tag>
+    </tags>
+    <models>
+        <model>wf_tower_square_platorm</model>
+    </models>
+</behavior>

@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<behavior name="0x130007a0" readable_name="Warp Pipe">
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>WARP</tag>
+        <tag>SPAWN_WARP</tag> <!--MARIO_SPAWN_PIPE-->
+    </tags>
+    <fields>
+        <field name="Warp ID" type="int" bparam="2" default="0"/>
+        <field name="Warp Radius" type="units" bparam="2" default="0x0B" multiplier="10">
+            <description>0 defaults to 50. Above 2550 is set to 10000.</description>
+        </field>
+    </fields>
+    <models>
+        <model>warp_pipe</model>
+    </models>
+</behavior>

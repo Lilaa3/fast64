@@ -1,0 +1,21 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001108" readable_name="Flamethrower">
+    <description>An object that spits fireballs when Mario is within 2000 units.</description>
+    <tags>
+        <tag>FIRE</tag>
+        <tag>SPAWNER</tag>
+        <tag>ENVIRONMENTAL</tag>
+    </tags>
+    <fields>
+        <field name="Flamethrower Type" type="int" bparam="2" default="0">
+            <description>The type of flames produced.</description>
+            <enums>
+                <enum value="0" name="Normal" c_name="FLAMETHROWER_BP_0"/>
+                <enum value="1" name="Blue" c_name="FLAMETHROWER_BP_BLUE"/>
+                <enum value="2" name="Slow" c_name="FLAMETHROWER_BP_SLOW"/>
+                <enum value="3" name="Tall Hitbox" c_name="FLAMETHROWER_BP_TALL_HITBOX"/>
+                <enum value="4" name="Upwards" c_name="FLAMETHROWER_BP_UPWARDS"/>
+            </enums>
+        </field>
+    </fields>
+</behavior>

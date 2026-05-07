@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<behavior name="0x130008ec" readable_name="Coin Formation">
+    <description>Spawner for patterns of yellow coins.</description>
+    <tags>
+        <tag>SPAWNER</tag>
+        <tag>MANAGER</tag>
+        <tag>COINS</tag>
+        <tag>COLLECTABLE</tag>
+    </tags>
+    <fields>
+        <field name="Formation Shape" type="enum" bparam="2" default="0">
+            <enums>
+                <enum value="0" name="Horizontal Line" c_name="COIN_FORMATION_BP_SHAPE_HORIZONTAL_LINE"/>
+                <enum value="1" name="Vertical Line" c_name="COIN_FORMATION_BP_SHAPE_VERTICAL_LINE"/>
+                <enum value="2" name="Horizontal Ring" c_name="COIN_FORMATION_BP_SHAPE_HORIZONTAL_RING"/>
+                <enum value="3" name="Vertical Ring" c_name="COIN_FORMATION_BP_SHAPE_VERTICAL_RING"/>
+                <enum value="4" name="Arrow" c_name="COIN_FORMATION_BP_SHAPE_ARROW"/>
+            </enums>
+        </field>
+        <field name="Flying" type="bool" bparam="2" shift="4" default="0"/>
+        <field name="Coin Spawn Mask" type="int" bparam="3" default="0"/>
+    </fields>
+</behavior>

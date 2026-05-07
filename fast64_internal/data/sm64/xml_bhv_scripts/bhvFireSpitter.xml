@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x1300518c" readable_name="Fire Spitter">
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>FIRE</tag>
+    </tags>
+    <models>
+        <model>bowling_ball</model>
+    </models>
+</behavior>

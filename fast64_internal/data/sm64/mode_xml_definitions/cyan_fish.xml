@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Cyan Fish">
+    <geolayout>0xd000324</geolayout>
+    <group>group13</group>
+    <ids>
+        <id value="0x67" name="MODEL_CYAN_FISH"/>
+    </ids>
+    <animation_tables>
+        <table>cyan_fish</table>
+    </animation_tables>
+</model>

@@ -1,0 +1,16 @@
+<?xml version="1.0" ?>
+<behavior name="0x13004c94" readable_name="TTC Moving Bar">
+    <description>A bar in TTC that extends and retracts. The initial stop timer is determined by its parameters.</description>
+    <tags>
+        <tag>PLATFORM</tag>
+        <tag>TTC</tag>
+    </tags>
+    <fields>
+        <field name="Stop Timer Multiplier" type="int" bparam="2" multiplier="10" default="0">
+            <description>Multiplier for the initial stopped timer (multiplied by 10).</description>
+        </field>
+    </fields>
+    <models>
+        <model>ttc_push_block</model>
+    </models>
+</behavior>

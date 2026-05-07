@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="bhvSmallPenguinReturned" readable_name="Small Penguin Returned">
+    <description>A static state for the small penguin after it has been successfully returned to its mother.</description>
+    <tags>
+        <tag>NPC</tag>
+        <tag>ENVIRONMENTAL</tag>
+    </tags>
+    <models>
+        <model>penguin</model>
+    </models>
+</behavior>

@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Pokey Body Part">
+    <geolayout>0xc000644</geolayout>
+    <group>group5</group>
+    <ids>
+        <id value="0x55" name="MODEL_POKEY_BODY_PART"/>
+    </ids>
+</model>

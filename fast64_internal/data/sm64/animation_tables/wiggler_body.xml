@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<animation_table address="0x500c874" name="Wiggler Body" size="1">
+    <names>
+        <name>Walk</name>
+    </names>
+</animation_table>

@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<behavior name="0x13000338" readable_name="Small Water Wave">
+    <description>Spawned by bhvBubbleParticleSpawner.</description>
+    <tags>
+        <tag>PARTICLE</tag>
+        <tag>WATER</tag>
+    </tags>
+</behavior>

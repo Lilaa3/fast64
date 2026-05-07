@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<animation_table address="0x5008cfc" name="Klepto">
+    <names>
+        <name>Dive</name>
+        <name>Struck By Mario</name>
+        <name>Dive at Mario</name>
+        <name>Dive at Mario 2</name>
+        <name>Dive at Mario 3</name>
+        <name>Dive at Mario 4</name>
+        <name>Dive Flap</name>
+        <name>Dive Flap 2</name>
+    </names>
+</animation_table>

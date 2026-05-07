@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13000254" readable_name="Bob-omb Anchor Mario">
+    <description>An anchor for King Bob-omb used to grab Mario. Relies on parent object's oCommonAnchorAction.</description>
+    <tags>
+        <tag>BOSS</tag>
+        <tag>ENEMY</tag>
+        <tag>MANAGER</tag>
+        <tag>BOB</tag>
+    </tags>
+</behavior>

@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002f90" readable_name="Launch Death Warp">
+    <description>Death spawn warp that launches Mario. Non painting death's like Bowser courses.</description>
+    <tags>
+        <tag>SPAWN_WARP</tag>
+    </tags>
+    <fields>
+        <field name="Warp ID" type="int" bparam="2"/>
+    </fields>
+</behavior>

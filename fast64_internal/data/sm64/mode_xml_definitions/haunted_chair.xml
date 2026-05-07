@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Haunted Chair">
+    <geolayout>0xc0000d8</geolayout>
+    <group>group9</group>
+    <ids>
+        <id value="0x56" name="MODEL_HAUNTED_CHAIR"/>
+    </ids>
+    <animation_tables>
+        <table>haunted_chair</table>
+    </animation_tables>
+</model>

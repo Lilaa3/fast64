@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Bits Tilting W Platform">
+    <geolayout>0xe000688</geolayout>
+    <level>BITS</level>
+    <ids>
+        <id value="0x40" name="MODEL_BITS_TILTING_W_PLATFORM"/>
+    </ids>
+</model>

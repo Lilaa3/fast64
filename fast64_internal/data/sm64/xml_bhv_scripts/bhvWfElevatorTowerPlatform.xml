@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001340" readable_name="WF Elevator Tower Platform">
+    <description>It is deleted if its parent object's action is set to 3. Goes up <game_unit value="700"/> from its starting position.</description>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>MOVING</tag>
+        <tag>ELAVATOR</tag>
+        <tag>PLATFORM</tag>
+        <tag>WF</tag>
+    </tags>
+    <models>
+        <model>wf_tower_square_platorm_elevator</model>
+    </models>
+</behavior>

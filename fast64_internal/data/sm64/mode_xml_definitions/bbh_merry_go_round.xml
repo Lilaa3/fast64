@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Bbh Merry Go Round">
+    <geolayout>0xe000640</geolayout>
+    <level>BBH</level>
+    <ids>
+        <id value="0x3b" name="MODEL_BBH_MERRY_GO_ROUND"/>
+    </ids>
+    <collisions>
+        <collision name="bbh_seg7_collision_merry_go_round" address="0x7026c1c"/>
+    </collisions>
+</model>

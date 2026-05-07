@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Chain Ball">
+    <geolayout>0xd0005d0</geolayout>
+    <group>group14</group>
+    <ids>
+        <id value="0x65" name="MODEL_METALLIC_BALL"/>
+    </ids>
+</model>

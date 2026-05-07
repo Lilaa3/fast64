@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="bhvMovingFlameEmber" readable_name="Moving Flame Ember">
+    <description>Moving flame ember, a small particle spawned by moving flames that shrinks over time and then disappears.</description>
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>PARTICLE</tag>
+        <tag>FIRE</tag>
+        <tag>SUB_OBJECT</tag>
+    </tags>
+</behavior>

@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<animation_table address="0x5008eb4" name="Manta Ray">
+    <names>
+        <name>Swimming</name>
+    </names>
+</animation_table>

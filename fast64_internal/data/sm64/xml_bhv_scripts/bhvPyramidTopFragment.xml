@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003bec" readable_name="Pyramid Top Fragment">
+    <description>Debris fragments spawned from the explosion of the pyramid top.</description>
+    <tags>
+        <tag>PARTICLE</tag>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>SUB_OBJECT</tag>
+    </tags>
+    <models>
+        <model>dirt</model>
+    </models>
+</behavior>

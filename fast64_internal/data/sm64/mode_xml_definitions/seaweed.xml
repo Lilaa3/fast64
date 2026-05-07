@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Seaweed">
+    <geolayout>0xd000284</geolayout>
+    <group>group13</group>
+    <ids>
+        <id value="0xc1" name="MODEL_SEAWEED"/>
+    </ids>
+    <animation_tables>
+        <table>seaweed</table>
+    </animation_tables>
+</model>

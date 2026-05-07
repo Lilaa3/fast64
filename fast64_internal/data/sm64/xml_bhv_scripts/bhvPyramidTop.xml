@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003bb4" readable_name="Pyramid Top">
+    <description>Once all four detectors are triggered it unlocks the pyramid, the detectors are hardcoded and non relative.</description>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>INTERACTIVE</tag>
+        <tag>PUZZLE</tag>
+    </tags>
+    <models>
+        <model>ssl_pyramid_top</model>
+    </models>
+</behavior>

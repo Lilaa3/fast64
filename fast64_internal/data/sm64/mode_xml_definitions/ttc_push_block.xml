@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Ttc Push Block">
+    <geolayout>0xe0002c8</geolayout>
+    <level>TTC</level>
+    <ids>
+        <id value="0x3b" name="MODEL_TTC_PUSH_BLOCK"/>
+    </ids>
+    <collisions>
+        <collision name="ttc_seg7_collision_sliding_surface" address="0x701550c"/>
+    </collisions>
+</model>

@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Water Splash">
+    <geolayout>0x17000230</geolayout>
+    <group>group0</group>
+    <ids>
+        <id value="0xa7" name="MODEL_WATER_SPLASH"/>
+    </ids>
+</model>

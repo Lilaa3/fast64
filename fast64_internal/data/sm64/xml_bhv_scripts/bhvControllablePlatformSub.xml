@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<behavior name="0x130041f0" readable_name="Controllable Platform Sub">
+    <description>Arrow plataform of/spawned by HMC controllable platform, one of four.</description>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>PLATFORM</tag>
+        <tag>HMC</tag>
+    </tags>
+    <fields>
+        <field name="Direction ID" type="int" bparam="2" default="0"/>
+    </fields>
+    <models>
+        <model>hmc_metal_arrow_platform</model>
+    </models>
+</behavior>

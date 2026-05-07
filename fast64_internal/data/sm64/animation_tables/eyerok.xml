@@ -1,0 +1,16 @@
+<?xml version="1.0" ?>
+<animation_table address="0x50116e4" name="Eyerok">
+    <behaviours>
+        <behaviour>0x130052b4</behaviour>
+    </behaviours>
+    <names>
+        <name>Recovering</name>
+        <name>Death</name>
+        <name>Idle</name>
+        <name>Attacked</name>
+        <name>Open</name>
+        <name>Show Eye</name>
+        <name>Sleep</name>
+        <name>Close</name>
+    </names>
+</animation_table>

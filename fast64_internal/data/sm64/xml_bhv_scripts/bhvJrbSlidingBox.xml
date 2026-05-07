@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x130023a4" readable_name="Sliding Box">
+    <description>A box that slides and oscillates relative to the JRB Afloating Ship Collision object.</description>
+    <tags>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>SURFACE</tag>
+        <tag>MOVING</tag>
+    </tags>
+    <models>
+        <model>jrb_sliding_box</model>
+    </models>
+</behavior>

@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003c7c" readable_name="Birds Sound Loop">
+    <description>An object that plays bird chirping sounds when not in behind-Mario camera mode.</description>
+    <tags>
+        <tag>BIRD</tag>
+        <tag>SOUND</tag>
+    </tags>
+    <fields>
+        <field name="Sound ID" type="int" bparam="2" default="0" min="0" max="3"/>
+    </fields>
+</behavior>

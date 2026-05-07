@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Ssl Pyramid Elevator">
+    <geolayout>0xe0007ac</geolayout>
+    <level>SSL</level>
+    <ids>
+        <id value="0x39" name="MODEL_SSL_PYRAMID_ELEVATOR"/>
+    </ids>
+    <collisions>
+        <collision name="ssl_seg7_collision_pyramid_elevator" address="0x7028110"/>
+    </collisions>
+</model>

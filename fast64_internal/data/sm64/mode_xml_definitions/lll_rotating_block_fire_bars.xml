@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Lll Rotating Block Fire Bars">
+    <geolayout>0xe000b38</geolayout>
+    <level>LLL</level>
+    <ids>
+        <id value="0x3a" name="MODEL_LLL_ROTATING_BLOCK_FIRE_BARS"/>
+    </ids>
+    <collisions>
+        <collision name="lll_seg7_collision_rotating_fire_bars" address="0x701d138"/>
+    </collisions>
+</model>

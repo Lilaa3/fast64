@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x13005680" readable_name="End Birds 2">
+    <description>Birds used during the end cutscene.</description>
+    <tags>
+        <tag>BIRD</tag>
+        <tag>CUTSCENE</tag>
+        <tag>NPC</tag>
+    </tags>
+</behavior>

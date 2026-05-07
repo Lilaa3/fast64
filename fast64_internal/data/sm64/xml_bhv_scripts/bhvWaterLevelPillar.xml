@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001c04" readable_name="Water Level Pillar">
+    <description>A surface object that acts as a trigger for draining the moat water.</description>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>INTERACTIVE</tag>
+        <tag>WATER</tag>
+        <tag>CASTLE_INSIDE</tag>
+    </tags>
+    <models>
+        <model>castle_inside_castle_water_level_pillar</model>
+    </models>
+</behavior>

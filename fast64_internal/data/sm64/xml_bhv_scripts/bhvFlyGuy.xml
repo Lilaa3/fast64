@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<behavior name="0x130046dc" readable_name="Fly Guy">
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>MOVING</tag>
+    </tags>
+    <fields>
+        <field name="Attack Type" type="int" bparam="2" default="0">
+            <enums>
+                <enum value="0" name="Lunge Only" c_name="FLY_GUY_BP_LUNGES"/>
+                <enum value="1" name="Lunge and Fire" c_name="FLY_GUY_BP_SHOOTS_FIRE"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>fly_guy</model>
+    </models>
+</behavior>

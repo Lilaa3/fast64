@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Ssl Moving Pyramid Wall">
+    <geolayout>0xe000794</geolayout>
+    <level>SSL</level>
+    <ids>
+        <id value="0x38" name="MODEL_SSL_MOVING_PYRAMID_WALL"/>
+    </ids>
+    <collisions>
+        <collision name="ssl_seg7_collision_0702808C" address="0x702808c"/>
+    </collisions>
+</model>

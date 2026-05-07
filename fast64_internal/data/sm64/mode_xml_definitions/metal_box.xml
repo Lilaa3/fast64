@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Metal Box">
+    <geolayout>0xf000a30</geolayout>
+    <group>common0</group>
+    <ids>
+        <id value="0xd9" name="MODEL_METAL_BOX"/>
+    </ids>
+    <collisions>
+        <collision name="metal_box_seg8_collision_08024C28" c_name="metal_box_seg8_collision_08024C28"/>
+    </collisions>
+</model>

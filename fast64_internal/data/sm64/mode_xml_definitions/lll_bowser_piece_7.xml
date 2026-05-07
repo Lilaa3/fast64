@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Lll Bowser Piece 7">
+    <geolayout>0xe000cd0</geolayout>
+    <level>LLL</level>
+    <ids>
+        <id value="0x49" name="MODEL_LLL_BOWSER_PIECE_7"/>
+    </ids>
+</model>

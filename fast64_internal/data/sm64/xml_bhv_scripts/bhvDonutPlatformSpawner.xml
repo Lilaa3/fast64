@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x130054ec" readable_name="Donut Platform Spawner">
+    <description>Spawns donut platforms at predefined positions</description>
+    <tags>
+        <tag>SPAWNER</tag>
+        <tag>PLATFORM</tag>
+        <tag>RR</tag>
+    </tags>
+</behavior>

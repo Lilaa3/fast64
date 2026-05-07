@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003750" readable_name="Jet Stream Water Ring">
+    <description>A collectable water ring that contributes to its parent (Jet Stream Ring Spawner)'s count.</description>
+    <tags>
+        <tag>COLLECTABLE</tag>
+        <tag>WATER</tag>
+        <tag>DDD</tag>
+    </tags>
+    <models>
+        <model>water_ring</model>
+    </models>
+</behavior>

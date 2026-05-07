@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Sl Cracked Ice">
+    <geolayout>0xe000360</geolayout>
+    <level>SL</level>
+    <ids>
+        <id value="0x37" name="MODEL_SL_CRACKED_ICE"/>
+    </ids>
+</model>

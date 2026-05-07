@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x130010b8" readable_name="Beta Moving Flames">
+    <description>Beta flames that move back and forth.</description>
+    <tags>
+        <tag>UNUSED</tag>
+        <tag>FIRE</tag>
+        <tag>PARTICLE</tag>
+    </tags>
+    <models>
+        <model>red_flame</model>
+    </models>
+</behavior>

@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002c14" readable_name="Water Splash">
+    <description>Periodically spawns multiple water droplets (bhvWaterDroplet).</description>
+    <tags>
+        <tag>WATER</tag>
+        <tag>PARTICLE</tag>
+        <tag>SPAWNER</tag>
+    </tags>
+    <models>
+        <model>water_splash</model>
+    </models>
+</behavior>

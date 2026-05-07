@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<model readable_name="Hazy Maze Door">
+    <geolayout>0x1600068c</geolayout>
+    <group>common1</group>
+    <ids>
+        <id value="0x20" name="MODEL_HMC_HAZY_MAZE_DOOR" level="common1"/>
+    </ids>
+    <animation_tables>
+        <table>door</table>
+    </animation_tables>
+    <collisions>
+        <collision name="door_seg3_collision_door"/>
+    </collisions>
+</model>

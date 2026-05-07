@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Ttm Rolling Log">
+    <geolayout>0xe000730</geolayout>
+    <level>TTM</level>
+    <ids>
+        <id value="0x35" name="MODEL_TTM_ROLLING_LOG"/>
+    </ids>
+    <collisions>
+        <collision name="ttm_seg7_collision_pitoune_2" address="0x7013678"/>
+    </collisions>
+</model>

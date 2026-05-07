@@ -1,0 +1,21 @@
+<?xml version="1.0" ?>
+<behavior name="0x13005414" readable_name="Coffin">
+    <descriptio>Deletes it self when parent bhvCoffinSpawner sets COFFIN_SPAWNER_ACT_COFFINS_UNLOADED</descriptio>
+    <defaul_model c_name="MODEL_BBH_WOODEN_TOMB" value="0x3c"/>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>INTERACTIVE</tag>
+        <tag>BBH</tag>
+    </tags>
+    <fields>
+        <field name="Stationary" type="bool" bparam="2" default="0">
+            <enums>
+                <enum value="0" name="Stationary" c_name="COFFIN_BP_STATIONARY"/>
+                <enum value="1" name="Active" c_name="COFFIN_BP_MOVING"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>bbh_wooden_tomb</model>
+    </models>
+</behavior>

@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003e3c" readable_name="Star">
+    <tags>
+        <tag>COLLECTABLE</tag>
+    </tags>
+    <fields>
+        <field name="Star ID" type="int" bparam="1" default="0">
+            <description>The ID of the star, used to determine if it should be transparent (already collected).</description>
+        </field>
+    </fields>
+    <models>
+        <model>star</model>
+    </models>
+</behavior>

@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Pebble">
+    <displaylist address="0x301cb00">pebble_seg3_dl_0301CB00</displaylist>
+    <group>common1</group>
+    <ids>
+        <id value="0xa1" name="MODEL_PEBBLE"/>
+    </ids>
+</model>

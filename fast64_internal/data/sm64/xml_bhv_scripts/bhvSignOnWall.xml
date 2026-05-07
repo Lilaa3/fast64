@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003324" readable_name="Sign on Wall">
+    <description>A decorative sign on a wall that provides text information when interacted with by Mario.</description>
+    <tags>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>DIALOGUE</tag>
+    </tags>
+    <fields>
+        <field name="Dialogue ID" type="dialogue_id" bparam="2" default="0"/>
+    </fields>
+</behavior>

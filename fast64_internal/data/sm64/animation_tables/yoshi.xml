@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<animation_table address="0x50241e8" name="Yoshi">
+    <names>
+        <name>Idle</name>
+        <name>Walk</name>
+        <name>Jump</name>
+    </names>
+</animation_table>

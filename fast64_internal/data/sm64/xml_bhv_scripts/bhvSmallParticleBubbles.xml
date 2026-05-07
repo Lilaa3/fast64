@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x1300046c" readable_name="Small Particle Bubbles">
+    <description>Spawned with the fish in the entrance to JRB.</description>
+    <tags>
+        <tag>PARTICLE</tag>
+        <tag>WATER</tag>
+        <tag>CASTLE</tag>
+    </tags>
+    <models>
+        <model>white_particle_small</model>
+    </models>
+</behavior>

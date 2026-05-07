@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x130015e4" readable_name="Unused Poundable Platform">
+    <description>An unused surface platform that despawns and spawns break particles when Mario performs a ground pound on it.</description>
+    <tags>
+        <tag>UNUSED</tag>
+        <tag>SURFACE</tag>
+        <tag>INTERACTIVE</tag>
+    </tags>
+</behavior>

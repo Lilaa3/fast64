@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002d50" readable_name="Shallow Water Wave">
+    <tags>
+        <tag>PARTICLE</tag>
+        <tag>WATER</tag>
+    </tags>
+    <particle>PARTICLE_SHALLOW_WATER_WAVE</particle>
+</behavior>

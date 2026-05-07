@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x1300246c" readable_name="Sunken Ship">
+    <description>JRB sunken ship (excluding the aftcastle) act 1's collision.</description>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>JRB</tag>
+    </tags>
+    <collisions>
+        <collision c_name="jrb_seg7_collision_in_sunken_ship" address="0x0700CE5C"/>
+    </collisions>
+</behavior>

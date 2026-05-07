@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x130033bc" readable_name="Butterfly">
+    <tags>
+        <tag>ENVIRONMENTAL</tag>
+    </tags>
+    <models>
+        <model>butterfly</model>
+    </models>
+</behavior>

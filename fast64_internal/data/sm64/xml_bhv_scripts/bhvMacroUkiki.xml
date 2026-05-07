@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001cb0" readable_name="Macro Ukiki (UNUSED)">
+    <description>The actual script used by the main Ukiki behavior.</description>
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>NPC</tag>
+        <tag>HOLDABLE</tag>
+        <tag>HELPER</tag>
+        <tag>SUB_OBJECT</tag>
+        <tag>UNUSED</tag>
+    </tags>
+    <fields>
+        <field name="Type" type="int" bparam="2" default="0">
+            <enums>
+                <enum value="0" name="Cage" c_name="UKIKI_BP_CAGE"/>
+                <enum value="1" name="Steal Mario's Cap" c_name="UKIKI_BP_CAP"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>ukiki</model>
+    </models>
+</behavior>

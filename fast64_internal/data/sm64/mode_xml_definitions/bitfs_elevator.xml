@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Bitfs Elevator">
+    <geolayout>0xe000678</geolayout>
+    <level>BITFS</level>
+    <ids>
+        <id value="0x3b" name="MODEL_BITFS_ELEVATOR"/>
+    </ids>
+</model>

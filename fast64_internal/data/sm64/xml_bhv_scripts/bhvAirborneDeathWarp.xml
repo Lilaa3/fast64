@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002f84" readable_name="Airborne Death Warp">
+    <tags>
+        <tag>WARP_SPAWN</tag>
+    </tags>
+    <fields>
+        <field name="Warp ID" type="int" bparam="2"/>
+    </fields>
+</behavior>

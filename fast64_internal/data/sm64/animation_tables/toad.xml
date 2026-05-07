@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<animation_table address="0x600fc48" name="Toad" size="8">
+    <names>
+        <name>Wave Then Run (West)</name>
+        <name>Walking (West)</name>
+        <name>Node Then Turn (East)</name>
+        <name>Walking (East)</name>
+        <name>Standing (West)</name>
+        <name>Standing (East)</name>
+        <name>Waving Both Arms (West)</name>
+        <name>Waving One Arm (East)</name>
+    </names>
+</animation_table>

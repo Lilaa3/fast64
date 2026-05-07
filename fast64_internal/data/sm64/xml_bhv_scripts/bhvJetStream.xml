@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x130032c8" readable_name="Jet Stream">
+    <description>A water jet stream that spawns bubble particles when Mario is nearby and plays a water ambient sound.</description>
+    <tags>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>WATER</tag>
+        <tag>PARTICLE</tag>
+    </tags>
+</behavior>

@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Rr L Shaped Platform">
+    <geolayout>0xe000940</geolayout>
+    <level>RR</level>
+    <ids>
+        <id value="0x3d" name="MODEL_RR_L_SHAPED_PLATFORM"/>
+    </ids>
+</model>

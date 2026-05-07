@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001478" readable_name="Floor Switch (Grills)">
+    <description>A purple floor switch that inherits from bhvFloorSwitchHardcodedModel. It forces PURPLE_SWITCH_BP_NO_TICK.</description>
+    <tags>
+        <tag>INTERACTIVE</tag>
+        <tag>SURFACE</tag>
+        <tag>PUZZLE</tag>
+    </tags>
+    <models>
+        <model>purple_switch</model>
+    </models>
+</behavior>

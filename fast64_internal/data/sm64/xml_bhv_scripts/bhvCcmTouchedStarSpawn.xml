@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x130015c0" readable_name="CCM Touched Star Spawn">
+    <description>Spawns a star at fixed coordinates when gCCMEnteredSlide bit 0 is set.</description>
+    <tags>
+        <tag>SPAWNER</tag>
+        <tag>CASTLE</tag>
+        <tag>COLLECTABLE</tag>
+        <tag>CCM</tag>
+    </tags>
+</behavior>

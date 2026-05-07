@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x130049c8" readable_name="Spiny">
+    <description>Walks randomly on the ground or is held/thrown by Lakitu.</description>
+    <tags>
+        <tag>ENEMY</tag>
+    </tags>
+    <models>
+        <model>spiny_egg</model>
+    </models>
+</behavior>

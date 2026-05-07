@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<behavior name="0x130022d8" readable_name="Bowser Sub Door">
+    <comment>TODO Hacker is techinically fucking this up by checking if its act 1 instead of checking if BITFS was beaten</comment>
+    <description>Door near the sub. Deactivates after act 1</description>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>ENVIROMENTAL</tag>
+        <tag>BOWSER</tag>
+        <tag>DDD</tag>
+    </tags>
+    <models>
+        <model>ddd_bowser_sub_door</model>
+    </models>
+</behavior>

@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13005610" readable_name="Beginning Lakitu">
+    <description>Lakitu appearing at the start of the game.</description>
+    <tags>
+        <tag>NPC</tag>
+    </tags>
+    <models>
+        <model>lakitu_cameraman</model>
+    </models>
+</behavior>

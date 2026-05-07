@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002b08" readable_name="Sparkle Particle Spawner">
+    <particle>PARTICLE_SPARKLES</particle>
+    <tags>
+        <tag>PARTICLE</tag>
+        <tag>SPAWNER</tag>
+    </tags>
+</behavior>

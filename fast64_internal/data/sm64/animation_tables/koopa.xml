@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<animation_table address="0x6011364" name="Koopa">
+    <names>
+        <name>Falling Over (Unused Shelled Act 3)</name>
+        <name>Run Away</name>
+        <name>Laying (Unshelled)</name>
+        <name>Running</name>
+        <name>Run (Unused)</name>
+        <name>Laying (Shelled)</name>
+        <name>Stand Up</name>
+        <name>Stopped</name>
+        <name>Wake Up (Unused)</name>
+        <name>Walk</name>
+        <name>Walk Stop</name>
+        <name>Walk Start</name>
+        <name>Jump</name>
+        <name>Land</name>
+    </names>
+</animation_table>

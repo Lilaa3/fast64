@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Wooden Signpost">
+    <geolayout>0x16000fb4</geolayout>
+    <group>common1</group>
+    <ids>
+        <id value="0x7c" name="MODEL_WOODEN_SIGNPOST"/>
+    </ids>
+    <collisions>
+        <collision name="wooden_signpost_seg3_collision_0302DD80" c_name="wooden_signpost_seg3_collision_0302DD80"/>
+    </collisions>
+</model>

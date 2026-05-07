@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001bb4" readable_name="Bowser Key Unlock Door">
+    <description>Key used in the Bowser key unlock door cutscene.</description>
+    <tags>
+        <tag>BOWSER</tag>
+        <tag>CUTSCENE</tag>
+        <tag>CASTLE</tag>
+    </tags>
+</behavior>

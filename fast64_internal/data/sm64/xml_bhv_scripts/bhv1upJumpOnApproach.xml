@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x130040b4" readable_name="1-Up Mushroom (Jump On Approach)">
+    <tags>
+        <tag>COLLECTIBLE</tag>
+    </tags>
+    <models>
+        <model>mushroom_1up</model>
+    </models>
+</behavior>

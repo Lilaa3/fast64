@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001608" readable_name="Beta Trampoline Top">
+    <description>A beta trampoline top.</description>
+    <tags>
+        <tag>UNUSED</tag>
+        <tag>PLATAFORM</tag>
+    </tags>
+    <models>
+        <model>springboard_top</model>
+    </models>
+</behavior>

@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<animation_table address="0x6003994" name="Chilly Chief">
+    <behaviours>
+        <behaviour>0x130036c8</behaviour>
+    </behaviours>
+    <names>
+        <name>Patrol</name>
+        <name>Chase</name>
+        <name>Falling over (Unused)</name>
+        <name>Knockback</name>
+    </names>
+</animation_table>

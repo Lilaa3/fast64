@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<behavior name="0x13004770" readable_name="Goomba Triplet Spawner">
+    <description>Spawns a circle of Goombas. Respawns are tracked via bitflags in oBehParams to prevent respawning killed Goombas..</description>
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>SPAWNER</tag>
+    </tags>
+    <fields>
+        <field name="Spawned Goomba Size" type="int" bparam="2" mask="0x03" default="0">
+            <enums>
+                <enum value="0" name="Regular" c_name="GOOMBA_SIZE_REGULAR"/>
+                <enum value="1" name="Huge" c_name="GOOMBA_SIZE_HUGE"/>
+                <enum value="2" name="Tiny" c_name="GOOMBA_SIZE_TINY"/>
+            </enums>
+        </field>
+        <field name="Extra Goombas" type="int" bparam="2" shift="2" default="0"/>
+    </fields>
+</behavior>

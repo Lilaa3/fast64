@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x130041bc" readable_name="Controllable Platform">
+    <description>Spawns four of bhvControllablePlatformSub</description>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>PLATFORM</tag>
+        <tag>HMC</tag>
+    </tags>
+    <models>
+        <model>hmc_metal_platform</model>
+    </models>
+</behavior>

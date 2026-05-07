@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<behavior name="0x13000c84" readable_name="Flame">
+    <description>A static environmental hazard.</description>
+    <tags>
+        <tag>FIRE</tag>
+        <tag>HURT</tag>
+        <tag>ENVIRONMENTAL</tag>
+    </tags>
+    <models>
+        <model>blue_flame</model>
+        <model>red_flame</model>
+    </models>
+</behavior>

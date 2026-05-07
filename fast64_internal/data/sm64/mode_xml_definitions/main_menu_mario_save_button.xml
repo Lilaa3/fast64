@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Main Menu Mario Save Button">
+    <geolayout>0x0E0001D0</geolayout>
+    <level>MENU</level>
+    <ids>
+        <id value="0x03" name="MODEL_MAIN_MENU_MARIO_SAVE_BUTTON"/>
+    </ids>
+</model>

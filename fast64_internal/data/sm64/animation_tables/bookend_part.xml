@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<animation_table address="0x5002540" name="Bookend Part">
+    <names>
+        <name>Opening Mouth</name>
+        <name>Bite</name>
+        <name>Closed</name>
+    </names>
+</animation_table>

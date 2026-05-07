@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Ttc Elevator Platform">
+    <geolayout>0xe000340</geolayout>
+    <level>TTC</level>
+    <ids>
+        <id value="0x40" name="MODEL_TTC_ELEVATOR_PLATFORM"/>
+    </ids>
+    <collisions>
+        <collision name="ttc_seg7_collision_clock_platform" address="0x701585c"/>
+    </collisions>
+</model>

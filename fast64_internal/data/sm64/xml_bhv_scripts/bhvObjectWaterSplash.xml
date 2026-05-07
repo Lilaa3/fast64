@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002d28" readable_name="Object Water Splash">
+    <description>Water splashes similar to the splashes created by water droplets, but are created by other objects.</description>
+    <tags>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>PARTICLE</tag>
+        <tag>WATER</tag>
+        <tag>SUB_OBJECT</tag>
+    </tags>
+    <models>
+        <model>small_water_splash</model>
+    </models>
+</behavior>

@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x1300286c" readable_name="Staircase Step">
+    <description>Is assigned to room 1 regardless of its position.</description>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>BBH</tag>
+    </tags>
+    <models>
+        <model>bbh_staircase_step</model>
+    </models>
+</behavior>

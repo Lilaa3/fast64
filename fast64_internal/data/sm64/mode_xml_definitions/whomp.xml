@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<model readable_name="Whomp">
+    <geolayout>0xd000480</geolayout>
+    <group>group14</group>
+    <ids>
+        <id value="0x67" name="MODEL_WHOMP"/>
+    </ids>
+    <animation_tables>
+        <table>whomp</table>
+    </animation_tables>
+    <collisions>
+        <collision name="whomp_seg6_collision_06020A0C" c_name="whomp_seg6_collision_06020A0C"/>
+    </collisions>
+</model>

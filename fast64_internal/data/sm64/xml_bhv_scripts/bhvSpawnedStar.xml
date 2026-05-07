@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x130007f8" readable_name="Spawned Star">
+    <tags>
+        <tag>COLLECTABLE</tag>
+        <tag>SPECIALIZED</tag>
+    </tags>
+    <fields>
+        <field name="Star ID" type="int" bparam="1" default="0">
+            <description>The ID of the star, used to determine if it should be transparent (already collected). 6 is 100 coins.</description>
+        </field>
+    </fields>
+</behavior>

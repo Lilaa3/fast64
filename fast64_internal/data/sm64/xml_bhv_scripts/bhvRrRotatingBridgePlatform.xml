@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<behavior name="0x130010d8" readable_name="RR Rotating Bridge Platform">
+    <description>A rotating platform that also acts as a flamethrower.</description>
+    <tags>
+        <tag>RR</tag>
+        <tag>PLATFORM</tag>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>FIRE</tag>
+    </tags>
+    <fields>
+        <field name="Flamethrower Type" type="int" bparam="2" default="1">
+            <description>The type of flames produced.</description>
+            <enums>
+                <enum value="0" name="Normal" c_name="FLAMETHROWER_BP_0"/>
+                <enum value="1" name="Blue" c_name="FLAMETHROWER_BP_BLUE"/>
+                <enum value="2" name="Slow" c_name="FLAMETHROWER_BP_SLOW"/>
+                <enum value="3" name="Tall Hitbox" c_name="FLAMETHROWER_BP_TALL_HITBOX"/>
+                <enum value="4" name="Upwards" c_name="FLAMETHROWER_BP_UPWARDS"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>rr_rotating_bridge_platform</model>
+    </models>
+</behavior>

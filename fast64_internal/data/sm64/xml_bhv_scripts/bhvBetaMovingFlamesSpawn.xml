@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x130010a8" readable_name="Beta Moving Flames Spawner">
+    <description>A beta spawner for moving flames.</description>
+    <tags>
+        <tag>SPAWNER</tag>
+        <tag>FIRE</tag>
+        <tag>PARTICLE</tag>
+    </tags>
+</behavior>

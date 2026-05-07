@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<behavior name="0x130053f4" readable_name="Coffin Spawner">
+    <description>Spawns six bhvCoffin objects dynamically if player enters the room.</description>
+    <tags>
+        <tag>SPAWNER</tag>
+        <tag>BBH</tag>
+    </tags>
+</behavior>

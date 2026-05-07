@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Idle Water Wave">
+    <geolayout>0x17000124</geolayout>
+    <group>group0</group>
+    <ids>
+        <id value="0xa6" name="MODEL_IDLE_WATER_WAVE"/>
+    </ids>
+</model>

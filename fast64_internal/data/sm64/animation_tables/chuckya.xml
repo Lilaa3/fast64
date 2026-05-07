@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<animation_table address="0x800c070" name="Chuckya">
+    <names>
+        <name>Grab Mario</name>
+        <name>Holding Mario</name>
+        <name>Being Held</name>
+        <name>Throwing</name>
+        <name>Moving</name>
+        <name>Balancing/Idle (Unused)</name>
+    </names>
+</animation_table>

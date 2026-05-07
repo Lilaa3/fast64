@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002e58" readable_name="SL Bridge Penguin">
+    <description>A penguin that walks erratically back and forth across the ice bridge.</description>
+    <tags>
+        <tag>SL</tag>
+        <tag>ENVIRONMENTAL</tag>
+    </tags>
+    <models>
+        <model>penguin</model>
+    </models>
+</behavior>

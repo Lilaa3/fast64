@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001714" readable_name="Bowser Final Star">
+    <description>Star of the last bowser, uses a specific subtype for its interaction.</description>
+    <tags>
+        <tag>COLLECTABLE</tag>
+        <tag>LEVEL</tag>
+    </tags>
+    <models>
+        <model>star</model>
+    </models>
+</behavior>

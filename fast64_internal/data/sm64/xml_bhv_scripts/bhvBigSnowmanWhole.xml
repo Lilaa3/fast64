@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003d4c" readable_name="Big Snowman (Whole)">
+    <tags>
+        <tag>BOSS</tag>
+        <tag>COLD</tag>
+        <tag>CCM</tag>
+        <tag>CCM_SNOWMAN</tag>
+    </tags>
+    <models>
+        <model>ccm_snowman_base</model>
+    </models>
+</behavior>

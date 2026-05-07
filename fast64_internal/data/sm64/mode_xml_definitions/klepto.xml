@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Klepto">
+    <geolayout>0xc000000</geolayout>
+    <group>group5</group>
+    <ids>
+        <id value="0x57" name="MODEL_KLEPTO"/>
+    </ids>
+    <animation_tables>
+        <table>klepto</table>
+    </animation_tables>
+</model>

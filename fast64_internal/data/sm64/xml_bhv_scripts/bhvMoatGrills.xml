@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001c58" readable_name="Moat Grills">
+    <description>Grills in the castle moat. They disappear if the moat has been drained.</description>
+    <tags>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>SURFACE</tag>
+        <tag>CASTLE</tag>
+    </tags>
+    <models>
+        <model>castle_grounds_vcutm_grill</model>
+    </models>
+</behavior>

@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003970" readable_name="WF Sliding Platform">
+    <description>A platform that slides back and forth. Its movement speed is determined by its behavior parameters. It extends and retracts periodically.</description>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>MOVING</tag>
+        <tag>PLATFORM</tag>
+        <tag>WF</tag>
+    </tags>
+    <fields>
+        <field name="Movement Velocity" type="int" bparam="2" default="1">
+            <enums>
+                <enum value="1" name="10" c_name="WF_SLID_BRICK_PTFM_BP_MOV_VEL_10"/>
+                <enum value="2" name="15" c_name="WF_SLID_BRICK_PTFM_BP_MOV_VEL_15"/>
+                <enum value="3" name="20" c_name="WF_SLID_BRICK_PTFM_BP_MOV_VEL_20"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>wf_sliding_platform</model>
+    </models>
+</behavior>

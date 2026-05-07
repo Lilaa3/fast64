@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<behavior name="0x130047e4" readable_name="Chain Chomp Chain Part">
+    <tags>
+        <tag>PART</tag>
+        <tag>ENEMY</tag>
+        <tag>BOB</tag>
+    </tags>
+    <fields>
+        <field name="Part Index" type="int" bparam="2" default="0"/>
+    </fields>
+    <models>
+        <model>chain_ball</model>
+    </models>
+</behavior>

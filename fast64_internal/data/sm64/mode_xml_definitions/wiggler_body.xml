@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Wiggler Body">
+    <geolayout>0x500c778</geolayout>
+    <group>group11</group>
+    <ids>
+        <id value="0x58" name="MODEL_WIGGLER_BODY"/>
+    </ids>
+    <animation_tables>
+        <table>wiggler_body</table>
+    </animation_tables>
+</model>

@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Bowser Key (Cutscene)">
+    <geolayout>0x16000ab0</geolayout>
+    <group>common1</group>
+    <ids>
+        <id value="0xc8" name="MODEL_BOWSER_KEY_CUTSCENE"/>
+    </ids>
+    <animation_tables>
+        <table>bowser_key</table>
+    </animation_tables>
+</model>

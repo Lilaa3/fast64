@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002684" readable_name="Merry-Go-Round Boo Manager">
+    <description>Manages the Boo encounter. Spawns multiple Merry-Go-Round Boos and, chilren add to the boo killed count until it spawns the Big Boo.</description>
+    <tags>
+        <tag>MANAGER</tag>
+        <tag>ENEMY</tag>
+        <tag>BBH</tag>
+        <tag>SPAWNER</tag>
+    </tags>
+</behavior>

@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x130025f8" readable_name="Water Level Diamond">
+    <tags>
+        <tag>INTERACTIVE</tag>
+        <tag>WATER</tag>
+    </tags>
+    <models>
+        <model>breakable_box</model> <!-- Comes from a macro...... it's kinda funny-->
+        <model>wdw_water_level_diamond</model>
+    </models>
+</behavior>

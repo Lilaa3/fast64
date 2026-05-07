@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<behavior name="0x13004e4c" readable_name="Sliding Platform 2">
+    <description>A platform that slides back and forth.</description>
+    <comment>TODO RR Pyramid while unused does have collision data, how to include that?</comment>
+    <tags>
+        <tag>PLATFORM</tag>
+        <tag>ENVIRONMENTAL</tag>
+    </tags>
+    <fields>
+        <field name="Platform Type" type="int" bparam="1" default="0">
+            <enums>
+                <enum value="0" name="BitS Sliding Platform" c_name="SLIDING_PLATFORM_BP1_BITS_SLIDING_PLATFORM"/>
+                <enum value="1" name="BitS Twin Sliding Platforms" c_name="SLIDING_PLATFORM_BP1_BITS_TWIN_SLIDING_PLATFORMS"/>
+                <enum value="2" name="BitFS Moving Square" c_name="SLIDING_PLATFORM_BP1_BITFS_MOVING_SQUARE"/>
+                <enum value="3" name="BitFS Sliding Platform" c_name="SLIDING_PLATFORM_BP1_BITFS_SLIDING_PLATFORM"/>
+                <enum value="4" name="RR Sliding Platform" c_name="SLIDING_PLATFORM_BP1_RR_SLIDING_PLATFORM"/>
+                <enum value="5" name="RR Pyramid (Unused)" c_name="SLIDING_PLATFORM_BP1_RR_PYRAMID"/>
+                <enum value="6" name="Null (Unused)" c_name="SLIDING_PLATFORM_BP1_NULL"/>
+                <enum value="7" name="BitDW Sliding Platform" c_name="SLIDING_PLATFORM_BP1_BITDW_SLIDING_PLATFORM"/>
+            </enums>
+        </field>
+        <field name="Path Length" type="units" bparam="2" mask="0x3F" default="0" multiplier="50"/>
+        <field name="Inverted" type="bool" bparam="2" shift="6" default="False"/>
+    </fields>
+    <models>
+        <model>bitdw_sliding_platform</model>
+        <model>bitfs_moving_square_platform</model>
+        <model>bitfs_sliding_platform</model>
+        <model>bits_sliding_platform</model>
+        <model>bits_twin_sliding_platforms</model>
+        <model>rr_sliding_platform</model>
+    </models>
+</behavior>

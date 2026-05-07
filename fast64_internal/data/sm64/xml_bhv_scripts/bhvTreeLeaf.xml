@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x130013c4" readable_name="Tree Leaf">
+    <tags>
+        <tag>PARTICLE</tag>
+        <tag>ENVIRONMENTAL</tag>
+    </tags>
+    <models>
+        <model>leaves</model>
+    </models>
+</behavior>

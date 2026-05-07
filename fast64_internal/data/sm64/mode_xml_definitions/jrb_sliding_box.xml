@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Jrb Sliding Box">
+    <geolayout>0xe000960</geolayout>
+    <level>JRB</level>
+    <ids>
+        <id value="0x3c" name="MODEL_JRB_SLIDING_BOX"/>
+    </ids>
+    <collisions>
+        <collision name="jrb_seg7_collision_floating_box" address="0x700c8a8"/>
+    </collisions>
+</model>

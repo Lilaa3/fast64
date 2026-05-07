@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Wf Sliding Platform">
+    <geolayout>0xe000a98</geolayout>
+    <level>WF</level>
+    <ids>
+        <id value="0xad" name="MODEL_WF_SLIDING_PLATFORM"/>
+    </ids>
+    <collisions>
+        <collision name="wf_seg7_collision_sliding_brick_platform" address="0x700faa4"/>
+    </collisions>
+</model>

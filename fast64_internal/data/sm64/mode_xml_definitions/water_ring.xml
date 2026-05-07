@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Water Ring">
+    <geolayout>0xd000414</geolayout>
+    <group>group13</group>
+    <ids>
+        <id value="0x68" name="MODEL_WATER_RING"/>
+    </ids>
+    <animation_tables>
+        <table>water_ring</table>
+    </animation_tables>
+</model>

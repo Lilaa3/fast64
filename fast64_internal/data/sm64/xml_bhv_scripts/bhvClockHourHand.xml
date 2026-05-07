@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001c8c" readable_name="Clock Hour Hand">
+    <tags>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>CASTLE</tag>
+    </tags>
+    <models>
+        <model>castle_inside_castle_clock_hour_hand</model>
+    </models>
+</behavior>

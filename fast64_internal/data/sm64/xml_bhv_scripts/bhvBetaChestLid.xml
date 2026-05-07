@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x1300029c" readable_name="Beta Chest Lid">
+    <description>A beta treasure chest lid.</description>
+    <tags>
+        <tag>UNUSED</tag>
+        <tag>CHEST</tag>
+    </tags>
+    <models>
+        <model>treasure_chest_lid</model>
+    </models>
+</behavior>

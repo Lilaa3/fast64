@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<behavior name="0x13004580" readable_name="Koopa/Koopa the Quick">
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>FRIENDLY</tag>
+    </tags>
+    <fields>
+        <field name="Movement Type" type="int" bparam="2" default="0">
+            <enums>
+                <enum value="0" name="Unshelled" c_name="KOOPA_BP_UNSHELLED"/>
+                <enum value="1" name="Normal" c_name="KOOPA_BP_NORMAL"/>
+                <enum value="2" name="Koopa the Quick BOB" c_name="KOOPA_BP_KOOPA_THE_QUICK_BOB">
+                    <description>Uses bob_seg7_trajectory_koopa.</description>
+                </enum>
+                <enum value="3" name="Koopa the Quick THI" c_name="KOOPA_BP_KOOPA_THE_QUICK_THI">
+                    <description>Uses thi_seg7_trajectory_koopa.</description>
+                </enum>
+                <enum value="4" name="Tiny" c_name="KOOPA_BP_TINY"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>koopa_with_shell</model>
+        <model>koopa_without_shell</model>
+    </models>
+</behavior>

@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001da8" readable_name="LLL Rotating Flamethrower Stone">
+    <description>Stone on top of the hex plataform and in the sub area that spits fire in two directions.</description>
+    <tags>
+        <tag>SPAWNER</tag>
+        <tag>SURFACE</tag>
+        <tag>MOVING</tag>
+        <tag>FIRE</tag>
+        <tag>LLL</tag>
+    </tags>
+    <models>
+        <model>lll_rotating_block_fire_bars</model>
+    </models>
+</behavior>

@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x130009a4" readable_name="Single Coin Spawned">
+    <tags>
+        <tag>COLLECTABLE</tag>
+        <tag>COINS</tag>
+    </tags>
+    <models>
+        <model>yellow_coin</model>
+    </models>
+</behavior>

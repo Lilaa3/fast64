@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Lll Sinking Checkerboard Rectangular Platform">
+    <geolayout>0xe000bc8</geolayout>
+    <level>LLL</level>
+    <ids>
+        <id value="0x3f" name="MODEL_LLL_SINKING_RECTANGULAR_PLATFORM"/>
+    </ids>
+    <collisions>
+        <collision name="lll_seg7_collision_slow_tilting_platform" address="0x701d408"/>
+    </collisions>
+</model>

@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x130033ec" readable_name="Hoot">
+    <tags>
+        <tag>NPC</tag>
+        <tag>FRIENDLY</tag>
+        <tag>WF</tag>
+    </tags>
+    <models>
+        <model>hoot</model>
+    </models>
+</behavior>

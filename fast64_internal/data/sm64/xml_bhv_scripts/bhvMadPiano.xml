@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13005024" readable_name="Mad Piano">
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>BBH</tag>
+    </tags>
+    <models>
+        <model>mad_piano</model>
+    </models>
+</behavior>

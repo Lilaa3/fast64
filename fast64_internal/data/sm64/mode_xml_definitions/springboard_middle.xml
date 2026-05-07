@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Springboard Middle">
+    <geolayout>0xc000018</geolayout>
+    <group>group8</group>
+    <ids>
+        <id value="0xb6" name="MODEL_TRAMPOLINE_CENTER"/>
+    </ids>
+</model>

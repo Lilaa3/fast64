@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<animation_table address="0x5005768" name="Hoot">
+    <names>
+        <name>Flying</name>
+        <name>Flying Fast</name>
+    </names>
+</animation_table>

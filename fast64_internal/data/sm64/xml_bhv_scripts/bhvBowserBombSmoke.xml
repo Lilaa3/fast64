@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003840" readable_name="Bowser Bomb Smoke">
+    <description>Smoke particles from a Bowser bomb explosion.</description>
+    <tags>
+        <tag>BOSS</tag>
+        <tag>ENEMY</tag>
+        <tag>BOWSER</tag>
+        <tag>PARTICLE</tag>
+    </tags>
+    <models>
+        <model>bowser_impact_smoke</model>
+    </models>
+</behavior>

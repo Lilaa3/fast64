@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Lakitu (Enemy)">
+    <geolayout>0xc0001bc</geolayout>
+    <group>group11</group>
+    <ids>
+        <id value="0x54" name="MODEL_ENEMY_LAKITU"/>
+    </ids>
+    <animation_tables>
+        <table>lakitu_enemy</table>
+    </animation_tables>
+</model>

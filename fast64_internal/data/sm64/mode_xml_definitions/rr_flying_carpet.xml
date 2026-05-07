@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Rr Flying Carpet">
+    <geolayout>0xe000848</geolayout>
+    <level>RR</level>
+    <ids>
+        <id value="0x37" name="MODEL_RR_FLYING_CARPET"/>
+    </ids>
+    <collisions>
+        <collision name="rr_seg7_collision_flying_carpet" address="0x07029038"/>
+    </collisions>
+</model>

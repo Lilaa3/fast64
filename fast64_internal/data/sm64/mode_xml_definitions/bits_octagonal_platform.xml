@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Bits Octagonal Platform">
+    <geolayout>0xe000610</geolayout>
+    <level>BITS</level>
+    <ids>
+        <id value="0x39" name="MODEL_BITS_OCTAGONAL_PLATFORM"/>
+    </ids>
+    <collisions>
+        <collision c_name="bits_seg7_collision_0701AA84" address="0x0701AA84"/>
+    </collisions>
+</model>

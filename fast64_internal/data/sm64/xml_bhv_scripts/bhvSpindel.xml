@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003b00" readable_name="Spindel">
+    <tags>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>SURFACE</tag>
+    </tags>
+    <models>
+        <model>ssl_spindel</model>
+    </models>
+</behavior>

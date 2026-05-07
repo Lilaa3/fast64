@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003ae0" readable_name="RR Cruiser Wing">
+    <tags>
+        <tag>RR</tag>
+        <tag>ENVIRONMENTAL</tag>
+    </tags>
+    <fields>
+        <field name="Oscillation Direction" type="bool" bparam="2" default="False">
+            <enums>
+                <enum value="0" name="Left"/>
+                <enum value="1" name="Right"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>rr_cruiser_wing</model>
+    </models>
+</behavior>

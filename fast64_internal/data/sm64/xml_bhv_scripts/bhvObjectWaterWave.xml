@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x130034c4" readable_name="Splash Wave">
+    <tags>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>PARTICLE</tag>
+        <tag>WATER</tag>
+    </tags>
+    <models>
+        <model>idle_water_wave</model>
+    </models>
+</behavior>

@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Ttc Clock Hand">
+    <geolayout>0xe000358</geolayout>
+    <level>TTC</level>
+    <ids>
+        <id value="0x41" name="MODEL_TTC_CLOCK_HAND"/>
+    </ids>
+    <collisions>
+        <collision name="ttc_seg7_collision_clock_main_rotation" address="0x70158e0"/>
+    </collisions>
+</model>

@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<behavior name="0x13000c28" readable_name="WF Tumbling Bridge">
+    <description>A spawner that creates a sequence of tumbling bridge segments. The specific configuration (number of sections, dimensions, model, and collision) is determined by the field.</description>
+    <tags>
+        <tag>SPAWNER</tag>
+        <tag>WF</tag>
+    </tags>
+    <fields>
+        <field name="Bridge Configuration" type="int" bparam="2" default="0">
+            <enums>
+                <enum value="0" name="WF" c_name="TUMBLING_BRIDGE_BP_WF"/>
+                <enum value="1" name="BBH" c_name="TUMBLING_BRIDGE_BP_BBH"/>
+                <enum value="2" name="LLL" c_name="TUMBLING_BRIDGE_BP_LLL"/>
+                <enum value="3" name="BITFS" c_name="TUMBLING_BRIDGE_BP_BITFS"/>
+            </enums>
+        </field>
+    </fields>
+    <models automatically_set="true">
+        <model>wf_tumbling_bridge_part</model>
+        <model>bbh_tumbling_platform_part</model>
+        <model>lll_falling_platform</model>
+        <model>bitfs_tumbling_platform_part</model>
+    </models>
+</behavior>

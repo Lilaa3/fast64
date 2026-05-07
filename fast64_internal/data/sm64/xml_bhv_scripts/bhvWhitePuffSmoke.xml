@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x130017f4" readable_name="White Puff Smoke">
+    <tags>
+        <tag>PARTICLE</tag>
+    </tags>
+    <models>
+        <model>smoke</model>
+    </models>
+</behavior>

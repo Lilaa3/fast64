@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x130021c0" readable_name="WDW Express Elevator Platform">
+    <description>The solid plataform on the express elevator star.</description>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>PLATFORM</tag>
+        <tag>WDW</tag>
+    </tags>
+    <models>
+        <model>wdw_express_elevator</model>
+    </models>
+</behavior>

@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Metal Door">
+    <geolayout>0x16000618</geolayout>
+    <group>common1</group>
+    <ids>
+        <id value="0x29" name="MODEL_CASTLE_GROUNDS_METAL_DOOR" level="common1"/>
+    </ids>
+    <animation_tables>
+        <table>door</table>
+    </animation_tables>
+</model>

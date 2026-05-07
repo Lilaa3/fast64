@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Bowser Flame">
+    <geolayout>0xd000000</geolayout>
+    <group>group12</group>
+    <ids>
+        <id value="0x67" name="MODEL_BOWSER_FLAMES"/>
+    </ids>
+</model>

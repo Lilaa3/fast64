@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Mushroom 1up">
+    <geolayout>0x16000e84</geolayout>
+    <group>common1</group>
+    <ids>
+        <id value="0xd4" name="MODEL_1UP"/>
+    </ids>
+</model>

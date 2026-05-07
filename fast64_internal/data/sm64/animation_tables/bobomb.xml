@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<animation_table address="0x802396c" name="Bobomb">
+    <names>
+        <name>Walking</name>
+        <name>Strugling</name>
+    </names>
+</animation_table>

@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13004314" readable_name="Arrow Lift">
+    <description>A platform that moves forward and backward when Mario stands on it.</description>
+    <tags>
+        <tag>PLATAFORM</tag>
+        <tag>MOVING</tag>
+        <tag>WDW</tag>
+    </tags>
+    <models>
+        <model>wdw_arrow_lift</model>
+    </models>
+</behavior>

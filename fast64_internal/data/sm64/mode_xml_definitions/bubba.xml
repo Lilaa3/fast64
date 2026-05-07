@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Bubba">
+    <geolayout>0xc000000</geolayout>
+    <group>group11</group>
+    <ids>
+        <id value="0x59" name="MODEL_BUBBA"/>
+    </ids>
+</model>

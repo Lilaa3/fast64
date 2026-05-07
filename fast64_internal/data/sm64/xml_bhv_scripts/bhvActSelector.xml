@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003048" readable_name="Act Selector">
+    <description>Menu object that handles the star selection screen (act selector).</description>
+    <tags>
+        <tag>UI</tag>
+    </tags>
+</behavior>

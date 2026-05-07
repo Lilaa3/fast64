@@ -1,0 +1,16 @@
+<?xml version="1.0" ?>
+<behavior name="0x13000000" readable_name="Star Door">
+    <description>INT_SUBTYPE_STAR_DOOR subtype of door.</description>
+    <tags>
+        <tag>DOOR</tag>
+    </tags>
+    <fields>
+        <field name="Star Requirement" type="int" bparam="3" default="0"/>
+    </fields>
+    <models>
+        <model>castle_inside_castle_star_door_30_stars</model>
+        <model>castle_inside_castle_star_door_50_stars</model>
+        <model>castle_inside_castle_star_door_70_stars</model>
+        <model>castle_inside_castle_star_door_8_stars</model>
+    </models>
+</behavior>

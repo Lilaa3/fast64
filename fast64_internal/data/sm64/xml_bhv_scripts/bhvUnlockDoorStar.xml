@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002f40" readable_name="Star (Unlock Door)">
+    <tags>
+        <tag>CUTSCENE</tag>
+        <tag>CASTLE</tag>
+    </tags>
+    <models>
+        <model>star</model>
+    </models>
+</behavior>

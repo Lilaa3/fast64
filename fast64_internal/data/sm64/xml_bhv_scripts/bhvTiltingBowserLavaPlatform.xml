@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001920" readable_name="Tilting Bowser Lava Platform">
+    <description>A platform in Bowser's lava area that rotates based on its angular velocity. Other behaviors controlled by Bowser.</description>
+    <tags>
+        <tag>PLATFORM</tag>
+        <tag>SURFACE</tag>
+        <tag>BOWSER</tag>
+    </tags>
+    <models>
+        <model>bowser_2_tilting_arena</model>
+    </models>
+</behavior>

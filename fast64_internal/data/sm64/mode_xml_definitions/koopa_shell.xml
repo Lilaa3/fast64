@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Koopa Shell">
+    <geolayout>0xf000ab0</geolayout>
+    <group>common0</group>
+    <ids>
+        <id value="0xbe" name="MODEL_KOOPA_SHELL"/>
+    </ids>
+</model>

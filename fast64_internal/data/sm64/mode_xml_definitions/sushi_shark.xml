@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Sushi Shark">
+    <geolayout>0xc000068</geolayout>
+    <group>group4</group>
+    <ids>
+        <id value="0x56" name="MODEL_SUSHI"/>
+    </ids>
+    <animation_tables>
+        <table>sushi_shark</table>
+    </animation_tables>
+</model>

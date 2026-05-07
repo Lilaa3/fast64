@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Clam Shell">
+    <geolayout>0xc000000</geolayout>
+    <group>group4</group>
+    <ids>
+        <id value="0x58" name="MODEL_CLAM_SHELL"/>
+    </ids>
+    <animation_tables>
+        <table>clam_shell</table>
+    </animation_tables>
+</model>

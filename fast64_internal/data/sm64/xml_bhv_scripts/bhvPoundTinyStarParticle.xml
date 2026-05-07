@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13000a78" readable_name="GP Star Particle">
+    <description>Spawned by Horizontal Star Particle Spawner</description>
+    <tags>
+        <tag>PARTICLE</tag>
+    </tags>
+    <models>
+        <model>cartoon_star</model>
+    </models>
+</behavior>

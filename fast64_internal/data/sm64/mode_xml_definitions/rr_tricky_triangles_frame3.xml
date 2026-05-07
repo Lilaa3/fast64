@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Rr Tricky Triangles Frame3">
+    <geolayout>0xe0009a0</geolayout>
+    <level>RR</level>
+    <ids>
+        <id value="0x44" name="MODEL_RR_TRICKY_TRIANGLES_FRAME3"/>
+    </ids>
+    <collisions>
+        <collision name="rr_seg7_collision_0702A32C" address="0x702a32c"></collision>
+    </collisions>
+</model>

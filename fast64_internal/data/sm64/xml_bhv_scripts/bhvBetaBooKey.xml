@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001744" readable_name="Beta Boo Key">
+    <description>A beta key that drops from Boos.</description>
+    <tags>
+        <tag>UNUSED</tag>
+        <tag>KEY</tag>
+        <tag>BBH</tag>
+    </tags>
+</behavior>

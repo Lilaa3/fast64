@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Hoot">
+    <geolayout>0xc000018</geolayout>
+    <group>group1</group>
+    <ids>
+        <id value="0x56" name="MODEL_HOOT"/>
+    </ids>
+    <animation_tables>
+        <table>hoot</table>
+    </animation_tables>
+</model>

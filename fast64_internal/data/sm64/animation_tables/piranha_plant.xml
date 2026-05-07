@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<animation_table address="0x601c31c" name="Piranha Plant">
+    <names>
+        <name>Bite</name>
+        <name>Sleeping? (Unused)</name>
+        <name>Falling over</name>
+        <name>Bite (Unused)</name>
+        <name>Grow</name>
+        <name>Attacked</name>
+        <name>Stop Bitting</name>
+        <name>Sleeping (Unused)</name>
+        <name>Sleeping</name>
+        <name>Bite (Duplicate)</name>
+    </names>
+</animation_table>

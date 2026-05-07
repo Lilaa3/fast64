@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002308" readable_name="Bowser's Sub">
+    <description>Bowser's submarine. It is only active in act 1.</description>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>BOWSER</tag>
+        <tag>DDD</tag>
+    </tags>
+    <models>
+        <model>ddd_bowser_sub</model>
+    </models>
+</behavior>

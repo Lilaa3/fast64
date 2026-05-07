@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x1300167c" readable_name="Boo Cage">
+    <description>The cage that falls from the castle boo.</description>
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>CASTLE</tag>
+        <tag>WARP</tag>
+    </tags>
+    <models>
+        <model>haunted_cage</model>
+    </models>
+</behavior>

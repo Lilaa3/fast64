@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Sparkle Animation">
+    <geolayout>0x17000284</geolayout>
+    <group>group0</group>
+    <ids>
+        <id value="0x8f" name="MODEL_SPARKLES_ANIMATION"/>
+    </ids>
+</model>

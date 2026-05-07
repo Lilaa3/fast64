@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x130014ac" readable_name="Floor Switch (Hidden Objects)">
+    <description>A purple floor switch that inherits from bhvFloorSwitchHardcodedModel. It forces PURPLE_SWITCH_BP_REVEAL_HIDDEN.</description>
+    <tags>
+        <tag>INTERACTIVE</tag>
+        <tag>SURFACE</tag>
+        <tag>PUZZLE</tag>
+    </tags>
+    <models>
+        <model>purple_switch</model>
+    </models>
+</behavior>

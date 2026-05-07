@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001168" readable_name="Bouncing Fireball Spawner">
+    <tags>
+        <tag>SPAWNER</tag>
+        <tag>FIRE</tag>
+        <tag>HURT</tag>
+        <tag>LLL</tag>
+    </tags>
+</behavior>

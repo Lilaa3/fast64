@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<behavior name="0x130040ec" readable_name="Hidden 1-Up Mushroom">
+    <description>A 1-Up Mushroom that remains invisible until o1UpHiddenTimesTriggered (set by Hidden 1up Trigger) matches the Trigger Count.</description>
+    <tags>
+        <tag>COLLECTABLE</tag>
+    </tags>
+    <fields>
+        <field name="Trigger Count" type="int" bparam="2" default="0"/>
+    </fields>
+    <models>
+        <model>mushroom_1up</model>
+    </models>
+</behavior>

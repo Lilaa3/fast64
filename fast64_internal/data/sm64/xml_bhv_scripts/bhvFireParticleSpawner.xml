@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x130011ec" readable_name="Fire Particle Spawner">
+    <description>A particle spawner that generates flame effects around Mario during his flame state.</description>
+    <particle>PARTICLE_FIRE</particle>
+    <tags>
+        <tag>PARTICLE</tag>
+        <tag>FIRE</tag>
+    </tags>
+</behavior>

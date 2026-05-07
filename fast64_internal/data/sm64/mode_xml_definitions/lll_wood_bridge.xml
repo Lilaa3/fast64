@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Lll Wood Bridge">
+    <geolayout>0xe000b50</geolayout>
+    <level>LLL</level>
+    <ids>
+        <id value="0x35" name="MODEL_LLL_WOOD_BRIDGE"/>
+    </ids>
+    <collisions>
+        <collision name="lll_seg7_collision_wood_piece" address="0x0701D1EC"/>
+    </collisions>
+</model>

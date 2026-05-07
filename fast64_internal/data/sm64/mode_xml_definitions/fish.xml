@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Fish">
+    <geolayout>0x16000c44</geolayout>
+    <group>common1</group>
+    <ids>
+        <id value="0xb9" name="MODEL_FISH"/>
+    </ids>
+    <animation_tables>
+        <table>blue_fish</table>
+    </animation_tables>
+</model>

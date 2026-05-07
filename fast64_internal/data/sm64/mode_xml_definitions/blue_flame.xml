@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Blue Flame">
+    <geolayout>0x16000b8c</geolayout>
+    <group>common1</group>
+    <ids>
+        <id value="0x91" name="MODEL_BLUE_FLAME"/>
+    </ids>
+</model>

@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x130054b8" readable_name="RR Swing Platform">
+    <description>A platform that rotates back and forth.</description>
+    <tags>
+        <tag>PLATFORM</tag>
+    </tags>
+    <models>
+        <model>rr_swinging_platform</model>
+    </models>
+</behavior>

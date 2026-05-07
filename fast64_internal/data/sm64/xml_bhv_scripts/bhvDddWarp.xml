@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001c34" readable_name="DDD Warp">
+    <description>Warp object that switches its collision model based on whether Bowser's sub has been beaten.</description>
+    <tags>
+        <tag>WARP</tag>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>DDD</tag>
+    </tags>
+</behavior>

@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Chilly Chief (Small)">
+    <geolayout>0x6003754</geolayout>
+    <group>group16</group>
+    <ids>
+        <id value="0x64" name="MODEL_CHILL_BULLY"/>
+    </ids>
+    <animation_tables>
+        <table>chilly_chief</table>
+    </animation_tables>
+</model>

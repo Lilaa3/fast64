@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003fa4" readable_name="LLL Rolling Log">
+    <description>Hardcoded position to x 5120 z 6016.</description>
+    <tags>
+        <tag>INTERACTIVE</tag>
+        <tag>SURFACE</tag>
+        <tag>MOVING</tag>
+        <tag>LLL</tag>
+    </tags>
+    <models>
+        <model>lll_rolling_log</model>
+    </models>
+</behavior>

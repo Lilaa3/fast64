@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x1300241c" readable_name="JRB Unused Floating Ship">
+    <description>The infamous unused floating ship, can be shown up by removing cur_obj_disable_rendering in it's loop.</description>
+    <tags>
+        <tag>UNUSED</tag>
+        <tag>JRB</tag>
+    </tags>
+    <models>
+        <model>jrb_sunken_ship</model>
+        <model>jrb_sunken_ship_back</model>
+    </models>
+</behavior>

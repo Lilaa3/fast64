@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002568" readable_name="Blue Coin Switch">
+    <description>A switch that reveals hidden blue coins.</description>
+    <tags>
+        <tag>COINS</tag>
+        <tag>MANAGER</tag>
+    </tags>
+    <models>
+        <model>blue_coin_switch</model>
+    </models>
+</behavior>

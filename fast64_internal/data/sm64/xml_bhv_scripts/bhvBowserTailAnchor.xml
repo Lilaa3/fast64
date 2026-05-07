@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001828" readable_name="Bowser Tail Anchor">
+    <tags>
+        <tag>BOSS</tag>
+        <tag>BOWSER</tag>
+        <tag>ENEMY</tag>
+        <tag>HELPER</tag>
+    </tags>
+</behavior>

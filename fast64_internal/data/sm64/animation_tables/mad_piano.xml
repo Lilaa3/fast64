@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<animation_table address="0x5009b14" name="Mad Piano">
+    <names>
+        <name>Sleeping</name>
+        <name>Chomping</name>
+    </names>
+</animation_table>

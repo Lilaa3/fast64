@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13000624" readable_name="WF Breakable Wall Right">
+    <description>If a corresponding left-side breakable wall is present, plays a puzzle jingle.</description>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>INTERACTIVE</tag>
+        <tag>WF</tag>
+    </tags>
+    <models>
+        <model>wf_breakable_wall_right</model>
+    </models>
+</behavior>

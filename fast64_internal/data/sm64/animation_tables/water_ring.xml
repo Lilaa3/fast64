@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<animation_table address="0x6013f7c" name="Water Ring">
+    <behaviours>
+        <behaviour>0xc66c16</behaviour>
+    </behaviours>
+    <names>
+        <name>Wobble</name>
+    </names>
+</animation_table>

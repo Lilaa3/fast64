@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Mist">
+    <geolayout>0x16000000</geolayout>
+    <group>common1</group>
+    <ids>
+        <id value="0x8e" name="MODEL_MIST"/>
+    </ids>
+</model>

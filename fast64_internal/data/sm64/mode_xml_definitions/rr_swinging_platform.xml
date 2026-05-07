@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Rr Swinging Platform">
+    <geolayout>0xe000860</geolayout>
+    <level>RR</level>
+    <ids>
+        <id value="0x3e" name="MODEL_RR_SWINGING_PLATFORM"/>
+    </ids>
+    <collisions>
+        <collision name="rr_seg7_collision_pendulum" address="0x7029154"/>
+    </collisions>
+</model>

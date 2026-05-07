@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<animation_table address="0x60070d0" name="Swoop" size="2">
+    <names>
+        <name>Idle</name>
+        <name>Move</name>
+    </names>
+</animation_table>

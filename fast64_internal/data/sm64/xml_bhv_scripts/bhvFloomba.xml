@@ -1,0 +1,21 @@
+<?xml version="1.0" ?>
+<behavior name="bhvFloomba" readable_name="Floomba">
+    <description>A.. 😳 variant of a Goomba. It sets oIsFloomba to TRUE and then switches to bhvGoomba.</description>
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>Individual</tag>
+    </tags>
+    <fields>
+        <field name="Size" type="int" bparam="2" mask="0x03" default="0">
+            <enums>
+                <enum value="0" name="Regular" c_name="GOOMBA_SIZE_REGULAR"/>
+                <enum value="1" name="Huge" c_name="GOOMBA_SIZE_HUGE"/>
+                <enum value="2" name="Tiny" c_name="GOOMBA_SIZE_TINY"/>
+            </enums>
+        </field>
+        <field name="Triplet Index" type="int" bparam="2" mask="0xFC" shift="2" default="0"/>
+    </fields>
+    <models>
+        <model>goomba</model>
+    </models>
+</behavior>

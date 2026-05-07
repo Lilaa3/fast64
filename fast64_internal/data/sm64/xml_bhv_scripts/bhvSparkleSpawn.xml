@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002af0" readable_name="Sparkle Spawn">
+    <description>Spawns a sparkle particle around its own position with random transforms, then deletes itself.</description>
+    <tags>
+        <tag>PARTICLE</tag>
+        <tag>HELPER</tag>
+    </tags>
+</behavior>

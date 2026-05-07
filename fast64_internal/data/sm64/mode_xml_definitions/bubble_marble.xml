@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Bubble Marble">
+    <geolayout>0x1700001c</geolayout>
+    <group>group0</group>
+    <ids>
+        <id value="0xaa" name="MODEL_PURPLE_MARBLE"/>
+    </ids>
+</model>

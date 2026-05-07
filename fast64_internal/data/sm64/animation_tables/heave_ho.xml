@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<animation_table address="0x501534c" name="Heave-Ho">
+    <names>
+        <name>Moving</name>
+        <name>Throwing</name>
+        <name>Stop</name>
+    </names>
+</animation_table>

@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<behavior name="0x130027e4" readable_name="Boo">
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>BBH</tag>
+    </tags>
+    <fields>
+        <field name="Variant" type="int" bparam="2" default="1">
+            <enums>
+                <enum value="1" name="Normal" c_name="BOO_BP_NORMAL"/>
+                <enum value="2" name="Merry Go Round" c_name="BOO_BP_MERRY_GO_ROUND"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>boo</model>
+    </models>
+</behavior>

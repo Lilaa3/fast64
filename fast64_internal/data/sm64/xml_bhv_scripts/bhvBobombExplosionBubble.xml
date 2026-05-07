@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x130035b0" readable_name="Bob-omb Explosion Bubble">
+    <description>Bubbles that appear when a Bob-omb explodes underwater.</description>
+    <tags>
+        <tag>PARTICLE</tag>
+        <tag>ENEMY</tag>
+    </tags>
+    <models>
+        <model>white_particle_small</model>
+    </models>
+</behavior>

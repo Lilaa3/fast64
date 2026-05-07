@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Checkerboard Platform">
+    <geolayout>0xf0004e4</geolayout>
+    <group>common0</group>
+    <ids>
+        <id value="0xca" name="MODEL_CHECKERBOARD_PLATFORM"/>
+    </ids>
+    <collisions>
+        <collision name="checkerboard_platform_seg8_collision_platform" address="0x0800D710"/>
+    </collisions>
+</model>

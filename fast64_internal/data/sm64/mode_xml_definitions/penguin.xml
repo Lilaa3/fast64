@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<model readable_name="Penguin">
+    <geolayout>0xc000104</geolayout>
+    <group>group7</group>
+    <ids>
+        <id value="0x57" name="MODEL_PENGUIN"/>
+    </ids>
+    <animation_tables>
+        <table>penguin</table>
+    </animation_tables>
+    <collisions>
+        <collision name="penguin_seg5_collision_05008B88" c_name="penguin_seg5_collision_05008B88"/>
+    </collisions>
+</model>

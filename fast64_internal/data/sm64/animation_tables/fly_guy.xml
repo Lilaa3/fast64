@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<animation_table address="0x8011a64" name="Fly Guy">
+    <names>
+        <name>Flying</name>
+    </names>
+</animation_table>

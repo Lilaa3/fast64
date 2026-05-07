@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002558" readable_name="Purple Switch Hidden Boxes">
+    <description>Wraps around Floor Switch Hardcoded Model using Reveal Hidden.</description>
+    <tags>
+        <tag>INTERACTIVE</tag>
+        <tag>SURFACE</tag>
+        <tag>ENVIRONMENTAL</tag>
+    </tags>
+</behavior>

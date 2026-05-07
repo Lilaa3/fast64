@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Bowser">
+    <geolayout>0xd000ac4</geolayout>
+    <group>group12</group>
+    <ids>
+        <id value="0x64" name="MODEL_BOWSER"/>
+    </ids>
+    <animation_tables>
+        <table>bowser</table>
+    </animation_tables>
+</model>

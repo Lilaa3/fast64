@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003700" readable_name="Big Chill Bully">
+    <description>Equivilent to a big bully, but with BULLY_STYPE_CHILL subtype. Spawns star on death.</description>
+    <tags>
+        <tag>BOSS</tag>
+        <tag>SL</tag>
+        <tag>COLD</tag>
+    </tags>
+    <models>
+        <model>chilly_chief_big</model>
+    </models>
+</behavior>

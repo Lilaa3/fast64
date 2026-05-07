@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002aa4" readable_name="Tree">
+    <tags>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>POLE</tag>
+    </tags>
+    <models>
+        <model>bubbly_tree</model>
+        <model>palm_tree</model>
+        <model>pine_tree</model>
+        <model>snow_tree</model>
+        <model>unknown_tree_1a</model>
+    </models>
+</behavior>

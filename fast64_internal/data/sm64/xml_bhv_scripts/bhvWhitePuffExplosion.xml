@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<behavior name="0x130007dc" readable_name="White Puff Explosion">
+    <tags>
+        <tag>PARTICLE</tag>
+    </tags>
+    <fields>
+        <field name="Fade Style" type="int" bparam="2" default="2">
+            <enums>
+                <enum value="2" name="Fast Fade"/>
+                <enum value="3" name="Slow Fade"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>mist</model>
+        <model>sand</model>
+        <model>white_particle_dl</model>
+        <model>pebble</model>
+        <model>white_particle</model>
+        <model>white_particle_small</model>
+        <model>bubble</model>
+    </models>
+</behavior>

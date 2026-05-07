@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001778" readable_name="Boo Race Key">
+    <description>Alpha boo key. Collecting it causes the parent Boo to drop.</description>
+    <tags>
+        <tag>COLLECTIBLE</tag>
+        <tag>KEY</tag>
+        <tag>UNUSED</tag>
+        <tag>BBH</tag>
+    </tags>
+    <models>
+        <model>beta_boo_key</model>
+    </models>
+</behavior>

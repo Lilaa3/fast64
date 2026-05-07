@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<behavior name="0x13000584" readable_name="Chuckya Anchor Mario">
+    <description>Anchor object for Chuckya. Syncs Mario's position and handles throwing/dropping transitions based on parent's oCommonAnchorAction.</description>
+    <tags>
+        <tag>MANAGER</tag>
+        <tag>HOLDABLE</tag>
+    </tags>
+</behavior>

@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Hmc Rolling Rock">
+    <geolayout>0xe000548</geolayout>
+    <level>HMC</level>
+    <ids>
+        <id value="0x39" name="MODEL_HMC_ROLLING_ROCK"/>
+    </ids>
+</model>

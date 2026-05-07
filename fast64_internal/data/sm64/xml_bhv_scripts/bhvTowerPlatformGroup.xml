@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x130012f4" readable_name="WF Tower Platform Group">
+    <description>Spawns the group of moving and static plataforms, and elevators of the WF tower (solid, sliding, and elevator) when Mario reaches a specific height.</description>
+    <tags>
+        <tag>SPAWNER</tag>
+        <tag>PLATFORM</tag>
+        <tag>WF</tag>
+    </tags>
+</behavior>

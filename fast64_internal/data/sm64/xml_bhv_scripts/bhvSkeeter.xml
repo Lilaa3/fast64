@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13005468" readable_name="Skeeter">
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>WATER</tag>
+        <tag>WDW</tag>
+    </tags>
+    <models>
+        <model>skeeter</model>
+    </models>
+</behavior>

@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001d40" readable_name="LLL Sinking Rock Block">
+    <description>A rock block in the rolling log section that sinks.</description>
+    <tags>
+        <tag>INTERACTIVE</tag>
+        <tag>SURFACE</tag>
+        <tag>MOVING</tag>
+        <tag>LLL</tag>
+    </tags>
+    <models>
+        <model>lll_sinking_rock_block</model>
+    </models>
+</behavior>

@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<behavior name="0x130027f4" readable_name="Boo (Merry-Go-Round)">
+    <description>Acts as a wrapper for bhvGhostHuntBoo. Changes bparam to Merry Go Round mode. Spawned by the Merry Go Round Manager.</description>
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>SPECIALIZED</tag>
+        <tag>BBH</tag>
+        <tag>SUB_OBJECT</tag>
+    </tags>
+    <models>
+        <model>boo</model>
+    </models>
+</behavior>

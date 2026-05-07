@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Bitfs Seesaw Platform">
+    <geolayout>0xe000788</geolayout>
+    <level>BITFS</level>
+    <ids>
+        <id value="0x3d" name="MODEL_BITFS_SEESAW_PLATFORM"/>
+    </ids>
+</model>

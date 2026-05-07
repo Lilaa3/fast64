@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<behavior name="bhvCarrySomethingDropped" readable_name="Carry Something Dropped">
+    <description>Placeholder behavior for dropped carryable objects.</description>
+    <tags>
+        <tag>HOLDABLE</tag>
+        <tag>HELPER</tag>
+    </tags>
+</behavior>

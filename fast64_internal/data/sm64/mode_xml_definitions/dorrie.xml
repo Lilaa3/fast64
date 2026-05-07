@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<model readable_name="Dorrie">
+    <geolayout>0xd000230</geolayout>
+    <group>group17</group>
+    <ids>
+        <id value="0x68" name="MODEL_DORRIE"/>
+    </ids>
+    <animation_tables>
+        <table>dorrie</table>
+    </animation_tables>
+    <collisions>
+        <collision name="dorrie_seg6_collision_0600F644"/>
+    </collisions>
+</model>

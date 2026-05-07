@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<animation_table address="0x5002d68" name="Spindrift">
+    <names>
+        <name>Flying</name>
+    </names>
+</animation_table>

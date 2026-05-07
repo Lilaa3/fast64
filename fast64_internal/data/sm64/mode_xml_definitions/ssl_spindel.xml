@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Ssl Spindel">
+    <geolayout>0xe000764</geolayout>
+    <level>SSL</level>
+    <ids>
+        <id value="0x37" name="MODEL_SSL_SPINDEL"/>
+    </ids>
+    <collisions>
+        <collision name="ssl_seg7_collision_spindel" address="0x7027f54"/>
+    </collisions>
+</model>

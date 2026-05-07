@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<animation_table address="0x5001744" name="Clam Shell">
+    <names>
+        <name>Close</name>
+        <name>Open</name>
+    </names>
+</animation_table>

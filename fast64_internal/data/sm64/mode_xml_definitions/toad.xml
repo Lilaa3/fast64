@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Toad">
+    <geolayout>0xd0003e4</geolayout>
+    <group>group15</group>
+    <ids>
+        <id value="0xdd" name="MODEL_TOAD"/>
+    </ids>
+    <animation_tables>
+        <table>toad</table>
+    </animation_tables>
+</model>

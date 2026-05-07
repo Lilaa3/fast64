@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001fbc" readable_name="Piranha Plant">
+    <description>Spawns a bubble for the sleeping piranha.</description>
+    <tags>
+        <tag>ENEMY</tag>
+    </tags>
+    <models>
+        <model>piranha_plant</model>
+    </models>
+</behavior>

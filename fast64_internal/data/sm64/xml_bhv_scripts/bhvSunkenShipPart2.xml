@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x1300244c" readable_name="JRB Sunken Ship">
+    <tags>
+        <tag>ENVIRONMENTAL</tag>
+    </tags>
+    <models>
+        <model>jrb_ship_left_half_part</model>
+        <model>jrb_ship_right_half_part</model>
+    </models>
+</behavior>

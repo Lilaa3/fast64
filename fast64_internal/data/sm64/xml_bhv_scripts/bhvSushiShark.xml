@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002338" readable_name="Sushi Shark">
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>WATER</tag>
+    </tags>
+    <models>
+        <model>sushi_shark</model>
+    </models>
+</behavior>

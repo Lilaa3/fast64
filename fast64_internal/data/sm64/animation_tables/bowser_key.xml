@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<animation_table address="0x30172d0" name="Bowser Key" size="2">
+    <behaviours>
+        <behaviour>0x13001bb4</behaviour>
+        <behaviour>0x13001bd4</behaviour>
+    </behaviours>
+    <names>
+        <name>Unlock Door</name>
+        <name>Course Exit</name>
+    </names>
+</animation_table>

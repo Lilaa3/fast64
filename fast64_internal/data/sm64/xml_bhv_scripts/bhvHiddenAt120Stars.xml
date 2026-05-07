@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003cb8" readable_name="Castle Grounds Canon Grate">
+    <description>A cannon grate that deactivates itself upon initialization if the player has 120 or more stars in the current save file.</description>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>CASTLE</tag>
+        <tag>LEVEL</tag>
+    </tags>
+    <models>
+        <model>castle_grounds_cannon_grill</model>
+    </models>
+</behavior>

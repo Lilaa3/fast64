@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001064" readable_name="Squishable Platform">
+    <description>A platform that oscillates its scale on the Y-axis.</description>
+    <tags>
+        <tag>PLATFORM</tag>
+    </tags>
+    <models>
+        <model>bitfs_stretching_platforms</model>
+    </models>
+</behavior>

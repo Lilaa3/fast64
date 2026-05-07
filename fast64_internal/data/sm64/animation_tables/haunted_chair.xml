@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<animation_table address="0x5005784" name="Haunted Chair">
+    <names>
+        <name>Default Pose</name>
+    </names>
+</animation_table>

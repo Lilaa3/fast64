@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13000f48" readable_name="Ukiki Cage">
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>INTERACTIVE</tag>
+        <tag>TTM</tag>
+    </tags>
+    <models>
+        <model>ttm_star_cage</model>
+    </models>
+</behavior>

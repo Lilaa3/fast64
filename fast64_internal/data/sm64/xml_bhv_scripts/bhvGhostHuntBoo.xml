@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002804" readable_name="Boo (Ghost Hunt)">
+    <description>A Boo that manages its opacity and scale, and spawns a bhvCoinInsideBoo child upon initialization. It executes sBooActions and integrates with bhvMerryGoRoundBooManager to track kills.</description>
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>MOVING</tag>
+        <tag>BBH</tag>
+    </tags>
+    <fields>
+        <field name="Type" type="int" bparam="2" default="0">
+            <enums>
+                <enum value="0" name="Ghost Hunt" c_name="BOO_BP_GHOST_HUNT">
+                    <description>If no Ghost Hunt Boo's are left when dying, it will show dialogue of the big boo (DIALOG_108).</description>
+                </enum>
+                <enum value="1" name="Normal" c_name="BOO_BP_NORMAL"/>
+                <enum value="2" name="Merry Go Round" c_name="BOO_BP_MERRY_GO_ROUND"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>boo</model>
+    </models>
+</behavior>

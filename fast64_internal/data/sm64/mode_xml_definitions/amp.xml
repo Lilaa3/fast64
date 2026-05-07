@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Amp">
+    <geolayout>0xf000028</geolayout>
+    <group>common0</group>
+    <ids>
+        <id value="0xc2" name="MODEL_AMP"/>
+    </ids>
+    <animation_tables>
+        <table>amp</table>
+    </animation_tables>
+</model>

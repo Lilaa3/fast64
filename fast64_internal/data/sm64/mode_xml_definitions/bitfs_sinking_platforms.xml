@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Bitfs Sinking Platforms">
+    <geolayout>0xe000770</geolayout>
+    <level>BITFS</level>
+    <ids>
+        <id value="0x38" name="MODEL_BITFS_SINKING_PLATFORMS"/>
+    </ids>
+    <collisions>
+        <collision name="bitfs_seg7_collision_sinking_platform" address="0x7015858"/>
+    </collisions>
+</model>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<behavior name="bhvCloud" readable_name="Cloud Manager/Fwoosh">
+    <description>Cloud part spawner and controller, handles Lakitu clouds (spawned by lakitusssss) or Fwoosh's logic.</description>
+    <tags>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>MANAGER</tag>
+    </tags>
+    <fields>
+        <field name="Cloud Type" type="int" bparam="2" default="0">
+            <enums>
+                <enum value="0" name="Fwoosh" c_name="CLOUD_BP_FWOOSH"/>
+                <enum value="1" name="Lakitu" c_name="CLOUD_BP_LAKITU_CLOUD"/>
+                <enum value="5" name="Fwoosh Face" c_name="CLOUD_BP_FWOOSH_FACE"/>
+            </enums>
+        </field>
+    </fields>
+</behavior>
+sssss

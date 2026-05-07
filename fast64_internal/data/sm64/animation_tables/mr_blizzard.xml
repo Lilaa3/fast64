@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<animation_table address="0x500d118" name="Mr. Blizzard">
+    <names>
+        <name>Spawn Snowball</name>
+        <name>Throw Snowball</name>
+    </names>
+</animation_table>

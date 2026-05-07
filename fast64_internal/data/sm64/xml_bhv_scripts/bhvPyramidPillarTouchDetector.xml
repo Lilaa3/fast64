@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003c0c" readable_name="Pyramid Pillar Touch Detector">
+    <description>Spawned by the Pyramid Top. An invisible trigger that detects when Mario touches a pillar at the top of the pyramid. It increments the touch counter on its parent object and then deactivates.</description>
+    <tags>
+        <tag>INTERACTIVE</tag>
+        <tag>HELPER</tag>
+        <tag>PUZZLE</tag>
+        <tag>SUB_OBJECT</tag>
+    </tags>
+</behavior>

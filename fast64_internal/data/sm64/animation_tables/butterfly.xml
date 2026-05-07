@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<animation_table address="0x30056b0" name="Butterfly" size="2">
+    <names>
+        <name>Flying</name>
+        <name>Resting</name>
+    </names>
+</animation_table>

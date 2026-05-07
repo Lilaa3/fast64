@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Bobomb Buddy">
+    <geolayout>0xf0008f4</geolayout>
+    <group>common0</group>
+    <ids>
+        <id value="0xc3" name="MODEL_BOBOMB_BUDDY"/>
+    </ids>
+    <animation_tables>
+        <table>bobomb</table>
+    </animation_tables>
+</model>

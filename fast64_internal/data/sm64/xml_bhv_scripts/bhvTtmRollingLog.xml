@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003f40" readable_name="TTM Rolling Log">
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>MOVING</tag>
+        <tag>TTM</tag>
+    </tags>
+    <models>
+        <model>ttm_rolling_log</model>
+    </models>
+</behavior>

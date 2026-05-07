@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Mario">
+    <geolayout>0x17002dd4</geolayout>
+    <group>group0</group>
+    <ids>
+        <id value="0x1" name="MODEL_MARIO"/>
+    </ids>
+    <animation_tables>
+        <table>mario</table>
+    </animation_tables>
+</model>

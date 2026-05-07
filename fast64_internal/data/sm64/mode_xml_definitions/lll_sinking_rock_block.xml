@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="LLL Sinking Rock Block">
+    <geolayout>0xe000dd0</geolayout>
+    <level>LLL</level>
+    <ids>
+        <id value="0x37" name="MODEL_LLL_SINKING_ROCK_BLOCK"/>
+    </ids>
+    <collisions>
+        <collision name="lll_seg7_collision_floating_block" address="0x701d590"/>
+    </collisions>
+</model>

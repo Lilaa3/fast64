@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x130023ec" readable_name="JRB Afloating Ship Collision">
+    <description>JRB afloat ship act 2 and onwards's collision.</description>
+    <tags>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>SURFACE</tag>
+        <tag>MOVING</tag>
+    </tags>
+    <collisions>
+        <collision c_name="jrb_seg7_collision_in_sunken_ship_3" address="0x0700C92C"/>
+    </collisions>
+</behavior>

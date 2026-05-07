@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<model readable_name="Castle Door (0 Star)">
+    <geolayout>0x160007b4</geolayout>
+    <group>common1</group>
+    <ids>
+        <id value="0x22" name="MODEL_CASTLE_DOOR_0_STARS" level="common1"/>
+    </ids>
+    <animation_tables>
+        <table>door</table>
+    </animation_tables>
+    <collisions>
+        <collision name="door_seg3_collision_door"/>
+    </collisions>
+</model>

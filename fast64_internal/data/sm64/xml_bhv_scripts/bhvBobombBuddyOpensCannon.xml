@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003228" readable_name="Bob-omb Buddy Opens Cannon">
+    <description>A Bob-omb Buddy that opens the cannon.</description>
+    <tags>
+        <tag>NPC</tag>
+        <tag>FRIENDLY</tag>
+        <tag>DIALOGUE</tag>
+    </tags>
+    <models>
+        <model>bobomb_buddy</model>
+    </models>
+</behavior>

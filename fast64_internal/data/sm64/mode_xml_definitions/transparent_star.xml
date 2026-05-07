@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Transparent Star">
+    <geolayout>0x16000f6c</geolayout>
+    <group>common1</group>
+    <ids>
+        <id value="0x79" name="MODEL_TRANSPARENT_STAR"/>
+    </ids>
+</model>

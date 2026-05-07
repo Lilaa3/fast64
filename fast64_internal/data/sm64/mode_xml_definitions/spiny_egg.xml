@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Spiny Egg">
+    <geolayout>0xc000290</geolayout>
+    <group>group11</group>
+    <ids>
+        <id value="0x55" name="MODEL_SPINY_BALL"/>
+    </ids>
+    <animation_tables>
+        <table>spiny_egg</table>
+    </animation_tables>
+</model>

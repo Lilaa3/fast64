@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Ttm Yellow Smiley">
+    <geolayout>0xe000d4c</geolayout>
+    <level>TTM</level>
+    <ids>
+        <id value="0x38" name="MODEL_TTM_YELLOW_SMILEY"/>
+    </ids>
+</model>

@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<behavior name="0x130025c0" readable_name="Openable Cage Door">
+    <description>A cage door that opens when its parent openable grill is activated.</description>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>INTERACTIVE</tag>
+        <tag>SUB_OBJECT</tag>
+    </tags>
+    <fields>
+        <field name="Opening Direction" type="int" bparam="2" default="1">
+            <enums>
+                <enum value="1" name="Unflipped" c_name="OPENABLE_GRILL_DOOR_BP_SIDE_UNFLIPPED"/>
+                <enum value="-1" name="Flipped" c_name="OPENABLE_GRILL_DOOR_BP_SIDE_FLIPPED"/>
+            </enums>
+        </field>
+    </fields>
+</behavior>

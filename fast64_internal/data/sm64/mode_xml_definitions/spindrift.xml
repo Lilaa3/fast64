@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Spindrift">
+    <geolayout>0xc000000</geolayout>
+    <group>group7</group>
+    <ids>
+        <id value="0x54" name="MODEL_SPINDRIFT"/>
+    </ids>
+    <animation_tables>
+        <table>spindrift</table>
+    </animation_tables>
+</model>

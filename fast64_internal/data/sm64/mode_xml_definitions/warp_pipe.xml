@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Warp Pipe">
+    <geolayout>0x16000388</geolayout>
+    <group>common1</group>
+    <ids>
+        <id value="0x16" name="MODEL_CASTLE_GROUNDS_WARP_PIPE" level="common1"/>
+    </ids>
+</model>

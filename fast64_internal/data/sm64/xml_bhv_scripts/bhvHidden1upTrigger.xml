@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<behavior name="0x13004124" readable_name="Hidden 1-Up Mushroom Trigger">
+    <description>An invisible trigger that increments the o1UpHiddenTimesTriggered counter of the nearest Hidden 1 Up object when collided with by Mario, then deactivates itself.</description>
+    <tags>
+        <tag>INTERACTIVE</tag>
+    </tags>
+</behavior>

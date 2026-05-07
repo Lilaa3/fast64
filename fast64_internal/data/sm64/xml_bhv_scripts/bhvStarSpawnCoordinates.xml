@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003e64" readable_name="Star Spawn Coordinates">
+    <description>An object that handles the spawning of a Power Star with a cutscene.</description>
+    <tags>
+        <tag>COLLECTABLE</tag>
+        <tag>SPAWNER</tag>
+    </tags>
+    <fields>
+        <field name="Star ID" type="int" bparam="1" default="0">
+            <description>The ID of the star, used to determine if it should be transparent (already collected).</description>
+        </field>
+        <field name="Cutscene Type" type="int" bparam="2" default="0">
+            <enums>
+                <enum value="0" name="Default (Forced in BBH)" c_name="SPAWN_STAR_ARC_CUTSCENE_BP_DEFAULT_STAR"/> <!-- TODO Remove "Forced in bbh comment for hacker"-->
+                <enum value="1" name="Hidden/Red Coin" c_name="SPAWN_STAR_ARC_CUTSCENE_BP_HIDDEN_STAR"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>star</model>
+    </models>
+</behavior>

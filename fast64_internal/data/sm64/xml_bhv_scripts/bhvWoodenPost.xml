@@ -1,0 +1,16 @@
+<?xml version="1.0" ?>
+<behavior name="0x1300481c" readable_name="Wooden Post">
+    <description>Spawns with Chain-chomp. A poundable post that sinks when ground-pounded. If it has coins enabled, Mario can spawn coins by running around the post 3 times.</description>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>INTERACTIVE</tag>
+    </tags>
+    <fields>
+        <field name="Disable Coins" type="bool" bparam="3" default="False">
+            <enums/>
+        </field>
+    </fields>
+    <models>
+        <model>wooden_post</model>
+    </models>
+</behavior>

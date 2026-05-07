@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<behavior name="0x13000398" readable_name="Small Water Wave Helper">
+    <description>A helper behavior script used by the Small Water Wave to update its animation and position, creating a slight random drifting effect.</description>
+    <tags>
+        <tag>PARTICLE</tag>
+        <tag>WATER</tag>
+    </tags>
+</behavior>

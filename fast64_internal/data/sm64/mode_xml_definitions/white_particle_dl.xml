@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="White Particle (DL)">
+    <displaylist address="0x302c8a0">white_particle_dl</displaylist>
+    <group>common1</group>
+    <ids>
+        <id value="0x9e" name="MODEL_WHITE_PARTICLE_DL"/>
+    </ids>
+</model>

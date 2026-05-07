@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<animation_table address="0x5015784" name="Ukiki">
+    <names>
+        <name>Run</name>
+        <name>Walk (Unused)</name>
+        <name>Apose (Unused)</name>
+        <name>Death (Unused)</name>
+        <name>Screech</name>
+        <name>Jump Clap</name>
+        <name>Hop (Unused)</name>
+        <name>Land</name>
+        <name>Jump</name>
+        <name>Itch</name>
+        <name>Handstand</name>
+        <name>Turn</name>
+        <name>Held</name>
+    </names>
+</animation_table>

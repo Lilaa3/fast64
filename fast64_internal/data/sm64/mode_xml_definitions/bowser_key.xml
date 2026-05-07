@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Bowser Key">
+    <geolayout>0x16000a84</geolayout>
+    <group>common1</group>
+    <ids>
+        <id value="0xcc" name="MODEL_BOWSER_KEY"/>
+    </ids>
+    <animation_tables>
+        <table>bowser_key</table>
+    </animation_tables>
+</model>

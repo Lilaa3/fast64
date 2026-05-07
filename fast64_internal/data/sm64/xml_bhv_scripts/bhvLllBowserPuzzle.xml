@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002068" readable_name="LLL Bowser Puzzle Manager">
+    <description>Manages the Bowser puzzle in LLL. Spawns 14 puzzle pieces of width 512, relative, and awards coins. The interacitons with Mario are communicated from the pieces by setting oBowserPuzzleCompletionFlags.</description>
+    <tags>
+        <tag>PUZZLE</tag>
+        <tag>MANAGER</tag>
+        <tag>SPAWNER</tag>
+        <tag>LLL</tag>
+    </tags>
+</behavior>

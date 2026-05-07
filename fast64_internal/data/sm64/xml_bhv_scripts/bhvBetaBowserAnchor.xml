@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x130029b4" readable_name="Beta Bowser Anchor">
+    <description>A beta object that stays in front of Mario and attacks other objects.</description>
+    <tags>
+        <tag>BOSS</tag>
+        <tag>ENEMY</tag>
+        <tag>HELPER</tag>
+    </tags>
+</behavior>

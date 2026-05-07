@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Butterfly">
+    <geolayout>0x160000a8</geolayout>
+    <group>common1</group>
+    <ids>
+        <id value="0xbb" name="MODEL_BUTTERFLY"/>
+    </ids>
+    <animation_tables>
+        <table>butterfly</table>
+    </animation_tables>
+</model>

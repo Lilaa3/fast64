@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<behavior name="0x130014bc" readable_name="Hidden Object">
+    <description>A box that remains hidden and intangible until the nearest bhvFloorSwitchHiddenObjects enter the PURPLE_SWITCH_ACT_TICKING state. Depending on the type, it either executes hidden_breakable_box_actions or hidden_unbreakable_box_actions. Unbreakable variants disappear after 400 frames (360 wait + 40 blink).</description>
+    <tags>
+        <tag>INTERACTIVE</tag>
+        <tag>SURFACE</tag>
+        <tag>PUZZLE</tag>
+    </tags>
+    <fields>
+        <field name="Box Type" type="int" bparam="2" default="0">
+            <enums>
+                <enum value="0" name="Breakable">
+                    <description>Forces the breakable box model.</description> <!-- TODO in hacker please unhard code that -->
+                </enum>
+                <enum value="1" name="Unbreakable">
+                    <description>Forces the wdw hidden plataform collision.</description>
+                </enum>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>breakable_box</model>
+        <model>wdw_hidden_platform</model>
+    </models>
+</behavior>

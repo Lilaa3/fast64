@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x130036c8" readable_name="Small Chill Bully">
+    <description>Equivilent to a small bully, but with BULLY_STYPE_CHILL subtype.</description>
+    <tags>
+        <tag>SL</tag>
+        <tag>COLD</tag>
+        <tag>ENEMY</tag>
+    </tags>
+</behavior>

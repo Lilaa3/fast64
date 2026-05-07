@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Unknown Door 2a">
+    <geolayout>referenced</geolayout>
+    <groups/>
+    <ids>
+        <id value="0x2a" name="MODEL_UNKNOWN_DOOR_2A" group="UNKNOWN"/>
+    </ids>
+</model>

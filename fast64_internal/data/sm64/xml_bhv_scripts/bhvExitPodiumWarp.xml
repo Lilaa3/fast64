@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<behavior name="0x13000720" readable_name="Exit Podium Warp">
+    <comment>TODO Document better</comment>
+    <tags>
+        <tag>SPAWN_WARP</tag>
+        <tag>SURFACE</tag>
+        <tag>TTM</tag>
+    </tags>
+    <fields>
+        <field name="Warp ID" type="int" bparam="2"/>
+    </fields>
+    <models>
+        <model>ttm_slide_exit_podium</model>
+    </models>
+</behavior>

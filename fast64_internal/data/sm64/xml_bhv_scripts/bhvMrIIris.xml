@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<behavior name="bhvMrIIris" readable_name="Mr. I Iris">
+    <description>It follows the body's position and scale, and blinks when the body does.</description>
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>SUB_OBJECT</tag>
+    </tags>
+</behavior>

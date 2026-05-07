@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x130028fc" readable_name="Haunted Bookshelf">
+    <description>Plays a sound when triggered by bhvHauntedBookshelfManager, no parent. Not spawned by Haunted Bookshelf Manager.</description>
+    <tags>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>SURFACE</tag>
+        <tag>BBH</tag>
+    </tags>
+    <models>
+        <model>bbh_moving_bookshelf</model>
+    </models>
+</behavior>

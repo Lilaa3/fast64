@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<animation_table address="0x500616c" name="Blargg">
+    <names>
+        <name>Idle</name>
+        <name>Bite</name>
+    </names>
+</animation_table>

@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<behavior name="0x130025e0" readable_name="Openable Grill">
+    <description>A grill that spawns two cage doors and opens when a corresponding floor switch is activated. Depending on its parameter, it may play a puzzle-solving jingle upon opening.</description>
+    <tags>
+        <tag>DOOR</tag>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>INTERACTIVE</tag>
+    </tags>
+    <fields>
+        <field name="Grill Type" type="int" bparam="2" default="0">
+            <description>Index into gOpenableGrills. If non-zero, the puzzle jingle plays upon opening.</description>
+            <enums>
+                <enum value="0" name="BOB's Bars Grill" c_name="OPENABLE_GRILL_BP_BOB"/>
+                <enum value="1" name="HMC Red Grill" c_name="OPENABLE_GRILL_BP_HMC"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>bob_bars_grills</model>
+        <model>hmc_red_grills</model>
+    </models>
+</behavior>

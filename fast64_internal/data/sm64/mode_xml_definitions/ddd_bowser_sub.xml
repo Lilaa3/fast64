@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Ddd Bowser Sub">
+    <geolayout>0xe0004a0</geolayout>
+    <level>DDD</level>
+    <ids>
+        <id value="0x37" name="MODEL_DDD_BOWSER_SUB"/>
+    </ids>
+    <collisions>
+        <collision name="ddd_seg7_collision_submarine" address="0x700f17c"/>
+    </collisions>
+</model>

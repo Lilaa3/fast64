@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x1300091c" readable_name="Yellow Coin">
+    <tags>
+        <tag>COLLECTABLE</tag>
+    </tags>
+    <models>
+        <model>unknown_7d</model>
+        <model>yellow_coin</model>
+    </models>
+</behavior>

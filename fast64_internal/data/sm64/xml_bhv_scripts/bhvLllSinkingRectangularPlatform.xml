@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001e94" readable_name="LLL Sinking Checkerboard Rectangular Platform">
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>MOVING</tag>
+        <tag>LLL</tag>
+    </tags>
+    <models>
+        <model>lll_sinking_rectangular_platform</model>
+    </models>
+</behavior>

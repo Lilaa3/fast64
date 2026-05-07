@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<animation_table address="0x5016eac" name="Spiny">
+    <names>
+        <name>Walk</name>
+    </names>
+</animation_table>

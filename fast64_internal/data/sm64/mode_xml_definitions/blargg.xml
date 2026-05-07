@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Blargg">
+    <geolayout>0xc000240</geolayout>
+    <group>group2</group>
+    <ids>
+        <id value="0x54" name="MODEL_BLARGG"/>
+    </ids>
+    <animation_tables>
+        <table>blargg</table>
+    </animation_tables>
+</model>

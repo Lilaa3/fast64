@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Bubbly Tree">
+    <geolayout>0x16000fe8</geolayout>
+    <group>common1</group>
+    <ids>
+        <id value="0x17" name="MODEL_THI_BUBBLY_TREE" level="common1"/>
+    </ids>
+</model>

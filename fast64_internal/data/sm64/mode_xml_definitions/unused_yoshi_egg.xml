@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="(Unused) Yoshi Egg">
+    <geolayout>0xc0001e4</geolayout>
+    <group>group1</group>
+    <ids>
+        <id value="0x57" name="MODEL_YOSHI_EGG"/>
+    </ids>
+</model>

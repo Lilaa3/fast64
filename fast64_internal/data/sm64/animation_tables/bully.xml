@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<animation_table address="0x500470c" name="Bully">
+    <names>
+        <name>Patrol</name>
+        <name>Chase</name>
+        <name>Falling over (Unused)</name>
+        <name>Knockback</name>
+    </names>
+</animation_table>

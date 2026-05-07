@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Wdw Arrow Lift">
+    <geolayout>0xe000598</geolayout>
+    <level>WDW</level>
+    <ids>
+        <id value="0x37" name="MODEL_WDW_ARROW_LIFT"/>
+    </ids>
+    <collisions>
+        <collision name="wdw_seg7_collision_arrow_lift" address="0x7018444"/>
+    </collisions>
+</model>

@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13000abc" readable_name="Punch Tiny Triangle">
+    <description>A small triangle particle that spawns during a punch attack. Spawned by Triangle Particle Spawnersss</description>
+    <tags>
+        <tag>PARTICLE</tag>
+        <tag>SUB_OBJECT</tag>
+    </tags>
+    <models>
+        <model>dirt</model>
+    </models>
+</behavior>
+sssssssssssssssssssssssssss

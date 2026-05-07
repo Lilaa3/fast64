@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<animation_table address="0x301c2b0" name="Blue Fish">
+    <names>
+        <name>Swimming</name>
+        <name>Diving</name>
+    </names>
+</animation_table>

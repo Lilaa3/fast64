@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x130000f8" readable_name="Purple Particle">
+    <description>Commonly used for Piranha Plant and Mr I.</description>
+    <tags>
+        <tag>PARTICLE</tag>
+        <tag>SUB_OBJECT</tag>
+    </tags>
+    <models>
+        <model>bubble_marble</model>
+    </models>
+</behavior>

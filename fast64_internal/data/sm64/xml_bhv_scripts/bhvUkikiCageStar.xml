@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13000f2c" readable_name="Ukiki Cage Star">
+    <description>Mimics the cage's position and params when is hidden (parent object->action == UKIKI_CAGE_ACT_HIDE), once unhidden it spawns a normal star.</description>
+    <tags>
+        <tag>COLLECTABLE</tag>
+    </tags>
+    <models>
+        <model>star</model>
+    </models>
+</behavior>

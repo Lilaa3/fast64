@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<animation_table address="0x8004034" name="Amp" ignore_bone_count="true">
+    <names>
+        <name>Moving</name>
+    </names>
+</animation_table>

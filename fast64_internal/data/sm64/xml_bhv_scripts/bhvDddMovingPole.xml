@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001000" readable_name="Moving Pole">
+    <description>Pole that syncs position and angle with its bhvBitfsSinkingCagePlatform parent.</description>
+    <tags>
+        <tag>POLE</tag>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>BITFS</tag>
+    </tags>
+</behavior>

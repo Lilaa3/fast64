@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Ukiki">
+    <geolayout>0xc000110</geolayout>
+    <group>group6</group>
+    <ids>
+        <id value="0x56" name="MODEL_UKIKI"/>
+    </ids>
+    <animation_tables>
+        <table>ukiki</table>
+    </animation_tables>
+</model>

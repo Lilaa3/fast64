@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x130012b4" readable_name="Spindrift">
+    <tags>
+        <tag>ENEMY</tag>
+    </tags>
+    <models>
+        <model>spindrift</model>
+    </models>
+</behavior>

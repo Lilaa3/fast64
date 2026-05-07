@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<behavior name="0x130049ac" readable_name="Cloud Part">
+    <description>Component of a cloud. Positions itself relative to and is spawned by the parent cloud manager.</description>
+    <tags>
+        <tag>PART</tag>
+        <tag>ENVIRONMENTAL</tag>
+    </tags>
+    <fields>
+        <field name="Part Index" type="int" bparam="2" default="0"/>
+    </fields>
+    <models>
+        <model>fwoosh</model>
+        <model>mist</model>
+    </models>
+</behavior>

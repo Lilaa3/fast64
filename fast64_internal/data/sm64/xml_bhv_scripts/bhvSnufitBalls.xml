@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x1300521c" readable_name="Snufit Balls">
+    <description>Despawns if mario is an different room.</description>
+    <tags>
+        <tag>PROJECTILE</tag>
+        <tag>ENEMY</tag>
+    </tags>
+    <models>
+        <model>bowling_ball</model>
+    </models>
+</behavior>

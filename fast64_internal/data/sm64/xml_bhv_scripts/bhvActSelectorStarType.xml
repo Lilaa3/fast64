@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x1300302c" readable_name="Act Selector Star Type">
+    <description>Individual star in the act selector menu. Handles selection animation.</description>
+    <tags>
+        <tag>UI</tag>
+    </tags>
+    <models>
+        <model>star</model>
+    </models>
+</behavior>

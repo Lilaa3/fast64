@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<behavior name="0x13000b0c" readable_name="Door">
+    <tags>
+        <tag>DOOR</tag>
+        <tag>INTERACTIVE</tag>
+        <tag>SURFACE</tag>
+    </tags>
+    <fields>
+        <field name="Star Requirement" type="int" bparam="3" default="0"/>
+    </fields>
+    <models>
+        <model>castle_door</model>
+        <model>castle_door_0_star</model>
+        <model>castle_door_1_star</model>
+        <model>castle_door_3_star</model>
+        <model>hazy_maze_door</model>
+        <model>key_door</model>
+        <model>metal_door</model>
+        <model>unknown_door_1e</model>
+        <model>unknown_door_21</model>
+        <model>wooden_door</model>
+    </models>
+</behavior>

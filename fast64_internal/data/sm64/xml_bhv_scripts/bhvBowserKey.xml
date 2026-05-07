@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<behavior name="0x130016e4" readable_name="Bowser Key">
+    <tags>
+        <tag>COLLECTABLE</tag>
+        <tag>BOWSER</tag>
+    </tags>
+    <field name="Star Index" type="int" bparam="2" default="0">
+        <description>Index of the star. Always 0 for keys</description>
+    </field>
+    <models>
+        <model>bowser_key</model>
+    </models>
+</behavior>

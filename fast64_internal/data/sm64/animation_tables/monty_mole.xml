@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<animation_table address="0x5007248" name="Monty Mole">
+    <names>
+        <name>Jump Into Hole</name>
+        <name>Rise</name>
+        <name>Get Rock</name>
+        <name>Begin Jump Into Hole</name>
+        <name>Jump Out Of Hole Down</name>
+        <name>Unused 5</name>
+        <name>Unused 6</name>
+        <name>Unused 7</name>
+        <name>Throw Rock</name>
+        <name>Jump Out Of Hole Up</name>
+    </names>
+</animation_table>

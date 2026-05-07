@@ -1,0 +1,214 @@
+<?xml version="1.0" ?>
+<animation_table address="0x4ec000" name="Mario" dma="true" directory="assets/anims">
+    <names>
+        <name>Slow ledge climb up</name>
+        <name>Fall over backwards</name>
+        <name>Backward air kb</name>
+        <name>Dying on back</name>
+        <name>Backflip</name>
+        <name>Climbing up pole</name>
+        <name>Grab pole short</name>
+        <name>Grab pole swing part 1</name>
+        <name>Grab pole swing part 2</name>
+        <name>Handstand idle</name>
+        <name>Handstand jump</name>
+        <name>Start handstand</name>
+        <name>Return from handstand</name>
+        <name>Idle on pole</name>
+        <name>A pose</name>
+        <name>Skid on ground</name>
+        <name>Stop skid</name>
+        <name>Crouch from fast longjump</name>
+        <name>Crouch from a slow longjump</name>
+        <name>Fast longjump</name>
+        <name>Slow longjump</name>
+        <name>Airborne on stomach</name>
+        <name>Walk with light object</name>
+        <name>Run with light object</name>
+        <name>Slow walk with light object</name>
+        <name>Shivering and warming hands</name>
+        <name>Shivering return to idle </name>
+        <name>Shivering</name>
+        <name>Climb down on ledge</name>
+        <name>Waving (Credits)</name>
+        <name>Look up (Credits)</name>
+        <name>Return from look up (Credits)</name>
+        <name>Raising hand (Credits)</name>
+        <name>Lowering hand (Credits)</name>
+        <name>Taking off cap (Credits)</name>
+        <name>Start walking and look up (Credits)</name>
+        <name>Look back then run (Credits)</name>
+        <name>Final Bowser - Raise hand and spin</name>
+        <name>Final Bowser - Wing cap take off</name>
+        <name>Peach sign (Credits)</name>
+        <name>Stand up from lava boost</name>
+        <name>Fire/Lava burn</name>
+        <name>Wing cap flying</name>
+        <name>Hang on owl</name>
+        <name>Land on stomach</name>
+        <name>Air forward kb</name>
+        <name>Dying on stomach</name>
+        <name>Suffocating</name>
+        <name>Coughing</name>
+        <name>Throw catch key</name>
+        <name>Dying fall over</name>
+        <name>Idle on ledge</name>
+        <name>Fast ledge grab</name>
+        <name>Hang on ceiling</name>
+        <name>Put cap on</name>
+        <name>Take cap off then on</name>
+        <name>Quickly put cap on</name>
+        <name>Head stuck in ground</name>
+        <name>Ground pound landing</name>
+        <name>Triple jump ground-pound</name>
+        <name>Start ground-pound</name>
+        <name>Ground-pound</name>
+        <name>Bottom stuck in ground</name>
+        <name>Idle with light object</name>
+        <name>Jump land with light object</name>
+        <name>Jump with light object</name>
+        <name>Fall land with light object</name>
+        <name>Fall with light object</name>
+        <name>Fall from sliding with light object</name>
+        <name>Sliding on bottom with light object</name>
+        <name>Stand up from sliding with light object</name>
+        <name>Riding shell</name>
+        <name>Walking</name>
+        <name>Forward flip</name>
+        <name>Jump riding shell</name>
+        <name>Land from double jump</name>
+        <name>Double jump fall</name>
+        <name>Single jump</name>
+        <name>Land from single jump</name>
+        <name>Air kick</name>
+        <name>Double jump rise</name>
+        <name>Start forward spinning</name>
+        <name>Throw light object</name>
+        <name>Fall from slide kick</name>
+        <name>Bend kness riding shell</name>
+        <name>Legs stuck in ground</name>
+        <name>General fall</name>
+        <name>General land</name>
+        <name>Being grabbed</name>
+        <name>Grab heavy object</name>
+        <name>Slow land from dive</name>
+        <name>Fly from cannon</name>
+        <name>Moving right while hanging</name>
+        <name>Moving left while hanging</name>
+        <name>Missing cap</name>
+        <name>Pull door walk in</name>
+        <name>Push door walk in</name>
+        <name>Unlock door</name>
+        <name>Start reach pocket</name>
+        <name>Reach pocket</name>
+        <name>Stop reach pocket</name>
+        <name>Ground throw</name>
+        <name>Ground kick</name>
+        <name>First punch</name>
+        <name>Second punch</name>
+        <name>First punch fast</name>
+        <name>Second punch fast</name>
+        <name>Pick up light object</name>
+        <name>Pushing</name>
+        <name>Start riding shell</name>
+        <name>Place light object</name>
+        <name>Forward spinning</name>
+        <name>Backward spinning</name>
+        <name>Breakdance</name>
+        <name>Running</name>
+        <name>Running (unused)</name>
+        <name>Soft back kb</name>
+        <name>Soft front kb</name>
+        <name>Dying in quicksand</name>
+        <name>Idle in quicksand</name>
+        <name>Move in quicksand</name>
+        <name>Electrocution</name>
+        <name>Shocked</name>
+        <name>Backward kb</name>
+        <name>Forward kb</name>
+        <name>Idle heavy object</name>
+        <name>Stand against wall</name>
+        <name>Side step left</name>
+        <name>Side step right</name>
+        <name>Start sleep idle</name>
+        <name>Start sleep scratch</name>
+        <name>Start sleep yawn</name>
+        <name>Start sleep sitting</name>
+        <name>Sleep idle</name>
+        <name>Sleep start laying</name>
+        <name>Sleep laying</name>
+        <name>Dive</name>
+        <name>Slide dive</name>
+        <name>Ground bonk</name>
+        <name>Stop slide light object</name>
+        <name>Slide kick</name>
+        <name>Crouch from slide kick</name>
+        <name>Slide motionless</name>
+        <name>Stop slide</name>
+        <name>Fall from slide</name>
+        <name>Slide</name>
+        <name>Tiptoe</name>
+        <name>Twirl land</name>
+        <name>Twirl</name>
+        <name>Start twirl</name>
+        <name>Stop crouching</name>
+        <name>Start crouching</name>
+        <name>Crouching</name>
+        <name>Crawling</name>
+        <name>Stop crawling</name>
+        <name>Start crawling</name>
+        <name>Summon star</name>
+        <name>Return star approach door</name>
+        <name>Backwards water kb</name>
+        <name>Swim with object part 1</name>
+        <name>Swim with object part 2</name>
+        <name>Flutter kick with object</name>
+        <name>Action end with object in water</name>
+        <name>Stop holding object in water</name>
+        <name>Holding object in water</name>
+        <name>Drowning part 1</name>
+        <name>Drowning part 2</name>
+        <name>Dying in water</name>
+        <name>Forward kb in water</name>
+        <name>Falling from water</name>
+        <name>Swimming part 1</name>
+        <name>Swimming part 2</name>
+        <name>Flutter kick</name>
+        <name>Action end in water</name>
+        <name>Pick up object in water</name>
+        <name>Grab object in water part 2</name>
+        <name>Grab object in water part 1</name>
+        <name>Throw object in water</name>
+        <name>Idle in water</name>
+        <name>Star dance in water</name>
+        <name>Return from in water star dance</name>
+        <name>Grab bowser</name>
+        <name>Swing bowser</name>
+        <name>Release bowser</name>
+        <name>Holding bowser</name>
+        <name>Heavy throw</name>
+        <name>Walk panting</name>
+        <name>Walk with heavy object</name>
+        <name>Turning part 1</name>
+        <name>Turning part 2</name>
+        <name>Side flip land</name>
+        <name>Side flip</name>
+        <name>Triple jump land</name>
+        <name>Triple jump</name>
+        <name>First person</name>
+        <name>Idle head left</name>
+        <name>Idle head right</name>
+        <name>Idle head center</name>
+        <name>Handstand left</name>
+        <name>Handstand right</name>
+        <name>Wake up from sleeping</name>
+        <name>Wake up from laying</name>
+        <name>Start tiptoeing</name>
+        <name>Slide jump</name>
+        <name>Start wallkick</name>
+        <name>Star dance</name>
+        <name>Return from star dance</name>
+        <name>Forwards spinning flip</name>
+        <name>Triple jump fly</name>
+    </names>
+</animation_table>

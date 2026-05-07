@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Smoke">
+    <geolayout>0x17000038</geolayout>
+    <group>group0</group>
+    <ids>
+        <id value="0x96" name="MODEL_SMOKE"/>
+    </ids>
+</model>

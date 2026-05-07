@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x1300362c" readable_name="Bully">
+    <description>A small version of the Bully enemy. It patrols its area and chases Mario if he gets close, and can be knocked back by jumping on it.</description>
+    <tags>
+        <tag>ENEMY</tag>
+    </tags>
+    <models>
+        <model>bully</model>
+        <model>bully_boss</model> <!-- From an unused macro -->
+    </models>
+</behavior>

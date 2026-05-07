@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Wdw Rectangular Floating Platform">
+    <geolayout>0xe000628</geolayout>
+    <level>WDW</level>
+    <ids>
+        <id value="0x3b" name="MODEL_WDW_RECTANGULAR_FLOATING_PLATFORM"/>
+    </ids>
+    <collisions>
+        <collision name="wdw_seg7_collision_rect_floating_platform" address="0x7018630"/>
+    </collisions>
+</model>

@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002634" readable_name="Tweester Sand Particle">
+    <tags>
+        <tag>PARTICLE</tag>
+        <tag>ENEMY</tag>
+    </tags>
+    <models>
+        <model>sand</model>
+    </models>
+</behavior>

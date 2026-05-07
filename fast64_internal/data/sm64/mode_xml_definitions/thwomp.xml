@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<model readable_name="Thwomp">
+    <geolayout>0xc000248</geolayout>
+    <group>group1</group>
+    <ids>
+        <id value="0x58" name="MODEL_THWOMP"/>
+    </ids>
+    <collisions>
+        <collision c_name="thwomp_seg5_collision_0500B7D0" address="0x500b7d0"/>
+        <collision c_name="thwomp_seg5_collision_0500B92C" address="0x0500B92C"/>
+    </collisions>
+</model>

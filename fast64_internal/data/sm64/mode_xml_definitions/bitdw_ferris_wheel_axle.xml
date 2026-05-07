@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Bitdw Ferris Wheel Axle">
+    <geolayout>0xe000570</geolayout>
+    <level>BITDW</level>
+    <ids>
+        <id value="0x39" name="MODEL_BITDW_FERRIS_WHEEL_AXLE"/>
+    </ids>
+    <collisions>
+        <collision c_name="bitdw_seg7_collision_0700F898" address="0x0700F898"/>
+    </collisions>
+</model>

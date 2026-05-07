@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="bhvCoinSparklesSpawner" readable_name="Coin Sparkles Spawner">
+    <description>Spawns bhvCoinSparkles</description>
+    <tags>
+        <tag>SPAWNER</tag>
+        <tag>PARTICLE</tag>
+        <tag>COLLECTIBLE</tag>
+    </tags>
+    <models>
+        <model>sparkle</model>
+    </models>
+</behavior>

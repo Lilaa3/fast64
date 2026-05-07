@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<animation_table address="0x6005e5c" name="Moneybag">
+    <names>
+        <name>Idle</name>
+        <name>Prepare</name>
+        <name>Jump</name>
+        <name>Land</name>
+        <name>Walk</name>
+    </names>
+</animation_table>

@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x130005d8" readable_name="WF Tower">
+    <description>A static tower surface object with fixed collision data.</description>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>WF</tag>
+    </tags>
+    <models>
+        <model>wf_tower</model>
+    </models>
+</behavior>

@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x1300179c" readable_name="Bullet Bill">
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>PROJECTILE</tag>
+        <tag>WF</tag>
+    </tags>
+    <models>
+        <model>bullet_bill</model>
+    </models>
+</behavior>

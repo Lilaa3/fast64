@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Heave-Ho">
+    <geolayout>0xc00028c</geolayout>
+    <group>group1</group>
+    <ids>
+        <id value="0x59" name="MODEL_HEAVE_HO"/>
+    </ids>
+    <animation_tables>
+        <table>heave_ho</table>
+    </animation_tables>
+</model>

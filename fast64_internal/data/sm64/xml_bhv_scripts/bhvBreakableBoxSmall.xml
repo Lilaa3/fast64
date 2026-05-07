@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13004218" readable_name="Small Breakable Box">
+    <tags>
+        <tag>HOLDABLE</tag>
+        <tag>INTERACTIVE</tag>
+        <tag>SURFACE</tag>
+    </tags>
+    <models>
+        <model>breakable_box</model>
+    </models>
+</behavior>

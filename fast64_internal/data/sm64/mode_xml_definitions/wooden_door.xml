@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Wooden Door">
+    <geolayout>0x160004d0</geolayout>
+    <group>common1</group>
+    <ids>
+        <id value="0x27" name="MODEL_COURTYARD_WOODEN_DOOR" level="common1"/>
+    </ids>
+    <animation_tables>
+        <table>door</table>
+    </animation_tables>
+</model>

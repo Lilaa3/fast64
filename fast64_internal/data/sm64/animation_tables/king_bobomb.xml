@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<animation_table address="0x500fe30" name="King Bobomb" size="12">
+    <names>
+        <name>Grab Mario</name>
+        <name>Holding Mario</name>
+        <name>Hit Ground</name>
+        <name>Unkwnown (Unused)</name>
+        <name>Stomp</name>
+        <name>Idle</name>
+        <name>Being Held</name>
+        <name>Landing</name>
+        <name>Jump</name>
+        <name>Throw Mario</name>
+        <name>Stand Up</name>
+        <name>Walking</name>
+    </names>
+</animation_table>

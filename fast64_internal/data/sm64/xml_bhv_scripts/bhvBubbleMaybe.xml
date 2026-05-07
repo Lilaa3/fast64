@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x130002e4" readable_name="Bubble">
+    <tags>
+        <tag>PARTICLE</tag>
+        <tag>WATER</tag>
+    </tags>
+    <models>
+        <model>bubble</model>
+    </models>
+</behavior>

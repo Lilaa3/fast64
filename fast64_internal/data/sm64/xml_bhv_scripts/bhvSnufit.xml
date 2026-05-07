@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<behavior name="0x130051e0" readable_name="Snufit">
+    <tags>
+        <tag>ENEMY</tag>
+    </tags>
+    <models>
+        <model>snufit</model>
+    </models>
+</behavior>

@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002038" readable_name="LLL Bowser Puzzle Piece">
+    <description>Follows a sequence of predefined actions and informs the parent puzzle manager when Mario is on it via and when its sequence is complete via oBowserPuzzleCompletionFlags.</description>
+    <tags>
+        <tag>PUZZLE</tag>
+        <tag>SURFACE</tag>
+        <tag>LLL</tag>
+        <tag>SUB_OBJECT</tag>
+    </tags>
+    <collisions>
+        <collision c_name="lll_seg7_collision_puzzle_piece" address="0x0701D560"/>
+    </collisions>
+    <models>
+        <model>lll_bowser_piece_1</model>
+        <model>lll_bowser_piece_2</model>
+        <model>lll_bowser_piece_3</model>
+        <model>lll_bowser_piece_4</model>
+        <model>lll_bowser_piece_5</model>
+        <model>lll_bowser_piece_6</model>
+        <model>lll_bowser_piece_7</model>
+        <model>lll_bowser_piece_8</model>
+        <model>lll_bowser_piece_9</model>
+        <model>lll_bowser_piece_10</model>
+        <model>lll_bowser_piece_11</model>
+        <model>lll_bowser_piece_12</model>
+        <model>lll_bowser_piece_13</model>
+        <model>lll_bowser_piece_14</model>
+    </models>
+</behavior>

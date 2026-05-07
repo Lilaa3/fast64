@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003df8" readable_name="Normal Cap">
+    <description>Spawned at it's last static position from the save file along with Mario.</description>
+    <tags>
+        <tag>CAP</tag>
+        <tag>COLLECTABLE</tag>
+    </tags>
+    <models>
+        <model>mario_s_cap</model>
+    </models>
+</behavior>

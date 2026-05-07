@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Fwoosh">
+    <geolayout>0xc00036c</geolayout>
+    <group>group6</group>
+    <ids>
+        <id value="0x57" name="MODEL_FWOOSH"/>
+    </ids>
+</model>

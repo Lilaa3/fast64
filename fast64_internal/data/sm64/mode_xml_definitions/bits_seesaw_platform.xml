@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Bits Seesaw Platform">
+    <geolayout>0xe000670</geolayout>
+    <level>BITS</level>
+    <ids>
+        <id value="0x3f" name="MODEL_BITS_SEESAW_PLATFORM"/>
+    </ids>
+</model>

@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Monty Mole">
+    <geolayout>0xc000000</geolayout>
+    <group>group6</group>
+    <ids>
+        <id value="0x55" name="MODEL_MONTY_MOLE"/>
+    </ids>
+    <animation_tables>
+        <table>monty_mole</table>
+    </animation_tables>
+</model>

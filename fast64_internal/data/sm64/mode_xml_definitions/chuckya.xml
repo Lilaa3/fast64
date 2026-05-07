@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Chuckya">
+    <geolayout>0xf0001d8</geolayout>
+    <group>common0</group>
+    <ids>
+        <id value="0xdf" name="MODEL_CHUCKYA"/>
+    </ids>
+    <animation_tables>
+        <table>chuckya</table>
+    </animation_tables>
+</model>

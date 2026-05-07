@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x130013dc" readable_name="Another Tilting Platform">
+    <description>A platform that tilts towards Mario when he stands on it.</description>
+    <tags>
+        <tag>UNUSED</tag>
+        <tag>MOVING</tag>
+    </tags>
+    <models>
+        <model>bitdw_sliding_platform</model>
+    </models>
+</behavior>

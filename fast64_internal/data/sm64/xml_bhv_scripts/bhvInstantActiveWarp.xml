@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<behavior name="0x13002f60" readable_name="Instant Active Warp">
+    <description>A warp point that triggers an instant warp.</description>
+    <tags>
+        <tag>WARP</tag>
+    </tags>
+    <field name="Warp ID" type="int" bparam="2" default="0"/>
+</behavior>

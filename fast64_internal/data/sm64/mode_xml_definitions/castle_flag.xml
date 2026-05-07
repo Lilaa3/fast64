@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Castle Flag">
+    <geolayout>0xe000660</geolayout>
+    <level>CG</level>
+    <ids>
+        <id value="0x37" name="MODEL_CASTLE_GROUNDS_FLAG"/>
+    </ids>
+    <animation_tables>
+        <table>castle_flag</table>
+    </animation_tables>
+</model>

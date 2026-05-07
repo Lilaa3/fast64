@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x130009e0" readable_name="Coin Sparkles">
+    <tags>
+        <tag>PARTICLE</tag>
+        <tag>COLLECTIBLE</tag>
+    </tags>
+    <models>
+        <model>sparkle</model>
+    </models>
+</behavior>

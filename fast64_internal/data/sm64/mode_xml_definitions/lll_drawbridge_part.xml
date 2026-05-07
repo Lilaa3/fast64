@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Lll Drawbridge Part">
+    <geolayout>0xe000b20</geolayout>
+    <level>LLL</level>
+    <ids>
+        <id value="0x38" name="MODEL_LLL_DRAWBRIDGE_PART"/>
+    </ids>
+    <collisions>
+        <collision name="lll_seg7_collision_drawbridge" address="0x701d108"/>
+    </collisions>
+</model>

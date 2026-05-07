@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Burn Smoke Unused">
+    <geolayout>burn_smoke_geo</geolayout>
+    <groups/>
+    <ids>
+        <id value="0x9c" name="MODEL_BURN_SMOKE_UNUSED" group="UNKNOWN"/>
+    </ids>
+</model>

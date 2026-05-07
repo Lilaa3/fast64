@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Blue Coin Switch">
+    <geolayout>0xf000000</geolayout>
+    <group>common0</group>
+    <ids>
+        <id value="0x8c" name="MODEL_BLUE_COIN_SWITCH"/>
+    </ids>
+    <collisions>
+        <collision name="blue_coin_switch_seg8_collision_08000E98" c_name="blue_coin_switch_seg8_collision_08000E98"/>
+    </collisions>
+</model>

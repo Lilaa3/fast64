@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<animation_table address="0x600f638" name="Dorrie" size="3">
+    <names>
+        <name>Idle</name>
+        <name>Moving</name>
+        <name>Lower and Raise Head</name>
+    </names>
+</animation_table>

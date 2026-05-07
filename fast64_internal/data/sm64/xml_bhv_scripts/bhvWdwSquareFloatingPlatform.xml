@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13004284" readable_name="WDW Square Floating Platform">
+    <description>A surface platform that floats on water or stays on the floor.</description>
+    <tags>
+        <tag>SURFACE</tag>
+        <tag>PLATFORM</tag>
+        <tag>WDW</tag>
+    </tags>
+    <models>
+        <model>wdw_square_floating_platform</model>
+    </models>
+</behavior>

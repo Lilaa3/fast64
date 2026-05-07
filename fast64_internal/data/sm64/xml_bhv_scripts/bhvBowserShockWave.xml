@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x130011d0" readable_name="Bowser Shockwave">
+    <tags>
+        <tag>HURT</tag>
+        <tag>BOWSER</tag>
+    </tags>
+    <models>
+        <model>bowser_impact_ring</model>
+    </models>
+</behavior>

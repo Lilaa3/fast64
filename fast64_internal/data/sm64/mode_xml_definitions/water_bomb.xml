@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Water Bomb">
+    <geolayout>0xc000308</geolayout>
+    <group>group3</group>
+    <ids>
+        <id value="0x54" name="MODEL_WATER_BOMB"/>
+    </ids>
+</model>

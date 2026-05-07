@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x13000400" readable_name="Small Particle">
+    <description>Spawned by bhvPlungeBubble</description>
+    <tags>
+        <tag>PARTICLE</tag>
+        <tag>WATER</tag>
+    </tags>
+    <models>
+        <model>white_particle_small</model>
+    </models>
+</behavior>

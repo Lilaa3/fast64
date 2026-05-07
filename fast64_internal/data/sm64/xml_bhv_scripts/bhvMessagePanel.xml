@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<behavior name="0x130032e0" readable_name="Wooden Signpost">
+    <description>Static signpost object that triggers text display upon interaction. Utilizes standard signpost collision and initializes its room context for text-related logic.</description>
+    <tags>
+        <tag>INTERACTIVE</tag>
+        <tag>SURFACE</tag>
+        <tag>ENVIRONMENTAL</tag>
+    </tags>
+    <fields>
+        <field name="Dialogue ID" type="dialogue_id" bparam="2" default="0"/>
+    </fields>
+    <models>
+        <model>wooden_signpost</model>
+    </models>
+</behavior>

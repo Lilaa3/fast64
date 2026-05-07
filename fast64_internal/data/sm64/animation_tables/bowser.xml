@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+<animation_table address="0x60577e0" name="Bowser" size="27" ignore_bone_count="true">
+    <names>
+        <name>Stand Up</name>
+        <name>Stand Up (Unused)</name>
+        <name>Shaking</name>
+        <name>Grabbed</name>
+        <name>Broken Animation (Unused)</name>
+        <name>Fall Down</name>
+        <name>Fire Breath</name>
+        <name>Jump</name>
+        <name>Jump Stop</name>
+        <name>Jump Start</name>
+        <name>Dance</name>
+        <name>Fire Breath Up</name>
+        <name>Idle</name>
+        <name>Slow Gait</name>
+        <name>Look Down Stop Walk</name>
+        <name>Look Up Start Walk</name>
+        <name>Flip Down</name>
+        <name>Lay Down</name>
+        <name>Run Start</name>
+        <name>Run</name>
+        <name>Run Stop</name>
+        <name>Run Slip</name>
+        <name>Fire Breath Quick</name>
+        <name>Edge Move</name>
+        <name>Edge Stop</name>
+        <name>Flip</name>
+        <name>Stand Up From Flip</name>
+    </names>
+</animation_table>

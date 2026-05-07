@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Lll Rotating Hexagonal Platform">
+    <geolayout>0xe000a78</geolayout>
+    <level>LLL</level>
+    <ids>
+        <id value="0x9" name="MODEL_LLL_ROTATING_HEXAGONAL_PLATFORM"/>
+    </ids>
+    <collisions>
+        <collision name="lll_seg7_collision_hexagonal_platform" address="0x701d71c"/>
+    </collisions>
+</model>

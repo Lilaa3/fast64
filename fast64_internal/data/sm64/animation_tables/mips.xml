@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<animation_table address="0x6015724" name="Mips">
+    <names>
+        <name>Idle</name>
+        <name>Hopping</name>
+        <name>Thrown</name>
+        <name>Thrown (Unused)</name>
+        <name>Held</name>
+    </names>
+</animation_table>

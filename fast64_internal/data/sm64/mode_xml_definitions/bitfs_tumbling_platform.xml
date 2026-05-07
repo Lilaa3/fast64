@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Bitfs Tumbling Platform">
+    <geolayout>0xe0006f0</geolayout>
+    <level>BITFS</level>
+    <ids>
+        <id value="0x41" name="MODEL_BITFS_TUMBLING_PLATFORM"/>
+    </ids>
+</model>

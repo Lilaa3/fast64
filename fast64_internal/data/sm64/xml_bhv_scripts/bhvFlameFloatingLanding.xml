@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<behavior name="0x130019c8" readable_name="Floating Landing Flame">
+    <description>A floating flame that spawns either bhvFlameLargeBurningOut or bhvBlueFlamesGroup upon landing.</description>
+    <tags>
+        <tag>FIRE</tag>
+        <tag>HURT</tag>
+        <tag>BOWSER</tag>
+    </tags>
+    <fields>
+        <field name="Flame Type" type="int" bparam="2" default="0">
+            <description>Determines initial velocity, vertical velocity cap, and the object spawned upon landing.</description>
+            <enums>
+                <enum value="0" name="Red"/>
+                <enum value="1" name="Blue Group"/>
+            </enums>
+        </field>
+    </fields>
+    <models>
+        <model>blue_flame</model>
+        <model>red_flame</model>
+    </models>
+</behavior>

@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<behavior name="0x130026d4" readable_name="Castle Boo">
+    <description>A Boo that appears in the castle.</description>
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>CASTLE</tag>
+    </tags>
+    <models>
+        <model>boo_inside_castle</model>
+    </models>
+</behavior>

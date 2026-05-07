@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<animation_table address="0x6020a04" name="Whomp" size="2">
+    <names>
+        <name>Walk</name>
+        <name>Jump</name>
+    </names>
+</animation_table>

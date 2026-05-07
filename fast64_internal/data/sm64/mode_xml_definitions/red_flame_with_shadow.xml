@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Red Flame (With Shadow)">
+    <geolayout>0x16000b10</geolayout>
+    <group>common1</group>
+    <ids>
+        <id value="0xcb" name="MODEL_RED_FLAME_SHADOW"/>
+    </ids>
+</model>

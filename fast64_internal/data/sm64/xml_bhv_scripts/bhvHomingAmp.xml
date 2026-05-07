@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003354" readable_name="Homing Amp">
+    <description>Appears and groows when Mario is within 800 units.</description>
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>MOVING</tag>
+        <tag>HURT</tag>
+        <tag>SSL</tag>
+    </tags>
+    <models>
+        <model>amp</model>
+    </models>
+</behavior>

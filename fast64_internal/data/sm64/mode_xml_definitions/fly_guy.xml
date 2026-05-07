@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Fly Guy">
+    <geolayout>0xf000518</geolayout>
+    <group>common0</group>
+    <ids>
+        <id value="0xdc" name="MODEL_FLYGUY"/>
+    </ids>
+    <animation_tables>
+        <table>fly_guy</table>
+    </animation_tables>
+</model>

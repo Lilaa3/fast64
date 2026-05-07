@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Cannon Barrel">
+    <geolayout>0xf0001c0</geolayout>
+    <group>common0</group>
+    <ids>
+        <id value="0x7f" name="MODEL_CANNON_BARREL"/>
+    </ids>
+</model>

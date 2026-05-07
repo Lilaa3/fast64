@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13004ba8" readable_name="Water Bomb">
+    <description>It can either be shot from a cannon (WATER_BOMB_ACT_SHOT_FROM_CANNON, the default) or dropped from above (WATER_BOMB_ACT_INIT), which is set directly by the parent.</description>
+    <tags>
+        <tag>HURT</tag>
+        <tag>PROJECTILE</tag>
+        <tag>BOB</tag>
+    </tags>
+    <models>
+        <model>water_bomb</model>
+    </models>
+</behavior>

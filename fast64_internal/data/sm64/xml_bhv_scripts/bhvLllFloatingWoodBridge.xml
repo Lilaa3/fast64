@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x13001e30" readable_name="LLL Floating Wood Bridge">
+    <description>Spawns a set of floating wood pieces when Mario is nearby, and resets once Mario has moved away, its children check for its action to be reset to despawn themselves.</description>
+    <tags>
+        <tag>SPAWNER</tag>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>MANAGER</tag>
+        <tag>LLL</tag>
+    </tags>
+</behavior>

@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Castle Inside Castle Clock Hour Hand">
+    <geolayout>0xe001548</geolayout>
+    <level>CASTLE_INSIDE</level>
+    <ids>
+        <id value="0x38" name="MODEL_CASTLE_CLOCK_HOUR_HAND"/>
+    </ids>
+</model>

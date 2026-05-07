@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<behavior name="bhvCoinFormationSpawnedCoin" readable_name="Coin Formation Spawned Coin">
+    <description>Coin spawned by bhvCoinFormation. Marks its index as collected in the parent's oCoinRespawnBits upon collection.</description>
+    <defaul_model c_name="MODEL_YELLOW_COIN" value="0x74"/>
+    <tags>
+        <tag>COINS</tag>
+        <tag>COLLECTABLE</tag>
+    </tags>
+    <fields>
+        <field name="Coin Index" type="int" bparam="2" default="0"/>
+    </fields>
+    <models>
+        <model>yellow_coin</model>
+    </models>
+</behavior>

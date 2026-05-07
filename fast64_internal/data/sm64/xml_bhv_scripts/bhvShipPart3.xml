@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<behavior name="0x130023d0" readable_name="JRB Afloat Ship">
+    <description>A part of the JRB Afloating ship act 2 and onwards.</description>
+    <tags>
+        <tag>JRB</tag>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>WATER</tag>
+    </tags>
+    <models>
+        <model>jrb_ship_back_left_part</model>
+        <model>jrb_ship_back_right_part</model>
+        <model>jrb_ship_left_half_part</model>
+        <model>jrb_ship_right_half_part</model>
+    </models>
+</behavior>

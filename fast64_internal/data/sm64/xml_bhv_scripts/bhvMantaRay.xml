@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<behavior name="0x13004370" readable_name="Manta Ray">
+    <description>Collecting 5 rings triggers the spawn of a star, the children rings set the count on the parent. Creates its own parent of Manta Ray Ring Manager.</description>
+    <tags>
+        <tag>ENEMY</tag>
+        <tag>WATER</tag>
+        <tag>SPAWNER</tag>
+        <tag>DDD</tag>
+    </tags>
+    <models>
+        <model>manta_ray</model>
+    </models>
+</behavior>

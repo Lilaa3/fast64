@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Main Menu Red Erase Button">
+    <geolayout>0x0E000290</geolayout>
+    <level>MENU</level>
+    <ids>
+        <id value="0x04" name="MODEL_MAIN_MENU_RED_ERASE_BUTTON"/>
+    </ids>
+</model>

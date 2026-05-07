@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Scuttlebug">
+    <geolayout>0xd000394</geolayout>
+    <group>group17</group>
+    <ids>
+        <id value="0x65" name="MODEL_SCUTTLEBUG"/>
+    </ids>
+    <animation_tables>
+        <table>scuttlebug</table>
+    </animation_tables>
+</model>

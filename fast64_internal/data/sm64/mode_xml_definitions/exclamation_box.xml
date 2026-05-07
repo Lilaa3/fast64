@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<model readable_name="Exclamation Box">
+    <geolayout>0xf000694</geolayout>
+    <group>common0</group>
+    <ids>
+        <id value="0x89" name="MODEL_EXCLAMATION_BOX"/>
+    </ids>
+    <collisions>
+        <collision name="exclamation_box_outline_seg8_collision_08025F78" c_name="exclamation_box_outline_seg8_collision_08025F78"/>
+    </collisions>
+</model>

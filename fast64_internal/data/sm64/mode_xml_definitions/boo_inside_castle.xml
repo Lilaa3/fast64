@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<model readable_name="Boo (Inside Castle)">
+    <geolayout>0xd0005b0</geolayout>
+    <group>group15</group>
+    <ids>
+        <id value="0x65" name="MODEL_BOO_CASTLE"/>
+    </ids>
+</model>

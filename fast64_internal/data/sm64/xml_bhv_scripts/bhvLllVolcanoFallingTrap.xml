@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<behavior name="0x13003f78" readable_name="LLL Volcano Falling Wall Trap">
+    <tags>
+        <tag>ENVIRONMENTAL</tag>
+        <tag>SURFACE</tag>
+        <tag>MOVING</tag>
+        <tag>LLL</tag>
+    </tags>
+    <models>
+        <model>lll_volcano_falling_trap</model>
+    </models>
+</behavior>
