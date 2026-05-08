@@ -6,6 +6,6 @@
         <id value="0x38" name="MODEL_BITFS_SINKING_PLATFORMS"/>
     </ids>
     <collisions>
-        <collision name="bitfs_seg7_collision_sinking_platform" address="0x7015858"/>
+        <collision c_name="bitfs_seg7_collision_sinking_platform" address="0x7015858"/>
     </collisions>
 </model>

@@ -6,6 +6,6 @@
         <id value="0x37" name="MODEL_DDD_BOWSER_SUB"/>
     </ids>
     <collisions>
-        <collision name="ddd_seg7_collision_submarine" address="0x700f17c"/>
+        <collision c_name="ddd_seg7_collision_submarine" address="0x700f17c"/>
     </collisions>
 </model>

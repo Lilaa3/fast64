@@ -6,6 +6,6 @@
         <id value="0x38" name="MODEL_CASTLE_GROUNDS_CANNON_GRILL"/>
     </ids>
     <collisions>
-        <collision name="castle_grounds_seg7_collision_cannon_grill" address="0x7010e10"/>
+        <collision c_name="castle_grounds_seg7_collision_cannon_grill" address="0x7010e10"/>
     </collisions>
 </model>

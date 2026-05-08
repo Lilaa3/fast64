@@ -6,6 +6,6 @@
         <id value="0x37" name="MODEL_WDW_ARROW_LIFT"/>
     </ids>
     <collisions>
-        <collision name="wdw_seg7_collision_arrow_lift" address="0x7018444"/>
+        <collision c_name="wdw_seg7_collision_arrow_lift" address="0x7018444"/>
     </collisions>
 </model>

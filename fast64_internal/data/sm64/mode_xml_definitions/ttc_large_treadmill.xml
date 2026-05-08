@@ -6,6 +6,6 @@
         <id value="0x39" name="MODEL_TTC_LARGE_TREADMILL"/>
     </ids>
     <collisions>
-        <collision name="ttc_seg7_collision_070152B4" address="0x070152B4"/>
+        <collision c_name="ttc_seg7_collision_070152B4" address="0x070152B4"/>
     </collisions>
 </model>

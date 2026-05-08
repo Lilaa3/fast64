@@ -6,6 +6,6 @@
         <id value="0x89" name="MODEL_EXCLAMATION_BOX"/>
     </ids>
     <collisions>
-        <collision name="exclamation_box_outline_seg8_collision_08025F78" c_name="exclamation_box_outline_seg8_collision_08025F78"/>
+        <collision c_name="exclamation_box_outline_seg8_collision_08025F78" c_name="exclamation_box_outline_seg8_collision_08025F78"/>
     </collisions>
 </model>

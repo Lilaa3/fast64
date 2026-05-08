@@ -6,6 +6,6 @@
         <id value="0x38" name="MODEL_SSL_MOVING_PYRAMID_WALL"/>
     </ids>
     <collisions>
-        <collision name="ssl_seg7_collision_0702808C" address="0x702808c"/>
+        <collision c_name="ssl_seg7_collision_0702808C" address="0x702808c"/>
     </collisions>
 </model>

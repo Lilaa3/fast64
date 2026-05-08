@@ -6,6 +6,6 @@
         <id value="0xaf" name="MODEL_WF_ROTATING_WOODEN_PLATFORM"/>
     </ids>
     <collisions>
-        <collision name="wf_seg7_collision_clocklike_rotation" address="0x700fa00"/>
+        <collision c_name="wf_seg7_collision_clocklike_rotation" address="0x700fa00"/>
     </collisions>
 </model>

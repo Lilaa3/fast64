@@ -6,6 +6,6 @@
         <id value="0x38" name="MODEL_WF_KICKABLE_BOARD"/>
     </ids>
     <collisions>
-        <collision name="wf_seg7_collision_kickable_board" address="0x700fc7c"/>
+        <collision c_name="wf_seg7_collision_kickable_board" address="0x700fc7c"/>
     </collisions>
 </model>

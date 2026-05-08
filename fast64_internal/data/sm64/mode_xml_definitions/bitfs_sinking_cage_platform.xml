@@ -6,6 +6,6 @@
         <id value="0x3a" name="MODEL_BITFS_SINKING_CAGE_PLATFORM"/>
     </ids>
     <collisions>
-        <collision name="bitfs_seg7_collision_sinking_cage_platform" address="0x70151b4"/>
+        <collision c_name="bitfs_seg7_collision_sinking_cage_platform" address="0x70151b4"/>
     </collisions>
 </model>

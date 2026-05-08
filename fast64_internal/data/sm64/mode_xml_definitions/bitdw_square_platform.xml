@@ -6,6 +6,6 @@
         <id value="0x36" name="MODEL_BITDW_SQUARE_PLATFORM"/>
     </ids>
     <collisions>
-        <collision name="bitdw_seg7_collision_moving_pyramid" address="0x700f790"/>
+        <collision c_name="bitdw_seg7_collision_moving_pyramid" address="0x700f790"/>
     </collisions>
 </model>

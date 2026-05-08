@@ -6,6 +6,6 @@
         <id value="0x3c" name="MODEL_BITFS_STRETCHING_PLATFORMS"/>
     </ids>
     <collisions>
-        <collision name="bitfs_seg7_collision_squishable_platform" address="0x701530c"/>
+        <collision c_name="bitfs_seg7_collision_squishable_platform" address="0x701530c"/>
     </collisions>
 </model>

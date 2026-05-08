@@ -6,6 +6,6 @@
         <id value="0x36" name="MODEL_THI_HUGE_ISLAND_TOP"/>
     </ids>
     <collisions>
-        <collision name="thi_seg7_collision_top_trap" address="0x700e228"/>
+        <collision c_name="thi_seg7_collision_top_trap" address="0x700e228"/>
     </collisions>
 </model>

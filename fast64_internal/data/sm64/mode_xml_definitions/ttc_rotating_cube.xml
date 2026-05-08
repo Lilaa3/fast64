@@ -6,6 +6,6 @@
         <id value="0x36" name="MODEL_TTC_ROTATING_CUBE"/>
     </ids>
     <collisions>
-        <collision name="ttc_seg7_collision_07014F70" address="0x07014F70"/>
+        <collision c_name="ttc_seg7_collision_07014F70" address="0x07014F70"/>
     </collisions>
 </model>

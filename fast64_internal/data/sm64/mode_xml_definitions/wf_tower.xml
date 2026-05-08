@@ -6,6 +6,6 @@
         <id value="0x08" name="MODEL_LEVEL_GEOMETRY_08"/>
     </ids>
     <collisions>
-        <collision name="wf_seg7_collision_tower" address="0x0700FE14"/>
+        <collision c_name="wf_seg7_collision_tower" address="0x0700FE14"/>
     </collisions>
 </model>

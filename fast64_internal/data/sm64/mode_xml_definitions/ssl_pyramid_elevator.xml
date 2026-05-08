@@ -6,6 +6,6 @@
         <id value="0x39" name="MODEL_SSL_PYRAMID_ELEVATOR"/>
     </ids>
     <collisions>
-        <collision name="ssl_seg7_collision_pyramid_elevator" address="0x7028110"/>
+        <collision c_name="ssl_seg7_collision_pyramid_elevator" address="0x7028110"/>
     </collisions>
 </model>

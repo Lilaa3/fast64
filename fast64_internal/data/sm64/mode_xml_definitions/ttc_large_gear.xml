@@ -6,6 +6,6 @@
         <id value="0x44" name="MODEL_TTC_LARGE_GEAR"/>
     </ids>
     <collisions>
-        <collision name="ttc_seg7_collision_clock_main_rotation" address="0x70158e0"/>
+        <collision c_name="ttc_seg7_collision_clock_main_rotation" address="0x70158e0"/>
     </collisions>
 </model>

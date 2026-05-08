@@ -18,7 +18,7 @@
                 <enum value="2" name="Child 2"/>
             </enums>
         </field>
-        <field name="No Bombs" type="bool" bparam="2" shift="2" default="TRUE">
+        <field name="No Bombs" type="bool" bparam="2" shift="2" default="TRUE"/>
     </fields>
     <models>
         <model>butterfly</model>

@@ -6,6 +6,6 @@
         <id value="0x37" name="MODEL_HMC_METAL_ARROW_PLATFORM"/>
     </ids>
     <collisions>
-        <collision name="hmc_seg7_collision_controllable_platform_sub" address="0x702b7f4"/>
+        <collision c_name="hmc_seg7_collision_controllable_platform_sub" address="0x702b7f4"/>
     </collisions>
 </model>

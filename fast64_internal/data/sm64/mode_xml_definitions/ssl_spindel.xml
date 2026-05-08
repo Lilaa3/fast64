@@ -6,6 +6,6 @@
         <id value="0x37" name="MODEL_SSL_SPINDEL"/>
     </ids>
     <collisions>
-        <collision name="ssl_seg7_collision_spindel" address="0x7027f54"/>
+        <collision c_name="ssl_seg7_collision_spindel" address="0x7027f54"/>
     </collisions>
 </model>

@@ -9,6 +9,6 @@
         <table>penguin</table>
     </animation_tables>
     <collisions>
-        <collision name="penguin_seg5_collision_05008B88" c_name="penguin_seg5_collision_05008B88"/>
+        <collision c_name="penguin_seg5_collision_05008B88" c_name="penguin_seg5_collision_05008B88"/>
     </collisions>
 </model>

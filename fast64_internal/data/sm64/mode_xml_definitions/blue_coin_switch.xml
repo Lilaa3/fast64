@@ -6,6 +6,6 @@
         <id value="0x8c" name="MODEL_BLUE_COIN_SWITCH"/>
     </ids>
     <collisions>
-        <collision name="blue_coin_switch_seg8_collision_08000E98" c_name="blue_coin_switch_seg8_collision_08000E98"/>
+        <collision c_name="blue_coin_switch_seg8_collision_08000E98" c_name="blue_coin_switch_seg8_collision_08000E98"/>
     </collisions>
 </model>

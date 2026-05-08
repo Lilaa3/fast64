@@ -6,6 +6,6 @@
         <id value="0x35" name="MODEL_TTM_ROLLING_LOG"/>
     </ids>
     <collisions>
-        <collision name="ttm_seg7_collision_pitoune_2" address="0x7013678"/>
+        <collision c_name="ttm_seg7_collision_pitoune_2" address="0x7013678"/>
     </collisions>
 </model>

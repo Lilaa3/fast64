@@ -6,6 +6,6 @@
         <id value="0x36" name="MODEL_TTM_STAR_CAGE"/>
     </ids>
     <collisions>
-        <collision name="ttm_seg7_collision_ukiki_cage" address="0x7013790"/>
+        <collision c_name="ttm_seg7_collision_ukiki_cage" address="0x7013790"/>
     </collisions>
 </model>

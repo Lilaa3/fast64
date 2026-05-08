@@ -6,6 +6,6 @@
         <id value="0x43" name="MODEL_RR_TRICKY_TRIANGLES_FRAME2"/>
     </ids>
     <collisions>
-        <collision name="rr_seg7_collision_07029FA4" address="0x7039fa4"></collision>
+        <collision c_name="rr_seg7_collision_07029FA4" address="0x7039fa4"></collision>
     </collisions>
 </model>

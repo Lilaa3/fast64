@@ -6,6 +6,6 @@
         <id value="0xd5" name="MODEL_CASTLE_STAR_DOOR_8_STARS"/>
     </ids>
     <collisions>
-        <collision name="inside_castle_seg7_collision_star_door" address="0x7078e14"/>
+        <collision c_name="inside_castle_seg7_collision_star_door" address="0x7078e14"/>
     </collisions>
 </model>

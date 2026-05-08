@@ -6,6 +6,6 @@
         <id value="0x41" name="MODEL_LLL_TILTING_SQUARE_PLATFORM"/>
     </ids>
     <collisions>
-        <collision name="lll_seg7_collision_inverted_pyramid" address="0x701d510"/>
+        <collision c_name="lll_seg7_collision_inverted_pyramid" address="0x701d510"/>
     </collisions>
 </model>

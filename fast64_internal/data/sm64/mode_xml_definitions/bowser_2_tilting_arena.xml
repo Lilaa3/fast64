@@ -6,6 +6,6 @@
         <id value="0x36" name="MODEL_BOWSER_2_TILTING_ARENA"/>
     </ids>
     <collisions>
-        <collision name="bowser_2_seg7_collision_tilting_platform" address="0x7001a68"/>
+        <collision c_name="bowser_2_seg7_collision_tilting_platform" address="0x7001a68"/>
     </collisions>
 </model>

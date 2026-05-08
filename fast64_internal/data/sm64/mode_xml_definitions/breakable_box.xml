@@ -6,6 +6,6 @@
         <id value="0x81" name="MODEL_BREAKABLE_BOX"/>
     </ids>
     <collisions>
-        <collision name="breakable_box_seg8_collision"/>
+        <collision c_name="breakable_box_seg8_collision"/>
     </collisions>
 </model>

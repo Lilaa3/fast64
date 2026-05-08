@@ -6,6 +6,6 @@
         <id value="0xb1" name="MODEL_WF_LARGE_BOMP"/>
     </ids>
     <collisions>
-        <collision name="wf_seg7_collision_large_bomp" address="0x700f934"/>
+        <collision c_name="wf_seg7_collision_large_bomp" address="0x700f934"/>
     </collisions>
 </model>

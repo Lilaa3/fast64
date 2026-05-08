@@ -6,6 +6,6 @@
         <id value="0x40" name="MODEL_RR_ELEVATOR_PLATFORM"/>
     </ids>
     <collisions>
-        <collision name="rr_seg7_collision_elevator_platform" address="0x70296cc"/>
+        <collision c_name="rr_seg7_collision_elevator_platform" address="0x70296cc"/>
     </collisions>
 </model>

@@ -6,6 +6,6 @@
         <id value="0x3b" name="MODEL_JRB_ROCK"/>
     </ids>
     <collisions>
-        <collision name="jrb_seg7_collision_rock_solid" address="0x700c758"/>
+        <collision c_name="jrb_seg7_collision_rock_solid" address="0x700c758"/>
     </collisions>
 </model>

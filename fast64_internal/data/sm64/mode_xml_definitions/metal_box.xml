@@ -6,6 +6,6 @@
         <id value="0xd9" name="MODEL_METAL_BOX"/>
     </ids>
     <collisions>
-        <collision name="metal_box_seg8_collision_08024C28" c_name="metal_box_seg8_collision_08024C28"/>
+        <collision c_name="metal_box_seg8_collision_08024C28" c_name="metal_box_seg8_collision_08024C28"/>
     </collisions>
 </model>

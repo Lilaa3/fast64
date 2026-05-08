@@ -6,6 +6,6 @@
         <id value="0x55" name="MODEL_CAP_SWITCH"/>
     </ids>
     <collisions>
-        <collision name="Cap Switch (Top)" c_name="capswitch_collision_050033D0"/>
+        <collision c_name="Cap Switch (Top)" c_name="capswitch_collision_050033D0"/>
     </collisions>
 </model>

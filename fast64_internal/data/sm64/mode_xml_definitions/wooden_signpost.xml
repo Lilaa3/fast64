@@ -6,6 +6,6 @@
         <id value="0x7c" name="MODEL_WOODEN_SIGNPOST"/>
     </ids>
     <collisions>
-        <collision name="wooden_signpost_seg3_collision_0302DD80" c_name="wooden_signpost_seg3_collision_0302DD80"/>
+        <collision c_name="wooden_signpost_seg3_collision_0302DD80" c_name="wooden_signpost_seg3_collision_0302DD80"/>
     </collisions>
 </model>

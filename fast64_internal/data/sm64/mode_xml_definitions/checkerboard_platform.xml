@@ -6,6 +6,6 @@
         <id value="0xca" name="MODEL_CHECKERBOARD_PLATFORM"/>
     </ids>
     <collisions>
-        <collision name="checkerboard_platform_seg8_collision_platform" address="0x0800D710"/>
+        <collision c_name="checkerboard_platform_seg8_collision_platform" address="0x0800D710"/>
     </collisions>
 </model>

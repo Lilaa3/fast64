@@ -6,6 +6,6 @@
         <id value="0xc7" name="MODEL_SSL_TOX_BOX"/>
     </ids>
     <collisions>
-        <collision name="ssl_seg7_collision_tox_box" address="0x7012644"/>
+        <collision c_name="ssl_seg7_collision_tox_box" address="0x7012644"/>
     </collisions>
 </model>

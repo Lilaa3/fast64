@@ -6,6 +6,6 @@
         <id value="0x37" name="MODEL_WF_BREAKABLE_WALL_LEFT"/>
     </ids>
     <collisions>
-        <collision name="wf_seg7_collision_breakable_wall_2" address="0x700fc44"/>
+        <collision c_name="wf_seg7_collision_breakable_wall_2" address="0x700fc44"/>
     </collisions>
 </model>

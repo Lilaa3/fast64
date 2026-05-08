@@ -6,6 +6,6 @@
         <id value="0x21" name="MODEL_UNKNOWN_DOOR_21" group="UNKNOWN"/>
     </ids>
     <collisions>
-        <collision name="door_seg3_collision_door"/>
+        <collision c_name="door_seg3_collision_door"/>
     </collisions>
 </model>

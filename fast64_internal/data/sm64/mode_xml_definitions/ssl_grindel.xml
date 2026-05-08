@@ -6,6 +6,6 @@
         <id value="0x36" name="MODEL_SSL_GRINDEL"/>
     </ids>
     <collisions>
-        <collision name="ssl_seg7_collision_grindel" address="0x7027ed0"/>
+        <collision c_name="ssl_seg7_collision_grindel" address="0x7027ed0"/>
     </collisions>
 </model>

@@ -6,6 +6,6 @@
         <id value="0x36" name="MODEL_CASTLE_GROUNDS_VCUTM_GRILL"/>
     </ids>
     <collisions>
-        <collision name="castle_grounds_seg7_collision_moat_grills" address="0x7010db4"/>
+        <collision c_name="castle_grounds_seg7_collision_moat_grills" address="0x7010db4"/>
     </collisions>
 </model>

@@ -6,6 +6,6 @@
         <id value="0x53" name="MODEL_LLL_VOLCANO_FALLING_TRAP"/>
     </ids>
     <collisions>
-        <collision name="lll_seg7_collision_falling_wall" address="0x70284dc"/>
+        <collision c_name="lll_seg7_collision_falling_wall" address="0x70284dc"/>
     </collisions>
 </model>

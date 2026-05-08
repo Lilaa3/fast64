@@ -6,6 +6,6 @@
         <id value="0x3f" name="MODEL_JRB_FLOATING_PLATFORM"/>
     </ids>
     <collisions>
-        <collision name="jrb_seg7_collision_floating_platform" address="0x700c824"/>
+        <collision c_name="jrb_seg7_collision_floating_platform" address="0x700c824"/>
     </collisions>
 </model>

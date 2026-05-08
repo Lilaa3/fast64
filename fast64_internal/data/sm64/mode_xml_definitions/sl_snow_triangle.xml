@@ -6,6 +6,6 @@
         <id value="0x36" name="MODEL_SL_SNOW_TRIANGLE"/>
     </ids>
     <collisions>
-        <collision name="sl_seg7_collision_sliding_snow_mound" address="0x700ef6c"/>
+        <collision c_name="sl_seg7_collision_sliding_snow_mound" address="0x700ef6c"/>
     </collisions>
 </model>

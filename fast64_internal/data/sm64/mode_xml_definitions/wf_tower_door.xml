@@ -6,6 +6,6 @@
         <id value="0x39" name="MODEL_WF_TOWER_DOOR"/>
     </ids>
     <collisions>
-        <collision name="wf_seg7_collision_tower_door" address="0x700fd00"/>
+        <collision c_name="wf_seg7_collision_tower_door" address="0x700fd00"/>
     </collisions>
 </model>

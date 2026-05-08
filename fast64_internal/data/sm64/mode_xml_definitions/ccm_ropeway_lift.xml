@@ -6,6 +6,6 @@
         <id value="0x36" name="MODEL_CCM_ROPEWAY_LIFT"/>
     </ids>
     <collisions>
-        <collision name="ccm_seg7_collision_ropeway_lift" address="0x070163F8"/>
+        <collision c_name="ccm_seg7_collision_ropeway_lift" address="0x070163F8"/>
     </collisions>
 </model>

@@ -6,6 +6,6 @@
         <id value="0x37" name="MODEL_LLL_SINKING_ROCK_BLOCK"/>
     </ids>
     <collisions>
-        <collision name="lll_seg7_collision_floating_block" address="0x701d590"/>
+        <collision c_name="lll_seg7_collision_floating_block" address="0x701d590"/>
     </collisions>
 </model>

@@ -6,6 +6,6 @@
         <id value="0x6b" name="MODEL_WOODEN_POST"/>
     </ids>
     <collisions>
-        <collision name="poundable_pole_collision_wooden_post" address="0x06002490"/>
+        <collision c_name="poundable_pole_collision_wooden_post" address="0x06002490"/>
     </collisions>
 </model>

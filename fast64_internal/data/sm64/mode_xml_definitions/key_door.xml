@@ -9,6 +9,6 @@
         <table>door</table>
     </animation_tables>
     <collisions>
-        <collision name="door_seg3_collision_door"/>
+        <collision c_name="door_seg3_collision_door"/>
     </collisions>
 </model>

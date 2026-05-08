@@ -6,6 +6,6 @@
         <id value="0xb5" name="MODEL_TRAMPOLINE"/>
     </ids>
     <collisions>
-        <collision name="springboard_collision_05001A28"/>
+        <collision c_name="springboard_collision_05001A28"/>
     </collisions>
 </model>

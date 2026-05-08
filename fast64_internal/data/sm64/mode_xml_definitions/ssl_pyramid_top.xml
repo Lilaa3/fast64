@@ -6,6 +6,6 @@
         <id value="0x3a" name="MODEL_SSL_PYRAMID_TOP"/>
     </ids>
     <collisions>
-        <collision name="ssl_seg7_collision_pyramid_top" address="0x70125f4"/>
+        <collision c_name="ssl_seg7_collision_pyramid_top" address="0x70125f4"/>
     </collisions>
 </model>

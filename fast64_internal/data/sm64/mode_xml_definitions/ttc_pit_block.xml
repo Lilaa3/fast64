@@ -6,6 +6,6 @@
         <id value="0x3e" name="MODEL_TTC_PIT_BLOCK"/>
     </ids>
     <collisions>
-        <collision name="ttc_seg7_collision_07015754" address="0x07015754"/>
+        <collision c_name="ttc_seg7_collision_07015754" address="0x07015754"/>
     </collisions>
 </model>

@@ -6,6 +6,6 @@
         <id value="0x36" name="MODEL_BITFS_PLATFORM_ON_TRACK"/>
     </ids>
     <collisions>
-        <collision name="bitfs_seg7_collision_platform_on_track" address="0x070157E0"/>
+        <collision c_name="bitfs_seg7_collision_platform_on_track" address="0x070157E0"/>
     </collisions>
 </model>
