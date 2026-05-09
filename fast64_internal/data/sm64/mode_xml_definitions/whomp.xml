@@ -9,6 +9,6 @@
         <table>whomp</table>
     </animation_tables>
     <collisions>
-        <collision c_name="whomp_seg6_collision_06020A0C" c_name="whomp_seg6_collision_06020A0C"/>
+        <collision c_name="whomp_seg6_collision_06020A0C" address="0x06020A0C"/>
     </collisions>
 </model>

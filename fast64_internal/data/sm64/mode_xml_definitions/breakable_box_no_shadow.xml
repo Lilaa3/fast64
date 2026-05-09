@@ -1,7 +1,6 @@
 <?xml version="1.0" ?>
 <model readable_name="Breakable Box No Shadow">
     <geolayout>breakable_box_no_shadow_geo</geolayout>
-    <groups/>
     <ids>
         <id value="0x82" name="MODEL_BREAKABLE_BOX_NO_SHADOW" group="UNKNOWN"/>
     </ids>

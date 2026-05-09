@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <model readable_name="Luigi">
     <geolayout>unused</geolayout>
-    <groups/>
+    
     <ids>
         <id value="0x2" name="MODEL_LUIGI" group="UNKNOWN"/>
     </ids>

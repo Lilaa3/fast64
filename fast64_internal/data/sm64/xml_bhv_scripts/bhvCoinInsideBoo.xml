@@ -1,6 +1,5 @@
 <?xml version="1.0" ?>
 <behavior name="0x13000888" readable_name="Coin Inside Boo">
-    <defaul_model c_name="MODEL_YELLOW_COIN" value="0x74"/>
     <tags>
         <tag>COINS</tag>
         <tag>COLLECTABLE</tag>
@@ -13,4 +12,7 @@
             </enum>
         </field>
     </fields>
+    <models>
+        <model>yellow_coin</model>
+    </models>
 </behavior>

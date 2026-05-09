@@ -6,6 +6,6 @@
         <id value="0xc9" name="MODEL_DL_CANNON_LID"/>
     </ids>
     <collisions>
-        <collision c_name="cannon_lid_seg8_collision_08004950" c_name="cannon_lid_seg8_collision_08004950"/>
+        <collision c_name="cannon_lid_seg8_collision_08004950" address="0x8004950"/>
     </collisions>
 </model>

@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <model readable_name="Silver Coin">
     <geolayout>silver_coin_geo</geolayout>
-    <groups/>
+    
     <ids>
         <id value="0xe2" name="MODEL_SILVER_COIN" group="UNKNOWN"/>
     </ids>

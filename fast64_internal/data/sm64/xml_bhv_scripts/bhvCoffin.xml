@@ -1,7 +1,6 @@
 <?xml version="1.0" ?>
 <behavior name="0x13005414" readable_name="Coffin">
-    <descriptio>Deletes it self when parent bhvCoffinSpawner sets COFFIN_SPAWNER_ACT_COFFINS_UNLOADED</descriptio>
-    <defaul_model c_name="MODEL_BBH_WOODEN_TOMB" value="0x3c"/>
+    <description>Deletes it self when parent bhvCoffinSpawner sets COFFIN_SPAWNER_ACT_COFFINS_UNLOADED</description>
     <tags>
         <tag>SURFACE</tag>
         <tag>INTERACTIVE</tag>

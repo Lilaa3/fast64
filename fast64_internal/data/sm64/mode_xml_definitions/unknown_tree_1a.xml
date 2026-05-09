@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <model readable_name="Unknown Tree 1a">
     <geolayout>referenced</geolayout>
-    <groups/>
+    
     <ids>
         <id value="0x1a" name="MODEL_UNKNOWN_TREE_1A" group="UNKNOWN"/>
     </ids>
