@@ -96,6 +96,7 @@ def int_from_str(value: str):
     }
     decimal = (10, "decimal value. \nUse 0x for hexadecimal, 0b for binary, and 0o for octal.")
 
+    assert isinstance(value, str), f"Expected str, got {type(value)}."
     value = value.strip()
     prefix = value[:2].lower() if len(value) > 1 else ""
     number_part = value[2:] if prefix in bases else value
