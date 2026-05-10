@@ -1,8 +1,0 @@
-<?xml version="1.0" ?>
-<model readable_name="Menu Main Menu Yellow File Button">
-    <geolayout>main_menu_geo_0002E0</geolayout>
-    <level>MENU</level>
-    <ids>
-        <id value="0x6" name="MODEL_MAIN_MENU_YELLOW_FILE_BUTTON"/>
-    </ids>
-</model>

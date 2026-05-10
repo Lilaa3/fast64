@@ -1,8 +1,0 @@
-<?xml version="1.0" ?>
-<model readable_name="Menu Main Menu Generic Button">
-    <geolayout>main_menu_geo_000358</geolayout>
-    <level>MENU</level>
-    <ids>
-        <id value="0xc" name="MODEL_MAIN_MENU_GENERIC_BUTTON"/>
-    </ids>
-</model>

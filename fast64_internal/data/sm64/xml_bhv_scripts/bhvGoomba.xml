@@ -13,7 +13,7 @@
                 <enum value="2" name="Tiny" c_name="GOOMBA_SIZE_TINY"/>
             </enums>
         </field>
-        <field name="Triplet Index" type="int" bparam="2" mask="0xFC" shift="2" default="0"/> <!-- Watch out for this-->
+        <field name="Triplet Index" type="int" bparam="2" shift="2" default="0"/> <!-- Watch out for this-->
     </fields>
     <models>
         <model>goomba</model>

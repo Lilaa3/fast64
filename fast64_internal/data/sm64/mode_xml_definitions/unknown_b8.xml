@@ -1,8 +1,6 @@
 <?xml version="1.0" ?>
 <model readable_name="Unknown B8">
-    <geolayout>referenced</geolayout>
-    
     <ids>
-        <id value="0xb8" name="MODEL_UNKNOWN_B8" group="UNKNOWN"/>
+        <id value="0xb8" name="MODEL_UNKNOWN_B8"/>
     </ids>
 </model>

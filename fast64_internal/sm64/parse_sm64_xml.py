@@ -29,15 +29,14 @@ class BehaviorField:
     description: Optional[str]
     type: str
     bparam: list[int]
-    default: Optional[int]
-    enums: list[BehaviorFieldEnum]
-    mask: int
-    shift: int
-    multiplier: int
-    offset: int
-    min: Optional[int]
-    max: Optional[int]
-
+    default: Optional[int|str] = None
+    enums: list[BehaviorFieldEnum] = dataclasses.field(default_factory=list)
+    mask: int = 0
+    shift: int = 0
+    multiplier: int = 1
+    offset: int = 0
+    min: int = 0
+    max: int = 0
 
 @dataclasses.dataclass(frozen=True)
 class AnimationTable:
@@ -92,6 +91,7 @@ class SM64XMLParser:
         attr: str,
         required: bool = True,
         convert_int: bool = False,
+        convert_float: bool = False,
         convert_bool: bool = False,
     ):
         """Retrieves an attribute, optionally converting it to an integer."""
@@ -100,6 +100,13 @@ class SM64XMLParser:
             if required:
                 raise ParseError(f"Missing required attribute '{attr}' in <{element.tag}>")
             return None
+        if convert_float:
+            if convert_int:
+                try:
+                    return int(val, 0)
+                except ValueError:
+                    pass
+            return float(val)
         if convert_bool:
             if val.lower() == "true":
                 return True
@@ -164,7 +171,7 @@ class SM64XMLParser:
 
         return Collision(name, address, readable_name)
 
-    def _parse_animation_table(self, root: ET.Element) -> AnimationTable:
+    def _parse_animation_table(self, root: ET.Element, name: str) -> AnimationTable:
         self._check_unknown_elements(root, ["names", "behaviors"])
 
         address = self._get_attr(root, "address", convert_int=True)
@@ -178,6 +185,65 @@ class SM64XMLParser:
             raise ParseError("Missing or empty <names> section in <animation_table>")
 
         return AnimationTable(address, name, dma, directory, names, behaviors)
+
+    def apply_mul_offset(self, value: int|float, offset: int|float, multiplier: int|float):
+        return value * multiplier - offset
+
+    def undo_mul_offset(self, value: int|float, offset: int|float, multiplier: int|float):
+        return (value + offset) / multiplier
+
+    def get_mask_info(self, bparam: list[int], mask: Optional[int] = None, shift: int = 0):
+        """Calculates the raw bit-width and maximum value allowed by the mask."""
+        param_bit_width = len(bparam) * 8
+        if mask is None:
+            mask = ((1 << param_bit_width) - 1) >> shift
+        max_raw_value = mask
+        
+        return mask, max_raw_value, param_bit_width
+
+    def validate_field_constraints(self, field: BehaviorField):
+        """Checks if default, min, and max are valid for the field's bitmask and type."""
+        if field.type == "bool":
+            if field.default not in [None, True, False, 0, 1]:
+                raise ParseError(f"Field '{field.name}' is bool but has non-boolean default: {field.default}")
+            return
+
+        if field.min is not None and field.max is not None:
+            if field.min > field.max:
+                raise ParseError(f"Field '{field.name}' has min ({field.min}) > max ({field.max})")
+
+        if field.default is not None:
+            # Check against explicit min/max
+            if field.min is not None and field.default < field.min:
+                raise ParseError(f"Default {field.default} for '{field.name}' is below min {field.min}")
+            if field.max is not None and field.default > field.max:
+                raise ParseError(f"Default {field.default} for '{field.name}' is above max {field.max}")
+
+    def validate_fields(self, fields: list[BehaviorField]):
+        used_bparams = {}
+
+        for field in fields:
+            # Continuity Check
+            if any(field.bparam[i] != field.bparam[i-1] + 1 for i in range(1, len(field.bparam))):
+                raise ParseError(f"Field '{field.name}' has non-continuous bparams: {field.bparam}")
+
+            self.validate_field_constraints(field)
+
+            full_field_mask = field.mask << field.shift
+            
+            # Check if the mask/shift actually fits in the allocated bparams
+            if (full_field_mask).bit_length() > self.get_mask_info(field.bparam)[2]:
+                raise ParseError(f"Field '{field.name}' mask/shift exceeds its {len(field.bparam)} bparams.")
+
+            # Map to individual bytes to find overlaps
+            temp_mask = full_field_mask
+            for bp_index in reversed(field.bparam):
+                byte_bits = temp_mask & 0xFF
+                if byte_bits:
+                    if used_bparams.get(bp_index, 0) & byte_bits:
+                        raise ParseError(f"Field '{field.name}' overlaps bits in bparam {bp_index}.")
+                    used_bparams[bp_index] = used_bparams.get(bp_index, 0) | byte_bits
+                temp_mask >>= 8
 
     def _parse_field_enum(self, element: ET.Element, is_bool: bool) -> BehaviorFieldEnum:
         """Parses an <enum> tag within a field."""
@@ -203,20 +269,19 @@ class SM64XMLParser:
         name = self._get_attr(root, "name")
         field_type = self._get_attr(root, "type")
         description = self._get_text(root, "description", required=False)
-        shift = self._get_attr(root, "shift", convert_int=True, required=False)
-        mask = self._get_attr(root, "mask", convert_int=True, required=False)
+        shift = self._get_attr(root, "shift", convert_int=True, required=False) or 0
         multiplier = self._get_attr(root, "multiplier", convert_int=True, required=False) or 1
         offset = self._get_attr(root, "offset", convert_int=True, required=False) or 0
-        min_value = self._get_attr(root, "min", convert_int=True, required=False) or 0
 
-        if field_type not in {"int", "float", "bool", "dialogue_id", "units", "frames"}:
+        if field_type not in {"int", "float", "bool", "dialogue_id", "units", "frames", "bitflag"}:
             raise ParseError(f"Unsupported field type '{field_type}' in field '{name}'.")
 
         default = self._get_attr(
             root,
             "default",
-            convert_int=(field_type in {"int", "dialogue_id", "units", "frames"}),
+            convert_int=(field_type in {"int", "dialogue_id", "units", "frames", "bitflag"}),
             convert_bool=(field_type == "bool"),
+            convert_float=(field_type == "units"),
             required=False,
         )
 
@@ -225,34 +290,47 @@ class SM64XMLParser:
         if any(bparam < 1 or bparam > 4 for bparam in bparams):
             raise ParseError(f"Invalid bparam '{bparams}' in field '{name}'. Must be between 1 and 4.")
 
-        max_value = self._get_attr(root, "max", convert_int=True, required=False) or len(bparams) * 255
         enums = []
         enums_elem = root.find("enums")
         if enums_elem is not None:
             self._check_unknown_elements(enums_elem, ["enum"])
             for enum_node in enums_elem.findall("enum"):
                 enums.append(self._parse_field_enum(enum_node, field_type == "bool"))
+        
+        mask = self._get_attr(root, "mask", convert_int=True, required=False)
+        if enums:
+            max_enum = max(enum.value or i for i, enum in enumerate(enums))
+            bits = max(0, max_enum.bit_length())
+            mask = (1 << bits) - 1
+        if field_type == "bool":
+            if mask is not None and mask != 1:
+                logger.warning(f"Invalid mask '{mask}' for bool field '{name}'. Must be 1.")
+            mask = 1
+        mask, max_raw_val, _bit_width = self.get_mask_info(bparams, mask, shift)
+        min_value = self._get_attr(root, "min", convert_int=True, required=False) or self.apply_mul_offset(0, offset, multiplier)
+        max_value = self._get_attr(root, "max", convert_int=True, required=False) or self.apply_mul_offset(max_raw_val, offset, multiplier)
 
-        return BehaviorField(
+        field = BehaviorField(
             name,
             description,
             field_type,
             bparams,
             default,
             enums,
-            shift,
             mask,
+            shift,
             multiplier,
             offset,
             min_value,
-            max_value,
+            max_value
         )
 
-    def _parse_behavior(self, root: ET.Element) -> Behavior:
+        return field
+
+    def _parse_behavior_wrapped(self, root: ET.Element) -> Behavior:
         self._check_unknown_elements(
             root, ["tags", "models", "collisions", "description", "comment", "fields", "particle"]
         )
-
         address = self._get_attr(root, "name", convert_int=True)
         description = self._get_text(root, "description") or ""
         readable_name = self._get_attr(root, "readable_name")
@@ -273,6 +351,8 @@ class SM64XMLParser:
             for field_node in fields_container.findall("field"):
                 fields.append(self._parse_field(field_node))
 
+        self.validate_fields(fields)
+
         collisions = []
         collisions_elem = root.find("collisions")
         if collisions_elem is not None:
@@ -286,7 +366,20 @@ class SM64XMLParser:
 
         return Behavior(address, readable_name, description, comment, tags, models, collisions, fields)
 
-    def _parse_model(self, root: ET.Element) -> Model:
+    def _parse_behavior(self, root: ET.Element, file_name: str) -> Behavior:
+        address = None
+        readable_name = None
+        try:
+            readable_name = self._get_attr(root, "readable_name")
+            address = self._get_attr(root, "name", convert_int=True)
+            return self._parse_behavior_wrapped(root)
+        except Exception as exc:
+            given_name = readable_name or address
+            if given_name is None:
+                raise ParseError(f"Error while parsing behavior in file {file_name}:\n{exc}")
+            raise ParseError(f"Error while parsing behavior \"{given_name}\" in file {file_name}:\n{exc}") from exc
+
+    def _parse_model_wrapped(self, root: ET.Element):
         self._check_unknown_elements(
             root, ["geolayout", "displaylist", "ids", "animation_tables", "collisions", "level", "group"]
         )
@@ -303,15 +396,17 @@ class SM64XMLParser:
 
         if displaylist and geolayout:
             raise ParseError("Cannot specify both <geolayout> and <displaylist>")
-        if not displaylist and not geolayout:
-            raise ParseError("Must specify either <geolayout> or <displaylist>")
+        #if not displaylist and not geolayout:
+            #raise ParseError("Must specify either <geolayout> or <displaylist>")
+        # we can't evoke this if we want unused model ids to still exist, so I think
+        # it makes sense to check if a bhv is using it, and only then warn
 
         group = self._get_text(root, "group")
         level = self._get_text(root, "level")
 
         if group and level:
             raise ParseError("Cannot specify both <group> and <level>")
-        if not group and not level:
+        if (displaylist or geolayout) and not group and not level:
             raise ParseError("Must specify either <group> or <level>")
 
         ids = []
@@ -351,6 +446,18 @@ class SM64XMLParser:
 
         return Model(readable_name, geolayout, group, ids, tables, collisions)
 
+    def _parse_model(self, root: ET.Element, file_name: str):
+        try:
+            return self._parse_model_wrapped(root)
+        except Exception as exc:
+            try:
+                readable_name = self._get_attr(root, "readable_name")
+            except Exception:
+                readable_name = None
+            if readable_name is None:
+                raise ParseError(f"Error while parsing model in file {file_name}:\n{exc}")
+            raise ParseError(f"Error while parsing model \"{readable_name}\" in file {file_name}:\n{exc}") from exc
+
     def parse_file(self, file_path: Path) -> Union[AnimationTable, Behavior, Model]:
         filepath_checks(file_path)
         try:
@@ -364,11 +471,7 @@ class SM64XMLParser:
             }
 
             if root.tag in parsers:
-                try:
-                    return parsers[root.tag](root)
-                except Exception as exc:
-                    raise ParseError(f"Error while parsing <{root.tag}>:\n{exc}") from exc
-
+                return parsers[root.tag](root, file_path.parts[-1])
             raise ParseError(f"Unknown root tag: {root.tag}")
         except ET.ParseError as exc:
             raise ParseError(f"XML Syntax Error: {exc}") from exc

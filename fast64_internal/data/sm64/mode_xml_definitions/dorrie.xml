@@ -9,6 +9,6 @@
         <table>dorrie</table>
     </animation_tables>
     <collisions>
-        <collision c_name="dorrie_seg6_collision_0600F644"/>
+        <collision c_name="dorrie_seg6_collision_0600F644" address="0x0600F644"/>
     </collisions>
 </model>

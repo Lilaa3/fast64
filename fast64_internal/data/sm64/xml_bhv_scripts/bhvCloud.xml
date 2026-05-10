@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<behavior name="bhvCloud" readable_name="Cloud Manager/Fwoosh">
+<behavior name="0x13004988" readable_name="Cloud Manager/Fwoosh">
     <description>Cloud part spawner and controller, handles Lakitu clouds (spawned by lakitusssss) or Fwoosh's logic.</description>
     <tags>
         <tag>ENVIRONMENTAL</tag>

@@ -1,12 +1,11 @@
 <?xml version="1.0" ?>
-<behavior name="bhvBubSpawner" readable_name="Bub Spawner">
-    <comment>Chip Chip in some fuckass refresh. Is it also unused in vanilla?</comment>
+<behavior name="0x130021e4" readable_name="Bub Spawner">
+    <comment>Chip Chip in decomp??? Fire whoever did that. Hacker uses bhvBubSpawner</comment>
     <tags>
         <tag>SPAWNER</tag>
         <tag>FISH</tag>
         <tag>WATER</tag>
         <tag>ENEMY</tag>
         <tag>DDD</tag>
-        <tag>UNUSED</tag>
     </tags>
 </behavior>

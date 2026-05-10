@@ -5,6 +5,6 @@
         <tag>ENVIRONMENTAL</tag>
     </tags>
     <fields>
-        <field name="Height" type="units" bparams="12" multiplier="10"/>
+        <field name="Height" type="units" bparam="12" multiplier="10"/>
     </fields>
 </behavior>

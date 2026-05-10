@@ -1,8 +1,0 @@
-<?xml version="1.0" ?>
-<model readable_name="Menu Main Menu Purple Sound Button">
-    <geolayout>main_menu_geo_000330</geolayout>
-    <level>MENU</level>
-    <ids>
-        <id value="0xb" name="MODEL_MAIN_MENU_PURPLE_SOUND_BUTTON"/>
-    </ids>
-</model>

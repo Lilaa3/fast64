@@ -1,8 +1,8 @@
 <?xml version="1.0" ?>
 <model readable_name="Bully Boss">
-    <geolayout>bully_boss_geo</geolayout>
-    
+    <geolayout>0x0C000120</geolayout>
+    <group>group2</group>
     <ids>
-        <id value="0x57" name="MODEL_BULLY_BOSS" group="UNKNOWN"/>
+        <id value="0x57" name="MODEL_BULLY_BOSS"/>
     </ids>
 </model>

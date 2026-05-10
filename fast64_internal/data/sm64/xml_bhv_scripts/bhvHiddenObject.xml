@@ -18,8 +18,8 @@
             </enums>
         </field>
     </fields>
-    <models>
-        <model>breakable_box</model>
+    <models automatically_set="true">
+        <model>breakable_box_small</model>
         <model>wdw_hidden_platform</model>
     </models>
 </behavior>

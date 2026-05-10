@@ -8,7 +8,7 @@
     </tags>
     <fields>
         <field name="Spawn Balls" type="bool" bparam="2" shift="7" default="False"/>
-        <field name="Type" type="bool" bparam="12" shift="4" mask="0x70">
+        <field name="Type" type="int" bparam="12" shift="4" mask="0x70">
             <enums>
                 <enum name="Carpet" c_name="PLATFORM_ON_TRACK_TYPE_CARPET" value="0"/>
                 <enum name="Ski Lift" c_name="PLATFORM_ON_TRACK_TYPE_SKI_LIFT" value="1"/>
@@ -16,7 +16,7 @@
                 <enum name="Grate" c_name="PLATFORM_ON_TRACK_TYPE_GRATE" value="3"/>
             </enums>
         </field>
-        <field name="Path" type="bool" bparam="12" mask="0x0F">
+        <field name="Path" type="int" bparam="12" mask="0x0F">
             <enums>
                 <enum name="RR 0x702EC3C" value="0"/>
                 <enum name="RR 0x702ECC0" value="1"/>

@@ -1,8 +1,7 @@
 <?xml version="1.0" ?>
 <model readable_name="Silver Coin No Shadow">
     <geolayout>silver_coin_no_shadow_geo</geolayout>
-    
     <ids>
-        <id value="0xe3" name="MODEL_SILVER_COIN_NO_SHADOW" group="UNKNOWN"/>
+        <id value="0xe3" name="MODEL_SILVER_COIN_NO_SHADOW" group="common1"/>
     </ids>
 </model>

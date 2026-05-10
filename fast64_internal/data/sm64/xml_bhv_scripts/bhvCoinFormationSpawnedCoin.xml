@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
-<behavior name="bhvCoinFormationSpawnedCoin" readable_name="Coin Formation Spawned Coin">
+<behavior name="0x130008d0" readable_name="Coin Formation Spawned Coin">
     <description>Coin spawned by bhvCoinFormation. Marks its index as collected in the parent's oCoinRespawnBits upon collection.</description>
+    <comment>TODO: Equivelent in hacker is bhvCoinFormationSpawnedCoin</comment>
     <tags>
         <tag>COINS</tag>
         <tag>COLLECTABLE</tag>

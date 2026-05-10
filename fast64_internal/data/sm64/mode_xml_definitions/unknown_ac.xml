@@ -1,8 +1,6 @@
 <?xml version="1.0" ?>
 <model readable_name="Unknown Ac">
-    <geolayout>according</geolayout>
-    
     <ids>
-        <id value="0xac" name="MODEL_UNKNOWN_AC" group="UNKNOWN"/>
+        <id value="0xac" name="MODEL_UNKNOWN_AC"/>
     </ids>
 </model>

@@ -4,7 +4,7 @@
     <tags>
         <tag>ENEMY</tag>
         <tag>THI</tag>
-        <thi>MANAGER</thi>
+        <tag>MANAGER</tag>
     </tags>
     <models>
         <model>wiggler_head</model>

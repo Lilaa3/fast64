@@ -6,6 +6,6 @@
         <tag>SURFACE</tag>
     </tags>
     <models>
-        <model>breakable_box</model>
+        <model>breakable_box_small</model>
     </models>
 </behavior>

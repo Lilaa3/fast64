@@ -1,11 +1,9 @@
 <?xml version="1.0" ?>
 <model readable_name="Unknown Door 1e">
-    <geolayout>referenced</geolayout>
-    
     <ids>
-        <id value="0x1e" name="MODEL_UNKNOWN_DOOR_1E" group="UNKNOWN"/>
+        <id value="0x1e" name="MODEL_UNKNOWN_DOOR_1E"/>
     </ids>
     <collisions>
-        <collision c_name="door_seg3_collision_door"/>
+        <collision c_name="door_seg3_collision_door" address="0x0301CE78"/>
     </collisions>
 </model>

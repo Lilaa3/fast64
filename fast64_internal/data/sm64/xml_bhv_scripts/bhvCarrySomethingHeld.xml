@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
-<behavior name="bhvCarrySomethingHeld" readable_name="Carry Something Held">
+<behavior name="0x13003464" readable_name="Carry Something Held">
     <description>Placeholder behavior for objects currently being held.</description>
+    <comment>Hacker calls this bhvCarrySomethingHeld. Decomp uses bhvCarrySomething3.</comment>
     <tags>
         <tag>HOLDABLE</tag>
         <tag>HELPER</tag>

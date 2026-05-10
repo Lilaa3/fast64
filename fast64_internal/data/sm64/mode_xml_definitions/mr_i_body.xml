@@ -1,8 +1,8 @@
 <?xml version="1.0" ?>
 <model readable_name="Mr I Body">
-    <geolayout>mr_i_geo</geolayout>
-    
+    <geolayout>0x0D000000</geolayout>
+    <group>group16</group>
     <ids>
-        <id value="0x67" name="MODEL_MR_I_BODY" group="UNKNOWN"/>
+        <id value="0x67" name="MODEL_MR_I_BODY"/>
     </ids>
 </model>

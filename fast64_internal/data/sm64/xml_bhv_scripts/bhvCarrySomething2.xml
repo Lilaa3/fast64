@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<behavior name="0x1300345c" readable_name="Carry Something 2 (Unused)">
+    <description>Placeholder behavior.</description>
+    <comment>Hacker removes this.</comment>
+    <tags>
+        <tag>HOLDABLE</tag>
+        <tag>HELPER</tag>
+        <tag>UNUSED</tag>
+    </tags>
+</behavior>

@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
-<behavior name="bhvMovingFlameEmber" readable_name="Moving Flame Ember">
+<behavior name="0x130051ac" readable_name="Moving Flame Ember">
     <description>Moving flame ember, a small particle spawned by moving flames that shrinks over time and then disappears.</description>
+    <comment>bhvMovingFlameEmber in hacker, bhvFlyguyFlame in decomp.</comment>
     <tags>
         <tag>ENEMY</tag>
         <tag>PARTICLE</tag>
