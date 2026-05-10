@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Lll Rotating Block Fire Bars">
-    <geolayout>0xe000b38</geolayout>
+    <geolayout address="0xe000b38" />
     <level>LLL</level>
     <ids>
-        <id value="0x3a" name="MODEL_LLL_ROTATING_BLOCK_FIRE_BARS"/>
+        <id value="0x3a" name="MODEL_LLL_ROTATING_BLOCK_FIRE_BARS" />
     </ids>
     <collisions>
-        <collision c_name="lll_seg7_collision_rotating_fire_bars" address="0x701d138"/>
+        <collision c_name="lll_seg7_collision_rotating_fire_bars" address="0x701d138" />
     </collisions>
 </model>

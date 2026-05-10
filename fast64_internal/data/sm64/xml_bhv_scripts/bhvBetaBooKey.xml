@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001744" readable_name="Beta Boo Key">
     <description>A beta key that drops from Boos.</description>
     <tags>

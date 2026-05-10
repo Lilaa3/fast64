@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130053f4" readable_name="Coffin Spawner">
     <description>Spawns six bhvCoffin objects dynamically if player enters the room.</description>
     <tags>

@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ttc Rotating Hexagon">
-    <geolayout>0xe0002e0</geolayout>
+    <geolayout address="0xe0002e0" />
     <level>TTC</level>
     <ids>
-        <id value="0x3c" name="MODEL_TTC_ROTATING_HEXAGON"/>
+        <id value="0x3c" name="MODEL_TTC_ROTATING_HEXAGON" />
     </ids>
 </model>

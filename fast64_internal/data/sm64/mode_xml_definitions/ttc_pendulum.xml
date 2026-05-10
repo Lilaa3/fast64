@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ttc Pendulum">
-    <geolayout>0xe000270</geolayout>
+    <geolayout address="0xe000270" />
     <level>TTC</level>
     <ids>
-        <id value="0x38" name="MODEL_TTC_PENDULUM"/>
+        <id value="0x38" name="MODEL_TTC_PENDULUM" />
     </ids>
     <collisions>
-        <collision c_name="ttc_seg7_collision_clock_pendulum" address="0x701508c"/>
+        <collision c_name="ttc_seg7_collision_clock_pendulum" address="0x701508c" />
     </collisions>
 </model>

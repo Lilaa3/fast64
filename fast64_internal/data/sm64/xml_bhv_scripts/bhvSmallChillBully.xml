@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130036c8" readable_name="Small Chill Bully">
     <description>Equivilent to a small bully, but with BULLY_STYPE_CHILL subtype.</description>
     <tags>

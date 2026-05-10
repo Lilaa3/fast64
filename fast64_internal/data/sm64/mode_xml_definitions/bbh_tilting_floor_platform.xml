@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bbh Tilting Floor Platform">
-    <geolayout>0xe0005c8</geolayout>
+    <geolayout address="0xe0005c8" />
     <level>BBH</level>
     <ids>
-        <id value="0x36" name="MODEL_BBH_TILTING_FLOOR_PLATFORM"/>
+        <id value="0x36" name="MODEL_BBH_TILTING_FLOOR_PLATFORM" />
     </ids>
     <collisions>
-        <collision c_name="bbh_seg7_collision_tilt_floor_platform" address="0x7026a98"/>
+        <collision c_name="bbh_seg7_collision_tilt_floor_platform" address="0x7026a98" />
     </collisions>
 </model>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000cfc" readable_name="RR Elevator Platform">
     <tags>
         <tag>RR</tag>
@@ -9,11 +9,11 @@
         <field name="Height Index" type="int" bparam="2" default="5">
             <description>Index into the internal elevator heights table to determine movement range.</description>
             <enums>
-                <enum value="0" name="BBH (bhvMeshElevator) and HMC (bhvHmcElevatorPlatform)"/>
-                <enum value="1" name="HMC (bhvHmcElevatorPlatform)"/>
-                <enum value="2" name="HMC (bhvHmcElevatorPlatform)"/>
-                <enum value="3" name="HMC (bhvHmcElevatorPlatform)"/>
-                <enum value="5" name="RR"/>
+                <enum value="0" name="BBH (bhvMeshElevator) and HMC (bhvHmcElevatorPlatform)" />
+                <enum value="1" name="HMC (bhvHmcElevatorPlatform)" />
+                <enum value="2" name="HMC (bhvHmcElevatorPlatform)" />
+                <enum value="3" name="HMC (bhvHmcElevatorPlatform)" />
+                <enum value="5" name="RR" />
             </enums>
         </field>
     </fields>

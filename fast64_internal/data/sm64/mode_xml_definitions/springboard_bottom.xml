@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Springboard Bottom">
-    <geolayout>0xc000030</geolayout>
+    <geolayout address="0xc000030" />
     <group>group8</group>
     <ids>
-        <id value="0xb7" name="MODEL_TRAMPOLINE_BASE"/>
+        <id value="0xb7" name="MODEL_TRAMPOLINE_BASE" />
     </ids>
 </model>

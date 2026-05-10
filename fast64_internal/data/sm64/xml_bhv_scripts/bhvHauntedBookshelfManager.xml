@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130050d4" readable_name="Haunted Bookshelf Manager">
     <description>
         A manager object for the haunted bookshelf puzzle. 

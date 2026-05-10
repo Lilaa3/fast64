@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130020e8" readable_name="Baby Penguin">
     <description>If the baby ID matches to the big penguin, the baby is it's child!</description>
     <tags>
@@ -6,7 +6,7 @@
         <tag>ENVIRONMENTAL</tag>
     </tags>
     <fields>
-        <field name="Baby ID" type="int" bparam="2" default="0"/>
+        <field name="Baby ID" type="int" bparam="2" default="0" />
     </fields>
     <models>
         <model>penguin</model>

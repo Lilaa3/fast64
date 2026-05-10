@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Hmc Elevator Platform">
-    <geolayout>0xe0005d0</geolayout>
+    <geolayout address="0xe0005d0" />
     <level>HMC</level>
     <ids>
-        <id value="0x38" name="MODEL_HMC_ELEVATOR_PLATFORM"/>
+        <id value="0x38" name="MODEL_HMC_ELEVATOR_PLATFORM" />
     </ids>
     <collisions>
-        <collision c_name="hmc_seg7_collision_elevator" address="0x702b5e4"/>
+        <collision c_name="hmc_seg7_collision_elevator" address="0x702b5e4" />
     </collisions>
 </model>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002634" readable_name="Tweester Sand Particle">
     <tags>
         <tag>PARTICLE</tag>

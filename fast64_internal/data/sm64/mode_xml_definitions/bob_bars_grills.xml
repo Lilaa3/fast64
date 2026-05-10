@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bob Bars Grills">
-    <geolayout>0xe000470</geolayout>
+    <geolayout address="0xe000470" />
     <level>BOB</level>
     <ids>
-        <id value="0x38" name="MODEL_BOB_BARS_GRILLS"/>
+        <id value="0x38" name="MODEL_BOB_BARS_GRILLS" />
     </ids>
     <collisions>
-        <collision c_name="bob_seg7_collision_gate" address="0x07011474"/>
+        <collision c_name="bob_seg7_collision_gate" address="0x07011474" />
     </collisions>
 </model>

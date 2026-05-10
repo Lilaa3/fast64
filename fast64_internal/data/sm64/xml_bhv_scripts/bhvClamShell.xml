@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13005440" readable_name="Clam Shell">
     <tags>
         <tag>ENEMY</tag>

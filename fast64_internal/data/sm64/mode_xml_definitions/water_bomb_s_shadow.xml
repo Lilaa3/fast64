@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Water Bomb's Shadow">
-    <geolayout>0xc000328</geolayout>
+    <geolayout address="0xc000328" />
     <group>group3</group>
     <ids>
-        <id value="0x55" name="MODEL_WATER_BOMB_SHADOW"/>
+        <id value="0x55" name="MODEL_WATER_BOMB_SHADOW" />
     </ids>
 </model>

@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Silver Coin">
-    <geolayout>silver_coin_geo</geolayout>
+    <geolayout name="silver_coin_geo" />
     <group>common1</group>
     <comment>Hacker exclusive</comment>
     <ids>
-        <id value="0xe2" name="MODEL_SILVER_COIN"/>
+        <id value="0xe2" name="MODEL_SILVER_COIN" />
     </ids>
 </model>

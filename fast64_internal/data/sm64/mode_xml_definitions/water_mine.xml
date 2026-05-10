@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Water Mine">
-    <geolayout>0xd0002f4</geolayout>
+    <geolayout address="0xd0002f4" />
     <group>group13</group>
     <ids>
-        <id value="0xb3" name="MODEL_WATER_MINE"/>
+        <id value="0xb3" name="MODEL_WATER_MINE" />
     </ids>
 </model>

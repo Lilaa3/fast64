@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Rr Cruiser Wing">
-    <geolayout>0xe000890</geolayout>
+    <geolayout address="0xe000890" />
     <level>RR</level>
     <ids>
-        <id value="0x3b" name="MODEL_RR_CRUISER_WING"/>
+        <id value="0x3b" name="MODEL_RR_CRUISER_WING" />
     </ids>
 </model>

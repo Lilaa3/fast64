@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bob Chain Chomp Gate">
-    <geolayout>0xe000440</geolayout>
+    <geolayout address="0xe000440" />
     <level>BOB</level>
     <ids>
-        <id value="0x36" name="MODEL_BOB_CHAIN_CHOMP_GATE"/>
+        <id value="0x36" name="MODEL_BOB_CHAIN_CHOMP_GATE" />
     </ids>
     <collisions>
-        <collision c_name="bob_seg7_collision_chain_chomp_gate" address="0x70113c0"/>
+        <collision c_name="bob_seg7_collision_chain_chomp_gate" address="0x70113c0" />
     </collisions>
 </model>

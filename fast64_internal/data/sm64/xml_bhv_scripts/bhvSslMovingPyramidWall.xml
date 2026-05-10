@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003b30" readable_name="SSL Moving Pyramid Wall">
     <tags>
         <tag>ENVIRONMENTAL</tag>
@@ -8,9 +8,9 @@
         <field name="Initial Position" type="int" bparam="2" default="0">
             <description>Offsets the starting yposition, but is still relative.</description>
             <enums>
-                <enum value="0" name="High" c_name="PYRAMID_WALL_BP_POSITION_HIGH"/>
-                <enum value="1" name="Middle" c_name="PYRAMID_WALL_BP_POSITION_MIDDLE"/>
-                <enum value="2" name="Low" c_name="PYRAMID_WALL_BP_POSITION_LOW"/>
+                <enum value="0" name="High" c_name="PYRAMID_WALL_BP_POSITION_HIGH" />
+                <enum value="1" name="Middle" c_name="PYRAMID_WALL_BP_POSITION_MIDDLE" />
+                <enum value="2" name="Low" c_name="PYRAMID_WALL_BP_POSITION_LOW" />
             </enums>
         </field>
     </fields>

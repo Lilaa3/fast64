@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003868" readable_name="Celebration Star">
     <description>Visual star during star collection animation.</description>
     <tags>

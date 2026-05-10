@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130038b0" readable_name="Star/Key Collection Puff Spawner">
     <description>Dust used when a star or key is collected.</description>
     <tags>

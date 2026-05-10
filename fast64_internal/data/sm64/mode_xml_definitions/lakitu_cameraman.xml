@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Lakitu (Cameraman)">
-    <geolayout>0xd000000</geolayout>
+    <geolayout address="0xd000000" />
     <group>group15</group>
     <ids>
-        <id value="0x66" name="MODEL_LAKITU"/>
+        <id value="0x66" name="MODEL_LAKITU" />
     </ids>
     <animation_tables>
         <table>lakitu_cameraman</table>

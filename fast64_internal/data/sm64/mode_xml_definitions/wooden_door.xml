@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wooden Door">
-    <geolayout>0x160004d0</geolayout>
+    <geolayout address="0x160004d0" />
     <group>common1</group>
     <ids>
-        <id value="0x27" name="MODEL_COURTYARD_WOODEN_DOOR" level="common1"/>
+        <id value="0x27" name="MODEL_COURTYARD_WOODEN_DOOR" level="common1" />
     </ids>
     <animation_tables>
         <table>door</table>

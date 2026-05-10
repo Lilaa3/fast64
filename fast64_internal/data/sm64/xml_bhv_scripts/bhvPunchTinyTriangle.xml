@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000abc" readable_name="Punch Tiny Triangle">
     <description>A small triangle particle that spawns during a punch attack. Spawned by Triangle Particle Spawnersss</description>
     <tags>

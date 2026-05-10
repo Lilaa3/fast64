@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bitdw Sliding Platform">
-    <geolayout>0xe000528</geolayout>
+    <geolayout address="0xe000528" />
     <level>BITDW</level>
     <ids>
-        <id value="0x38" name="MODEL_BITDW_SLIDING_PLATFORM"/>
+        <id value="0x38" name="MODEL_BITDW_SLIDING_PLATFORM" />
     </ids>
     <collisions>
-        <collision c_name="bitdw_seg7_collision_0700F688" address="0x0700F688"/>
+        <collision c_name="bitdw_seg7_collision_0700F688" address="0x0700F688" />
     </collisions>
 </model>

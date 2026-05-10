@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130027e4" readable_name="Boo">
     <tags>
         <tag>ENEMY</tag>
@@ -7,8 +7,8 @@
     <fields>
         <field name="Variant" type="int" bparam="2" default="1">
             <enums>
-                <enum value="1" name="Normal" c_name="BOO_BP_NORMAL"/>
-                <enum value="2" name="Merry Go Round" c_name="BOO_BP_MERRY_GO_ROUND"/>
+                <enum value="1" name="Normal" c_name="BOO_BP_NORMAL" />
+                <enum value="2" name="Merry Go Round" c_name="BOO_BP_MERRY_GO_ROUND" />
             </enums>
         </field>
     </fields>

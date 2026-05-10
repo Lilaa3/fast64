@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001318" readable_name="WF Sliding Tower Platform">
     <tags>
         <tag>SURFACE</tag>

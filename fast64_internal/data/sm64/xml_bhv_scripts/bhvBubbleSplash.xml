@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002cb0" readable_name="Bubble Splash">
     <description>Snaps to the water.</description>
     <tags>

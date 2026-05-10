@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003388" readable_name="Circling Amp">
     <description>Amp enemy. Circles a point or stays fixed based on BP2. Faces Mario and oscillates vertically.</description>
     <tags>
@@ -8,10 +8,10 @@
     <fields>
         <field name="Rotation Radius" type="int" bparam="2" default="0">
             <enums>
-                <enum value="0" name="200" c_name="AMP_BP_ROT_RADIUS_200"/>
-                <enum value="1" name="300" c_name="AMP_BP_ROT_RADIUS_300"/>
-                <enum value="2" name="400" c_name="AMP_BP_ROT_RADIUS_400"/>
-                <enum value="3" name="Fixed" c_name="AMP_BP_ROT_RADIUS_0"/>
+                <enum value="0" name="200" c_name="AMP_BP_ROT_RADIUS_200" />
+                <enum value="1" name="300" c_name="AMP_BP_ROT_RADIUS_300" />
+                <enum value="2" name="400" c_name="AMP_BP_ROT_RADIUS_400" />
+                <enum value="3" name="Fixed" c_name="AMP_BP_ROT_RADIUS_0" />
             </enums>
         </field>
     </fields>

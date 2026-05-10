@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Unagi">
-    <geolayout>0xc00010c</geolayout>
+    <geolayout address="0xc00010c" />
     <group>group4</group>
     <ids>
-        <id value="0x55" name="MODEL_UNAGI"/>
+        <id value="0x55" name="MODEL_UNAGI" />
     </ids>
     <animation_tables>
         <table>unagi</table>

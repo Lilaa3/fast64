@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x1300302c" readable_name="Act Selector Star Type">
     <description>Individual star in the act selector menu. Handles selection animation.</description>
     <tags>

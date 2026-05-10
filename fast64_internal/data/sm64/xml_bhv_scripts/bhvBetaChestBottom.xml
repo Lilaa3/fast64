@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000278" readable_name="Beta Chest Bottom">
     <description>A beta treasure chest base. Hitbox only.</description>
     <tags>

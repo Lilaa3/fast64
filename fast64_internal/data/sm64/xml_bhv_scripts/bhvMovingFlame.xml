@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13005158" readable_name="Moving Flame">
     <description>Moving flame, a projectile that follows Mario. Can be configured to exist for only a single frame or to spawn embers as it moves.</description>
     <comment>bhvMovingFlame in hacker, bhvSmallPiranhaFlame in decomp.</comment>
@@ -11,8 +11,8 @@
     <fields>
         <field name="Single Frame" type="bool" bparam="2" default="0">
             <enums>
-                <enum value="0" c_name="MOVING_FLAME_BP_NORMAL"/>
-                <enum value="1" c_name="MOVING_FLAME_BP_1FRAME"/>
+                <enum value="0" c_name="MOVING_FLAME_BP_NORMAL" />
+                <enum value="1" c_name="MOVING_FLAME_BP_1FRAME" />
             </enums>
         </field>
     </fields>

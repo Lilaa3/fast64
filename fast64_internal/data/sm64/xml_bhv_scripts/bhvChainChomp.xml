@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x1300478c" readable_name="Chain Chomp">
     <description>Manages and spawns a list of object's with bhvChainChompChainPart.</description>
     <tags>

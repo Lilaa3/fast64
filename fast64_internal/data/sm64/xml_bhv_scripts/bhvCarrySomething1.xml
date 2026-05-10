@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003454" readable_name="Carry Something 1 (Unused)">
     <description>Placeholder behavior.</description>
     <comment>Hacker calls this bhvCarrySomething2. Decomp uses bhvCarrySomethingDropped.</comment>

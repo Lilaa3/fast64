@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <animation_table address="0x5012824" name="Unagi" size="7">
     <names>
         <name>Yawn</name>

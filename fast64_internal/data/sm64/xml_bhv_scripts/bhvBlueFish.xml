@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001b2c" readable_name="Blue Fish">
     <description>Blue fish that swim in patterns.</description>
     <tags>

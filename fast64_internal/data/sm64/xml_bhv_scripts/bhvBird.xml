@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13005354" readable_name="Bird">
     <description>Birds that fly in patterns.</description>
     <tags>
@@ -9,8 +9,8 @@
     <fields>
         <field name="Type" type="int" bparam="2" default="0">
             <enums>
-                <enum value="0" name="Spawned" c_name="BIRD_BP_SPAWNED"/>
-                <enum value="1" name="Spawner" c_name="BIRD_BP_SPAWNER"/>
+                <enum value="0" name="Spawned" c_name="BIRD_BP_SPAWNED" />
+                <enum value="1" name="Spawner" c_name="BIRD_BP_SPAWNER" />
             </enums>
         </field>
     </fields>

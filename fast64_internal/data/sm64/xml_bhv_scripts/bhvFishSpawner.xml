@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x1300215c" readable_name="Fish Spawner">
     <description>A general-purpose fish spawner that manages the creation of fish schools.</description>
     <tags>
@@ -10,15 +10,15 @@
         <field name="Spawner Type" type="int" bparam="2" default="0">
             <description>The type of fish to spawn and the quantity.</description>
             <enums>
-                <enum value="0" name="Many Blue" c_name="FISH_SPAWNER_BP_MANY_BLUE"/>
-                <enum value="1" name="Few Blue" c_name="FISH_SPAWNER_BP_FEW_BLUE"/>
-                <enum value="2" name="Many Cyan" c_name="FISH_SPAWNER_BP_MANY_CYAN"/>
-                <enum value="3" name="Few Cyan" c_name="FISH_SPAWNER_BP_FEW_CYAN"/>
+                <enum value="0" name="Many Blue" c_name="FISH_SPAWNER_BP_MANY_BLUE" />
+                <enum value="1" name="Few Blue" c_name="FISH_SPAWNER_BP_FEW_BLUE" />
+                <enum value="2" name="Many Cyan" c_name="FISH_SPAWNER_BP_MANY_CYAN" />
+                <enum value="3" name="Few Cyan" c_name="FISH_SPAWNER_BP_FEW_CYAN" />
             </enums>
         </field>
         <field name="Flags" type="bitflag" bparam="2" shift="4">
             <enums>
-                <enum value="1" name="In Full Water Level" c_name="FISH_BP_FLAG_IN_FULL_WATER_LEVEL"/>
+                <enum value="1" name="In Full Water Level" c_name="FISH_BP_FLAG_IN_FULL_WATER_LEVEL" />
             </enums>
         </field>
     </fields>

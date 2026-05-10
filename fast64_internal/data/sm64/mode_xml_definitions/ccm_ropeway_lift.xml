@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ccm Ropeway Lift">
-    <geolayout>0xe0003d0</geolayout>
+    <geolayout address="0xe0003d0" />
     <level>CCM</level>
     <ids>
-        <id value="0x36" name="MODEL_CCM_ROPEWAY_LIFT"/>
+        <id value="0x36" name="MODEL_CCM_ROPEWAY_LIFT" />
     </ids>
     <collisions>
-        <collision c_name="ccm_seg7_collision_ropeway_lift" address="0x070163F8"/>
+        <collision c_name="ccm_seg7_collision_ropeway_lift" address="0x070163F8" />
     </collisions>
 </model>

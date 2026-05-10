@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001984" readable_name="Blue Bowser Flame">
     <description>A blue flame spawned by Bowser.</description>
     <tags>
@@ -9,7 +9,7 @@
         <tag>HURT</tag>
     </tags>
     <fields>
-        <field name="Flame Type" type="int" bparam="2" default="0"/>
+        <field name="Flame Type" type="int" bparam="2" default="0" />
     </fields>
     <models>
         <model>red_flame</model>

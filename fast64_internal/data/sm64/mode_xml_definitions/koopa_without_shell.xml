@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Koopa (Without Shell)">
-    <geolayout>0xd0000d0</geolayout>
+    <geolayout address="0xd0000d0" />
     <group>group14</group>
     <ids>
-        <id value="0xbf" name="MODEL_KOOPA_WITHOUT_SHELL"/>
+        <id value="0xbf" name="MODEL_KOOPA_WITHOUT_SHELL" />
     </ids>
     <animation_tables>
         <table>koopa</table>

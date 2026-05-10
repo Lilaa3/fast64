@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13005528" readable_name="DDD Pole">
     <description>Pole that oscillates vertically based on Max Offset (100 * BP2). Deletes itself if not in act 1.</description>
     <tags>
@@ -7,7 +7,7 @@
         <tag>DDD</tag>
     </tags>
     <fields>
-        <field name="Max Offset Multiplier" type="units" bparam="2" default="14.8182" multiplier="100"/>
+        <field name="Max Offset Multiplier" type="units" bparam="2" default="14.8182" multiplier="100" />
     </fields>
     <models>
         <model>ddd_pole</model>

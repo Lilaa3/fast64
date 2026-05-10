@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002790" readable_name="Big Boo">
     <tags>
         <tag>ENEMY</tag>
@@ -11,8 +11,8 @@
                 <enum value="0" name="Ghost Hunt" c_name="BIG_BOO_BP_GHOST_HUNT">
                     <description>Spawns staircase objects on death.</description>
                 </enum>
-                <enum value="1" name="Merry-Go-Round" c_name="BIG_BOO_BP_MERRY_GO_ROUND"/>
-                <enum value="2" name="Balcony" c_name="BIG_BOO_BP_BALCONY"/>
+                <enum value="1" name="Merry-Go-Round" c_name="BIG_BOO_BP_MERRY_GO_ROUND" />
+                <enum value="2" name="Balcony" c_name="BIG_BOO_BP_BALCONY" />
             </enums>
         </field>
     </fields>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004ccc" readable_name="TTC Cog">
     <tags>
         <tag>ENVIRONMENTAL</tag>
@@ -7,14 +7,14 @@
     <fields>
         <field name="Rotation Direction" type="int" bparam="2" mask="0x01" default="0">
             <enums>
-                <enum value="0" name="Clockwise" c_name="TTC_COG_BP_DIR_CW"/>
-                <enum value="1" name="Counter-Clockwise" c_name="TTC_COG_BP_DIR_CCW"/>
+                <enum value="0" name="Clockwise" c_name="TTC_COG_BP_DIR_CW" />
+                <enum value="1" name="Counter-Clockwise" c_name="TTC_COG_BP_DIR_CCW" />
             </enums>
         </field>
         <field name="Shape" type="int" bparam="2" shift="1" mask="0x02" default="0">
             <enums>
-                <enum value="0" name="Hexagon" c_name="TTC_COG_BP_SHAPE_HEXAGON"/>
-                <enum value="1" name="Triangle" c_name="TTC_COG_BP_SHAPE_TRIANGLE"/>
+                <enum value="0" name="Hexagon" c_name="TTC_COG_BP_SHAPE_HEXAGON" />
+                <enum value="1" name="Triangle" c_name="TTC_COG_BP_SHAPE_TRIANGLE" />
             </enums>
         </field>
     </fields>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001124" readable_name="Flamethrower Flame">
     <tags>
         <tag>FIRE</tag>
@@ -9,11 +9,11 @@
         <field name="Flame Type" type="int" bparam="2" default="0">
             <description>Determines scaling, hitbox height, and movement direction.</description>
             <enums>
-                <enum value="0" name="Normal" c_name="FLAMETHROWER_BP_0"/>
-                <enum value="1" name="Blue" c_name="FLAMETHROWER_BP_BLUE"/>
-                <enum value="2" name="Slow" c_name="FLAMETHROWER_BP_SLOW"/>
-                <enum value="3" name="Tall Hitbox" c_name="FLAMETHROWER_BP_TALL_HITBOX"/>
-                <enum value="4" name="Upwards" c_name="FLAMETHROWER_BP_UPWARDS"/>
+                <enum value="0" name="Normal" c_name="FLAMETHROWER_BP_0" />
+                <enum value="1" name="Blue" c_name="FLAMETHROWER_BP_BLUE" />
+                <enum value="2" name="Slow" c_name="FLAMETHROWER_BP_SLOW" />
+                <enum value="3" name="Tall Hitbox" c_name="FLAMETHROWER_BP_TALL_HITBOX" />
+                <enum value="4" name="Upwards" c_name="FLAMETHROWER_BP_UPWARDS" />
             </enums>
         </field>
     </fields>

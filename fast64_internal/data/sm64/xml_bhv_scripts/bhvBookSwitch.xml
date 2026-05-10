@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130050f4" readable_name="Book Switch">
     <description>A switch in the form of a book. Managed by bhvHauntedBookshelfManager. Index is used for order.</description>
     <tags>
@@ -6,7 +6,7 @@
         <tag>BBH</tag>
     </tags>
     <fields>
-        <field name="Correct Choice Index" type="int" bparam="2" default="0"/>
+        <field name="Correct Choice Index" type="int" bparam="2" default="0" />
     </fields>
     <models>
         <model>bookend</model>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002f40" readable_name="Star (Unlock Door)">
     <tags>
         <tag>CUTSCENE</tag>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000c64" readable_name="LLL Tumbling Bridge">
     <tags>
         <tag>ENVIRONMENTAL</tag>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130023a4" readable_name="Sliding Box">
     <description>A box that slides and oscillates relative to the JRB Afloating Ship Collision object.</description>
     <tags>

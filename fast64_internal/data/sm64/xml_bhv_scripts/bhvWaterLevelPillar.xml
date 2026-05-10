@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001c04" readable_name="Water Level Pillar">
     <description>A surface object that acts as a trigger for draining the moat water.</description>
     <tags>

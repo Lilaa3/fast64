@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003c58" readable_name="Castle Flag Waving">
     <tags>
         <tag>ENVIRONMENTAL</tag>

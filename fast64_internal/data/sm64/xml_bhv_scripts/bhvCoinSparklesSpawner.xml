@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000a14" readable_name="Coin Sparkles Spawner">
     <description>Spawns bhvCoinSparkles</description>
     <tags>

@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Yellow Sphere">
-    <geolayout>0xc000000</geolayout>
+    <geolayout address="0xc000000" />
     <group>group1</group>
     <ids>
-        <id value="0x55" name="MODEL_YELLOW_SPHERE"/>
+        <id value="0x55" name="MODEL_YELLOW_SPHERE" />
     </ids>
 </model>

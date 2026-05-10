@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000e70" readable_name="Wind Particle">
     <description>A single wind particle</description>
     <tags>

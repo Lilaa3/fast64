@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bbh Tumbling Platform">
-    <geolayout>0xe0005e0</geolayout>
+    <geolayout address="0xe0005e0" />
     <level>BBH</level>
     <ids>
-        <id value="0x37" name="MODEL_BBH_TUMBLING_PLATFORM"/>
+        <id value="0x37" name="MODEL_BBH_TUMBLING_PLATFORM" />
     </ids>
 </model>

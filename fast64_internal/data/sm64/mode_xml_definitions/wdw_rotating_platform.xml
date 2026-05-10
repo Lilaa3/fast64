@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wdw Rotating Platform">
-    <geolayout>0xe000640</geolayout>
+    <geolayout address="0xe000640" />
     <level>WDW</level>
     <ids>
-        <id value="0x3c" name="MODEL_WDW_ROTATING_PLATFORM"/>
+        <id value="0x3c" name="MODEL_WDW_ROTATING_PLATFORM" />
     </ids>
     <collisions>
-        <collision c_name="wdw_seg7_collision_rotating_platform" address="0x070186B4"/>
+        <collision c_name="wdw_seg7_collision_rotating_platform" address="0x070186B4" />
     </collisions>
 </model>

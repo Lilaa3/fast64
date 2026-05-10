@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x1300142c" readable_name="Piranha Plant Bubble">
     <description>Grows and shrinks in sync with the plant's (parent object) animation.</description>
     <tags>

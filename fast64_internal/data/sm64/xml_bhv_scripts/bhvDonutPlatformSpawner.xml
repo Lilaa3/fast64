@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130054ec" readable_name="Donut Platform Spawner">
     <description>Spawns donut platforms at predefined positions</description>
     <tags>

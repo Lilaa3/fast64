@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130037ec" readable_name="Bowser Bomb">
     <tags>
         <tag>BOSS</tag>

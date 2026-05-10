@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004ef8" readable_name="Recovery Heart">
     <tags>
         <tag>COLLECTABLE</tag>

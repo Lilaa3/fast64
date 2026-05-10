@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Snow Tree">
-    <geolayout>0x16001018</geolayout>
+    <geolayout address="0x16001018" />
     <group>common1</group>
     <ids>
-        <id value="0x19" name="MODEL_SL_SNOW_TREE" level="common1"/>
+        <id value="0x19" name="MODEL_SL_SNOW_TREE" level="common1" />
     </ids>
 </model>

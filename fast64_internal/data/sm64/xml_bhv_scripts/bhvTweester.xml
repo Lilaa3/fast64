@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002650" readable_name="Tweester">
     <description>Chases Mario when he enters its activation radius.</description>
     <tags>
         <tag>ENEMY</tag>
     </tags>
     <fields>
-        <field name="Activation Radius" type="int" bparam="2" default="1900" multiplier="100"/>
+        <field name="Activation Radius" type="int" bparam="2" default="1900" multiplier="100" />
     </fields>
     <models>
         <model>tweester_tornado</model>

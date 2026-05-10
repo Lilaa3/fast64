@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003e1c" readable_name="Vanish Cap">
     <description>Shares the model with the main mario cap, switches to transparency using anim state.</description>
     <tags>

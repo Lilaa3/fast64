@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001aa4" readable_name="Bowser Flame">
     <tags>
         <tag>FIRE</tag>

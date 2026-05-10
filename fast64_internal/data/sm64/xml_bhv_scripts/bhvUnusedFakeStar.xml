@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002a20" readable_name="Unused Fake Star">
     <description>An unused star object that rotates, no hitbox.</description>
     <tags>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003750" readable_name="Jet Stream Water Ring">
     <description>A collectable water ring that contributes to its parent (Jet Stream Ring Spawner)'s count.</description>
     <tags>

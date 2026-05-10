@@ -1,14 +1,14 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Hazy Maze Door">
-    <geolayout>0x1600068c</geolayout>
+    <geolayout address="0x1600068c" />
     <group>common1</group>
     <ids>
-        <id value="0x20" name="MODEL_HMC_HAZY_MAZE_DOOR" level="common1"/>
+        <id value="0x20" name="MODEL_HMC_HAZY_MAZE_DOOR" level="common1" />
     </ids>
     <animation_tables>
         <table>door</table>
     </animation_tables>
     <collisions>
-        <collision c_name="door_seg3_collision_door" address="0x0301CE78"/>
+        <collision c_name="door_seg3_collision_door" address="0x0301CE78" />
     </collisions>
 </model>

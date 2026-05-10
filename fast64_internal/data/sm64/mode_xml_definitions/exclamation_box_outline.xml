@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Exclamation Box Outline">
-    <geolayout>0xf000a5a</geolayout>
+    <geolayout address="0xf000a5a" />
     <group>common0</group>
     <ids>
-        <id value="0x83" name="MODEL_EXCLAMATION_BOX_OUTLINE"/>
+        <id value="0x83" name="MODEL_EXCLAMATION_BOX_OUTLINE" />
     </ids>
 </model>

@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Burn Smoke Unused">
-    <geolayout>0x17000084</geolayout>
+    <geolayout address="0x17000084" />
     <group>group0</group>
     <ids>
-        <id value="0x9c" name="MODEL_BURN_SMOKE_UNUSED"/>
+        <id value="0x9c" name="MODEL_BURN_SMOKE_UNUSED" />
     </ids>
 </model>

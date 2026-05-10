@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x1300362c" readable_name="Bully">
     <description>A small version of the Bully enemy. It patrols its area and chases Mario if he gets close, and can be knocked back by jumping on it.</description>
     <tags>
@@ -6,6 +6,6 @@
     </tags>
     <models>
         <model>bully</model>
-        <model>bully_boss</model> <!-- From an unused macro -->
+        <model>bully_boss</model> 
     </models>
 </behavior>

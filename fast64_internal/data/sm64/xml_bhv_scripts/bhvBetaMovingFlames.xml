@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130010b8" readable_name="Beta Moving Flames">
     <description>Beta flames that move back and forth.</description>
     <tags>

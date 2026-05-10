@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130011d0" readable_name="Bowser Shockwave">
     <tags>
         <tag>HURT</tag>

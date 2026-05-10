@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002d50" readable_name="Shallow Water Wave">
     <tags>
         <tag>PARTICLE</tag>

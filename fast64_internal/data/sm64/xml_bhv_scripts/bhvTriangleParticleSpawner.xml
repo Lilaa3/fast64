@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000ad8" readable_name="Triangle Particle Spawner">
     <description>A temporary spawner object that generates 6 tiny triangle particles.</description>
     <particle>PARTICLE_TRIANGLE</particle>

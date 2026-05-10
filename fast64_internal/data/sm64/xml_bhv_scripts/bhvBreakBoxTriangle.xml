@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000db4" readable_name="Break Box Triangle">
     <description>A triangle piece from a broken box.</description>
     <tags>

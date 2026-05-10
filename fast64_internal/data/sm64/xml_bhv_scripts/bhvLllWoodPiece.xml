@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001e04" readable_name="LLL Wood Piece">
     <description>It is destroyed when its parent bridge manager resets.</description>
     <tags>

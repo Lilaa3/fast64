@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bub">
-    <geolayout>0xd00038c</geolayout>
+    <geolayout address="0xd00038c" />
     <group>group13</group>
     <ids>
-        <id value="0x64" name="MODEL_BUB"/>
+        <id value="0x64" name="MODEL_BUB" />
     </ids>
     <animation_tables>
         <table>bub</table>

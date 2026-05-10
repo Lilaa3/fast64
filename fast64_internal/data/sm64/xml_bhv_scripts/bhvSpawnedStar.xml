@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130007f8" readable_name="Spawned Star">
     <tags>
         <tag>COLLECTABLE</tag>

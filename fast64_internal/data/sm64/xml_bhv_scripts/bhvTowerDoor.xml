@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130006a4" readable_name="WF Tower Door">
     <description>Hides a secret one up mushroom.</description>
     <tags>

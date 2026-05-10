@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000500" readable_name="Unused Cannon Base">
     <description>Unused cannon base. Moves along Y axis for a short duration before deactivating.</description>
     <tags>

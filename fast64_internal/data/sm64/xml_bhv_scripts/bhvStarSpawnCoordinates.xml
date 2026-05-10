@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003e64" readable_name="Star Spawn Coordinates">
     <description>An object that handles the spawning of a Power Star with a cutscene.</description>
     <tags>
@@ -11,8 +11,8 @@
         </field>
         <field name="Cutscene Type" type="int" bparam="2" default="0">
             <enums>
-                <enum value="0" name="Default (Forced in BBH)" c_name="SPAWN_STAR_ARC_CUTSCENE_BP_DEFAULT_STAR"/> <!-- TODO Remove "Forced in bbh comment for hacker"-->
-                <enum value="1" name="Hidden/Red Coin" c_name="SPAWN_STAR_ARC_CUTSCENE_BP_HIDDEN_STAR"/>
+                <enum value="0" name="Default (Forced in BBH)" c_name="SPAWN_STAR_ARC_CUTSCENE_BP_DEFAULT_STAR" /> 
+                <enum value="1" name="Hidden/Red Coin" c_name="SPAWN_STAR_ARC_CUTSCENE_BP_HIDDEN_STAR" />
             </enums>
         </field>
     </fields>

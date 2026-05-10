@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002a48" readable_name="Static Object">
     <description>A static object that does nothing.</description>
     <tags>

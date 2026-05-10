@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Sparkle">
-    <geolayout>0x170001bc</geolayout>
+    <geolayout address="0x170001bc" />
     <group>group0</group>
     <ids>
-        <id value="0x95" name="MODEL_SPARKLES"/>
+        <id value="0x95" name="MODEL_SPARKLES" />
     </ids>
 </model>

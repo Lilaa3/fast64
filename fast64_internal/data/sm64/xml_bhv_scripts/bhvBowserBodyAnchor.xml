@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130018cc" readable_name="Bowser Body Anchor">
     <description>An anchor for Bowser's body. Applies big knockback.</description>
     <tags>

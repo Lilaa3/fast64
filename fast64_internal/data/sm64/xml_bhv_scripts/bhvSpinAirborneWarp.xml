@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002f74" readable_name="Spin Airborne Warp">
     <tags>
         <tag>SPAWN_WARP</tag>
     </tags>
     <fields>
-        <field name="Warp ID" type="int" bparam="2" default="0x0A"/>
+        <field name="Warp ID" type="int" bparam="2" default="0x0A" />
     </fields>
 </behavior>

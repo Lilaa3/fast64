@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000f08" readable_name="Ukiki">
     <tags>
         <tag>NPC</tag>
@@ -9,8 +9,8 @@
     <fields>
         <field name="Type" type="int" bparam="2" default="0">
             <enums>
-                <enum value="0" name="Cage" c_name="UKIKI_BP_CAGE"/>
-                <enum value="1" name="Steal Mario's Cap" c_name="UKIKI_BP_CAP"/>
+                <enum value="0" name="Cage" c_name="UKIKI_BP_CAGE" />
+                <enum value="1" name="Steal Mario's Cap" c_name="UKIKI_BP_CAP" />
             </enums>
         </field>
     </fields>

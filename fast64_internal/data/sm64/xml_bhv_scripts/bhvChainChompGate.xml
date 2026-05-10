@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004868" readable_name="Chain Chomp Gate">
     <description>Gate that is destroyed when the associated Chain Chomp's (nearest on spawning) oChainChompHitGate flag is set.</description>
     <tags>

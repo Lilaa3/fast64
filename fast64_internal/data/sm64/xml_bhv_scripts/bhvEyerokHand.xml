@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130052d0" readable_name="Eyerok Hand">
     <tags>
         <tag>BOSS</tag>
@@ -9,16 +9,16 @@
     <fields>
         <field name="Side" type="int" bparam="2" default="1">
             <enums>
-                <enum value="-1" name="Left"/>
-                <enum value="1" name="Right"/>
+                <enum value="-1" name="Left" />
+                <enum value="1" name="Right" />
             </enums>
         </field>
     </fields>
     <collisions>
-        <collision readable_name="Wake" c_name="ssl_seg7_collision_07028274" address="0x07028274"/>
-        <collision readable_name="Sleep Left" c_name="ssl_seg7_collision_070284B0" address="0x070284B0"/>
-        <collision readable_name="Sleep Right" c_name="ssl_seg7_collision_07028370" address="0x07028370"/>
-        <collision readable_name="Open" c_name="ssl_seg7_collision_070282F8" address="0x070282F8"/>
+        <collision readable_name="Wake" c_name="ssl_seg7_collision_07028274" address="0x07028274" />
+        <collision readable_name="Sleep Left" c_name="ssl_seg7_collision_070284B0" address="0x070284B0" />
+        <collision readable_name="Sleep Right" c_name="ssl_seg7_collision_07028370" address="0x07028370" />
+        <collision readable_name="Open" c_name="ssl_seg7_collision_070282F8" address="0x070282F8" />
     </collisions>
     <models>
         <model>eyerok_left_hand</model>

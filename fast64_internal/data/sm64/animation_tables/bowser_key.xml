@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <animation_table address="0x30172d0" name="Bowser Key" size="2">
     <behaviors>
         <behavior>0x13001bb4</behavior>

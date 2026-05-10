@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130000ac" readable_name="Mr. I Particle">
     <description>A small damaging projectile spawned by Mr. I.</description>
     <tags>

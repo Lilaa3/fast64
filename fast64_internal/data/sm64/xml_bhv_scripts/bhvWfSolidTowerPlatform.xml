@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001368" readable_name="WF Solid Tower Platform">
     <description>A stationary platform in the tower. It is deleted if its parent object's action is 3.</description>
     <tags>

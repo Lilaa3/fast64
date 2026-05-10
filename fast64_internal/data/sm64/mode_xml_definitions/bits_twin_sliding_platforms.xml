@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bits Twin Sliding Platforms">
-    <geolayout>0xe0005f8</geolayout>
+    <geolayout address="0xe0005f8" />
     <level>BITS</level>
     <ids>
-        <id value="0x37" name="MODEL_BITS_TWIN_SLIDING_PLATFORMS"/>
+        <id value="0x37" name="MODEL_BITS_TWIN_SLIDING_PLATFORMS" />
     </ids>
     <collisions>
-        <collision c_name="bits_seg7_collision_0701AA0C" address="0x0701AA0C"/>
+        <collision c_name="bits_seg7_collision_0701AA0C" address="0x0701AA0C" />
     </collisions>
 </model>

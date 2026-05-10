@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130039d4" readable_name="Hidden Moneybag">
     <description>An invisible object that spawns a Moneybag when Mario gets close.</description>
     <tags>

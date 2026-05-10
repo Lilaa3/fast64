@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130015a4" readable_name="Heave Ho Throwing Helper">
     <description>A helper object that does the actual throw when it's parent goes into the throw action, sets mario's interact status and speed.</description>
     <tags>

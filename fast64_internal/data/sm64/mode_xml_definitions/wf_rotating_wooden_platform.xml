@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wf Rotating Wooden Platform">
-    <geolayout>0xe000a58</geolayout>
+    <geolayout address="0xe000a58" />
     <level>WF</level>
     <ids>
-        <id value="0xaf" name="MODEL_WF_ROTATING_WOODEN_PLATFORM"/>
+        <id value="0xaf" name="MODEL_WF_ROTATING_WOODEN_PLATFORM" />
     </ids>
     <collisions>
-        <collision c_name="wf_seg7_collision_clocklike_rotation" address="0x700fa00"/>
+        <collision c_name="wf_seg7_collision_clocklike_rotation" address="0x700fa00" />
     </collisions>
 </model>

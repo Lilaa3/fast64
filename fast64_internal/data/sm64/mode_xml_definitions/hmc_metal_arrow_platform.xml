@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Hmc Metal Arrow Platform">
-    <geolayout>0xe0005b8</geolayout>
+    <geolayout address="0xe0005b8" />
     <level>HMC</level>
     <ids>
-        <id value="0x37" name="MODEL_HMC_METAL_ARROW_PLATFORM"/>
+        <id value="0x37" name="MODEL_HMC_METAL_ARROW_PLATFORM" />
     </ids>
     <collisions>
-        <collision c_name="hmc_seg7_collision_controllable_platform_sub" address="0x702b7f4"/>
+        <collision c_name="hmc_seg7_collision_controllable_platform_sub" address="0x702b7f4" />
     </collisions>
 </model>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003104" readable_name="Jumping Blue Coin">
     <description>A blue coin that jumps and slides away from Mario.</description>
     <tags>

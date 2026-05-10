@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002710" readable_name="Boo With Cage">
     <description>The Boo that carries the cage in the cortyard.</description>
     <tags>

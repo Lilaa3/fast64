@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003694" readable_name="Big Bully With Minions">
     <description>A Big Bully that spawns and activates after its minions are killed.</description>
     <tags>
@@ -8,8 +8,8 @@
     <fields>
         <field name="Size" type="int" bparam="2" default="1">
             <enums>
-                <enum value="0" name="Small" c_name="BULLY_BP_SIZE_SMALL"/>
-                <enum value="1" name="Big" c_name="BULLY_BP_SIZE_BIG"/>
+                <enum value="0" name="Small" c_name="BULLY_BP_SIZE_SMALL" />
+                <enum value="1" name="Big" c_name="BULLY_BP_SIZE_BIG" />
             </enums>
         </field>
     </fields>

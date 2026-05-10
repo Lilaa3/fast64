@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bitdw Staircase Frame2">
-    <geolayout>0xe0005d0</geolayout>
+    <geolayout address="0xe0005d0" />
     <level>BITDW</level>
     <ids>
-        <id value="0x3d" name="MODEL_BITDW_STAIRCASE_FRAME2"/>
+        <id value="0x3d" name="MODEL_BITDW_STAIRCASE_FRAME2" />
     </ids>
     <collisions>
-        <collision c_name="bitdw_seg7_collision_0700FB5C" address="0x0700FB5C"/>
+        <collision c_name="bitdw_seg7_collision_0700FB5C" address="0x0700FB5C" />
     </collisions>
 </model>

@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ttm Star Cage">
-    <geolayout>0xe000710</geolayout>
+    <geolayout address="0xe000710" />
     <level>TTM</level>
     <ids>
-        <id value="0x36" name="MODEL_TTM_STAR_CAGE"/>
+        <id value="0x36" name="MODEL_TTM_STAR_CAGE" />
     </ids>
     <collisions>
-        <collision c_name="ttm_seg7_collision_ukiki_cage" address="0x7013790"/>
+        <collision c_name="ttm_seg7_collision_ukiki_cage" address="0x7013790" />
     </collisions>
 </model>

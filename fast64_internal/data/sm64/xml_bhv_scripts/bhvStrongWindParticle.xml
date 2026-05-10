@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002e20" readable_name="Strong Wind Particle">
     <description>Used for the Snowman in SL and Fwoosh.</description>
     <tags>
         <tag>PARTICLE</tag>
     </tags>
      <fields>
-        <field name="Wind Spread Multiplier" type="int" bparam="2" multiplier="500" default="0"/>
+        <field name="Wind Spread Multiplier" type="int" bparam="2" multiplier="500" default="0" />
     </fields>
     <models>
         <model>mist</model>

@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Moneybag">
-    <geolayout>0xd0000f0</geolayout>
+    <geolayout address="0xd0000f0" />
     <group>group16</group>
     <ids>
-        <id value="0x66" name="MODEL_MONEYBAG"/>
+        <id value="0x66" name="MODEL_MONEYBAG" />
     </ids>
     <animation_tables>
         <table>moneybag</table>

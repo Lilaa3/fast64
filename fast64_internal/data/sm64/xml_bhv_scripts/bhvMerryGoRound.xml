@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002968" readable_name="Merry-Go-Round">
     <description>Controls the rotating platform in Big Boo's Haunt. Triggers the howling wind ambient sound.</description>
     <tags>

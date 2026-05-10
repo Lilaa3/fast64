@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001d78" readable_name="LLL Moving Octagonal Mesh Platform">
     <description>Movement path is determined by an action list selected. On the first frame it uses the first one, but it doesn't matter until Mario steps on it.</description>
     <tags>
@@ -10,8 +10,8 @@
     <fields>
         <field name="Action List Index" type="int" bparam="2" default="0">
             <enums>
-                <enum value="0" name="Near the Bully Star"/>
-                <enum value="1" name="Near the Small Bullies"/>
+                <enum value="0" name="Near the Bully Star" />
+                <enum value="1" name="Near the Small Bullies" />
             </enums>
         </field>
     </fields>

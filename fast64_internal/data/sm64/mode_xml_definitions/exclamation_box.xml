@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Exclamation Box">
-    <geolayout>0xf000694</geolayout>
+    <geolayout address="0xf000694" />
     <group>common0</group>
     <ids>
-        <id value="0x89" name="MODEL_EXCLAMATION_BOX"/>
+        <id value="0x89" name="MODEL_EXCLAMATION_BOX" />
     </ids>
     <collisions>
-        <collision c_name="exclamation_box_outline_seg8_collision_08025F78" address="0x8025F78"/>
+        <collision c_name="exclamation_box_outline_seg8_collision_08025F78" address="0x8025F78" />
     </collisions>
 </model>

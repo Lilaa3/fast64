@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002fe4" readable_name="Menu Button">
     <description>Handles interactive menu buttons in the file select.</description>
     <tags>

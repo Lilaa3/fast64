@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004b8c" readable_name="Water Bomb Spawner">
     <description>A spawner that drops water bombs targeting Mario's current position when he is within a specific radius. The trigger radius is calculated as (50 * parameter + 200).</description>
     <tags>
@@ -6,6 +6,6 @@
         <tag>BOB</tag>
     </tags>
     <fields>
-        <field name="Spawn Radius Multiplier" type="units" bparam="2" default="0" multiplier="50" offset="200"/> <!-- Seems to  go unused?? -->
+        <field name="Spawn Radius Multiplier" type="units" bparam="2" default="0" multiplier="50" offset="200" /> 
     </fields>
 </behavior>

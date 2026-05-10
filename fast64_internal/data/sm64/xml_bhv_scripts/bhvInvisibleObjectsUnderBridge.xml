@@ -1,6 +1,6 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001bf4" readable_name="Moat Drained Water Manager">
-    <description>Checks if the moat was drained in the save, if so, lowers water regions 6 and 12 by <game_unit value="800"/></description>
+    <description>Checks if the moat was drained in the save, if so, lowers water regions 6 and 12 by <game_unit value="800" /></description>
     <tags>
         <tag>ENVIRONMENTAL</tag>
         <tag>CASTLE</tag>

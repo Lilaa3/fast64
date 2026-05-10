@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Main Menu Mario Save Button Fade">
-    <geolayout>0x0E000200</geolayout>
+    <geolayout address="0x0E000200" />
     <level>MENU</level>
     <ids>
-        <id value="0x08" name="MODEL_MAIN_MENU_MARIO_SAVE_BUTTON_FADE"/>
+        <id value="0x08" name="MODEL_MAIN_MENU_MARIO_SAVE_BUTTON_FADE" />
     </ids>
 </model>

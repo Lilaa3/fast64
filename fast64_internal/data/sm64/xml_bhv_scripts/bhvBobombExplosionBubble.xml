@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130035b0" readable_name="Bob-omb Explosion Bubble">
     <description>Bubbles that appear when a Bob-omb explodes underwater.</description>
     <tags>

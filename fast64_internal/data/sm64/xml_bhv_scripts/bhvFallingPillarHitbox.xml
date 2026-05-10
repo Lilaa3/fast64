@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130043c4" readable_name="JRB Falling Pillar Hitbox">
     <description>Invisible hitboxes, relies on the parent object's transform.</description>
     <tags>

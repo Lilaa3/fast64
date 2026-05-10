@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Hmc Red Grills">
-    <geolayout>0xe000530</geolayout>
+    <geolayout address="0xe000530" />
     <level>HMC</level>
     <ids>
-        <id value="0x3c" name="MODEL_HMC_RED_GRILLS"/>
+        <id value="0x3c" name="MODEL_HMC_RED_GRILLS" />
     </ids>
     <collisions>
-        <collision c_name="hmc_seg7_collision_grill_door" address="0x0702B65C"/>
+        <collision c_name="hmc_seg7_collision_grill_door" address="0x0702B65C" />
     </collisions>
 </model>

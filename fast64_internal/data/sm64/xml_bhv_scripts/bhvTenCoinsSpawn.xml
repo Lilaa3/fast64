@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000984" readable_name="Ten Coins Spawner">
     <description>Spawns 10 yellow coins using the bhvSingleCoinGetsSpawned behavior and then deactivates.</description>
     <tags>

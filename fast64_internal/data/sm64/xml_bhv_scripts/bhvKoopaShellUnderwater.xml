@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000708" readable_name="Koopa Shell Underwater">
     <description>A Koopa shell variant for underwater levels (DDD and JRB).</description>
     <tags>

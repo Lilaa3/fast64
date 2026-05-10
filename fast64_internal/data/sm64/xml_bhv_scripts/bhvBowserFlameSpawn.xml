@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001904" readable_name="Bowser Flame Spawner">
     <description>An object that spawns flames (bhvFlameMovingForwardGrowing) when Bowser breathes fire, also plays the sounds. It always exists with bowser.</description>
     <tags>

@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Orange Numbers">
-    <geolayout>0x16000e14</geolayout>
+    <geolayout address="0x16000e14" />
     <group>common1</group>
     <ids>
-        <id value="0xdb" name="MODEL_NUMBER"/>
+        <id value="0xdb" name="MODEL_NUMBER" />
     </ids>
 </model>

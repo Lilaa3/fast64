@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Eyerok Left Hand">
-    <geolayout>0xc0005a8</geolayout>
+    <geolayout address="0xc0005a8" />
     <group>group5</group>
     <ids>
-        <id value="0x58" name="MODEL_EYEROK_LEFT_HAND"/>
+        <id value="0x58" name="MODEL_EYEROK_LEFT_HAND" />
     </ids>
     <animation_tables>
         <table>eyerok</table>

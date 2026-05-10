@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130005d8" readable_name="WF Tower">
     <description>A static tower surface object with fixed collision data.</description>
     <tags>

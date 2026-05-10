@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Castle Inside Castle Bowser Trap">
-    <geolayout>0xe000f18</geolayout>
+    <geolayout address="0xe000f18" />
     <level>CASTLE_INSIDE</level>
     <ids>
-        <id value="0x35" name="MODEL_CASTLE_BOWSER_TRAP"/>
+        <id value="0x35" name="MODEL_CASTLE_BOWSER_TRAP" />
     </ids>
     <collisions>
-        <collision c_name="inside_castle_seg7_collision_floor_trap" address="0x7078de4"/>
+        <collision c_name="inside_castle_seg7_collision_floor_trap" address="0x7078de4" />
     </collisions>
 </model>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130038e8" readable_name="LLL Drawbridge">
     <description>Spawned by LLL Drawbridge Spawner.</description>
     <tags>

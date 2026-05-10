@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <animation_table address="0x6007de0" name="Skeeter" size="4">
     <names>
         <name>Water Lunge</name>

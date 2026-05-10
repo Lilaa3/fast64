@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003a58" readable_name="Bowling Ball">
     <tags>
         <tag>HURT</tag>
@@ -6,11 +6,11 @@
     <fields>
         <field name="Type" type="int" bparam="2" default="0">
             <enums>
-                <enum value="0" name="BOB Upper" c_name="BBALL_BP_STYPE_BOB_UPPER"/>
-                <enum value="1" name="TTM" c_name="BBALL_BP_STYPE_TTM"/>
-                <enum value="2" name="BOB Lower" c_name="BBALL_BP_STYPE_BOB_LOWER"/>
-                <enum value="3" name="THI Large" c_name="BBALL_BP_STYPE_THI_LARGE"/>
-                <enum value="4" name="THI Small" c_name="BBALL_BP_STYPE_THI_SMALL"/>
+                <enum value="0" name="BOB Upper" c_name="BBALL_BP_STYPE_BOB_UPPER" />
+                <enum value="1" name="TTM" c_name="BBALL_BP_STYPE_TTM" />
+                <enum value="2" name="BOB Lower" c_name="BBALL_BP_STYPE_BOB_LOWER" />
+                <enum value="3" name="THI Large" c_name="BBALL_BP_STYPE_THI_LARGE" />
+                <enum value="4" name="THI Small" c_name="BBALL_BP_STYPE_THI_SMALL" />
             </enums>
         </field>
     </fields>

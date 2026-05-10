@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003eac" readable_name="Red Coin">
     <description>When collected, it increments a counter on its parent red coin star and spawns orange number particles.</description>
     <tags>

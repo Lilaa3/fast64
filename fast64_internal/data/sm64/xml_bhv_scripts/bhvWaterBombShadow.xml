@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004bd4" readable_name="Water Bomb Shadow">
     <description>A shadow particle that follows a water bomb, mirroring scale and position (sent to the floor)</description>
     <tags>

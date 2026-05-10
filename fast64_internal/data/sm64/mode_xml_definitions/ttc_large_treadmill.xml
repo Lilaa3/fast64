@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ttc Large Treadmill">
-    <geolayout>0xe000288</geolayout>
+    <geolayout address="0xe000288" />
     <level>TTC</level>
     <ids>
-        <id value="0x39" name="MODEL_TTC_LARGE_TREADMILL"/>
+        <id value="0x39" name="MODEL_TTC_LARGE_TREADMILL" />
     </ids>
     <collisions>
-        <collision c_name="ttc_seg7_collision_070152B4" address="0x070152B4"/>
+        <collision c_name="ttc_seg7_collision_070152B4" address="0x070152B4" />
     </collisions>
 </model>

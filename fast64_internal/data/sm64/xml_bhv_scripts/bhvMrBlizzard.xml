@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004dbc" readable_name="Mr. Blizzard">
     <tags>
         <tag>ENEMY</tag>
@@ -7,9 +7,9 @@
     <fields>
         <field name="Style" type="int" bparam="2" default="0">
             <enums>
-                <enum value="0" name="Standard" c_name="MR_BLIZZARD_STYPE_NO_CAP"/>
-                <enum value="1" name="Jumping" c_name="MR_BLIZZARD_STYPE_JUMPING"/>
-                <enum value="2" name="Hidden"/>
+                <enum value="0" name="Standard" c_name="MR_BLIZZARD_STYPE_NO_CAP" />
+                <enum value="1" name="Jumping" c_name="MR_BLIZZARD_STYPE_JUMPING" />
+                <enum value="2" name="Hidden" />
             </enums>
         </field>
     </fields>

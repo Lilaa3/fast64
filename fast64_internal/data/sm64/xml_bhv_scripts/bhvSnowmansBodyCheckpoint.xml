@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003d34" readable_name="Snowman's Body Checkpoint">
     <description>A checkpoint object that marks when Mario is near the snowman's body. Spawned in relatively (but hardcoded) to the snowman's body.</description>
     <tags>

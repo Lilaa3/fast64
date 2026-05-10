@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Red Coin">
-    <geolayout>0x160002c4</geolayout>
+    <geolayout address="0x160002c4" />
     <group>common1</group>
     <ids>
-        <id value="0xd7" name="MODEL_RED_COIN"/>
+        <id value="0xd7" name="MODEL_RED_COIN" />
     </ids>
 </model>

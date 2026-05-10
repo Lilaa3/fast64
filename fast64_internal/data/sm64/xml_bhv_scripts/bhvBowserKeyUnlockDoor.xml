@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001bb4" readable_name="Bowser Key Unlock Door">
     <description>Key used in the Bowser key unlock door cutscene.</description>
     <tags>

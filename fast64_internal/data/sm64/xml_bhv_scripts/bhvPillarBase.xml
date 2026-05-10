@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130043e0" readable_name="JRB Pillar Base">
     <description>A static surface object.</description>
     <tags>

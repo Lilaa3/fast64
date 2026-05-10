@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ddd Pole">
-    <geolayout>0xe000450</geolayout>
+    <geolayout address="0xe000450" />
     <level>DDD</level>
     <ids>
-        <id value="0x38" name="MODEL_DDD_POLE"/>
+        <id value="0x38" name="MODEL_DDD_POLE" />
     </ids>
 </model>

@@ -1,7 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Silver Coin No Shadow">
-    <geolayout>silver_coin_no_shadow_geo</geolayout>
+    <geolayout name="silver_coin_no_shadow_geo" />
+    <group>common1</group>
+    <comment>Hacker exclusive</comment>
     <ids>
-        <id value="0xe3" name="MODEL_SILVER_COIN_NO_SHADOW" group="common1"/>
+        <id value="0xe3" name="MODEL_SILVER_COIN_NO_SHADOW"/>
     </ids>
 </model>

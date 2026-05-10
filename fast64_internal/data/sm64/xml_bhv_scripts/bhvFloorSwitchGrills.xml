@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001478" readable_name="Floor Switch (Grills)">
     <description>A purple floor switch that inherits from bhvFloorSwitchHardcodedModel. It forces PURPLE_SWITCH_BP_NO_TICK.</description>
     <tags>

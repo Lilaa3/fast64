@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Mario's Cap">
-    <geolayout>0x16000ca4</geolayout>
+    <geolayout address="0x16000ca4" />
     <group>common1</group>
     <ids>
-        <id value="0x88" name="MODEL_MARIOS_CAP"/>
+        <id value="0x88" name="MODEL_MARIOS_CAP" />
     </ids>
 </model>

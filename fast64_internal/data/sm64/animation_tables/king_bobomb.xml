@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <animation_table address="0x500fe30" name="King Bobomb" size="12">
     <names>
         <name>Grab Mario</name>

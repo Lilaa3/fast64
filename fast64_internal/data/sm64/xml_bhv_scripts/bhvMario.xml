@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002ec0" readable_name="Mario">
     <description>Always has bparam 4 set to 1, but uncessary.</description>
     <tags>

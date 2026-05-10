@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001850" readable_name="Bowser">
     <description>"Spawns bhvBowserBodyAnchor, bhvBowserTailAnchor, and bhvBowserFlameSpawn."</description>
     <tags>
@@ -9,9 +9,9 @@
     <fields>
         <field name="Variant" type="int" bparam="2" default="0">
             <enums>
-                <enum value="0" name="Bowser in the Dark World" c_name="BOWSER_BP_BITDW"/>
-                <enum value="1" name="Bowser in the Fire Sea" c_name="BOWSER_BP_BITFS"/>
-                <enum value="2" name="Bowser in the Sky" c_name="BOWSER_BP_BITS"/>
+                <enum value="0" name="Bowser in the Dark World" c_name="BOWSER_BP_BITDW" />
+                <enum value="1" name="Bowser in the Fire Sea" c_name="BOWSER_BP_BITFS" />
+                <enum value="2" name="Bowser in the Sky" c_name="BOWSER_BP_BITS" />
             </enums>
         </field>
     </fields>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001390" readable_name="Leaf Particle Spawner">
     <description>Spawns leaf or snow particles based on the nearest tree's model.</description>
     <particle>PARTICLE_LEAF</particle>

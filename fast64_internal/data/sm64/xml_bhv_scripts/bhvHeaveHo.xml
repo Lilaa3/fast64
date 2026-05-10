@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001548" readable_name="Heave Ho">
     <description>Handles movement and logic. Spawns its Heave Ho Throwing Helper.</description>
     <tags>

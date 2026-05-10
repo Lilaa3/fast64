@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002d7c" readable_name="Shallow Water Splash">
     <particle>PARTICLE_SHALLOW_WATER_SPLASH</particle>
     <tags>

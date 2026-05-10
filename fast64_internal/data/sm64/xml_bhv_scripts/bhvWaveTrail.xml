@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002dc0" readable_name="Wave Trail">
     <particle>PARTICLE_WAVE_TRAIL</particle>
     <tags>

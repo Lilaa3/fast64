@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001c58" readable_name="Moat Grills">
     <description>Grills in the castle moat. They disappear if the moat has been drained.</description>
     <tags>

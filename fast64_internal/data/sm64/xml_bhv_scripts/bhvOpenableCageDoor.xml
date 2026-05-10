@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130025c0" readable_name="Openable Cage Door">
     <description>A cage door that opens when its parent openable grill is activated.</description>
     <tags>
@@ -10,8 +10,8 @@
     <fields>
         <field name="Opening Direction" type="int" bparam="2" default="1">
             <enums>
-                <enum value="1" name="Unflipped" c_name="OPENABLE_GRILL_DOOR_BP_SIDE_UNFLIPPED"/>
-                <enum value="-1" name="Flipped" c_name="OPENABLE_GRILL_DOOR_BP_SIDE_FLIPPED"/>
+                <enum value="1" name="Unflipped" c_name="OPENABLE_GRILL_DOOR_BP_SIDE_UNFLIPPED" />
+                <enum value="-1" name="Flipped" c_name="OPENABLE_GRILL_DOOR_BP_SIDE_FLIPPED" />
             </enums>
         </field>
     </fields>

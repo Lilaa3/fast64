@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002768" readable_name="Balcony Big Boo">
     <description>A large Boo that appears on a balcony.</description>
     <tags>
@@ -9,9 +9,9 @@
     <fields>
         <field name="Variant" type="int" bparam="2" default="0">
             <enums>
-                <enum value="0" name="Ghost Hunt" c_name="BIG_BOO_BP_GHOST_HUNT"/>
-                <enum value="1" name="Merry Go Round" c_name="BIG_BOO_BP_MERRY_GO_ROUND"/>
-                <enum value="2" name="Balcony" c_name="BIG_BOO_BP_BALCONY"/>
+                <enum value="0" name="Ghost Hunt" c_name="BIG_BOO_BP_GHOST_HUNT" />
+                <enum value="1" name="Merry Go Round" c_name="BIG_BOO_BP_MERRY_GO_ROUND" />
+                <enum value="2" name="Balcony" c_name="BIG_BOO_BP_BALCONY" />
             </enums>
         </field>
     </fields>

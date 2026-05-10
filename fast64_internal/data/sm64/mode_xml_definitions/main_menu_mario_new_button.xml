@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Main Menu Mario New Button">
-    <geolayout>0x0E000230</geolayout>
+    <geolayout address="0x0E000230" />
     <level>MENU</level>
     <ids>
-        <id value="0x09" name="MODEL_MAIN_MENU_MARIO_NEW_BUTTON"/>
+        <id value="0x09" name="MODEL_MAIN_MENU_MARIO_NEW_BUTTON" />
     </ids>
 </model>

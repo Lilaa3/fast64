@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003d74" readable_name="Big Boulder">
     <description>A large rolling boulder.</description>
     <tags>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000624" readable_name="WF Breakable Wall Right">
     <description>If a corresponding left-side breakable wall is present, plays a puzzle jingle.</description>
     <tags>

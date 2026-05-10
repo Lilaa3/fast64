@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x1300407c" readable_name="1-Up Mushroom">
     <tags>
         <tag>COLLECTIBLE</tag>
@@ -6,9 +6,9 @@
     <fields>
         <field name="Type" type="int" bparam="2" default="0">
             <enums>
-                <enum value="0" name="Normal" c_name="MUSHROOM_BP_REQUIRES_NONE"/>
-                <enum value="1" name="Requires Bowser Key 1" c_name="MUSHROOM_BP_REQUIRES_BOWSER_1"/>
-                <enum value="2" name="Requires Bowser Key 2" c_name="MUSHROOM_BP_REQUIRES_BOWSER_2"/>
+                <enum value="0" name="Normal" c_name="MUSHROOM_BP_REQUIRES_NONE" />
+                <enum value="1" name="Requires Bowser Key 1" c_name="MUSHROOM_BP_REQUIRES_BOWSER_1" />
+                <enum value="2" name="Requires Bowser Key 2" c_name="MUSHROOM_BP_REQUIRES_BOWSER_2" />
             </enums>
         </field>
     </fields>

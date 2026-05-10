@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Explosion">
-    <geolayout>0x16000040</geolayout>
+    <geolayout address="0x16000040" />
     <group>common1</group>
     <ids>
-        <id value="0xcd" name="MODEL_EXPLOSION"/>
+        <id value="0xcd" name="MODEL_EXPLOSION" />
     </ids>
 </model>

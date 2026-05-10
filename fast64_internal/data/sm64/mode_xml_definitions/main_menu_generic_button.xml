@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Main Menu Generic Button">
-    <geolayout>0x0E000358</geolayout>
+    <geolayout address="0x0E000358" />
     <level>MENU</level>
     <ids>
-        <id value="0x0C" name="MODEL_MAIN_MENU_GENERIC_BUTTON"/>
+        <id value="0x0C" name="MODEL_MAIN_MENU_GENERIC_BUTTON" />
     </ids>
 </model>

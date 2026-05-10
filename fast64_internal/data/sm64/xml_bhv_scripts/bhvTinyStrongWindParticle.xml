@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002e04" readable_name="Tiny Strong Wind Particle">
     <comment>Spread diameter is oBehParams2ndByte * 500.</comment>
     <description>Used for the Snowman in SL and Fwoosh.</description>
@@ -6,7 +6,7 @@
         <tag>PARTICLE</tag>
     </tags>
     <fields>
-        <field name="Wind Spread Multiplier" type="int" bparam="2" multiplier="500" default="0"/>
+        <field name="Wind Spread Multiplier" type="int" bparam="2" multiplier="500" default="0" />
     </fields>
     <models>
         <model>white_particle_dl</model>

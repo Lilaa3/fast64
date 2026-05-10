@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130022d8" readable_name="Bowser Sub Door">
     <comment>TODO Hacker is techinically fucking this up by checking if its act 1 instead of checking if BITFS was beaten</comment>
     <description>Door near the sub. Deactivates after act 1</description>

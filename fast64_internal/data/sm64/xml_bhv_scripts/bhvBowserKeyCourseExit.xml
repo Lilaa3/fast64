@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001bd4" readable_name="Bowser Key (Course Exit)">
     <description>Key used in the Bowser course exit cutscene.</description>
     <tags>

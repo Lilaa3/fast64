@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Pebble">
-    <displaylist address="0x301cb00">pebble_seg3_dl_0301CB00</displaylist>
+    <displaylist address="0x301cb00" name="pebble_seg3_dl_0301CB00" />
     <group>common1</group>
     <ids>
-        <id value="0xa1" name="MODEL_PEBBLE"/>
+        <id value="0xa1" name="MODEL_PEBBLE" />
     </ids>
 </model>

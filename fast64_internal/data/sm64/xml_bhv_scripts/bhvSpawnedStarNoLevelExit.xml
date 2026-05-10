@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x1300080c" readable_name="Spawned Star (No Level Exit)">
     <tags>
         <tag>COLLECTABLE</tag>
@@ -10,8 +10,8 @@
         </field>
         <field name="Spawn Position" type="int" bparam="2" default="0">
             <enums>
-                <enum value="0" name="At Mario" c_name="SPAWN_STAR_POS_CUTSCENE_BP_SPAWN_AT_MARIO"/>
-                <enum value="1" name="Home" c_name="SPAWN_STAR_POS_CUTSCENE_BP_SPAWN_AT_HOME"/>
+                <enum value="0" name="At Mario" c_name="SPAWN_STAR_POS_CUTSCENE_BP_SPAWN_AT_MARIO" />
+                <enum value="1" name="Home" c_name="SPAWN_STAR_POS_CUTSCENE_BP_SPAWN_AT_HOME" />
             </enums>
         </field>
     </fields>

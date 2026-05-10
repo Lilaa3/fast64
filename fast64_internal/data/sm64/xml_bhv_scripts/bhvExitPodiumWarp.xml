@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000720" readable_name="Exit Podium Warp">
     <comment>TODO Document better</comment>
     <tags>
@@ -7,7 +7,7 @@
         <tag>TTM</tag>
     </tags>
     <fields>
-        <field name="Warp ID" type="int" bparam="2"/>
+        <field name="Warp ID" type="int" bparam="2" />
     </fields>
     <models>
         <model>ttm_slide_exit_podium</model>

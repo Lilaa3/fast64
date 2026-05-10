@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000b8c" readable_name="Thwomp (140% larger)">
     <description>Has higher drawing distance.</description>
     <tags>
@@ -6,12 +6,12 @@
         <tag>SURFACE</tag>
     </tags>
     <fields>
-        <field name="Rising Duration Offset" type="frames" bparam="2" offset="40" default="0"/>
+        <field name="Rising Duration Offset" type="frames" bparam="2" offset="40" default="0" />
     </fields>
     <models>
         <model>thwomp</model>
     </models>
     <collisions>
-        <collision c_name="thwomp_seg5_collision_0500B92C" address="0x0500B92C"/>
+        <collision c_name="thwomp_seg5_collision_0500B92C" address="0x0500B92C" />
     </collisions>
 </behavior>

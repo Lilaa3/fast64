@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <animation_table address="0x30056b0" name="Butterfly" size="2">
     <names>
         <name>Flying</name>

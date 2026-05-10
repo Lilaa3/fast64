@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130054b8" readable_name="RR Swing Platform">
     <description>A platform that rotates back and forth.</description>
     <tags>

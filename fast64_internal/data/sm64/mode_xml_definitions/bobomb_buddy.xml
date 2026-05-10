@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bobomb Buddy">
-    <geolayout>0xf0008f4</geolayout>
+    <geolayout address="0xf0008f4" />
     <group>common0</group>
     <ids>
-        <id value="0xc3" name="MODEL_BOBOMB_BUDDY"/>
+        <id value="0xc3" name="MODEL_BOBOMB_BUDDY" />
     </ids>
     <animation_tables>
         <table>bobomb</table>

@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Purple Switch">
-    <geolayout>0xf0004cc</geolayout>
+    <geolayout address="0xf0004cc" />
     <group>common0</group>
     <ids>
-        <id value="0xcf" name="MODEL_PURPLE_SWITCH"/>
+        <id value="0xcf" name="MODEL_PURPLE_SWITCH" />
     </ids>
 </model>

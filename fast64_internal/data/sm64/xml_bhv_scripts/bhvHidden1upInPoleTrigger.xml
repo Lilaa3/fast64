@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004180" readable_name="Hidden 1-Up Mushroom In Pole Trigger">
     <description>An invisible trigger that increments the o1UpHiddenTimesTriggered counter of the nearest Hidden1up In Pole object when collided with by Mario, then deactivates itself.</description>
     <tags>

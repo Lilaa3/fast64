@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003c44" readable_name="Volcano Sound Loop">
     <tags>
         <tag>SOUND</tag>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130003bc" readable_name="Air Bubble">
     <tags>
         <tag>WATER</tag>

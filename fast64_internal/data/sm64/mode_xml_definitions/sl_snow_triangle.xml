@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Sl Snow Triangle">
-    <geolayout>0xe000390</geolayout>
+    <geolayout address="0xe000390" />
     <level>SL</level>
     <ids>
-        <id value="0x36" name="MODEL_SL_SNOW_TRIANGLE"/>
+        <id value="0x36" name="MODEL_SL_SNOW_TRIANGLE" />
     </ids>
     <collisions>
-        <collision c_name="sl_seg7_collision_sliding_snow_mound" address="0x700ef6c"/>
+        <collision c_name="sl_seg7_collision_sliding_snow_mound" address="0x700ef6c" />
     </collisions>
 </model>

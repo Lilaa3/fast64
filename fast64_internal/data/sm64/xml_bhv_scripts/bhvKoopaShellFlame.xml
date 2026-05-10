@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001f68" readable_name="Koopa Shell Flame Particle">
     <description>A flame particle effect spawned by a Koopa shell on burning surfaces.</description>
     <tags>

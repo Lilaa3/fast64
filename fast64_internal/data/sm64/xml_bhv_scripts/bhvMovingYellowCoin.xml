@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003068" readable_name="Moving Yellow Coin">
     <description>Moving yellow coin, follows standard coin behavior and flickers before disappearing if not collected.</description>
     <tags>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001298" readable_name="Beta Fish Splash Spawner">
     <description>A beta spawner for fish splashes.</description>
     <tags>

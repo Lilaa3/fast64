@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002568" readable_name="Blue Coin Switch">
     <description>A switch that reveals hidden blue coins.</description>
     <tags>

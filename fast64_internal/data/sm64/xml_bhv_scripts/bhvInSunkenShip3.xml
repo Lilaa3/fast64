@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130023ec" readable_name="JRB Afloating Ship Collision">
     <description>JRB afloat ship act 2 and onwards's collision.</description>
     <tags>
@@ -7,6 +7,6 @@
         <tag>MOVING</tag>
     </tags>
     <collisions>
-        <collision c_name="jrb_seg7_collision_in_sunken_ship_3" address="0x0700C92C"/>
+        <collision c_name="jrb_seg7_collision_in_sunken_ship_3" address="0x0700C92C" />
     </collisions>
 </behavior>

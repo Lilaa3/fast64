@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130019c8" readable_name="Floating Landing Flame">
     <description>A floating flame that spawns either bhvFlameLargeBurningOut or bhvBlueFlamesGroup upon landing.</description>
     <tags>
@@ -10,8 +10,8 @@
         <field name="Flame Type" type="int" bparam="2" default="0">
             <description>Determines initial velocity, vertical velocity cap, and the object spawned upon landing.</description>
             <enums>
-                <enum value="0" name="Red"/>
-                <enum value="1" name="Blue Group"/>
+                <enum value="0" name="Red" />
+                <enum value="1" name="Blue Group" />
             </enums>
         </field>
     </fields>

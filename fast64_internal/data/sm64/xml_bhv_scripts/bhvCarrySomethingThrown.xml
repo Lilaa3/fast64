@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003474" readable_name="Carry Something Thrown">
     <description>Placeholder behavior for thrown carryable objects.</description>
     <comment>Hacker calls this bhvCarrySomethingThrown. Decomp uses bhvCarrySomething5.</comment>

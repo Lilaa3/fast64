@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Cartoon Star">
-    <geolayout>0x16000f24</geolayout>
+    <geolayout address="0x16000f24" />
     <group>common1</group>
     <ids>
-        <id value="0x8b" name="MODEL_CARTOON_STAR"/>
+        <id value="0x8b" name="MODEL_CARTOON_STAR" />
     </ids>
 </model>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003798" readable_name="Manta Ray Water Ring">
     <description>Updates the ring spawner's (parent) count upon collection.</description>
     <tags>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004c24" readable_name="TTC Pendulum">
     <tags>
         <tag>ENVIRONMENTAL</tag>

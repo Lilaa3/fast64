@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x1300277c" readable_name="Big Boo (Merry-Go-Round)">
     <description>Acts as a wrapper for bhvGhostHuntBigBoo. Changes bparam to Merry Go Round mode.</description>
     <tags>

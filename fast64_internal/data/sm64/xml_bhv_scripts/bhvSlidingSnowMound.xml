@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004244" readable_name="SL Sliding Snow Mound">
     <description>A mound of snow that slides to the left regardless of its own orientation.</description>
     <comment>TODO in hacker it should probably respect it's own rotation</comment>

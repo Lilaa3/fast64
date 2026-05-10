@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ttc Rotating Prism">
-    <geolayout>0xe000258</geolayout>
+    <geolayout address="0xe000258" />
     <level>TTC</level>
     <ids>
-        <id value="0x37" name="MODEL_TTC_ROTATING_PRISM"/>
+        <id value="0x37" name="MODEL_TTC_ROTATING_PRISM" />
     </ids>
     <collisions>
-        <collision c_name="ttc_seg7_collision_07015008" address="0x07015008"/>
+        <collision c_name="ttc_seg7_collision_07015008" address="0x07015008" />
     </collisions>
 </model>

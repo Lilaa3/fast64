@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001448" readable_name="Piranha Plant Waking Bubbles">
     <description>Small bubbles that spawn when a Piranha Plant's main bubble bursts.</description>
     <tags>

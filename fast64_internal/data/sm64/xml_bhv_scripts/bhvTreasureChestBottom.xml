@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130044b8" readable_name="Treasure Chest Bottom">
     <description>If oTreasureChestNumOpenedChests matches the Open Order, the treasure chest will open, the num will be increased by one</description>
     <tags>
@@ -6,7 +6,7 @@
         <tag>INTERACTIVE</tag>
     </tags>
     <fields>
-        <field name="Open Order" type="int" bparam="2" default="0"/>
+        <field name="Open Order" type="int" bparam="2" default="0" />
     </fields>
     <models>
         <model>treasure_chest_base</model>

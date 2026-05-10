@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000174" readable_name="THI Top Drain (Huge)">
     <description>Checks if was drained in small, if drained, hide model, otherwise load collision.</description>
     <tags>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004b6c" readable_name="Ferris Wheel Platform">
     <description>A platform that orbits a bhvFerrisWheelAxle. Position is relative to the parent's + rool.</description>
     <tags>
@@ -11,7 +11,7 @@
         </field>
     </fields>
     <collisions>
-        <collision c_name="bits_seg7_collision_0701AC28" address="0x0701AC28"/>
-        <collision c_name="bitdw_seg7_collision_0700F898" address="0x0700F898"/>
+        <collision c_name="bits_seg7_collision_0701AC28" address="0x0701AC28" />
+        <collision c_name="bitdw_seg7_collision_0700F898" address="0x0700F898" />
     </collisions>
 </behavior>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130051ac" readable_name="Moving Flame Ember">
     <description>Moving flame ember, a small particle spawned by moving flames that shrinks over time and then disappears.</description>
     <comment>bhvMovingFlameEmber in hacker, bhvFlyguyFlame in decomp.</comment>

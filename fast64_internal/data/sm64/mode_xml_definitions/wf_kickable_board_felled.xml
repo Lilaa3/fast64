@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wf Kickable Board Felled">
-    <geolayout>0xe000bc8</geolayout>
+    <geolayout address="0xe000bc8" />
     <level>WF</level>
     <ids>
-        <id value="0x3a" name="MODEL_WF_KICKABLE_BOARD_FELLED"/>
+        <id value="0x3a" name="MODEL_WF_KICKABLE_BOARD_FELLED" />
     </ids>
 </model>

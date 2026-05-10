@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002898" readable_name="Boo Staircase">
     <description>A staircase step that rises when activated.</description>
     <tags>
@@ -9,9 +9,9 @@
     <fields>
         <field name="Step Index" type="int" bparam="2" default="0">
             <enums>
-                <enum value="0" name="First"/>
-                <enum value="1" name="Second (-206.0f)"/>
-                <enum value="2" name="Third (-413.0f)"/>
+                <enum value="0" name="First" />
+                <enum value="1" name="Second (-206.0f)" />
+                <enum value="2" name="Third (-413.0f)" />
             </enums>
         </field>
     </fields>

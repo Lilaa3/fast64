@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004010" readable_name="1-Up Mushroom (Running Away)">
     <tags>
         <tag>COLLECTIBLE</tag>

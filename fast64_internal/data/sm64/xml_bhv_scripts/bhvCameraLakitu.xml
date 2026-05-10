@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004954" readable_name="Camera Lakitu">
     <description>Otherwise, it handles the intro cutscene and dialog.</description>
     <tags>

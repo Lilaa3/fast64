@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Mips">
-    <geolayout>0xd000448</geolayout>
+    <geolayout address="0xd000448" />
     <group>group15</group>
     <ids>
-        <id value="0x64" name="MODEL_MIPS"/>
+        <id value="0x64" name="MODEL_MIPS" />
     </ids>
     <animation_tables>
         <table>mips</table>

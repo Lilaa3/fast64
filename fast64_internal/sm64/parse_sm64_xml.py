@@ -393,12 +393,26 @@ class SM64XMLParser:
         readable_name = self._get_attr(root, "readable_name")
         description = self._get_text(root, "description")
         comment = self._get_text(root, "comment")
-        geolayout = self._get_text(root, "geolayout", convert_int=True)
+
+        geolayout_elem = root.find("geolayout")
+        if geolayout_elem is not None:
+            self._check_unknown_elements(geolayout_elem, ["address", "name"])
+            geolayout_address = self._get_attr(geolayout_elem, "address", convert_int=True, required=False)
+            geolayout_name = self._get_attr(geolayout_elem, "name", required=False)
+            if geolayout_name is None and geolayout_address is None:
+                raise ParseError("Must specify either \"name\" or \"address\"")
+            geolayout = (geolayout_name, geolayout_address)
+        else:
+            geolayout = None
 
         displaylist_elem = root.find("displaylist")
         if displaylist_elem is not None:
-            self._check_unknown_elements(displaylist_elem, ["address"])
-            displaylist = (displaylist_elem.text, self._get_text(displaylist_elem, "address", convert_int=True))
+            self._check_unknown_elements(displaylist_elem, ["address", "name"])
+            displaylist_address = self._get_attr(displaylist_elem, "address", convert_int=True, required=False)
+            displaylist_name = self._get_attr(displaylist_elem, "name", required=False)
+            if displaylist_name is None and displaylist_address is None:
+                raise ParseError("Must specify either \"name\" or \"address\"")
+            displaylist = (displaylist_name, displaylist_address)
         else:
             displaylist = None
 

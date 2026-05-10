@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="White Puff">
-    <geolayout>0x16000020</geolayout>
+    <geolayout address="0x16000020" />
     <group>common1</group>
     <ids>
-        <id value="0xe0" name="MODEL_WHITE_PUFF"/>
+        <id value="0xe0" name="MODEL_WHITE_PUFF" />
     </ids>
 </model>

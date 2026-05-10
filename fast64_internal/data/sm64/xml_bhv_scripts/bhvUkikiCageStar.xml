@@ -1,6 +1,6 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000f2c" readable_name="Ukiki Cage Star">
-    <description>Mimics the cage's position and params when is hidden (parent object->action == UKIKI_CAGE_ACT_HIDE), once unhidden it spawns a normal star.</description>
+    <description>Mimics the cage's position and params when is hidden (parent object-&gt;action == UKIKI_CAGE_ACT_HIDE), once unhidden it spawns a normal star.</description>
     <tags>
         <tag>COLLECTABLE</tag>
     </tags>

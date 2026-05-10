@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130008d0" readable_name="Coin Formation Spawned Coin">
     <description>Coin spawned by bhvCoinFormation. Marks its index as collected in the parent's oCoinRespawnBits upon collection.</description>
     <comment>TODO: Equivelent in hacker is bhvCoinFormationSpawnedCoin</comment>
@@ -7,7 +7,7 @@
         <tag>COLLECTABLE</tag>
     </tags>
     <fields>
-        <field name="Coin Index" type="int" bparam="2" default="0"/>
+        <field name="Coin Index" type="int" bparam="2" default="0" />
     </fields>
     <models>
         <model>yellow_coin</model>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002250" readable_name="Exclamation Box">
     <tags>
         <tag>INTERACTIVE</tag>
@@ -8,21 +8,21 @@
     <fields>
         <field name="Type" type="int" bparam="2" default="0">
             <enums>
-                <enum value="0" name="Wing Cap" c_name="EXCLAMATION_BOX_BP_WING_CAP"/>
-                <enum value="1" name="Metal Cap" c_name="EXCLAMATION_BOX_BP_METAL_CAP"/>
-                <enum value="2" name="Vanish Cap" c_name="EXCLAMATION_BOX_BP_VANISH_CAP"/>
-                <enum value="3" name="Koopas Shell" c_name="EXCLAMATION_BOX_BP_KOOPA_SHELL"/>
-                <enum value="4" name="1 Coin" c_name="EXCLAMATION_BOX_BP_COINS_1"/>
-                <enum value="5" name="3 Coins" c_name="EXCLAMATION_BOX_BP_COINS_3"/>
-                <enum value="6" name="10 Coins" c_name="EXCLAMATION_BOX_BP_COINS_10"/>
-                <enum value="7" name="1-Up Walking" c_name="EXCLAMATION_BOX_BP_1UP_WALKING"/>
-                <enum value="8" name="Star 1" c_name="EXCLAMATION_BOX_BP_STAR_1"/>
-                <enum value="9" name="1-Up Running Away" c_name="EXCLAMATION_BOX_BP_1UP_RUNNING_AWAY"/>
-                <enum value="10" name="Star 2" c_name="EXCLAMATION_BOX_BP_STAR_2"/>
-                <enum value="11" name="Star 3" c_name="EXCLAMATION_BOX_BP_STAR_3"/>
-                <enum value="12" name="Star 4" c_name="EXCLAMATION_BOX_BP_STAR_4"/>
-                <enum value="13" name="Star 5" c_name="EXCLAMATION_BOX_BP_STAR_5"/>
-                <enum value="14" name="Star 6" c_name="EXCLAMATION_BOX_BP_STAR_6"/>
+                <enum value="0" name="Wing Cap" c_name="EXCLAMATION_BOX_BP_WING_CAP" />
+                <enum value="1" name="Metal Cap" c_name="EXCLAMATION_BOX_BP_METAL_CAP" />
+                <enum value="2" name="Vanish Cap" c_name="EXCLAMATION_BOX_BP_VANISH_CAP" />
+                <enum value="3" name="Koopas Shell" c_name="EXCLAMATION_BOX_BP_KOOPA_SHELL" />
+                <enum value="4" name="1 Coin" c_name="EXCLAMATION_BOX_BP_COINS_1" />
+                <enum value="5" name="3 Coins" c_name="EXCLAMATION_BOX_BP_COINS_3" />
+                <enum value="6" name="10 Coins" c_name="EXCLAMATION_BOX_BP_COINS_10" />
+                <enum value="7" name="1-Up Walking" c_name="EXCLAMATION_BOX_BP_1UP_WALKING" />
+                <enum value="8" name="Star 1" c_name="EXCLAMATION_BOX_BP_STAR_1" />
+                <enum value="9" name="1-Up Running Away" c_name="EXCLAMATION_BOX_BP_1UP_RUNNING_AWAY" />
+                <enum value="10" name="Star 2" c_name="EXCLAMATION_BOX_BP_STAR_2" />
+                <enum value="11" name="Star 3" c_name="EXCLAMATION_BOX_BP_STAR_3" />
+                <enum value="12" name="Star 4" c_name="EXCLAMATION_BOX_BP_STAR_4" />
+                <enum value="13" name="Star 5" c_name="EXCLAMATION_BOX_BP_STAR_5" />
+                <enum value="14" name="Star 6" c_name="EXCLAMATION_BOX_BP_STAR_6" />
             </enums>
         </field>
     </fields>

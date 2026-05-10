@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x1300556c" readable_name="Red Coin Star Marker">
     <description>Marker on the floor of where the red coin star will spawn. Spawned with the (hidden) red coin star.</description>
     <tags>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13005610" readable_name="Beginning Lakitu">
     <description>Lakitu appearing at the start of the game.</description>
     <tags>

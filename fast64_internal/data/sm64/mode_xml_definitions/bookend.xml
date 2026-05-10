@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bookend">
-    <geolayout>0xc0000c0</geolayout>
+    <geolayout address="0xc0000c0" />
     <group>group9</group>
     <ids>
-        <id value="0x59" name="MODEL_BOOKEND"/>
+        <id value="0x59" name="MODEL_BOOKEND" />
     </ids>
 </model>

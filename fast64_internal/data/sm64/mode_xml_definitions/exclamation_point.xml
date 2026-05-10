@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Exclamation Point">
-    <displaylist address="0x8025f08">exclamation_box_outline_seg8_dl_08025F08</displaylist>
+    <displaylist address="0x8025f08" name="exclamation_box_outline_seg8_dl_08025F08" />
     <group>common0</group>
     <ids>
-        <id value="0x84" name="MODEL_EXCLAMATION_POINT"/>
+        <id value="0x84" name="MODEL_EXCLAMATION_POINT" />
     </ids>
 </model>

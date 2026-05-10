@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bully">
-    <geolayout>0xc000000</geolayout>
+    <geolayout address="0xc000000" />
     <group>group2</group>
     <ids>
-        <id value="0x56" name="MODEL_BULLY"/>
+        <id value="0x56" name="MODEL_BULLY" />
     </ids>
     <animation_tables>
         <table>bully</table>

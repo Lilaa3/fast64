@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003b60" readable_name="Pyramid Elevator">
     <description>Spawns marker balls that set themselves to inactive on idle.</description>
     <tags>

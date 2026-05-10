@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <animation_table address="0x5007248" name="Monty Mole">
     <names>
         <name>Jump Into Hole</name>

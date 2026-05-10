@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002088" readable_name="Tuxie's Mother">
     <description>She requires the correct baby penguin (matching her baby ID) to be delivered to her to reward Mario with a star.</description>
     <tags>
@@ -6,7 +6,7 @@
         <tag>FRIENDLY</tag>
     </tags>
     <fields>
-        <field name="Baby ID" type="int" bparam="2" default="0"/>
+        <field name="Baby ID" type="int" bparam="2" default="0" />
     </fields>
     <models>
         <model>penguin</model>

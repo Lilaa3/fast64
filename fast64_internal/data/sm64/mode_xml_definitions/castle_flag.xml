@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Castle Flag">
-    <geolayout>0xe000660</geolayout>
+    <geolayout address="0xe000660" />
     <level>CG</level>
     <ids>
-        <id value="0x37" name="MODEL_CASTLE_GROUNDS_FLAG"/>
+        <id value="0x37" name="MODEL_CASTLE_GROUNDS_FLAG" />
     </ids>
     <animation_tables>
         <table>castle_flag</table>

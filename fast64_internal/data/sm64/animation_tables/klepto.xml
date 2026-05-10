@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <animation_table address="0x5008cfc" name="Klepto">
     <names>
         <name>Dive</name>

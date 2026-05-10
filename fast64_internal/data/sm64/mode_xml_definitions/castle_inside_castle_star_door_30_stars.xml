@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Castle Inside Castle Star Door 30 Stars">
-    <geolayout>0xe000f00</geolayout>
+    <geolayout address="0xe000f00" />
     <level>CASTLE_INSIDE</level>
     <ids>
-        <id value="0xd0" name="MODEL_CASTLE_STAR_DOOR_30_STARS"/>
+        <id value="0xd0" name="MODEL_CASTLE_STAR_DOOR_30_STARS" />
     </ids>
     <collisions>
-        <collision c_name="inside_castle_seg7_collision_star_door" address="0x7078e14"/>
+        <collision c_name="inside_castle_seg7_collision_star_door" address="0x7078e14" />
     </collisions>
 </model>

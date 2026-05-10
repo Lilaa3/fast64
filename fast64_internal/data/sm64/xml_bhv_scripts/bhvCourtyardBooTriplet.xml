@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130027d0" readable_name="Courtyard Boo Triplet">
     <comment>Often has MODEL_BOO, even if the behavior itself disables rendering.</comment>
     <description>Spawner that creates three bhvGhostHuntBoo objects if the player has enough stars.</description>

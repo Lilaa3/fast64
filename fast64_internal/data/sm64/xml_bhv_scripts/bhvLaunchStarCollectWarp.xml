@@ -1,10 +1,10 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002f8c" readable_name="Launch Star Collect Warp">
     <description>Star collect exit spawn warp that launches Mario. Non painting like Bowser courses.</description>
     <tags>
         <tag>SPAWN_WARP</tag>
     </tags>
     <fields>
-        <field name="Warp ID" type="int" bparam="2"/>
+        <field name="Warp ID" type="int" bparam="2" />
     </fields>
 </behavior>

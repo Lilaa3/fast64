@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002308" readable_name="Bowser's Sub">
     <description>Bowser's submarine. It is only active in act 1.</description>
     <tags>

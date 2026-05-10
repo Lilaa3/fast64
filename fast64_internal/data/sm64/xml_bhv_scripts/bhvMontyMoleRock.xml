@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004a78" readable_name="Monty Mole Rock">
     <tags>
         <tag>ENEMY</tag>

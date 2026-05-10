@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002038" readable_name="LLL Bowser Puzzle Piece">
     <description>Follows a sequence of predefined actions and informs the parent puzzle manager when Mario is on it via and when its sequence is complete via oBowserPuzzleCompletionFlags.</description>
     <tags>
@@ -8,7 +8,7 @@
         <tag>SUB_OBJECT</tag>
     </tags>
     <collisions>
-        <collision c_name="lll_seg7_collision_puzzle_piece" address="0x0701D560"/>
+        <collision c_name="lll_seg7_collision_puzzle_piece" address="0x0701D560" />
     </collisions>
     <models>
         <model>lll_bowser_piece_1</model>

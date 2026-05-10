@@ -1,6 +1,6 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130045f8" readable_name="Koopa Flag Pole">
-    <description>The goal flag pole for the Koopa race. Height is <game_unit value="700"/>.</description>
+    <description>The goal flag pole for the Koopa race. Height is <game_unit value="700" />.</description>
     <tags>
         <tag>POLE</tag>
         <tag>ENVIRONMENTAL</tag>

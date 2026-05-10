@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bits Staircase Frame2">
-    <geolayout>0xe0006d0</geolayout>
+    <geolayout address="0xe0006d0" />
     <level>BITS</level>
     <ids>
-        <id value="0x43" name="MODEL_BITS_STAIRCASE_FRAME2"/>
+        <id value="0x43" name="MODEL_BITS_STAIRCASE_FRAME2" />
     </ids>
     <collisions>
-        <collision c_name="bits_seg7_collision_0701B404" address="0x0701B404"/>
+        <collision c_name="bits_seg7_collision_0701B404" address="0x0701B404" />
     </collisions>
 </model>

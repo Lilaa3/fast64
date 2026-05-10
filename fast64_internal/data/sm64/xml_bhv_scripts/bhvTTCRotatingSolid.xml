@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004bf0" readable_name="TTC Rotating Solid">
     <description>A solid block in TTC that rotates and moves vertically. It can be a cube or a prism.</description>
     <tags>
@@ -8,8 +8,8 @@
     <fields>
         <field name="Collision Model" type="int" bparam="2" default="0">
             <enums>
-                <enum value="0" name="Cube"/>
-                <enum value="1" name="Prism"/>
+                <enum value="0" name="Cube" />
+                <enum value="1" name="Prism" />
             </enums>
         </field>
     </fields>

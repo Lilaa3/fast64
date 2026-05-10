@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130053c4" readable_name="Penguin Race Finish Line">
     <description>Gets parented to the race penguin. Detects if Mario reached first and sets the variable on the parent for oRacingPenguinMarioWon.</description>
     <tags>

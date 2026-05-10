@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001484" readable_name="Floor Switch (Hardcoded Model)">
     <tags>
         <tag>INTERACTIVE</tag>
@@ -8,9 +8,9 @@
     <fields>
         <field name="Switch Mode" type="int" bparam="2" default="0">
             <enums>
-                <enum value="0" name="No Tick" c_name="PURPLE_SWITCH_BP_NO_TICK"/>
-                <enum value="1" name="Fast" c_name="PURPLE_SWITCH_BP_ANIMATES"/>
-                <enum value="2" name="Slow" c_name="PURPLE_SWITCH_BP_REVEAL_HIDDEN"/>
+                <enum value="0" name="No Tick" c_name="PURPLE_SWITCH_BP_NO_TICK" />
+                <enum value="1" name="Fast" c_name="PURPLE_SWITCH_BP_ANIMATES" />
+                <enum value="2" name="Slow" c_name="PURPLE_SWITCH_BP_REVEAL_HIDDEN" />
             </enums>
         </field>
     </fields>

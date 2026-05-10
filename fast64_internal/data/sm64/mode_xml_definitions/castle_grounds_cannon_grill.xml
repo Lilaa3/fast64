@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Castle Grounds Cannon Grill">
-    <geolayout>0xe000724</geolayout>
+    <geolayout address="0xe000724" />
     <level>CASTLE_GROUNDS</level>
     <ids>
-        <id value="0x38" name="MODEL_CASTLE_GROUNDS_CANNON_GRILL"/>
+        <id value="0x38" name="MODEL_CASTLE_GROUNDS_CANNON_GRILL" />
     </ids>
     <collisions>
-        <collision c_name="castle_grounds_seg7_collision_cannon_grill" address="0x7010e10"/>
+        <collision c_name="castle_grounds_seg7_collision_cannon_grill" address="0x7010e10" />
     </collisions>
 </model>

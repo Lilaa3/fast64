@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001958" readable_name="Falling Bowser Platform">
     <description>A surface platform that falls according to a scripted sequence of actions defined in sFallingBowserPlatformActions. These triggers are generally linked to Bowser's attack patterns or internal timers.</description>
     <tags>

@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Snufit">
-    <geolayout>0xd0001a0</geolayout>
+    <geolayout address="0xd0001a0" />
     <group>group17</group>
     <ids>
-        <id value="0xce" name="MODEL_SNUFIT"/>
+        <id value="0xce" name="MODEL_SNUFIT" />
     </ids>
 </model>

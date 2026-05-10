@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Toad">
-    <geolayout>0xd0003e4</geolayout>
+    <geolayout address="0xd0003e4" />
     <group>group15</group>
     <ids>
-        <id value="0xdd" name="MODEL_TOAD"/>
+        <id value="0xdd" name="MODEL_TOAD" />
     </ids>
     <animation_tables>
         <table>toad</table>

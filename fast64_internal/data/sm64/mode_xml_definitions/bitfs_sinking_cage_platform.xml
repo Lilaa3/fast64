@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bitfs Sinking Cage Platform">
-    <geolayout>0xe000690</geolayout>
+    <geolayout address="0xe000690" />
     <level>BITFS</level>
     <ids>
-        <id value="0x3a" name="MODEL_BITFS_SINKING_CAGE_PLATFORM"/>
+        <id value="0x3a" name="MODEL_BITFS_SINKING_CAGE_PLATFORM" />
     </ids>
     <collisions>
-        <collision c_name="bitfs_seg7_collision_sinking_cage_platform" address="0x70151b4"/>
+        <collision c_name="bitfs_seg7_collision_sinking_cage_platform" address="0x70151b4" />
     </collisions>
 </model>

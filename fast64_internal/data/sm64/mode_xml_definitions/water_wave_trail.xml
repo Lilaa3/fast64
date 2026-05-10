@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Water Wave Trail">
-    <geolayout>0x17000168</geolayout>
+    <geolayout address="0x17000168" />
     <group>group0</group>
     <ids>
-        <id value="0xa3" name="MODEL_WAVE_TRAIL"/>
+        <id value="0xa3" name="MODEL_WAVE_TRAIL" />
     </ids>
 </model>

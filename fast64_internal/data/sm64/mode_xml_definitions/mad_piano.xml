@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Mad Piano">
-    <geolayout>0xc0001b4</geolayout>
+    <geolayout address="0xc0001b4" />
     <group>group9</group>
     <ids>
-        <id value="0x57" name="MODEL_MAD_PIANO"/>
+        <id value="0x57" name="MODEL_MAD_PIANO" />
     </ids>
     <animation_tables>
         <table>mad_piano</table>

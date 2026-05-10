@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Cabin Door">
-    <geolayout>0x1600043c</geolayout>
+    <geolayout address="0x1600043c" />
     <group>common1</group>
     <ids>
-        <id value="0x27" name="MODEL_CCM_CABIN_DOOR" level="common1"/>
+        <id value="0x27" name="MODEL_CCM_CABIN_DOOR" level="common1" />
     </ids>
     <animation_tables>
         <table>door</table>

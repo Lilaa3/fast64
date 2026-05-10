@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13005380" readable_name="Racing Penguin">
     <description>Uses ccm_seg7_trajectory_penguin_race as its trajectory.</description>
     <comment>Weirdly, the object gets its behparam 1 to 2?</comment>
@@ -11,7 +11,7 @@
     <fields>
         <field name="Penguin Type" type="int" bparam="2" default="0">
             <enums>
-                <enum value="0" name="Normal"/>
+                <enum value="0" name="Normal" />
                 <enum value="1" name="120-Star (Giant)">
                     <description>Set automatically by the behavior.</description>
                 </enum>

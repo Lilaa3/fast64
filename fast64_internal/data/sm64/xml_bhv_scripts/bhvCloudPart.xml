@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130049ac" readable_name="Cloud Part">
     <description>Component of a cloud. Positions itself relative to and is spawned by the parent cloud manager.</description>
     <tags>
@@ -6,7 +6,7 @@
         <tag>ENVIRONMENTAL</tag>
     </tags>
     <fields>
-        <field name="Part Index" type="int" bparam="2" default="0"/>
+        <field name="Part Index" type="int" bparam="2" default="0" />
     </fields>
     <models>
         <model>fwoosh</model>

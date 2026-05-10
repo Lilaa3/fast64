@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000940" readable_name="Temporary Yellow Coin">
     <tags>
         <tag>COLLECTABLE</tag>

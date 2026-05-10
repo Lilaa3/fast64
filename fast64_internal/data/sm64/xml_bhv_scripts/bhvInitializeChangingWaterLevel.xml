@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002620" readable_name="Water Level Initializer">
     <description>Manages the water level in WDW. Initializes the water regions 0 and 6 and applies a sine-wave oscillation to them.</description>
     <tags>

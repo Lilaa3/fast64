@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130045d0" readable_name="Koopa Race Endpoint">
     <description>Spawns the goal flag and handles the race's completion, timing, checks for cheating, and fanfare.</description>
     <tags>

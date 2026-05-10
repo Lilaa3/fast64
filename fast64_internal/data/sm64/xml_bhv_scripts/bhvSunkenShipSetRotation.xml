@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x1300243c" readable_name="Sunken Ship Set Rotation">
     <description>Helper behavior for other behaviors to set specific rotation angles for sunken ship parts.</description>
     <tags>

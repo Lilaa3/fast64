@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130028fc" readable_name="Haunted Bookshelf">
     <description>Plays a sound when triggered by bhvHauntedBookshelfManager, no parent. Not spawned by Haunted Bookshelf Manager.</description>
     <tags>

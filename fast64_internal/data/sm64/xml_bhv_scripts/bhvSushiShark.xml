@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002338" readable_name="Sushi Shark">
     <tags>
         <tag>ENEMY</tag>

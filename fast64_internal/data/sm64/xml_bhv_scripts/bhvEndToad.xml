@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000e88" readable_name="End Toad">
     <description>Toads during the end cutscene.</description>
     <tags>

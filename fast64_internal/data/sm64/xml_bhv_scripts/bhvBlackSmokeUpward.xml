@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x1300127c" readable_name="Black Smoke Upward">
     <description>Spawned when Bowser's flames burn out, spawns black smoke particles moving upward.</description>
     <tags>

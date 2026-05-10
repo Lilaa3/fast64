@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004f28" readable_name="Water Bubbles Cannon Barrel">
     <tags>
         <tag>SPAWNER</tag>

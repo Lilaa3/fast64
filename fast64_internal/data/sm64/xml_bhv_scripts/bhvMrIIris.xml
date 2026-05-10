@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x1300008c" readable_name="Mr. I Iris">
     <description>It follows the body's position and scale, and blinks when the body does.</description>
     <comment>bhvMrIIris in hacker, bhvMrIBody in decomp.</comment>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003274" readable_name="Closed Cannon">
     <description>Cannon door that opens when the course cannon unlock flag is set in the save file. Spawns bhvCannon upon opening.</description>
     <tags>

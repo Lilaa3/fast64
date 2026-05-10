@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001000" readable_name="Moving Pole">
     <description>Pole that syncs position and angle with its bhvBitfsSinkingCagePlatform parent.</description>
     <tags>

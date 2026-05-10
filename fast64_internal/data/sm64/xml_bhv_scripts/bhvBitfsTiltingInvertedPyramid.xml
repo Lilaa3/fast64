@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001030" readable_name="Bitfs Tilting Inverted Pyramid">
     <description>An inverted pyramid platform in Bitfs that tilts towards Mario.</description>
     <tags>

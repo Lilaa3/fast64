@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bowser Bomb">
-    <geolayout>0xd000bbc</geolayout>
+    <geolayout address="0xd000bbc" />
     <group>group12</group>
     <ids>
-        <id value="0xb3" name="MODEL_BOWSER_BOMB"/>
+        <id value="0xb3" name="MODEL_BOWSER_BOMB" />
     </ids>
 </model>

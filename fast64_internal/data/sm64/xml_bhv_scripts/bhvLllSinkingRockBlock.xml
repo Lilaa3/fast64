@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001d40" readable_name="LLL Sinking Rock Block">
     <description>A rock block in the rolling log section that sinks.</description>
     <tags>

@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wiggler Head">
-    <geolayout>0xc000030</geolayout>
+    <geolayout address="0xc000030" />
     <group>group11</group>
     <ids>
-        <id value="0x57" name="MODEL_WIGGLER_HEAD"/>
+        <id value="0x57" name="MODEL_WIGGLER_HEAD" />
     </ids>
     <animation_tables>
         <table>wiggler_head</table>

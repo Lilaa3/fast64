@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001ae8" readable_name="Large Burning Out Flame">
     <description>Inherits movement and shrinking logic from bhvFlameBowser, but specifically sets its scale to 8.0 upon landing before beginning to shrink.</description>
     <tags>

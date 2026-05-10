@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000338" readable_name="Small Water Wave">
     <description>Spawned by bhvBubbleParticleSpawner.</description>
     <tags>

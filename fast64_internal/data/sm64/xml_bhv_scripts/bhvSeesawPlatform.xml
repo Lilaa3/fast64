@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004b1c" readable_name="Seesaw Platform">
     <tags>
         <tag>PLATFORM</tag>
@@ -7,14 +7,14 @@
     <fields>
         <field name="Seesaw Type" type="int" bparam="2" default="0">
             <enums>
-                <enum value="0" name="BitDW" c_name="SEESAW_PLATFORM_BP_BITDW"/>
-                <enum value="1" name="BitS" c_name="SEESAW_PLATFORM_BP_BITS"/>
-                <enum value="2" name="BitS W-Shaped" c_name="SEESAW_PLATFORM_BP_BITS_W_SHAPED"/>
-                <enum value="3" name="Bob Bridge" c_name="SEESAW_PLATFORM_BP_BOB_BRIDGE"/>
-                <enum value="4" name="BitFS" c_name="SEESAW_PLATFORM_BP_BITFS"/>
-                <enum value="5" name="RR" c_name="SEESAW_PLATFORM_BP_RR"/>
-                <enum value="6" name="RR L-Shaped" c_name="SEESAW_PLATFORM_BP_RR_L_SHAPED"/>
-                <enum value="7" name="VCUTM" c_name="SEESAW_PLATFORM_BP_VCUTM"/>
+                <enum value="0" name="BitDW" c_name="SEESAW_PLATFORM_BP_BITDW" />
+                <enum value="1" name="BitS" c_name="SEESAW_PLATFORM_BP_BITS" />
+                <enum value="2" name="BitS W-Shaped" c_name="SEESAW_PLATFORM_BP_BITS_W_SHAPED" />
+                <enum value="3" name="Bob Bridge" c_name="SEESAW_PLATFORM_BP_BOB_BRIDGE" />
+                <enum value="4" name="BitFS" c_name="SEESAW_PLATFORM_BP_BITFS" />
+                <enum value="5" name="RR" c_name="SEESAW_PLATFORM_BP_RR" />
+                <enum value="6" name="RR L-Shaped" c_name="SEESAW_PLATFORM_BP_RR_L_SHAPED" />
+                <enum value="7" name="VCUTM" c_name="SEESAW_PLATFORM_BP_VCUTM" />
             </enums>
         </field>
     </fields>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002a5c" readable_name="Bowser Floor Trap Manager">
     <comment>The actual object has a set behavior param, and this does spawn another object that would inherit it, but no use that I can find right now.</comment>
     <description>Bowser floor trap.</description>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000888" readable_name="Coin Inside Boo">
     <tags>
         <tag>COINS</tag>
@@ -7,7 +7,7 @@
     <fields>
         <field name="Coin Index" type="int" bparam="2" default="0">
             <enums>
-                <enum value="0" name="Yellow Coin" c_name="COIN_INSIDE_BOO_BP_YELLOW_COIN"/>
+                <enum value="0" name="Yellow Coin" c_name="COIN_INSIDE_BOO_BP_YELLOW_COIN" />
                 <enum value="1" name="Blue Coin" c_name="COIN_INSIDE_BOO_BP_BLUE_COIN">
                     <description>Forces model to be blue coin.</description>
                 </enum>

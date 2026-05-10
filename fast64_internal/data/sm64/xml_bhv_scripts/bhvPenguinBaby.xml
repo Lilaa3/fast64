@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130020d8" readable_name="No Behavior Penguin Baby">
     <description>No behavior version of the penguin.</description>
     <tags>

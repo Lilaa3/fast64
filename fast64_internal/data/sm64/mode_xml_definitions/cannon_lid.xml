@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Cannon Lid">
-    <displaylist address="0x80048e0">cannon_lid_seg8_dl_080048E0</displaylist>
+    <displaylist address="0x80048e0" name="cannon_lid_seg8_dl_080048E0" />
     <group>common0</group>
     <ids>
-        <id value="0xc9" name="MODEL_DL_CANNON_LID"/>
+        <id value="0xc9" name="MODEL_DL_CANNON_LID" />
     </ids>
     <collisions>
-        <collision c_name="cannon_lid_seg8_collision_08004950" address="0x8004950"/>
+        <collision c_name="cannon_lid_seg8_collision_08004950" address="0x8004950" />
     </collisions>
 </model>

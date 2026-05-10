@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bowser 2 Tilting Arena">
-    <geolayout>0xe000170</geolayout>
+    <geolayout address="0xe000170" />
     <level>BOWSER_2</level>
     <ids>
-        <id value="0x36" name="MODEL_BOWSER_2_TILTING_ARENA"/>
+        <id value="0x36" name="MODEL_BOWSER_2_TILTING_ARENA" />
     </ids>
     <collisions>
-        <collision c_name="bowser_2_seg7_collision_tilting_platform" address="0x7001a68"/>
+        <collision c_name="bowser_2_seg7_collision_tilting_platform" address="0x7001a68" />
     </collisions>
 </model>

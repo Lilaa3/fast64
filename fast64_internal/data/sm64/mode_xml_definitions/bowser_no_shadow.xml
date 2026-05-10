@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bowser (No Shadow)">
-    <geolayout>0xd000b40</geolayout>
+    <geolayout address="0xd000b40" />
     <group>group12</group>
     <ids>
-        <id value="0x69" name="MODEL_BOWSER_NO_SHADOW"/>
+        <id value="0x69" name="MODEL_BOWSER_NO_SHADOW" />
     </ids>
     <animation_tables>
         <table>bowser</table>

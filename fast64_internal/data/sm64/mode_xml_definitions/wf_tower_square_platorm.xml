@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wf Tower Square Platorm">
-    <geolayout>0xe000b10</geolayout>
+    <geolayout address="0xe000b10" />
     <level>WF</level>
     <ids>
-        <id value="0x2d" name="MODEL_WF_TOWER_SQUARE_PLATORM"/>
+        <id value="0x2d" name="MODEL_WF_TOWER_SQUARE_PLATORM" />
     </ids>
     <collisions>
-        <collision c_name="wf_seg7_collision_platform" address="0x0700FB94"/>
+        <collision c_name="wf_seg7_collision_platform" address="0x0700FB94" />
     </collisions>
 </model>

@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Dirt">
-    <geolayout>0x16000ed4</geolayout>
+    <geolayout address="0x16000ed4" />
     <group>common1</group>
     <ids>
-        <id value="0x8a" name="MODEL_DIRT_ANIMATION"/>
+        <id value="0x8a" name="MODEL_DIRT_ANIMATION" />
     </ids>
 </model>

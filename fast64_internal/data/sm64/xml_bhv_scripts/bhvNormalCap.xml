@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003df8" readable_name="Normal Cap">
     <description>Spawned at it's last static position from the save file along with Mario.</description>
     <tags>

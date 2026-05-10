@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bbh Tumbling Platform Part">
-    <geolayout>0xe0005f8</geolayout>
+    <geolayout address="0xe0005f8" />
     <level>BBH</level>
     <ids>
-        <id value="0x38" name="MODEL_BBH_TUMBLING_PLATFORM_PART"/>
+        <id value="0x38" name="MODEL_BBH_TUMBLING_PLATFORM_PART" />
     </ids>
     <collisions>
-        <collision c_name="bbh_seg7_collision_07026B1C" address="0x07026B1C"/>
+        <collision c_name="bbh_seg7_collision_07026B1C" address="0x07026B1C" />
     </collisions>
 </model>

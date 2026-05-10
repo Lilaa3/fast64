@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003510" readable_name="Explosion">
     <description>A damaging visual explosion effect. Triggers a camera shake and explosion sound on initialization. The object expands linearly over 9 frames while its opacity fades. Upon expiration, it spawns either smoke or a cluster of bubbles depending on whether it is submerged in water, then deactivates.</description>
     <tags>

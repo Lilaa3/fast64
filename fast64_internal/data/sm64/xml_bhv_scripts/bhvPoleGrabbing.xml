@@ -1,10 +1,10 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000144" readable_name="Grabable Pole">
     <tags>
         <tag>INTERACTIVE</tag>
         <tag>ENVIRONMENTAL</tag>
     </tags>
     <fields>
-        <field name="Height" type="units" bparam="12" multiplier="10"/>
+        <field name="Height" type="units" bparam="12" multiplier="10" />
     </fields>
 </behavior>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001da8" readable_name="LLL Rotating Flamethrower Stone">
     <description>Stone on top of the hex plataform and in the sub area that spits fire in two directions.</description>
     <tags>

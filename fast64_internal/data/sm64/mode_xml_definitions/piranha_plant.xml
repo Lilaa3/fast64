@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Piranha Plant">
-    <geolayout>0xd000358</geolayout>
+    <geolayout address="0xd000358" />
     <group>group14</group>
     <ids>
-        <id value="0x64" name="MODEL_PIRANHA_PLANT"/>
+        <id value="0x64" name="MODEL_PIRANHA_PLANT" />
     </ids>
     <animation_tables>
         <table>piranha_plant</table>

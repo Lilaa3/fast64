@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Rr Octagonal Platform">
-    <geolayout>0xe0008a8</geolayout>
+    <geolayout address="0xe0008a8" />
     <level>RR</level>
     <ids>
-        <id value="0x38" name="MODEL_RR_OCTAGONAL_PLATFORM"/>
+        <id value="0x38" name="MODEL_RR_OCTAGONAL_PLATFORM" />
     </ids>
     <collisions>
-        <collision c_name="rr_seg7_collision_07029508" address="0x07029508"/>
+        <collision c_name="rr_seg7_collision_07029508" address="0x07029508" />
     </collisions>
 </model>

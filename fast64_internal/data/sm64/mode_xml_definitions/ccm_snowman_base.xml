@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ccm Snowman Base">
-    <geolayout>0xe0003f0</geolayout>
+    <geolayout address="0xe0003f0" />
     <level>CCM</level>
     <ids>
-        <id value="0xd2" name="MODEL_CCM_SNOWMAN_BASE"/>
+        <id value="0xd2" name="MODEL_CCM_SNOWMAN_BASE" />
     </ids>
 </model>

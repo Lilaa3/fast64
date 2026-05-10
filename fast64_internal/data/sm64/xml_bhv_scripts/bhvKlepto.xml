@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13005310" readable_name="Klepto">
     <description>
         Positions are hardcoded to:
@@ -14,8 +14,8 @@
     <fields>
         <field name="Has Star" type="bool" bparam="2" default="1">
             <enums>
-                <enum value="0" name="No Star" c_name="KLEPTO_BP_NO_STAR"/>
-                <enum value="1" name="Has Star" c_name="KLEPTO_BP_HAS_STAR"/>
+                <enum value="0" name="No Star" c_name="KLEPTO_BP_NO_STAR" />
+                <enum value="1" name="Has Star" c_name="KLEPTO_BP_HAS_STAR" />
             </enums>
         </field>
     </fields>

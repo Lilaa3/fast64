@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Main Menu Blue Copy Button">
-    <geolayout>0x0E0002B8</geolayout>
+    <geolayout address="0x0E0002B8" />
     <level>MENU</level>
     <ids>
-        <id value="0x05" name="MODEL_MAIN_MENU_BLUE_COPY_BUTTON"/>
+        <id value="0x05" name="MODEL_MAIN_MENU_BLUE_COPY_BUTTON" />
     </ids>
 </model>

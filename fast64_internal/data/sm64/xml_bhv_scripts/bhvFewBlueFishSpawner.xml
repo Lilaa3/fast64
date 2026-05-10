@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x1300214c" readable_name="Few Blue Fish Spawner">
     <description>A specialized fish spawner that inherits functionality from bhvFishSpawner. Forces Few Blue.</description>
     <tags>

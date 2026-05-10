@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003a08" readable_name="BOB Pit Bowling Ball">
     <tags>
         <tag>ENEMY</tag>

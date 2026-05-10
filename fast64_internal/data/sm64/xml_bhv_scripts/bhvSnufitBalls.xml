@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x1300521c" readable_name="Snufit Balls">
     <description>Despawns if mario is an different room.</description>
     <tags>

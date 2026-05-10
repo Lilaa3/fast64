@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003420" readable_name="Beta Holdable Object">
     <description>A beta object that Mario can pick up and throw.</description>
     <tags>

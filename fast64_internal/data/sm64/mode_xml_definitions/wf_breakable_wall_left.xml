@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wf Breakable Wall Left">
-    <geolayout>0xe000b90</geolayout>
+    <geolayout address="0xe000b90" />
     <level>WF</level>
     <ids>
-        <id value="0x37" name="MODEL_WF_BREAKABLE_WALL_LEFT"/>
+        <id value="0x37" name="MODEL_WF_BREAKABLE_WALL_LEFT" />
     </ids>
     <collisions>
-        <collision c_name="wf_seg7_collision_breakable_wall_2" address="0x700fc44"/>
+        <collision c_name="wf_seg7_collision_breakable_wall_2" address="0x700fc44" />
     </collisions>
 </model>

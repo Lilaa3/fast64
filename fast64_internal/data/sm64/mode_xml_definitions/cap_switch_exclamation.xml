@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Cap Switch (Exclamation)">
-    <displaylist address="0x5002e00">cap_switch_exclamation_seg5_dl_05002E00</displaylist>
+    <displaylist address="0x5002e00" name="cap_switch_exclamation_seg5_dl_05002E00" />
     <group>group8</group>
     <ids>
-        <id value="0x54" name="MODEL_CAP_SWITCH_EXCLAMATION"/>
+        <id value="0x54" name="MODEL_CAP_SWITCH_EXCLAMATION" />
     </ids>
 </model>

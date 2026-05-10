@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002e58" readable_name="SL Bridge Penguin">
     <description>A penguin that walks erratically back and forth across the ice bridge.</description>
     <tags>

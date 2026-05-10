@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130001cc" readable_name="Cap Switch">
     <description>Spawns bhvCapSwitchBase.</description>
     <tags>
@@ -9,10 +9,10 @@
     <fields>
         <field name="Cap Type" type="int" bparam="2" default="0">
             <enums>
-                <enum value="0" name="Wing Cap" c_name="CAP_SWITCH_BP_WING_CAP"/>
-                <enum value="1" name="Metal Cap" c_name="CAP_SWITCH_BP_METAL_CAP"/>
-                <enum value="2" name="Vanish Cap" c_name="CAP_SWITCH_BP_VANISH_CAP"/>
-                <enum value="3" name="Yellow Cap" c_name="CAP_SWITCH_BP_YELLOW_CAP"/>
+                <enum value="0" name="Wing Cap" c_name="CAP_SWITCH_BP_WING_CAP" />
+                <enum value="1" name="Metal Cap" c_name="CAP_SWITCH_BP_METAL_CAP" />
+                <enum value="2" name="Vanish Cap" c_name="CAP_SWITCH_BP_VANISH_CAP" />
+                <enum value="3" name="Yellow Cap" c_name="CAP_SWITCH_BP_YELLOW_CAP" />
             </enums>
         </field>
     </fields>

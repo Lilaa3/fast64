@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Goomba">
-    <geolayout>0xf0006e4</geolayout>
+    <geolayout address="0xf0006e4" />
     <group>common0</group>
     <ids>
-        <id value="0xc0" name="MODEL_GOOMBA" level="common0"/>
+        <id value="0xc0" name="MODEL_GOOMBA" level="common0" />
     </ids>
     <animation_tables>
         <table>goomba</table>

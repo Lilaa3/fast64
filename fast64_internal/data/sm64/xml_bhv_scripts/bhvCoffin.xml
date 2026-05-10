@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13005414" readable_name="Coffin">
     <description>Deletes it self when parent bhvCoffinSpawner sets COFFIN_SPAWNER_ACT_COFFINS_UNLOADED</description>
     <tags>
@@ -9,8 +9,8 @@
     <fields>
         <field name="Stationary" type="bool" bparam="2" default="0">
             <enums>
-                <enum value="0" name="Stationary" c_name="COFFIN_BP_STATIONARY"/>
-                <enum value="1" name="Active" c_name="COFFIN_BP_MOVING"/>
+                <enum value="0" name="Stationary" c_name="COFFIN_BP_STATIONARY" />
+                <enum value="1" name="Active" c_name="COFFIN_BP_MOVING" />
             </enums>
         </field>
     </fields>

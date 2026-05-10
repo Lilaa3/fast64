@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130015c0" readable_name="CCM Touched Star Spawn">
     <description>Spawns a star at fixed coordinates when gCCMEnteredSlide bit 0 is set.</description>
     <tags>

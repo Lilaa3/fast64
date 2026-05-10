@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wf Tumbling Bridge Part">
-    <geolayout>0xe000ab0</geolayout>
+    <geolayout address="0xe000ab0" />
     <level>WF</level>
     <ids>
-        <id value="0xb0" name="MODEL_WF_TUMBLING_BRIDGE_PART"/>
+        <id value="0xb0" name="MODEL_WF_TUMBLING_BRIDGE_PART" />
     </ids>
     <collisions>
-        <collision c_name="wf_seg7_collision_tumbling_bridge" address="0x0700FAEC"/>
+        <collision c_name="wf_seg7_collision_tumbling_bridge" address="0x0700FAEC" />
     </collisions>
 </model>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001254" readable_name="Black Smoke Bowser">
     <description>Black smoke particles that appear when Bowser is defeated.</description>
     <tags>

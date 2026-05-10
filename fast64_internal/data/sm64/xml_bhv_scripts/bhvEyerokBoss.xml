@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130052b4" readable_name="Eyerok Boss">
     <description>The boss manager for the Eyerok encounter. It controls the fight's overall state machine.</description>
     <tags>

@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ttm Slide Exit Podium">
-    <geolayout>0xe000df4</geolayout>
+    <geolayout address="0xe000df4" />
     <level>TTM</level>
     <ids>
-        <id value="0x7b" name="MODEL_TTM_SLIDE_EXIT_PODIUM"/>
+        <id value="0x7b" name="MODEL_TTM_SLIDE_EXIT_PODIUM" />
     </ids>
     <collisions>
-        <collision c_name="ttm_seg7_collision_podium_warp" address="0x703013c"/>
+        <collision c_name="ttm_seg7_collision_podium_warp" address="0x703013c" />
     </collisions>
 </model>

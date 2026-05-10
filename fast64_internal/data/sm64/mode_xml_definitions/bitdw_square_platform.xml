@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bitdw Square Platform">
-    <geolayout>0xe000558</geolayout>
+    <geolayout address="0xe000558" />
     <level>BITDW</level>
     <ids>
-        <id value="0x36" name="MODEL_BITDW_SQUARE_PLATFORM"/>
+        <id value="0x36" name="MODEL_BITDW_SQUARE_PLATFORM" />
     </ids>
     <collisions>
-        <collision c_name="bitdw_seg7_collision_moving_pyramid" address="0x700f790"/>
+        <collision c_name="bitdw_seg7_collision_moving_pyramid" address="0x700f790" />
     </collisions>
 </model>

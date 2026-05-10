@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Lll Large Falling Platform">
-    <geolayout>0xe000b98</geolayout>
+    <geolayout address="0xe000b98" />
     <level>LLL</level>
     <ids>
-        <id value="0x3d" name="MODEL_LLL_LARGE_FALLING_PLATFORM"/>
+        <id value="0x3d" name="MODEL_LLL_LARGE_FALLING_PLATFORM" />
     </ids>
 </model>

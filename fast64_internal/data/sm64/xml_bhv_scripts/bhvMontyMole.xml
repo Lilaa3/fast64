@@ -1,6 +1,6 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004a00" readable_name="Monty Mole">
-    <description>Use Monty Mole Hole within <game_unit value="1500"/> of Mario.</description>
+    <description>Use Monty Mole Hole within <game_unit value="1500" /> of Mario.</description>
     <tags>
         <tag>ENEMY</tag>
         <tag>TTM</tag>
@@ -8,8 +8,8 @@
     <fields>
         <field name="Can Throw Rocks" type="bool" bparam="2" default="0">
             <enums>
-                <enum c_name="MONTY_MOLE_BP_NO_ROCK"/>
-                <enum c_name="MONTY_MOLE_BP_CAN_THROW_ROCK"/>
+                <enum c_name="MONTY_MOLE_BP_NO_ROCK" />
+                <enum c_name="MONTY_MOLE_BP_CAN_THROW_ROCK" />
             </enums>
         </field>
     </fields>

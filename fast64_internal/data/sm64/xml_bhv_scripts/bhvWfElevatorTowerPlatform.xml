@@ -1,6 +1,6 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001340" readable_name="WF Elevator Tower Platform">
-    <description>It is deleted if its parent object's action is set to 3. Goes up <game_unit value="700"/> from its starting position.</description>
+    <description>It is deleted if its parent object's action is set to 3. Goes up <game_unit value="700" /> from its starting position.</description>
     <tags>
         <tag>SURFACE</tag>
         <tag>MOVING</tag>

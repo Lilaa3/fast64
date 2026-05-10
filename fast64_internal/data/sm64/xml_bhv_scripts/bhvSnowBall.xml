@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001da4" readable_name="Snowball">
     <description>Unused behavior for the Snowman's head. Does nothing.</description>
     <tags>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130050b4" readable_name="Bookend Spawner">
     <description>A spawner for flying bookends.</description>
     <tags>

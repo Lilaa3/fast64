@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130017f4" readable_name="White Puff Smoke">
     <tags>
         <tag>PARTICLE</tag>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001468" readable_name="Floor Switch (Animates Object)">
     <description>A purple floor switch that inherits from bhvFloorSwitchHardcodedModel. Forces PURPLE_SWITCH_BP_ANIMATES to trigger associated object animations upon activation.</description>
     <tags>

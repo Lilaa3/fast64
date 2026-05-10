@@ -1,8 +1,8 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Haunted Cage">
-    <geolayout>0xc000274</geolayout>
+    <geolayout address="0xc000274" />
     <group>group9</group>
     <ids>
-        <id value="0x5a" name="MODEL_HAUNTED_CAGE"/>
+        <id value="0x5a" name="MODEL_HAUNTED_CAGE" />
     </ids>
 </model>

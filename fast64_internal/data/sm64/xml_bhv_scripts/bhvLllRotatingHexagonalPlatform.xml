@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13001d14" readable_name="LLL Rotating Hexagonal Platform">
     <description>The hexagonal platform where the fire thrower stone sits on.</description>
     <tags>

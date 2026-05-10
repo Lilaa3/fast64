@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Mr. Blizzard">
-    <geolayout>0xc000348</geolayout>
+    <geolayout address="0xc000348" />
     <group>group7</group>
     <ids>
-        <id value="0x56" name="MODEL_MR_BLIZZARD"/>
+        <id value="0x56" name="MODEL_MR_BLIZZARD" />
     </ids>
     <animation_tables>
         <table>mr_blizzard</table>

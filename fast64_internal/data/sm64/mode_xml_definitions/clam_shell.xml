@@ -1,9 +1,9 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Clam Shell">
-    <geolayout>0xc000000</geolayout>
+    <geolayout address="0xc000000" />
     <group>group4</group>
     <ids>
-        <id value="0x58" name="MODEL_CLAM_SHELL"/>
+        <id value="0x58" name="MODEL_CLAM_SHELL" />
     </ids>
     <animation_tables>
         <table>clam_shell</table>

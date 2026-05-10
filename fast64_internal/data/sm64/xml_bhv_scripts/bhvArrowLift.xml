@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004314" readable_name="Arrow Lift">
     <description>A platform that moves forward and backward when Mario stands on it.</description>
     <tags>

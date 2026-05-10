@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000194" readable_name="THI Top Drain (Tiny)">
     <description>Triggers environment changes, hardcoded to a specific water box's moving texture.</description>
     <tags>

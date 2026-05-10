@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000ed0" readable_name="Unused Particle Spawner">
     <description>Spawns 10 purple particles (bhvPurpleParticle) if Mario collides with its object.</description>
     <tags>

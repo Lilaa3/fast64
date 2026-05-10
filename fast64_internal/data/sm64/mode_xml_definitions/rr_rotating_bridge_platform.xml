@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Rr Rotating Bridge Platform">
-    <geolayout>0xe000878</geolayout>
+    <geolayout address="0xe000878" />
     <level>RR</level>
     <ids>
-        <id value="0x39" name="MODEL_RR_ROTATING_BRIDGE_PLATFORM"/>
+        <id value="0x39" name="MODEL_RR_ROTATING_BRIDGE_PLATFORM" />
     </ids>
     <collisions>
-        <collision c_name="rr_seg7_collision_rotating_platform_with_fire" address="0x7029308"/>
+        <collision c_name="rr_seg7_collision_rotating_platform_with_fire" address="0x7029308" />
     </collisions>
 </model>

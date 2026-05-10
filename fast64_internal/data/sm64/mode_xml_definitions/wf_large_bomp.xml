@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wf Large Bomp">
-    <geolayout>0xe000a40</geolayout>
+    <geolayout address="0xe000a40" />
     <level>WF</level>
     <ids>
-        <id value="0xb1" name="MODEL_WF_LARGE_BOMP"/>
+        <id value="0xb1" name="MODEL_WF_LARGE_BOMP" />
     </ids>
     <collisions>
-        <collision c_name="wf_seg7_collision_large_bomp" address="0x700f934"/>
+        <collision c_name="wf_seg7_collision_large_bomp" address="0x700f934" />
     </collisions>
 </model>

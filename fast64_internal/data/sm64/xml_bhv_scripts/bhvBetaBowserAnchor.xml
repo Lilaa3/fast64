@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130029b4" readable_name="Beta Bowser Anchor">
     <description>A beta object that stays in front of Mario and attacks other objects.</description>
     <tags>

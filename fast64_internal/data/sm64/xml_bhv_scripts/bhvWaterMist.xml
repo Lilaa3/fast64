@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13000d6c" readable_name="Water Mist">
     <description>A billboarded particle representing water mist.</description>
     <tags>

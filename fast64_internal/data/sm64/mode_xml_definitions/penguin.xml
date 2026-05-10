@@ -1,14 +1,14 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Penguin">
-    <geolayout>0xc000104</geolayout>
+    <geolayout address="0xc000104" />
     <group>group7</group>
     <ids>
-        <id value="0x57" name="MODEL_PENGUIN"/>
+        <id value="0x57" name="MODEL_PENGUIN" />
     </ids>
     <animation_tables>
         <table>penguin</table>
     </animation_tables>
     <collisions>
-        <collision c_name="penguin_seg5_collision_05008B88" address="0x05008B88"/>
+        <collision c_name="penguin_seg5_collision_05008B88" address="0x05008B88" />
     </collisions>
 </model>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130042e4" readable_name="JRB Aflot Platform">
     <description>A platform that floats on water.</description>
     <tags>

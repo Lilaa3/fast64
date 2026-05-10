@@ -1,11 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004f10" readable_name="Water Bomb Cannon">
     <tags>
         <tag>SPAWNER</tag>
         <tag>BOB</tag>
     </tags>
     <fields>
-        <field name="Disabled" type="bool" bparam="2" default="0"/>
+        <field name="Disabled" type="bool" bparam="2" default="0" />
     </fields>
     <models>
         <model>cannon_base</model>

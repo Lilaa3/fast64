@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002588" readable_name="Hidden Blue Coin">
     <description>A blue coin that remains invisible and intangible until the nearest Blue Coin Switch enters the BLUE_COIN_SWITCH_ACT_TICKING state.</description>
     <tags>

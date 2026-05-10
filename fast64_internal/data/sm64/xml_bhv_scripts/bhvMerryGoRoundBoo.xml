@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x130027f4" readable_name="Boo (Merry-Go-Round)">
     <description>Acts as a wrapper for bhvGhostHuntBoo. Changes bparam to Merry Go Round mode. Spawned by the Merry Go Round Manager.</description>
     <tags>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <animation_table address="0x50116e4" name="Eyerok">
     <behaviors>
         <behavior>0x130052b4</behavior>

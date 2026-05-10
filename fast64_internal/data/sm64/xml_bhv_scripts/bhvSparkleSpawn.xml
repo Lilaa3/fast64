@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13002af0" readable_name="Sparkle Spawn">
     <description>Spawns a sparkle particle around its own position with random transforms, then deletes itself.</description>
     <tags>
