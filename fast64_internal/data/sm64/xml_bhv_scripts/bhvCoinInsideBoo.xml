@@ -6,10 +6,12 @@
     </tags>
     <fields>
         <field name="Coin Index" type="int" bparam="2" default="0">
-            <enum value="0" name="Yellow Coin" c_name="COIN_INSIDE_BOO_BP_YELLOW_COIN"/>
-            <enum value="1" name="Blue Coin" c_name="COIN_INSIDE_BOO_BP_BLUE_COIN">
-                <description>Forces model to be blue coin.</description>
-            </enum>
+            <enums>
+                <enum value="0" name="Yellow Coin" c_name="COIN_INSIDE_BOO_BP_YELLOW_COIN"/>
+                <enum value="1" name="Blue Coin" c_name="COIN_INSIDE_BOO_BP_BLUE_COIN">
+                    <description>Forces model to be blue coin.</description>
+                </enum>
+            </enums>
         </field>
     </fields>
     <models>

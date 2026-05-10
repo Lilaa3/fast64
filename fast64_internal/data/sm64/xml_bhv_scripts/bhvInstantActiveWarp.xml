@@ -4,5 +4,7 @@
     <tags>
         <tag>WARP</tag>
     </tags>
-    <field name="Warp ID" type="int" bparam="2" default="0"/>
+    <fields>
+        <field name="Warp ID" type="int" bparam="2" default="0"/>
+    </fields>
 </behavior>

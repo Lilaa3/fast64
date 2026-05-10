@@ -4,9 +4,11 @@
         <tag>COLLECTABLE</tag>
         <tag>BOWSER</tag>
     </tags>
-    <field name="Star Index" type="int" bparam="2" default="0">
-        <description>Index of the star. Always 0 for keys</description>
-    </field>
+    <fields>
+        <field name="Star Index" type="int" bparam="2" default="0">
+            <description>Index of the star. Always 0 for keys</description>
+        </field>
+    </fields>
     <models>
         <model>bowser_key</model>
     </models>

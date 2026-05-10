@@ -8,7 +8,7 @@
         <tag>COLLECTABLE</tag>
     </tags>
     <fields>
-        <field name="Formation Shape" type="enum" bparam="2" default="0">
+        <field name="Formation Shape" type="int" bparam="2" default="0">
             <enums>
                 <enum value="0" name="Horizontal Line" c_name="COIN_FORMATION_BP_SHAPE_HORIZONTAL_LINE"/>
                 <enum value="1" name="Vertical Line" c_name="COIN_FORMATION_BP_SHAPE_VERTICAL_LINE"/>

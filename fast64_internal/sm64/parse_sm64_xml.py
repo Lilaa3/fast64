@@ -16,12 +16,37 @@ class ParseError(Exception):
 
 
 @dataclasses.dataclass(frozen=True)
+class BehaviorFieldEnum:
+    name: str
+    description: Optional[str]
+    value: int
+    c_name: str
+
+
+@dataclasses.dataclass(frozen=True)
+class BehaviorField:
+    name: str
+    description: Optional[str]
+    type: str
+    bparam: list[int]
+    default: Optional[int]
+    enums: list[BehaviorFieldEnum]
+    mask: int
+    shift: int
+    multiplier: int
+    offset: int
+    min: Optional[int]
+    max: Optional[int]
+
+
+@dataclasses.dataclass(frozen=True)
 class AnimationTable:
     address: int
     name: str
     dma: Optional[str]
     directory: Optional[str]
     names: list[str]
+    behaviors: list[str]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -36,9 +61,11 @@ class Behavior:
     address: int
     readable_name: str
     description: str
+    dev_comment: str
     tags: list[str]
     models: list[str]
     collisions: list[Collision]
+    fields: list[BehaviorField]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -59,13 +86,26 @@ class Model:
 
 
 class SM64XMLParser:
-    def _get_attr(self, element: ET.Element, attr: str, required: bool = True, convert_int: bool = False):
+    def _get_attr(
+        self,
+        element: ET.Element,
+        attr: str,
+        required: bool = True,
+        convert_int: bool = False,
+        convert_bool: bool = False,
+    ):
         """Retrieves an attribute, optionally converting it to an integer."""
         val = element.get(attr)
         if val is None:
             if required:
                 raise ParseError(f"Missing required attribute '{attr}' in <{element.tag}>")
             return None
+        if convert_bool:
+            if val.lower() == "true":
+                return True
+            if val.lower() == "false":
+                return False
+            return int_from_str(val)
         return int_from_str(val) if convert_int else val
 
     def _get_text(self, root: ET.Element, tag: str, required: bool = False, convert_int: bool = False):
@@ -96,6 +136,14 @@ class SM64XMLParser:
                     f"Unknown element <{child.tag}> found inside <{element.tag}>. Expected: {', '.join(expected_tags)}"
                 )
 
+    def _check_unknown_attributes(self, element: ET.Element, expected_attrs: list[str]):
+        """Ensures no unexpected attributes are present on an element."""
+        for attr in element.attrib:
+            if attr not in expected_attrs:
+                raise ParseError(
+                    f"Unknown attribute '{attr}' in <{element.tag}>. Expected: {', '.join(expected_attrs)}"
+                )
+
     def _parse_collision(self, element: ET.Element, base_name: str, more_than_one: bool) -> Collision:
         self._check_unknown_elements(element, [])
 
@@ -117,33 +165,113 @@ class SM64XMLParser:
         return Collision(name, address, readable_name)
 
     def _parse_animation_table(self, root: ET.Element) -> AnimationTable:
-        self._check_unknown_elements(root, ["names"])
+        self._check_unknown_elements(root, ["names", "behaviors"])
 
         address = self._get_attr(root, "address", convert_int=True)
         name = self._get_attr(root, "name")
         dma = self._get_attr(root, "dma", required=False)
         directory = self._get_attr(root, "directory", required=False)
+        behaviors = self._get_list(root, "behaviors", "behavior")
 
         names = self._get_list(root, "names", "name")
         if not names:
             raise ParseError("Missing or empty <names> section in <animation_table>")
 
-        return AnimationTable(address, name, dma, directory, names)
+        return AnimationTable(address, name, dma, directory, names, behaviors)
+
+    def _parse_field_enum(self, element: ET.Element, is_bool: bool) -> BehaviorFieldEnum:
+        """Parses an <enum> tag within a field."""
+        self._check_unknown_elements(element, ["description"])
+        self._check_unknown_attributes(element, ["name", "value", "c_name"])
+
+        if is_bool:
+            name = description = ""
+            value = None
+        else:
+            name = self._get_attr(element, "name")
+            description = self._get_text(element, "description", required=False)
+            value = self._get_attr(element, "value", convert_int=True)
+        c_name = self._get_attr(element, "c_name", required=False)
+        return BehaviorFieldEnum(name=name, description=description, value=value, c_name=c_name)
+
+    def _parse_field(self, root: ET.Element) -> BehaviorField:
+        self._check_unknown_elements(root, ["enums", "description"])
+        self._check_unknown_attributes(
+            root, ["name", "type", "bparam", "default", "shift", "mask", "multiplier", "offset", "min", "max"]
+        )
+
+        name = self._get_attr(root, "name")
+        field_type = self._get_attr(root, "type")
+        description = self._get_text(root, "description", required=False)
+        shift = self._get_attr(root, "shift", convert_int=True, required=False)
+        mask = self._get_attr(root, "mask", convert_int=True, required=False)
+        multiplier = self._get_attr(root, "multiplier", convert_int=True, required=False) or 1
+        offset = self._get_attr(root, "offset", convert_int=True, required=False) or 0
+        min_value = self._get_attr(root, "min", convert_int=True, required=False) or 0
+
+        if field_type not in {"int", "float", "bool", "dialogue_id", "units", "frames"}:
+            raise ParseError(f"Unsupported field type '{field_type}' in field '{name}'.")
+
+        default = self._get_attr(
+            root,
+            "default",
+            convert_int=(field_type in {"int", "dialogue_id", "units", "frames"}),
+            convert_bool=(field_type == "bool"),
+            required=False,
+        )
+
+        bparams = self._get_attr(root, "bparam")
+        bparams = [int(bparam) for bparam in bparams]
+        if any(bparam < 1 or bparam > 4 for bparam in bparams):
+            raise ParseError(f"Invalid bparam '{bparams}' in field '{name}'. Must be between 1 and 4.")
+
+        max_value = self._get_attr(root, "max", convert_int=True, required=False) or len(bparams) * 255
+        enums = []
+        enums_elem = root.find("enums")
+        if enums_elem is not None:
+            self._check_unknown_elements(enums_elem, ["enum"])
+            for enum_node in enums_elem.findall("enum"):
+                enums.append(self._parse_field_enum(enum_node, field_type == "bool"))
+
+        return BehaviorField(
+            name,
+            description,
+            field_type,
+            bparams,
+            default,
+            enums,
+            shift,
+            mask,
+            multiplier,
+            offset,
+            min_value,
+            max_value,
+        )
 
     def _parse_behavior(self, root: ET.Element) -> Behavior:
-        self._check_unknown_elements(root, ["tags", "models", "collisions", "description", "fields"])
+        self._check_unknown_elements(
+            root, ["tags", "models", "collisions", "description", "comment", "fields", "particle"]
+        )
 
-        name = self._get_attr(root, "name", convert_int=True) # TODO temp
-        description = self._get_attr(root, "description", required=False) or ""
+        address = self._get_attr(root, "name", convert_int=True)
+        description = self._get_text(root, "description") or ""
         readable_name = self._get_attr(root, "readable_name")
+        comment = self._get_text(root, "comment")
+        particle = self._get_text(root, "particle")
 
         tags = self._get_list(root, "tags", "tag")
+        if particle is not None and "PARTICLE" not in tags:
+            logger.warning(f"Behavior {readable_name} has a particle, but no PARTICLE tag.")
+
         models = self._get_list(root, "models", "model")
 
-        fields = root.find("fields")
-        fields = fields.findall("field") if fields is not None else []
-        for field in fields:
-            pass
+        # Restrictive field parsing
+        fields = []
+        fields_container = root.find("fields")
+        if fields_container is not None:
+            self._check_unknown_elements(fields_container, ["field"])
+            for field_node in fields_container.findall("field"):
+                fields.append(self._parse_field(field_node))
 
         collisions = []
         collisions_elem = root.find("collisions")
@@ -156,7 +284,7 @@ class SM64XMLParser:
                 except Exception as exc:
                     raise ParseError(f"Error while parsing <collision>:\n{exc}") from exc
 
-        return Behavior(name, readable_name, description, tags, models, collisions)
+        return Behavior(address, readable_name, description, comment, tags, models, collisions, fields)
 
     def _parse_model(self, root: ET.Element) -> Model:
         self._check_unknown_elements(
@@ -260,10 +388,11 @@ def parse_all() -> None:
 
     for xml_file in files:
         try:
-            print(parser.parse_file(xml_file))
+            parser.parse_file(xml_file)
+            # print(parser.parse_file(xml_file), "\n")
             success_count += 1
         except Exception as exc:
-            logger.error(f"Parse Error in {xml_file}:\n{exc}")
+            logger.error(f"Parse Error in {xml_file}:\n{exc}\n")
             # traceback.print_exc()
             error_count += 1
 
