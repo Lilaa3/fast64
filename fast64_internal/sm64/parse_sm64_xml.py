@@ -330,8 +330,9 @@ class SM64XMLParser:
         return field
 
     def _parse_behavior_wrapped(self, root: ET.Element, name_or_address: str|int) -> Behavior:
+        self._check_unknown_attributes(root, ["name", "address", "readable_name"])
         self._check_unknown_elements(
-            root, ["name", "readable_name", "tags", "models", "collisions", "description", "comment", "fields", "particle"]
+            root, ["tags", "models", "collisions", "description", "comment", "fields", "particle"]
         )
 
         description = self._get_text(root, "description") or ""
