@@ -1,3 +1,4 @@
+import dataclasses
 import traceback
 import xml.etree.ElementTree as ET
 import logging
@@ -14,62 +15,47 @@ class ParseError(Exception):
     pass
 
 
+@dataclasses.dataclass(frozen=True)
 class AnimationTable:
-    def __init__(self, address: int, name: str, dma: Optional[str], directory: Optional[str], names: list[str]):
-        self.address = address
-        self.name = name
-        self.dma = dma
-        self.directory = directory
-        self.names = names
+    address: int
+    name: str
+    dma: Optional[str]
+    directory: Optional[str]
+    names: list[str]
 
 
-class Behavior:
-    def __init__(
-        self,
-        address: int,
-        readable_name: str,
-        description: str,
-        tags: list[str],
-        models: list[str],
-        collisions: list["Collision"],
-    ):
-        self.address = address
-        self.readable_name = readable_name
-        self.tags = tags
-        self.models = models
-        self.collisions = collisions
-
-
-class ModelId:
-    def __init__(self, value: int, name: str, level: Optional[str]):
-        self.value = value
-        self.name = name
-        self.level = level
-
-
+@dataclasses.dataclass(frozen=True)
 class Collision:
-    def __init__(self, name: str, address: int, readable_name: str):
-        self.c_name = name
-        self.address = address
-        self.readable_name = readable_name
+    c_name: str
+    address: int
+    readable_name: str
 
 
+@dataclasses.dataclass(frozen=True)
+class Behavior:
+    address: int
+    readable_name: str
+    description: str
+    tags: list[str]
+    models: list[str]
+    collisions: list[Collision]
+
+
+@dataclasses.dataclass(frozen=True)
+class ModelId:
+    value: int
+    name: str
+    level: Optional[str]
+
+
+@dataclasses.dataclass(frozen=True)
 class Model:
-    def __init__(
-        self,
-        readable_name: str,
-        geolayout: Optional[str],
-        group: Optional[str],
-        ids: list[ModelId],
-        tables: list[str],
-        collisions: list[str],
-    ):
-        self.readable_name = readable_name
-        self.geolayout = geolayout
-        self.group = group
-        self.ids = ids
-        self.tables = tables
-        self.collisions = collisions
+    readable_name: str
+    geolayout: Optional[str]
+    group: Optional[str]
+    ids: list[ModelId]
+    tables: list[str]
+    collisions: list[str]
 
 
 class SM64XMLParser:
@@ -145,14 +131,19 @@ class SM64XMLParser:
         return AnimationTable(address, name, dma, directory, names)
 
     def _parse_behavior(self, root: ET.Element) -> Behavior:
-        self._check_unknown_elements(root, ["tags", "models", "collisions", "description"])
+        self._check_unknown_elements(root, ["tags", "models", "collisions", "description", "fields"])
 
-        name = self._get_attr(root, "name", convert_int=True)
+        name = self._get_attr(root, "name", convert_int=True) # TODO temp
         description = self._get_attr(root, "description", required=False) or ""
         readable_name = self._get_attr(root, "readable_name")
 
         tags = self._get_list(root, "tags", "tag")
         models = self._get_list(root, "models", "model")
+
+        fields = root.find("fields")
+        fields = fields.findall("field") if fields is not None else []
+        for field in fields:
+            pass
 
         collisions = []
         collisions_elem = root.find("collisions")
@@ -269,7 +260,7 @@ def parse_all() -> None:
 
     for xml_file in files:
         try:
-            parser.parse_file(xml_file)
+            print(parser.parse_file(xml_file))
             success_count += 1
         except Exception as exc:
             logger.error(f"Parse Error in {xml_file}:\n{exc}")
