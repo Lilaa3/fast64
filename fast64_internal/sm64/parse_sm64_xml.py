@@ -77,6 +77,8 @@ class ModelId:
 @dataclasses.dataclass(frozen=True)
 class Model:
     readable_name: str
+    description: str
+    dev_comment: str
     geolayout: Optional[str]
     group: Optional[str]
     ids: list[ModelId]
@@ -270,8 +272,8 @@ class SM64XMLParser:
         field_type = self._get_attr(root, "type")
         description = self._get_text(root, "description", required=False)
         shift = self._get_attr(root, "shift", convert_int=True, required=False) or 0
-        multiplier = self._get_attr(root, "multiplier", convert_int=True, required=False) or 1
-        offset = self._get_attr(root, "offset", convert_int=True, required=False) or 0
+        multiplier = self._get_attr(root, "multiplier", convert_int=True, convert_float=True, required=False) or 1
+        offset = self._get_attr(root, "offset", convert_int=True, convert_float=True, required=False) or 0
 
         if field_type not in {"int", "float", "bool", "dialogue_id", "units", "frames", "bitflag"}:
             raise ParseError(f"Unsupported field type '{field_type}' in field '{name}'.")
@@ -281,7 +283,7 @@ class SM64XMLParser:
             "default",
             convert_int=(field_type in {"int", "dialogue_id", "units", "frames", "bitflag"}),
             convert_bool=(field_type == "bool"),
-            convert_float=(field_type == "units"),
+            convert_float=(multiplier != 1),
             required=False,
         )
 
@@ -385,10 +387,12 @@ class SM64XMLParser:
 
     def _parse_model_wrapped(self, root: ET.Element):
         self._check_unknown_elements(
-            root, ["geolayout", "displaylist", "ids", "animation_tables", "collisions", "level", "group"]
+            root, ["geolayout", "description", "comment", "displaylist", "ids", "animation_tables", "collisions", "level", "group"]
         )
 
         readable_name = self._get_attr(root, "readable_name")
+        description = self._get_text(root, "description")
+        comment = self._get_text(root, "comment")
         geolayout = self._get_text(root, "geolayout", convert_int=True)
 
         displaylist_elem = root.find("displaylist")
@@ -448,7 +452,7 @@ class SM64XMLParser:
                 except Exception as exc:
                     raise ParseError(f"Error while parsing <collision>:\n{exc}") from exc
 
-        return Model(readable_name, geolayout, group, ids, tables, collisions)
+        return Model(readable_name, description, comment, geolayout, group, ids, tables, collisions)
 
     def _parse_model(self, root: ET.Element, file_name: str):
         try:

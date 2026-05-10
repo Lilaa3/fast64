@@ -1,8 +1,8 @@
 <?xml version="1.0" ?>
 <animation_table address="0x6003994" name="Chilly Chief">
-    <behaviours>
-        <behaviour>0x130036c8</behaviour>
-    </behaviours>
+    <behaviors>
+        <behavior>0x130036c8</behavior>
+    </behaviors>
     <names>
         <name>Patrol</name>
         <name>Chase</name>

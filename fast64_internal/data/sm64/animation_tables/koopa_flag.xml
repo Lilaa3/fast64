@@ -1,8 +1,8 @@
 <?xml version="1.0" ?>
 <animation_table address="0x6001028" name="Koopa Flag">
-    <behaviours>
-        <behaviour>0x130045f8</behaviour>
-    </behaviours>
+    <behaviors>
+        <behavior>0x130045f8</behavior>
+    </behaviors>
     <names>
         <name>Waving</name>
     </names>

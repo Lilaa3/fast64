@@ -1,8 +1,8 @@
 <?xml version="1.0" ?>
 <animation_table address="0x50116e4" name="Eyerok">
-    <behaviours>
-        <behaviour>0x130052b4</behaviour>
-    </behaviours>
+    <behaviors>
+        <behavior>0x130052b4</behavior>
+    </behaviors>
     <names>
         <name>Recovering</name>
         <name>Death</name>

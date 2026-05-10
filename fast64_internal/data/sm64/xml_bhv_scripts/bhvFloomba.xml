@@ -3,7 +3,6 @@
     <description>A.. 😳 variant of a Goomba. It sets oIsFloomba to TRUE and then switches to bhvGoomba.</description>
     <tags>
         <tag>ENEMY</tag>
-        <tag>Individual</tag>
     </tags>
     <fields>
         <field name="Size" type="int" bparam="2" mask="0x03" default="0">
@@ -13,7 +12,7 @@
                 <enum value="2" name="Tiny" c_name="GOOMBA_SIZE_TINY"/>
             </enums>
         </field>
-        <field name="Triplet Index" type="int" bparam="2" mask="0xFC" shift="2" default="0"/>
+        <field name="Triplet Index" type="int" bparam="2" shift="2" default="0"/>
     </fields>
     <models>
         <model>goomba</model>

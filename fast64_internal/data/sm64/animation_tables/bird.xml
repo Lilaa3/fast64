@@ -1,9 +1,9 @@
 <?xml version="1.0" ?>
 <animation_table address="0x50009e8" name="Bird">
-    <behaviours>
-        <behaviour>0x1300565c</behaviour>
-        <behaviour>0x13005680</behaviour>
-    </behaviours>
+    <behaviors>
+        <behavior>0x1300565c</behavior>
+        <behavior>0x13005680</behavior>
+    </behaviors>
     <names>
         <name>Flying</name>
         <name>Gliding</name>
