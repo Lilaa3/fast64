@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x30156c0" name="Door" ignore_bone_count="true">
+<animation_table address="0x30156c0" readable_name="Door" ignore_bone_count="true">
     <names>
         <name>Closed</name>
         <name>Open and Close</name>

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x501534c" name="Heave-Ho">
+<animation_table address="0x501534c" readable_name="Heave-Ho">
     <names>
         <name>Moving</name>
         <name>Throwing</name>

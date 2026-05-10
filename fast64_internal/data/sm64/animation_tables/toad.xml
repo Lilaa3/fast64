@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x600fc48" name="Toad" size="8">
+<animation_table address="0x600fc48" readable_name="Toad" size="8">
     <names>
         <name>Wave Then Run (West)</name>
         <name>Walking (West)</name>

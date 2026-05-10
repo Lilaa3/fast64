@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13003700" readable_name="Big Chill Bully">
+<behavior address="0x13003700" readable_name="Big Chill Chief">
     <description>Equivilent to a big bully, but with BULLY_STYPE_CHILL subtype. Spawns star on death.</description>
     <tags>
         <tag>BOSS</tag>

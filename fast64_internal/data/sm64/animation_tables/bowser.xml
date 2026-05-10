@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x60577e0" name="Bowser" size="27" ignore_bone_count="true">
+<animation_table address="0x60577e0" readable_name="Bowser" size="27" ignore_bone_count="true">
     <names>
         <name>Stand Up</name>
         <name>Stand Up (Unused)</name>

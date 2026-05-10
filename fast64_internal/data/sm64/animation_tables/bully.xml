@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x500470c" name="Bully">
+<animation_table address="0x500470c" readable_name="Bully">
     <names>
         <name>Patrol</name>
         <name>Chase</name>

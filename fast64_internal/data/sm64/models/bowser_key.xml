@@ -5,7 +5,4 @@
     <ids>
         <id value="0xcc" name="MODEL_BOWSER_KEY" />
     </ids>
-    <animation_tables>
-        <table>bowser_key</table>
-    </animation_tables>
 </model>

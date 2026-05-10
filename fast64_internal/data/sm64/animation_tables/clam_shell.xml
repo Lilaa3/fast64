@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x5001744" name="Clam Shell">
+<animation_table address="0x5001744" readable_name="Clam Shell">
     <names>
         <name>Close</name>
         <name>Open</name>

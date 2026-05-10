@@ -6,4 +6,7 @@
         <tag>CUTSCENE</tag>
         <tag>NPC</tag>
     </tags>
+    <models>
+        <model>bird</model>
+    </models>
 </behavior>

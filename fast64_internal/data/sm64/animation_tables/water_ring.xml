@@ -1,8 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x6013f7c" name="Water Ring">
-    <behaviors>
-        <behavior>0xc66c16</behavior>
-    </behaviors>
+<animation_table address="0x6013f7c" readable_name="Water Ring">
     <names>
         <name>Wobble</name>
     </names>

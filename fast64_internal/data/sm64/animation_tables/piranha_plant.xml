@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x601c31c" name="Piranha Plant">
+<animation_table address="0x601c31c" readable_name="Piranha Plant">
     <names>
         <name>Bite</name>
         <name>Sleeping? (Unused)</name>

@@ -5,4 +5,7 @@
         <tag>BOWSER</tag>
         <tag>CUTSCENE</tag>
     </tags>
+    <models>
+        <model>bowser_key_cutscene</model>
+    </models>
 </behavior>

@@ -40,24 +40,53 @@ class BehaviorField:
 
 
 @dataclasses.dataclass(frozen=True)
-class AnimationTable:
+class AddressOrCName:
     address: int
-    name: str
-    dma: Optional[str]
+    c_name: str
+
+
+@dataclasses.dataclass(frozen=True)
+class AnimationTable:
+    file_name: str
+    address_or_name: AddressOrCName
+    readable_name: str
+    dma: bool
+    size: Optional[int]
+    ignore_bone_count: bool
     directory: Optional[str]
     names: list[str]
-    behaviors: list[str]
 
 
 @dataclasses.dataclass(frozen=True)
 class Collision:
-    c_name: str
-    address: int
+    address_or_name: AddressOrCName
     readable_name: str
 
 
 @dataclasses.dataclass(frozen=True)
+class ModelId:
+    address_or_name: AddressOrCName
+    level: Optional[str]
+    group: Optional[str]
+
+
+@dataclasses.dataclass
+class Model:
+    file_name: str
+    readable_name: str
+    description: str
+    dev_comment: str
+    geolayout: Optional[AddressOrCName]
+    group: Optional[str]
+    ids: list[ModelId]
+    tables: list[str]
+    collisions: Optional[AddressOrCName]
+    real_tables: dict[str, AnimationTable] = dataclasses.field(default_factory=dict)
+
+
+@dataclasses.dataclass
 class Behavior:
+    file_name: str
     name_or_address: int | str
     readable_name: str
     description: str
@@ -66,25 +95,7 @@ class Behavior:
     models: list[str]
     collisions: list[Collision]
     fields: list[BehaviorField]
-
-
-@dataclasses.dataclass(frozen=True)
-class ModelId:
-    value: int
-    name: str
-    level: Optional[str]
-
-
-@dataclasses.dataclass(frozen=True)
-class Model:
-    readable_name: str
-    description: str
-    dev_comment: str
-    geolayout: Optional[str]
-    group: Optional[str]
-    ids: list[ModelId]
-    tables: list[str]
-    collisions: list[str]
+    real_models: dict[str, Model] = dataclasses.field(default_factory=dict)
 
 
 class SM64XMLParser:
@@ -155,7 +166,7 @@ class SM64XMLParser:
                 )
 
     def _parse_collision(self, element: ET.Element, base_name: str, more_than_one: bool) -> Collision:
-        self._check_unknown_elements(element, [])
+        self._check_unknown_attributes(element, ["c_name", "address", "readable_name"])
 
         name = self._get_attr(element, "c_name")
         address = self._get_attr(element, "address", convert_int=True)
@@ -172,22 +183,28 @@ class SM64XMLParser:
         elif base_name and not more_than_one:
             logger.warning("Not recommended to include per collision name when there is only one collision model.")
 
-        return Collision(name, address, readable_name)
+        return Collision(AddressOrCName(name, address), readable_name)
 
-    def _parse_animation_table(self, root: ET.Element, name: str) -> AnimationTable:
-        self._check_unknown_elements(root, ["names", "behaviors"])
+    def _parse_animation_table(self, root: ET.Element, file_name: str) -> AnimationTable:
+        self._check_unknown_elements(root, ["names"])
+        self._check_unknown_attributes(
+            root, ["address", "readable_name", "dma", "size", "ignore_bone_count", "directory"]
+        )
 
         address = self._get_attr(root, "address", convert_int=True)
-        name = self._get_attr(root, "name")
-        dma = self._get_attr(root, "dma", required=False)
+        readable_name = self._get_attr(root, "readable_name")
+        dma = self._get_attr(root, "dma", required=False) or False
+        size = self._get_attr(root, "size", required=False, convert_int=True)
         directory = self._get_attr(root, "directory", required=False)
-        behaviors = self._get_list(root, "behaviors", "behavior")
+        ignore_bone_count = self._get_attr(root, "ignore_bone_count", required=False) or False
 
         names = self._get_list(root, "names", "name")
         if not names:
             raise ParseError("Missing or empty <names> section in <animation_table>")
 
-        return AnimationTable(address, name, dma, directory, names, behaviors)
+        return AnimationTable(
+            file_name, AddressOrCName(address, None), readable_name, dma, size, ignore_bone_count, directory, names
+        )
 
     def apply_mul_offset(self, value: int | float, offset: int | float, multiplier: int | float):
         return value * multiplier - offset
@@ -334,7 +351,7 @@ class SM64XMLParser:
 
         return field
 
-    def _parse_behavior_wrapped(self, root: ET.Element, name_or_address: str | int) -> Behavior:
+    def _parse_behavior_wrapped(self, root: ET.Element, name_or_address: str | int, file_name: str) -> Behavior:
         self._check_unknown_attributes(root, ["name", "address", "readable_name"])
         self._check_unknown_elements(
             root, ["tags", "models", "collisions", "description", "comment", "fields", "particle"]
@@ -372,7 +389,9 @@ class SM64XMLParser:
                 except Exception as exc:
                     raise ParseError(f"Error while parsing <collision>:\n{exc}") from exc
 
-        return Behavior(name_or_address, readable_name, description, comment, tags, models, collisions, fields)
+        return Behavior(
+            file_name, name_or_address, readable_name, description, comment, tags, models, collisions, fields
+        )
 
     def _parse_behavior(self, root: ET.Element, file_name: str) -> Behavior:
         address = None
@@ -384,14 +403,14 @@ class SM64XMLParser:
             if name is None and address is None:
                 raise ParseError('Must specify either "name" or "address"')
             name_or_address = name or address
-            return self._parse_behavior_wrapped(root, name_or_address)
+            return self._parse_behavior_wrapped(root, name_or_address, file_name)
         except Exception as exc:
             given_name = readable_name or name_or_address
             if given_name is None:
                 raise ParseError(f"Error while parsing behavior in file {file_name}:\n{exc}")
             raise ParseError(f'Error while parsing behavior "{given_name}" in file {file_name}:\n{exc}') from exc
 
-    def _parse_model_wrapped(self, root: ET.Element):
+    def _parse_model_wrapped(self, root: ET.Element, file_name: str):
         self._check_unknown_elements(
             root,
             [
@@ -418,7 +437,7 @@ class SM64XMLParser:
             geolayout_name = self._get_attr(geolayout_elem, "name", required=False)
             if geolayout_name is None and geolayout_address is None:
                 raise ParseError('Must specify either "name" or "address"')
-            geolayout = (geolayout_name, geolayout_address)
+            geolayout = AddressOrCName(geolayout_name, geolayout_address)
         else:
             geolayout = None
 
@@ -429,7 +448,7 @@ class SM64XMLParser:
             displaylist_name = self._get_attr(displaylist_elem, "name", required=False)
             if displaylist_name is None and displaylist_address is None:
                 raise ParseError('Must specify either "name" or "address"')
-            displaylist = (displaylist_name, displaylist_address)
+            displaylist = AddressOrCName(displaylist_name, displaylist_address)
         else:
             displaylist = None
 
@@ -464,9 +483,11 @@ class SM64XMLParser:
 
                 ids.append(
                     ModelId(
-                        self._get_attr(id_elem, "value", convert_int=True),
-                        self._get_attr(id_elem, "name"),
-                        id_level or id_group,
+                        AddressOrCName(
+                            self._get_attr(id_elem, "value", convert_int=True), self._get_attr(id_elem, "name")
+                        ),
+                        id_level,
+                        id_group,
                     )
                 )
 
@@ -483,11 +504,11 @@ class SM64XMLParser:
                 except Exception as exc:
                     raise ParseError(f"Error while parsing <collision>:\n{exc}") from exc
 
-        return Model(readable_name, description, comment, geolayout, group, ids, tables, collisions)
+        return Model(file_name, readable_name, description, comment, geolayout, group, ids, tables, collisions)
 
     def _parse_model(self, root: ET.Element, file_name: str):
         try:
-            return self._parse_model_wrapped(root)
+            return self._parse_model_wrapped(root, file_name)
         except Exception as exc:
             try:
                 readable_name = self._get_attr(root, "readable_name")
@@ -497,7 +518,7 @@ class SM64XMLParser:
                 raise ParseError(f"Error while parsing model in file {file_name}:\n{exc}")
             raise ParseError(f'Error while parsing model "{readable_name}" in file {file_name}:\n{exc}') from exc
 
-    def parse_file(self, file_path: Path) -> Union[AnimationTable, Behavior, Model]:
+    def parse_file(self, file_path: Path, expected_root_tag: str) -> Union[AnimationTable, Behavior, Model]:
         filepath_checks(file_path)
         try:
             tree = ET.parse(file_path)
@@ -509,11 +530,45 @@ class SM64XMLParser:
                 "model": self._parse_model,
             }
 
-            if root.tag in parsers:
-                return parsers[root.tag](root, file_path.parts[-1])
-            raise ParseError(f"Unknown root tag: {root.tag}")
+            if root.tag not in parsers:
+                raise ParseError(f"Unknown root tag: {root.tag}")
+            elif root.tag != expected_root_tag:
+                raise ParseError(
+                    f"Expected root tag: {expected_root_tag}, but got: {root.tag}. Make sure the directory is correct."
+                )
+            return parsers[root.tag](root, file_path.parts[-1])
         except ET.ParseError as exc:
             raise ParseError(f"XML Syntax Error: {exc}") from exc
+
+
+def validate_cross_references(results: dict[str, list[Behavior | Model | AnimationTable]]):
+    """
+    Checks references of models and animation tables.
+    """
+    existing_model_names = {m.file_name.removesuffix(".xml"): m for m in results["models"]}
+    existing_table_names = {t.file_name.removesuffix(".xml"): t for t in results["animation_tables"]}
+
+    # Behaviors -> Models
+    for behavior in results["behaviors"]:
+        for model_ref in behavior.models:
+            if model_ref not in existing_model_names:
+                logger.warning(
+                    f"Validation Error: Behavior '{behavior.readable_name}' references "
+                    f"model '{model_ref}', but that model was not found."
+                )
+            else:
+                behavior.real_models[model_ref] = existing_model_names[model_ref]
+
+    # Models -> Animation Tables
+    for model in results["models"]:
+        for table_ref in model.tables:
+            if table_ref not in existing_table_names:
+                logger.warning(
+                    f"Validation Error: Model '{model.readable_name}' references "
+                    f"animation table '{table_ref}', but it was not found."
+                )
+            else:
+                model.real_tables[table_ref] = existing_table_names[table_ref]
 
 
 def parse_all() -> None:
@@ -522,20 +577,36 @@ def parse_all() -> None:
     parser = SM64XMLParser()
     base_path = Path("fast64_internal/data/sm64")
 
-    files = list(base_path.rglob("*.xml"))
-    logger.info(f"Found {len(files)} XML files to parse.")
+    results = {"models": [], "behaviors": [], "animation_tables": []}
 
     success_count = 0
     error_count = 0
 
-    for xml_file in files:
-        try:
-            parser.parse_file(xml_file)
-            # print(parser.parse_file(xml_file), "\n")
-            success_count += 1
-        except Exception as exc:
-            logger.error(f"Parse Error in {xml_file}:\n{exc}\n")
-            # traceback.print_exc()
-            error_count += 1
+    for folder_name in results.keys():
+        folder_path = base_path / folder_name
 
+        if not folder_path.exists():
+            logger.warning(f"Directory not found: {folder_path}")
+            continue
+
+        xml_files = list(folder_path.rglob("*.xml"))
+        logger.info(f"Processing {len(xml_files)} files in '{folder_name}'...")
+
+        for xml_file in xml_files:
+            try:
+                parsed_obj = parser.parse_file(
+                    xml_file,
+                    expected_root_tag={
+                        "animation_tables": "animation_table",
+                        "behaviors": "behavior",
+                        "models": "model",
+                    }[folder_name],
+                )
+                results[folder_name].append(parsed_obj)
+                success_count += 1
+            except Exception as exc:
+                logger.error(f"Parse Error in {xml_file}:\n{exc}")
+                error_count += 1
+
+    validate_cross_references(results)
     logger.info(f"Parsing complete. Success: {success_count}, Errors: {error_count}")

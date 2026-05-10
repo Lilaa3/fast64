@@ -6,4 +6,7 @@
         <tag>CUTSCENE</tag>
         <tag>CASTLE</tag>
     </tags>
+    <models>
+        <model>bowser_key_cutscene</model>
+    </models>
 </behavior>

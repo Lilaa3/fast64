@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x8004034" name="Amp" ignore_bone_count="true">
+<animation_table address="0x8004034" readable_name="Amp" ignore_bone_count="true">
     <names>
         <name>Moving</name>
     </names>

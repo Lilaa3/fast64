@@ -1,9 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x50009e8" name="Bird">
-    <behaviors>
-        <behavior>0x1300565c</behavior>
-        <behavior>0x13005680</behavior>
-    </behaviors>
+<animation_table address="0x50009e8" readable_name="Bird">
     <names>
         <name>Flying</name>
         <name>Gliding</name>

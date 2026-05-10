@@ -8,11 +8,11 @@
         <tag>SUB_OBJECT</tag>
     </tags>
     <models>
-        <model>menu_main_menu_blue_copy_button</model>
-        <model>menu_main_menu_generic_button</model>
-        <model>menu_main_menu_green_score_button</model>
-        <model>menu_main_menu_purple_sound_button</model>
-        <model>menu_main_menu_red_erase_button</model>
-        <model>menu_main_menu_yellow_file_button</model>
+        <model>main_menu_blue_copy_button</model>
+        <model>main_menu_generic_button</model>
+        <model>main_menu_green_score_button</model>
+        <model>main_menu_purple_sound_button</model>
+        <model>main_menu_red_erase_button</model>
+        <model>main_menu_yellow_file_button</model>
     </models>
 </behavior>

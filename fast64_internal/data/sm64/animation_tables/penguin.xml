@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x5008b74" name="Penguin" size="5">
+<animation_table address="0x5008b74" readable_name="Penguin" size="5">
     <names>
         <name>Walk</name>
         <name>Dive Slide</name>
