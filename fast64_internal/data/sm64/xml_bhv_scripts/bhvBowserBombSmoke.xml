@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13003840" readable_name="Bowser Bomb Smoke">
+<behavior address="0x13003840" readable_name="Bowser Bomb Smoke">
     <description>Smoke particles from a Bowser bomb explosion.</description>
     <tags>
         <tag>BOSS</tag>

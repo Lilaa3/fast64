@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13001408" readable_name="BITDW Squarish Path Moving Platform">
+<behavior address="0x13001408" readable_name="BITDW Squarish Path Moving Platform">
     <description>A platform that moves in a square path. The starting direction is determined by its parameters.</description>
     <tags>
         <tag>PLATFORM</tag>

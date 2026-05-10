@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13004698" readable_name="Swoop">
+<behavior address="0x13004698" readable_name="Swoop">
     <tags>
         <tag>ENEMY</tag>
     </tags>

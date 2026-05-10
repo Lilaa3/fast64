@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x1300472c" readable_name="Goomba">
+<behavior address="0x1300472c" readable_name="Goomba">
     <description>Standard Goomba enemy. Its size, scale, gravity, and damage are determined by the 'size's parameter. It manages a basic AI state machine (Walk, Jump, Attacked Mario) and handles collision via sGoombaHitbox.</description>
     <tags>
         <tag>ENEMY</tag>

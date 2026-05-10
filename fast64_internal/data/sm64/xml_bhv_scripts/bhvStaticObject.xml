@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13002a48" readable_name="Static Object">
+<behavior address="0x13002a48" readable_name="Static Object">
     <description>A static object that does nothing.</description>
     <tags>
         <tag>ENVIRONMENTAL</tag>

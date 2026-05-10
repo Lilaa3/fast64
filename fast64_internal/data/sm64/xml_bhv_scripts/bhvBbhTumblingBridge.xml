@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13000c44" readable_name="BBH Tumbling Bridge">
+<behavior address="0x13000c44" readable_name="BBH Tumbling Bridge">
     <description>A bridge that tumbles when Mario stands on it.</description>
     <tags>
         <tag>PLATAFORM</tag>

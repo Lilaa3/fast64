@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13001e6c" readable_name="LLL Rotating Hexagonal Ring">
+<behavior address="0x13001e6c" readable_name="LLL Rotating Hexagonal Ring">
     <description>A hexagonal ring platform that periodically spawns the volcano flames.</description>
     <tags>
         <tag>ENVIRONMENTAL</tag>

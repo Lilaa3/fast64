@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13003600" readable_name="Bob-omb Explosion Bubble Helper">
+<behavior address="0x13003600" readable_name="Bob-omb Explosion Bubble Helper">
     <comment>???? Wtf is that name</comment>
     <description>A helper behavior for Bob-omb explosions.</description>
     <tags>

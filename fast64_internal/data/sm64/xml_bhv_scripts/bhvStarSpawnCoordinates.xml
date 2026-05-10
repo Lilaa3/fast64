@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13003e64" readable_name="Star Spawn Coordinates">
+<behavior address="0x13003e64" readable_name="Star Spawn Coordinates">
     <description>An object that handles the spawning of a Power Star with a cutscene.</description>
     <tags>
         <tag>COLLECTABLE</tag>

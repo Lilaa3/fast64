@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13002558" readable_name="Purple Switch Hidden Boxes">
+<behavior address="0x13002558" readable_name="Purple Switch Hidden Boxes">
     <description>Wraps around Floor Switch Hardcoded Model using Reveal Hidden.</description>
     <tags>
         <tag>INTERACTIVE</tag>

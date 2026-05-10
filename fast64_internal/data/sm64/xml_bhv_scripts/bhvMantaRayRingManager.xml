@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x130037e0" readable_name="Manta Ray Ring Manager">
+<behavior address="0x130037e0" readable_name="Manta Ray Ring Manager">
     <description>A manager that handles the indexing of spawned rings.</description>
     <tags>
         <tag>MANAGER</tag>

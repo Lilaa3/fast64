@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13001608" readable_name="Beta Trampoline Top">
+<behavior address="0x13001608" readable_name="Beta Trampoline Top">
     <description>A beta trampoline top.</description>
     <tags>
         <tag>UNUSED</tag>

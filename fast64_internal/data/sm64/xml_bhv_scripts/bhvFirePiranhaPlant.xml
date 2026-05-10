@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13005120" readable_name="Fire Piranha Plant">
+<behavior address="0x13005120" readable_name="Fire Piranha Plant">
     <description>A Piranha Plant that shoots fireballs. Its scale and respawn behavior are determined by the variant parameter, while the loot coin count is toggled by another.</description>
     <tags>
         <tag>ENEMY</tag>

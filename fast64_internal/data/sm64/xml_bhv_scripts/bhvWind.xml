@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13000e70" readable_name="Wind Particle">
+<behavior address="0x13000e70" readable_name="Wind Particle">
     <description>A single wind particle</description>
     <tags>
         <tag>PARTICLE</tag>

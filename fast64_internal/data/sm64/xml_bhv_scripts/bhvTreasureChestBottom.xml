@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x130044b8" readable_name="Treasure Chest Bottom">
+<behavior address="0x130044b8" readable_name="Treasure Chest Bottom">
     <description>If oTreasureChestNumOpenedChests matches the Open Order, the treasure chest will open, the num will be increased by one</description>
     <tags>
         <tag>CHEST</tag>

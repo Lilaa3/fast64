@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13005024" readable_name="Mad Piano">
+<behavior address="0x13005024" readable_name="Mad Piano">
     <tags>
         <tag>ENEMY</tag>
         <tag>BBH</tag>

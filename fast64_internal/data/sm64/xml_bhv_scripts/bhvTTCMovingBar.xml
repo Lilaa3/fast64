@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13004c94" readable_name="TTC Moving Bar">
+<behavior address="0x13004c94" readable_name="TTC Moving Bar">
     <description>A bar in TTC that extends and retracts. The initial stop timer is determined by its parameters.</description>
     <tags>
         <tag>PLATFORM</tag>

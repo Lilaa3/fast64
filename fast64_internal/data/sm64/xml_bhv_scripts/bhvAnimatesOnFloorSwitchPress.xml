@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13004ea0" readable_name="Animated Floor Switch Press">
+<behavior address="0x13004ea0" readable_name="Animated Floor Switch Press">
     <comment>The object finds the nearest bhvFloorSwitchAnimatesObject to use as its parent.</comment>
     <description>Animated geometry that responds to floor switch activation. Linked to parent switch object. Uses the animation index to select timers and animation frames.</description>
     <tags>

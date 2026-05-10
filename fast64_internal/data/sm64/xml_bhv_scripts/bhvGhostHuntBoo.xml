@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13002804" readable_name="Boo (Ghost Hunt)">
+<behavior address="0x13002804" readable_name="Boo (Ghost Hunt)">
     <description>A Boo that manages its opacity and scale, and spawns a bhvCoinInsideBoo child upon initialization. It executes sBooActions and integrates with bhvMerryGoRoundBooManager to track kills.</description>
     <tags>
         <tag>ENEMY</tag>

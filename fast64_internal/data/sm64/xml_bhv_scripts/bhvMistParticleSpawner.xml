@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x130024ac" readable_name="Mist Particle Spawner">
+<behavior address="0x130024ac" readable_name="Mist Particle Spawner">
     <particle>PARTICLE_DUST</particle>
     <description>Spawns a mist and a smoke particle.</description>
     <tags>

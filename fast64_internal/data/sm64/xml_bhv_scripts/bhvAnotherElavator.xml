@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13000cc8" readable_name="Elevator">
+<behavior address="0x13000cc8" readable_name="Elevator">
     <description>Elevator platform that moves vertically based on a height table.</description>
     <tags>
         <tag>UNUSED</tag>

@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13005380" readable_name="Racing Penguin">
+<behavior address="0x13005380" readable_name="Racing Penguin">
     <description>Uses ccm_seg7_trajectory_penguin_race as its trajectory.</description>
     <comment>Weirdly, the object gets its behparam 1 to 2?</comment>
     <tags>

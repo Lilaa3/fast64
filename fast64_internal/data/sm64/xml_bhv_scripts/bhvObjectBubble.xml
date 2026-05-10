@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13003484" readable_name="Splash Bubble">
+<behavior address="0x13003484" readable_name="Splash Bubble">
     <tags>
         <tag>ENVIRONMENTAL</tag>
         <tag>PARTICLE</tag>

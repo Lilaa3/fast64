@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13004954" readable_name="Camera Lakitu">
+<behavior address="0x13004954" readable_name="Camera Lakitu">
     <description>Otherwise, it handles the intro cutscene and dialog.</description>
     <tags>
         <tag>CASTLE</tag>

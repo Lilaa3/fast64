@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13000e88" readable_name="End Toad">
+<behavior address="0x13000e88" readable_name="End Toad">
     <description>Toads during the end cutscene.</description>
     <tags>
         <tag>NPC</tag>

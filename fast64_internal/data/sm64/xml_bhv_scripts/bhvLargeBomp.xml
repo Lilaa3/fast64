@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13003940" readable_name="Large Bomp">
+<behavior address="0x13003940" readable_name="Large Bomp">
     <tags>
         <tag>ENEMY</tag>
         <tag>SURFACE</tag>

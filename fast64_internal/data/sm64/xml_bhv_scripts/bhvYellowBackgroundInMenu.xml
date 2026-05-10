@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13002fc0" readable_name="Yellow Menu Background">
+<behavior address="0x13002fc0" readable_name="Yellow Menu Background">
     <description>Yellow file button, scaled significantly to provide a yellow backdrop.</description>
     <tags>
         <tag>UI</tag>

@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13004bf0" readable_name="TTC Rotating Solid">
+<behavior address="0x13004bf0" readable_name="TTC Rotating Solid">
     <description>A solid block in TTC that rotates and moves vertically. It can be a cube or a prism.</description>
     <tags>
         <tag>ENVIRONMENTAL</tag>

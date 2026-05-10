@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13001e94" readable_name="LLL Sinking Checkerboard Rectangular Platform">
+<behavior address="0x13001e94" readable_name="LLL Sinking Checkerboard Rectangular Platform">
     <tags>
         <tag>SURFACE</tag>
         <tag>MOVING</tag>

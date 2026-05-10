@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13003008" readable_name="Menu Button Manager">
+<behavior address="0x13003008" readable_name="Menu Button Manager">
     <description>Central controller for the main menu system. Manages the selection state of menu buttons, coordinates navigation between the main menu and its submenus, and handles the lifecycle of submenu button objects.</description>
     <tags>
         <tag>MENU</tag>

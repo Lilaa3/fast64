@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x130056a4" readable_name="Intro Scene">
+<behavior address="0x130056a4" readable_name="Intro Scene">
     <description>Manages the spawning of characters and objects (relative) during cutscenes based on the current cutscene state.</description>
     <comment>Has an unused parameter in the level script.</comment>
     <tags>

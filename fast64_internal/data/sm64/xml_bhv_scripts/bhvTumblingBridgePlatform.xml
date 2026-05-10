@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13000c04" readable_name="Tumbling Bridge Platform">
+<behavior address="0x13000c04" readable_name="Tumbling Bridge Platform">
     <description>Despawns when the parent bridge manager object transitions to action 3. Spawned by tumbling_bridge_act_1.</description>
     <tags>
         <tag>SURFACE</tag>

@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13003b60" readable_name="Pyramid Elevator">
+<behavior address="0x13003b60" readable_name="Pyramid Elevator">
     <description>Spawns marker balls that set themselves to inactive on idle.</description>
     <tags>
         <tag>PLATAFORM</tag>

@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13000720" readable_name="Exit Podium Warp">
+<behavior address="0x13000720" readable_name="Exit Podium Warp">
     <comment>TODO Document better</comment>
     <tags>
         <tag>SPAWN_WARP</tag>

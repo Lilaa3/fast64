@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13001098" readable_name="Unused">
+<behavior address="0x13001098" readable_name="Unused">
     <comment>What is that name, why is that name?? Like a behavior that was cutout of the final game????</comment>
     <tags>
         <tag>UNUSED</tag>

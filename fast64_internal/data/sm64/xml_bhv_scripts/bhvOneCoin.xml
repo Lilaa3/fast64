@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x1300090c" readable_name="One Coin">
+<behavior address="0x1300090c" readable_name="One Coin">
     <description>Uses the main yellow coin logic. Sets YELLOW_COIN_BP_ONE_COIN.</description>
     <tags>
         <tag>COLLECTABLE</tag>

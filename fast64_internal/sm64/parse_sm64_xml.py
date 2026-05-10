@@ -57,7 +57,7 @@ class Collision:
 
 @dataclasses.dataclass(frozen=True)
 class Behavior:
-    address: int
+    name_or_address: int|str
     readable_name: str
     description: str
     dev_comment: str
@@ -327,11 +327,11 @@ class SM64XMLParser:
 
         return field
 
-    def _parse_behavior_wrapped(self, root: ET.Element) -> Behavior:
+    def _parse_behavior_wrapped(self, root: ET.Element, name_or_address: str|int) -> Behavior:
         self._check_unknown_elements(
-            root, ["tags", "models", "collisions", "description", "comment", "fields", "particle"]
+            root, ["name", "readable_name", "tags", "models", "collisions", "description", "comment", "fields", "particle"]
         )
-        address = self._get_attr(root, "name", convert_int=True)
+
         description = self._get_text(root, "description") or ""
         readable_name = self._get_attr(root, "readable_name")
         comment = self._get_text(root, "comment")
@@ -364,17 +364,21 @@ class SM64XMLParser:
                 except Exception as exc:
                     raise ParseError(f"Error while parsing <collision>:\n{exc}") from exc
 
-        return Behavior(address, readable_name, description, comment, tags, models, collisions, fields)
+        return Behavior(name_or_address, readable_name, description, comment, tags, models, collisions, fields)
 
     def _parse_behavior(self, root: ET.Element, file_name: str) -> Behavior:
         address = None
         readable_name = None
         try:
             readable_name = self._get_attr(root, "readable_name")
-            address = self._get_attr(root, "name", convert_int=True)
-            return self._parse_behavior_wrapped(root)
+            address = self._get_attr(root, "address", convert_int=True, required=False)
+            name = self._get_attr(root, "name", required=False)
+            if name is None and address is None:
+                raise ParseError("Must specify either \"name\" or \"address\"")
+            name_or_address = name or address
+            return self._parse_behavior_wrapped(root, name_or_address)
         except Exception as exc:
-            given_name = readable_name or address
+            given_name = readable_name or name_or_address
             if given_name is None:
                 raise ParseError(f"Error while parsing behavior in file {file_name}:\n{exc}")
             raise ParseError(f"Error while parsing behavior \"{given_name}\" in file {file_name}:\n{exc}") from exc

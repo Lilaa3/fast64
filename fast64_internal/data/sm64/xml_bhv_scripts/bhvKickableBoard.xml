@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x1300066c" readable_name="WF Kickable Board">
+<behavior address="0x1300066c" readable_name="WF Kickable Board">
     <tags>
         <tag>ENVIRONMENTAL</tag>
         <tag>SURFACE</tag>

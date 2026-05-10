@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13003ac8" readable_name="THI Bowling Ball Spawner">
+<behavior address="0x13003ac8" readable_name="THI Bowling Ball Spawner">
     <comment>Only passes oBehParams2ndByte to children.</comment>
     <description>Passes its second bparam to the spawned balls.</description>
     <tags>

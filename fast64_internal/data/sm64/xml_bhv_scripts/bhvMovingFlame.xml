@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13005158" readable_name="Moving Flame">
+<behavior address="0x13005158" readable_name="Moving Flame">
     <description>Moving flame, a projectile that follows Mario. Can be configured to exist for only a single frame or to spawn embers as it moves.</description>
     <comment>bhvMovingFlame in hacker, bhvSmallPiranhaFlame in decomp.</comment>
     <tags>

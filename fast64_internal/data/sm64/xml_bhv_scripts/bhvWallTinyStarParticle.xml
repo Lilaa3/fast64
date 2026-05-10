@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13000a34" readable_name="Tiny Star Particle">
+<behavior address="0x13000a34" readable_name="Tiny Star Particle">
     <tags>
         <tag>PARTICLE</tag>
     </tags>

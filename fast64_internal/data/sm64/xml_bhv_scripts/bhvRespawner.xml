@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13003614" readable_name="Respawner">
+<behavior address="0x13003614" readable_name="Respawner">
     <description>A manager object that respawns a specified object once Mario has moved beyond a minimum distance. It receives the essential properties of the object.</description>
     <tags>
         <tag>MANAGER</tag>

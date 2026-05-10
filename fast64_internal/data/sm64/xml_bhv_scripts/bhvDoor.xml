@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13000b0c" readable_name="Door">
+<behavior address="0x13000b0c" readable_name="Door">
     <tags>
         <tag>DOOR</tag>
         <tag>INTERACTIVE</tag>

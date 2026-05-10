@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13004cf8" readable_name="TTC Pit Block">
+<behavior address="0x13004cf8" readable_name="TTC Pit Block">
     <description>A block in TTC that moves up and down.</description>
     <tags>
         <tag>PLATFORM</tag>

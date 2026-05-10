@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13003ee4" readable_name="Bowser Course Red Coin Star">
+<behavior address="0x13003ee4" readable_name="Bowser Course Red Coin Star">
     <description>Star that appears after collecting a certain number of red coins in Bowser's courses.</description>
     <tags>
         <tag>BOWSER</tag>

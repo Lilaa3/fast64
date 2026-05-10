@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13002fa0" readable_name="Random Animated Texture">
+<behavior address="0x13002fa0" readable_name="Random Animated Texture">
     <description>A simple object that cycles through its animation frames continuously, and changes its graphical y offset to -16. Not used.</description>
     <tags>
         <tag>UNUSED</tag>

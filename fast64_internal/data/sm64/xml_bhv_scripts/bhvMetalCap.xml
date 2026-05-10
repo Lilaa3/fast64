@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13003dd8" readable_name="Metal Cap">
+<behavior address="0x13003dd8" readable_name="Metal Cap">
     <tags>
         <tag>CAP</tag>
         <tag>COLLECTABLE</tag>

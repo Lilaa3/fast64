@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13000428" readable_name="Plunge Bubble">
+<behavior address="0x13000428" readable_name="Plunge Bubble">
     <description>It is typically used when Mario plunges into water. Spawns 3 bubbles.</description>
     <particle>PARTICLE_PLUNGE_BUBBLE</particle>
     <tags>

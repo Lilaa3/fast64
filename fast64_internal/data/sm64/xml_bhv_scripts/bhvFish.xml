@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13002178" readable_name="Fish">
+<behavior address="0x13002178" readable_name="Fish">
     <description>A fish that roams the water. It constantly checks if it is still submerged; if it leaves the water (unless the 'sIn Full Water Level's flag is set), it is marked for deletion. Its movement and actions are managed via the sFishActions function array.</description>
     <tags>
         <tag>FISH</tag>

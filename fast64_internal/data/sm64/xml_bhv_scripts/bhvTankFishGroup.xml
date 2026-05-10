@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13001b54" readable_name="Tank Fish Group">
+<behavior address="0x13001b54" readable_name="Tank Fish Group">
     <description>Spawns a group of 15 blue fish when Mario enters room 7 or 15. Sets its action to BLUE_FISH_ACT_DUPLICATE when mario leaves those rooms, which the fish check for to delete themselves.</description>
     <comment>TODO: unhard code in hacker</comment>
     <tags>

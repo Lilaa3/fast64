@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13000b8c" readable_name="Thwomp (140% larger)">
+<behavior address="0x13000b8c" readable_name="Thwomp (140% larger)">
     <description>Has higher drawing distance.</description>
     <tags>
         <tag>ENEMY</tag>

@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13002f80" readable_name="Painting Death Warp">
+<behavior address="0x13002f80" readable_name="Painting Death Warp">
     <tags>
         <tag>SPAWN_WARP</tag>
         <tag>CASTLE</tag>

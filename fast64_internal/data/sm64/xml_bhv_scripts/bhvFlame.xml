@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13000c84" readable_name="Flame">
+<behavior address="0x13000c84" readable_name="Flame">
     <description>A static environmental hazard.</description>
     <tags>
         <tag>FIRE</tag>

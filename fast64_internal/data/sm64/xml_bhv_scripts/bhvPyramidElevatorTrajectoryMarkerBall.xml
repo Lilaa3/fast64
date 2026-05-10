@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13003b98" readable_name="Pyramid Elevator Trajectory Marker Ball">
+<behavior address="0x13003b98" readable_name="Pyramid Elevator Trajectory Marker Ball">
     <description>Small marker balls that indicate the path of the pyramid elevator. Unlike other marker balls these are spawned all at once by the elevator and get all deleted when they're nearest Pyramid Elevator stops.</description>
     <tags>
         <tag>PARTICLE</tag>

@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13000d98" readable_name="Breath Particle Spawner">
+<behavior address="0x13000d98" readable_name="Breath Particle Spawner">
     <description>A spawner that produces a series of breath particles from Mario.</description>
     <particle>PARTICLE_BREATH</particle>
     <tags>

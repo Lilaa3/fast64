@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13000dd8" readable_name="Water Mist 2">
+<behavior address="0x13000dd8" readable_name="Water Mist 2">
     <comment>Has bparam2 set in all objects, but not used. Flickers and moves slightly on the water level.</comment>
     <tags>
         <tag>PARTICLE</tag>

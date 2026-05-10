@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13003738" readable_name="Jet Stream Ring Spawner">
+<behavior address="0x13003738" readable_name="Jet Stream Ring Spawner">
     <description>Spawns a star and mist particles once 5 rings have been collected (checked with oWaterRingSpawnerRingsCollected which gets increased by its children).</description>
     <tags>
         <tag>SPAWNER</tag>

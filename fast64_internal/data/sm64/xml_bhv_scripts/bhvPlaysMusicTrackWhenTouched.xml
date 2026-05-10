@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13002998" readable_name="Play Puzzle-Solving Jingle When Touched">
+<behavior address="0x13002998" readable_name="Play Puzzle-Solving Jingle When Touched">
     <description>An invisible trigger that plays a puzzle-solving jingle when Mario gets close to it once, then never again.</description>
     <tags>
         <tag>ENVIRONMENTAL</tag>

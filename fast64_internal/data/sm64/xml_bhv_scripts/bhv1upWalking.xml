@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13003fdc" readable_name="1-Up Mushroom (Walking)">
+<behavior address="0x13003fdc" readable_name="1-Up Mushroom (Walking)">
     <description>1-Up Mushroom that walks slowly on the ground.</description>
     <tags>
         <tag>COLLECTIBLE</tag>

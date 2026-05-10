@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13001dcc" readable_name="LLL Rotating Stone Flame">
+<behavior address="0x13001dcc" readable_name="LLL Rotating Stone Flame">
     <description>Positions itself relative to its parent and deletes itself if the parent sets its action to LLL_FIRE_BAR_ACT_REMOVE_FLAMES.</description>
     <tags>
         <tag>HURT</tag>

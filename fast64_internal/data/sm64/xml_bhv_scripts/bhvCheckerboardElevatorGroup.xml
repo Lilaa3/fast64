@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13001b70" readable_name="Checkerboard Elevator Group">
+<behavior address="0x13001b70" readable_name="Checkerboard Elevator Group">
     <description>Spawner that creates a pair of bhvCheckerboardPlatformSub objects. Position and scale are determined by the platform type.</description>
     <tags>
         <tag>SPAWNER</tag>

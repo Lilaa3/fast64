@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x1300556c" readable_name="Red Coin Star Marker">
+<behavior address="0x1300556c" readable_name="Red Coin Star Marker">
     <description>Marker on the floor of where the red coin star will spawn. Spawned with the (hidden) red coin star.</description>
     <tags>
         <tag>ENVIRONMENTAL</tag>

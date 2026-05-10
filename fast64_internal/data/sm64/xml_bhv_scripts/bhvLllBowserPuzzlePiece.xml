@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13002038" readable_name="LLL Bowser Puzzle Piece">
+<behavior address="0x13002038" readable_name="LLL Bowser Puzzle Piece">
     <description>Follows a sequence of predefined actions and informs the parent puzzle manager when Mario is on it via and when its sequence is complete via oBowserPuzzleCompletionFlags.</description>
     <tags>
         <tag>PUZZLE</tag>

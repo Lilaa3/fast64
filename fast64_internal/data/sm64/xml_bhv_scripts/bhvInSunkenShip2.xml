@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13002480" readable_name="JRB Aftcastle Collision">
+<behavior address="0x13002480" readable_name="JRB Aftcastle Collision">
     <description>JRB sunken ship act 1 aftcastle's collision.</description>
     <tags>
         <tag>ENVIRONMENTAL</tag>

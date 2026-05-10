@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13003ae0" readable_name="RR Cruiser Wing">
+<behavior address="0x13003ae0" readable_name="RR Cruiser Wing">
     <tags>
         <tag>RR</tag>
         <tag>ENVIRONMENTAL</tag>

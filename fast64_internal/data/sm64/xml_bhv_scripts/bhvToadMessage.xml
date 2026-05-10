@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13002ef8" readable_name="Toad Message">
+<behavior address="0x13002ef8" readable_name="Toad Message">
     <comment>TODO Should there be some kind of default enums.</comment>
     <description>Speaks dialogue, if specific dialogue ids (TOAD_STAR_1_REQUIREMENT, TOAD_STAR_2_REQUIREMENT, TOAD_STAR_3_REQUIREMENT) certain star requirements are used, otherwise deletion. The dialogue for these is also modified after receiving their respective star after talking.</description>
     <tags>

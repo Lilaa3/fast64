@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x130038d0" readable_name="LLL Drawbridge Spawner">
+<behavior address="0x130038d0" readable_name="LLL Drawbridge Spawner">
     <description>Spawns two LLL drawbridge pieces at opposite offsets from its position/rotation by <game_unit value="640"/> and then deactivates.</description>
     <tags>
         <tag>SPAWNER</tag>

@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x1300292c" readable_name="BBH Mesh Elevator">
+<behavior address="0x1300292c" readable_name="BBH Mesh Elevator">
     <description>A platform elevator used in Big Boo's Haunt.</description>
     <tags>
         <tag>PLATAFORM</tag>

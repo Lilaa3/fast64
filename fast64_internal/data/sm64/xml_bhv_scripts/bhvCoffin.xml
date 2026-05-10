@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13005414" readable_name="Coffin">
+<behavior address="0x13005414" readable_name="Coffin">
     <description>Deletes it self when parent bhvCoffinSpawner sets COFFIN_SPAWNER_ACT_COFFINS_UNLOADED</description>
     <tags>
         <tag>SURFACE</tag>

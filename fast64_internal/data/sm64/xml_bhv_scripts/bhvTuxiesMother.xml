@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13002088" readable_name="Tuxie's Mother">
+<behavior address="0x13002088" readable_name="Tuxie's Mother">
     <description>She requires the correct baby penguin (matching her baby ID) to be delivered to her to reward Mario with a star.</description>
     <tags>
         <tag>NPC</tag>

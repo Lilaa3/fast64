@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<behavior name="0x13003588" readable_name="Breakable Box Dust">
+<behavior address="0x13003588" readable_name="Breakable Box Dust">
     <description>Breakable box dust.</description>
     <tags>
         <tag>PARTICLE</tag>
