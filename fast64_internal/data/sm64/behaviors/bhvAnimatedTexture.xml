@@ -1,5 +1,4 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x1300269c" readable_name="Animated Texture">
+<behavior address="0x1300269C" readable_name="Animated Texture">
     <description>Advances animation state each frame.</description>
-    <tags>UNUSED</tags>
 </behavior>

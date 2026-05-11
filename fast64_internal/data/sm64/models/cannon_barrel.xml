@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Cannon Barrel">
-    <geolayout address="0xf0001c0" />
+    <geolayout address="0x0F0001C0" />
     <group>common0</group>
     <ids>
-        <id value="0x7f" name="MODEL_CANNON_BARREL" />
+        <id value="0x7F" name="MODEL_CANNON_BARREL" />
     </ids>
 </model>

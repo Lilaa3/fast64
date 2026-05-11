@@ -7,11 +7,11 @@
         <tag>BOWSER</tag>
     </tags>
     <fields>
-        <field name="Variant" type="int" bparam="2" default="0">
+        <field name="Variant" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="Bowser in the Dark World" c_name="BOWSER_BP_BITDW" />
-                <enum value="1" name="Bowser in the Fire Sea" c_name="BOWSER_BP_BITFS" />
-                <enum value="2" name="Bowser in the Sky" c_name="BOWSER_BP_BITS" />
+                <enum name="Bowser in the Dark World" value="0" c_name="BOWSER_BP_BITDW" />
+                <enum name="Bowser in the Fire Sea" value="1" c_name="BOWSER_BP_BITFS" />
+                <enum name="Bowser in the Sky" value="2" c_name="BOWSER_BP_BITS" />
             </enums>
         </field>
     </fields>

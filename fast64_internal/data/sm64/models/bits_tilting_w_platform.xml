@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bits Tilting W Platform">
-    <geolayout address="0xe000688" />
+    <geolayout address="0x0E000688" />
     <level>BITS</level>
     <ids>
         <id value="0x40" name="MODEL_BITS_TILTING_W_PLATFORM" />

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x5005784" readable_name="Haunted Chair">
+<animation_table address="0x05005784" readable_name="Haunted Chair">
     <names>
         <name>Default Pose</name>
     </names>

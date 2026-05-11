@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x1300347c" readable_name="Carry Something 3 (Unused)">
+<behavior address="0x1300347C" readable_name="Carry Something 3 (Unused)">
     <description>Placeholder behavior.</description>
     <comment>Hacker removes this.</comment>
     <tags>

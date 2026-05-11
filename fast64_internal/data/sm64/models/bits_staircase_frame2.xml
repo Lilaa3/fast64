@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bits Staircase Frame2">
-    <geolayout address="0xe0006d0" />
+    <geolayout address="0x0E0006D0" />
     <level>BITS</level>
     <ids>
         <id value="0x43" name="MODEL_BITS_STAIRCASE_FRAME2" />

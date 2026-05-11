@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x1300346c" readable_name="Carry Something Dropped">
+<behavior address="0x1300346C" readable_name="Carry Something Dropped">
     <description>Placeholder behavior for dropped carryable objects.</description>
     <comment>Hacker calls this bhvCarrySomething4. Decomp uses bhvCarrySomethingDropped.</comment>
     <tags>

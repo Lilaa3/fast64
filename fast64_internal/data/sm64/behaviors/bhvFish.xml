@@ -8,18 +8,18 @@
         <tag>ENEMY</tag>
     </tags>
     <fields>
-        <field name="Spawner Type" type="int" bparam="2" default="0">
+        <field name="Spawner Type" type="int" bparam="2" default="0x0">
             <description>The type of fish to spawn and the quantity.</description>
             <enums>
-                <enum value="0" name="Many Blue" c_name="FISH_SPAWNER_BP_MANY_BLUE" />
-                <enum value="1" name="Few Blue" c_name="FISH_SPAWNER_BP_FEW_BLUE" />
-                <enum value="2" name="Many Cyan" c_name="FISH_SPAWNER_BP_MANY_CYAN" />
-                <enum value="3" name="Few Cyan" c_name="FISH_SPAWNER_BP_FEW_CYAN" />
+                <enum name="Many Blue" value="0" c_name="FISH_SPAWNER_BP_MANY_BLUE" />
+                <enum name="Few Blue" value="1" c_name="FISH_SPAWNER_BP_FEW_BLUE" />
+                <enum name="Many Cyan" value="2" c_name="FISH_SPAWNER_BP_MANY_CYAN" />
+                <enum name="Few Cyan" value="3" c_name="FISH_SPAWNER_BP_FEW_CYAN" />
             </enums>
         </field>
         <field name="Flags" type="bitflag" bparam="2" shift="4">
             <enums>
-                <enum value="1" name="In Full Water Level" c_name="FISH_BP_FLAG_IN_FULL_WATER_LEVEL" />
+                <enum name="In Full Water Level" value="1" c_name="FISH_BP_FLAG_IN_FULL_WATER_LEVEL" />
             </enums>
         </field>
     </fields>

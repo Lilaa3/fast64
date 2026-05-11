@@ -3,6 +3,6 @@
     <geolayout address="0x17000000" />
     <group>group0</group>
     <ids>
-        <id value="0xa8" name="MODEL_BUBBLE" />
+        <id value="0xA8" name="MODEL_BUBBLE" />
     </ids>
 </model>

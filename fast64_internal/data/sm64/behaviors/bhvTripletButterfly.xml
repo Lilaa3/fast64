@@ -11,14 +11,14 @@
         <tag>ENVIRONMENTAL</tag>
     </tags>
     <fields>
-        <field name="Butterfly Index" type="int" bparam="2" mask="0x3" default="0">
+        <field name="Butterfly Index" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="Master" c_name="TRIPLET_BUTTERFLY_BP_0" />
-                <enum value="1" name="Child 1" />
-                <enum value="2" name="Child 2" />
+                <enum name="Master" value="0" c_name="TRIPLET_BUTTERFLY_BP_0" />
+                <enum name="Child 1" value="1" />
+                <enum name="Child 2" value="2" />
             </enums>
         </field>
-        <field name="No Bombs" type="bool" bparam="2" shift="2" default="TRUE" />
+        <field name="No Bombs" type="bool" bparam="2" default="TRUE" shift="2" />
     </fields>
     <models>
         <model>butterfly</model>

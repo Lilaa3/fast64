@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bowling Ball">
-    <geolayout address="0xf000640" />
+    <geolayout address="0x0F000640" />
     <group>common0</group>
     <ids>
-        <id value="0xb4" name="MODEL_BOWLING_BALL" />
+        <id value="0xB4" name="MODEL_BOWLING_BALL" />
     </ids>
 </model>

@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wf Giant Pole">
-    <geolayout address="0xe000ae0" />
+    <geolayout address="0x0E000AE0" />
     <level>WF</level>
     <ids>
-        <id value="0xd" name="MODEL_WF_GIANT_POLE" />
+        <id value="0x0D" name="MODEL_WF_GIANT_POLE" />
     </ids>
 </model>

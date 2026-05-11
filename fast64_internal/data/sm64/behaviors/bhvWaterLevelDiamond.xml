@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130025f8" readable_name="Water Level Diamond">
+<behavior address="0x130025F8" readable_name="Water Level Diamond">
     <tags>
         <tag>INTERACTIVE</tag>
         <tag>WATER</tag>
     </tags>
     <models>
-        <model>breakable_box</model> 
+        <model>breakable_box</model>
         <model>wdw_water_level_diamond</model>
     </models>
 </behavior>

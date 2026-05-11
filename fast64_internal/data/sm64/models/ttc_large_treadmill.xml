@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ttc Large Treadmill">
-    <geolayout address="0xe000288" />
+    <geolayout address="0x0E000288" />
     <level>TTC</level>
     <ids>
         <id value="0x39" name="MODEL_TTC_LARGE_TREADMILL" />

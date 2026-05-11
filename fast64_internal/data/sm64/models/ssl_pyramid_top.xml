@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ssl Pyramid Top">
-    <geolayout address="0xe000618" />
+    <geolayout address="0x0E000618" />
     <level>SSL</level>
     <ids>
-        <id value="0x3a" name="MODEL_SSL_PYRAMID_TOP" />
+        <id value="0x3A" name="MODEL_SSL_PYRAMID_TOP" />
     </ids>
     <collisions>
-        <collision c_name="ssl_seg7_collision_pyramid_top" address="0x70125f4" />
+        <collision c_name="ssl_seg7_collision_pyramid_top" address="0x070125F4" />
     </collisions>
 </model>

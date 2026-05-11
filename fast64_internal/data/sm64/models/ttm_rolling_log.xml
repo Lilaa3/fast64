@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ttm Rolling Log">
-    <geolayout address="0xe000730" />
+    <geolayout address="0x0E000730" />
     <level>TTM</level>
     <ids>
         <id value="0x35" name="MODEL_TTM_ROLLING_LOG" />
     </ids>
     <collisions>
-        <collision c_name="ttm_seg7_collision_pitoune_2" address="0x7013678" />
+        <collision c_name="ttm_seg7_collision_pitoune_2" address="0x07013678" />
     </collisions>
 </model>

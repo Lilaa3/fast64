@@ -7,11 +7,11 @@
         <tag>BBH</tag>
     </tags>
     <fields>
-        <field name="Step Index" type="int" bparam="2" default="0">
+        <field name="Step Index" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="First" />
-                <enum value="1" name="Second (-206.0f)" />
-                <enum value="2" name="Third (-413.0f)" />
+                <enum name="First" value="0" />
+                <enum name="Second (-206.0f)" value="1" />
+                <enum name="Third (-413.0f)" value="2" />
             </enums>
         </field>
     </fields>

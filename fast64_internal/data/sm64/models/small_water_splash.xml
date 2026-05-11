@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Small Water Splash">
-    <geolayout address="0x1700009c" />
+    <geolayout address="0x1700009C" />
     <group>group0</group>
     <ids>
-        <id value="0xa5" name="MODEL_SMALL_WATER_SPLASH" />
+        <id value="0xA5" name="MODEL_SMALL_WATER_SPLASH" />
     </ids>
 </model>

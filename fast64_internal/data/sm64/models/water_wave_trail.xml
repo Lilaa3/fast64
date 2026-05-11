@@ -3,6 +3,6 @@
     <geolayout address="0x17000168" />
     <group>group0</group>
     <ids>
-        <id value="0xa3" name="MODEL_WAVE_TRAIL" />
+        <id value="0xA3" name="MODEL_WAVE_TRAIL" />
     </ids>
 </model>

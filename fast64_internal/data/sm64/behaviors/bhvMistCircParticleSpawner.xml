@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13000e24" readable_name="Mist Circle Particle Spawner">
+<behavior address="0x13000E24" readable_name="Mist Circle Particle Spawner">
     <particle>PARTICLE_MIST_CIRCLE</particle>
     <tags>
         <tag>ENVIRONMENTAL</tag>

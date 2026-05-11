@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ccm Ropeway Lift">
-    <geolayout address="0xe0003d0" />
+    <geolayout address="0x0E0003D0" />
     <level>CCM</level>
     <ids>
         <id value="0x36" name="MODEL_CCM_ROPEWAY_LIFT" />

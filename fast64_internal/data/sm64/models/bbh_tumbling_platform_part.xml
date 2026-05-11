@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bbh Tumbling Platform Part">
-    <geolayout address="0xe0005f8" />
+    <geolayout address="0x0E0005F8" />
     <level>BBH</level>
     <ids>
         <id value="0x38" name="MODEL_BBH_TUMBLING_PLATFORM_PART" />

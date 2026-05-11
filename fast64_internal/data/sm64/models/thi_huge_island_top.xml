@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Thi Huge Island Top">
-    <geolayout address="0xe0005b0" />
+    <geolayout address="0x0E0005B0" />
     <level>THI</level>
     <ids>
         <id value="0x36" name="MODEL_THI_HUGE_ISLAND_TOP" />
     </ids>
     <collisions>
-        <collision c_name="thi_seg7_collision_top_trap" address="0x700e228" />
+        <collision c_name="thi_seg7_collision_top_trap" address="0x0700E228" />
     </collisions>
 </model>

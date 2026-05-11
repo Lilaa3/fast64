@@ -3,6 +3,6 @@
     <geolayout address="0x16000000" />
     <group>common1</group>
     <ids>
-        <id value="0x8e" name="MODEL_MIST" />
+        <id value="0x8E" name="MODEL_MIST" />
     </ids>
 </model>

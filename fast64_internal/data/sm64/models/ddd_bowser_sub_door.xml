@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ddd Bowser Sub Door">
-    <geolayout address="0xe000478" />
+    <geolayout address="0x0E000478" />
     <level>DDD</level>
     <ids>
         <id value="0x36" name="MODEL_DDD_BOWSER_SUB_DOOR" />
     </ids>
     <collisions>
-        <collision c_name="ddd_seg7_collision_bowser_sub_door" address="0x700fc48" />
+        <collision c_name="ddd_seg7_collision_bowser_sub_door" address="0x0700FC48" />
     </collisions>
 </model>

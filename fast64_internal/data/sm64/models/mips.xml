@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Mips">
-    <geolayout address="0xd000448" />
+    <geolayout address="0x0D000448" />
     <group>group15</group>
     <ids>
         <id value="0x64" name="MODEL_MIPS" />

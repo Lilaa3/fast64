@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wdw Hidden Platform">
-    <geolayout address="0xe0005e8" />
+    <geolayout address="0x0E0005E8" />
     <level>WDW</level>
     <ids>
         <id value="0x39" name="MODEL_WDW_HIDDEN_PLATFORM" />
     </ids>
     <collisions>
-        <collision c_name="wdw_seg7_collision_hidden_platform" address="0x7018528" />
+        <collision c_name="wdw_seg7_collision_hidden_platform" address="0x07018528" />
     </collisions>
 </model>

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130000f8" readable_name="Purple Particle">
+<behavior address="0x130000F8" readable_name="Purple Particle">
     <description>Commonly used for Piranha Plant and Mr I.</description>
     <tags>
         <tag>PARTICLE</tag>

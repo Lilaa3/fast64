@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130039a0" readable_name="Moneybag">
+<behavior address="0x130039A0" readable_name="Moneybag">
     <description>If Mario gets close to its home, it starts moving again. Once it returns home, it spawns a coin and disappears.</description>
     <tags>
         <tag>COLLECTABLE</tag>

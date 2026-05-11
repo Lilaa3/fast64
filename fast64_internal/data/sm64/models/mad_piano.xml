@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Mad Piano">
-    <geolayout address="0xc0001b4" />
+    <geolayout address="0x0C0001B4" />
     <group>group9</group>
     <ids>
         <id value="0x57" name="MODEL_MAD_PIANO" />

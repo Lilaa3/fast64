@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Trajectory Marker Ball">
-    <geolayout address="0xf00066c" />
+    <geolayout address="0x0F00066C" />
     <group>common0</group>
     <ids>
-        <id value="0xe1" name="MODEL_TRAJECTORY_MARKER_BALL" />
+        <id value="0xE1" name="MODEL_TRAJECTORY_MARKER_BALL" />
     </ids>
 </model>

@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Jrb Floating Platform">
-    <geolayout address="0xe000948" />
+    <geolayout address="0x0E000948" />
     <level>JRB</level>
     <ids>
-        <id value="0x3f" name="MODEL_JRB_FLOATING_PLATFORM" />
+        <id value="0x3F" name="MODEL_JRB_FLOATING_PLATFORM" />
     </ids>
     <collisions>
-        <collision c_name="jrb_seg7_collision_floating_platform" address="0x700c824" />
+        <collision c_name="jrb_seg7_collision_floating_platform" address="0x0700C824" />
     </collisions>
 </model>

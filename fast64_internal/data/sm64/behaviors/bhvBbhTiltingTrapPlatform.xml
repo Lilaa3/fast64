@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130028cc" readable_name="BBH Tilting Trap Platform">
+<behavior address="0x130028CC" readable_name="BBH Tilting Trap Platform">
     <description>A platform in BBH that tilts based on Mario's distance and angle.</description>
     <tags>
         <tag>PLATAFORM</tag>

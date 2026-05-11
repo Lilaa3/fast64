@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130036c8" readable_name="Small Chill Chief">
+<behavior address="0x130036C8" readable_name="Small Chill Chief">
     <description>Equivilent to a small bully, but with BULLY_STYPE_CHILL subtype.</description>
     <tags>
         <tag>SL</tag>

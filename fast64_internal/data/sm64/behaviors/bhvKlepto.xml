@@ -12,10 +12,10 @@
         <tag>COLLECTABLE</tag>
     </tags>
     <fields>
-        <field name="Has Star" type="bool" bparam="2" default="1">
+        <field name="Has Star" type="bool" bparam="2" default="TRUE">
             <enums>
-                <enum value="0" name="No Star" c_name="KLEPTO_BP_NO_STAR" />
-                <enum value="1" name="Has Star" c_name="KLEPTO_BP_HAS_STAR" />
+                <enum c_name="KLEPTO_BP_NO_STAR" />
+                <enum c_name="KLEPTO_BP_HAS_STAR" />
             </enums>
         </field>
     </fields>

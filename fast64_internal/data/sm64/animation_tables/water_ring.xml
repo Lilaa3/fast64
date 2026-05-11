@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x6013f7c" readable_name="Water Ring">
+<animation_table address="0x06013F7C" readable_name="Water Ring">
     <names>
         <name>Wobble</name>
     </names>

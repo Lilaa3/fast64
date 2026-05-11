@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bbh Staircase Step">
-    <geolayout address="0xe0005b0" />
+    <geolayout address="0x0E0005B0" />
     <level>BBH</level>
     <ids>
         <id value="0x35" name="MODEL_BBH_STAIRCASE_STEP" />
     </ids>
     <collisions>
-        <collision c_name="bbh_seg7_collision_staircase_step" address="0x7026a1c" />
+        <collision c_name="bbh_seg7_collision_staircase_step" address="0x07026A1C" />
     </collisions>
 </model>

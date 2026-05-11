@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bob Seesaw Platform">
-    <geolayout address="0xe000458" />
+    <geolayout address="0x0E000458" />
     <level>BOB</level>
     <ids>
         <id value="0x37" name="MODEL_BOB_SEESAW_PLATFORM" />

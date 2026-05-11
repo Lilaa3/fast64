@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Sushi Shark">
-    <geolayout address="0xc000068" />
+    <geolayout address="0x0C000068" />
     <group>group4</group>
     <ids>
         <id value="0x56" name="MODEL_SUSHI" />

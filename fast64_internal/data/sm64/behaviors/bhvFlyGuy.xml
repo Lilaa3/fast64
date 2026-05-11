@@ -1,14 +1,14 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130046dc" readable_name="Fly Guy">
+<behavior address="0x130046DC" readable_name="Fly Guy">
     <tags>
         <tag>ENEMY</tag>
         <tag>MOVING</tag>
     </tags>
     <fields>
-        <field name="Attack Type" type="int" bparam="2" default="0">
+        <field name="Attack Type" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="Lunge Only" c_name="FLY_GUY_BP_LUNGES" />
-                <enum value="1" name="Lunge and Fire" c_name="FLY_GUY_BP_SHOOTS_FIRE" />
+                <enum name="Lunge Only" value="0" c_name="FLY_GUY_BP_LUNGES" />
+                <enum name="Lunge and Fire" value="1" c_name="FLY_GUY_BP_SHOOTS_FIRE" />
             </enums>
         </field>
     </fields>

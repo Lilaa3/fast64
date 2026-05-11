@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Boo (Inside Castle)">
-    <geolayout address="0xd0005b0" />
+    <geolayout address="0x0D0005B0" />
     <group>group15</group>
     <ids>
         <id value="0x65" name="MODEL_BOO_CASTLE" />

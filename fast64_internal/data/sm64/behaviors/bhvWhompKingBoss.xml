@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13002bb8" readable_name="Whomp King">
+<behavior address="0x13002BB8" readable_name="Whomp King">
     <tags>
         <tag>BOSS</tag>
         <tag>ENEMY</tag>

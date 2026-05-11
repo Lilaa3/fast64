@@ -7,10 +7,10 @@
         <tag>ENVIROMENTAL</tag>
     </tags>
     <fields>
-        <field name="Type" type="int" bparam="2" default="0">
+        <field name="Type" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="Spawned" c_name="BIRD_BP_SPAWNED" />
-                <enum value="1" name="Spawner" c_name="BIRD_BP_SPAWNER" />
+                <enum name="Spawned" value="0" c_name="BIRD_BP_SPAWNED" />
+                <enum name="Spawner" value="1" c_name="BIRD_BP_SPAWNER" />
             </enums>
         </field>
     </fields>

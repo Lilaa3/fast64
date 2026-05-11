@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130007dc" readable_name="White Puff Explosion">
+<behavior address="0x130007DC" readable_name="White Puff Explosion">
     <tags>
         <tag>PARTICLE</tag>
     </tags>
     <fields>
-        <field name="Fade Style" type="int" bparam="2" default="2">
+        <field name="Fade Style" type="int" bparam="2" default="0x2">
             <enums>
-                <enum value="2" name="Fast Fade" />
-                <enum value="3" name="Slow Fade" />
+                <enum name="Fast Fade" value="2" />
+                <enum name="Slow Fade" value="3" />
             </enums>
         </field>
     </fields>

@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Pokey Body Part">
-    <geolayout address="0xc000644" />
+    <geolayout address="0x0C000644" />
     <group>group5</group>
     <ids>
         <id value="0x55" name="MODEL_POKEY_BODY_PART" />

@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Breakable Box (Small)">
-    <geolayout address="0xf000610" />
+    <geolayout address="0x0F000610" />
     <group>common0</group>
     <ids>
         <id value="0x82" name="MODEL_BREAKABLE_BOX_SMALL" />

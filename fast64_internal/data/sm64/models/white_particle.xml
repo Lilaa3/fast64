@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="White Particle">
-    <geolayout address="0x16000f98" />
+    <geolayout address="0x16000F98" />
     <group>common1</group>
     <ids>
-        <id value="0xa0" name="MODEL_WHITE_PARTICLE" />
+        <id value="0xA0" name="MODEL_WHITE_PARTICLE" />
     </ids>
 </model>

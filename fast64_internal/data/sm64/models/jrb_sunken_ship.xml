@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Jrb Sunken Ship">
-    <geolayout address="0xe000990" />
+    <geolayout address="0x0E000990" />
     <level>JRB</level>
     <ids>
         <id value="0x39" name="MODEL_JRB_SUNKEN_SHIP" />

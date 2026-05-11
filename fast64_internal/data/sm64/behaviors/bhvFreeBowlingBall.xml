@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13003a30" readable_name="Free Bowling Ball">
+<behavior address="0x13003A30" readable_name="Free Bowling Ball">
     <description>Does not rely on set trajectories.</description>
     <tags>
         <tag>ENEMY</tag>

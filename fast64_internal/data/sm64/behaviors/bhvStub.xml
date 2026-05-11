@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130016ac" readable_name="Stub">
+<behavior address="0x130016AC" readable_name="Stub">
     <description>A stub behavior, disables rendering.</description>
     <tags>
         <tag>UNUSED</tag>

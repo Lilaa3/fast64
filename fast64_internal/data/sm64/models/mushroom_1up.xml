@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Mushroom 1up">
-    <geolayout address="0x16000e84" />
+    <geolayout address="0x16000E84" />
     <group>common1</group>
     <ids>
-        <id value="0xd4" name="MODEL_1UP" />
+        <id value="0xD4" name="MODEL_1UP" />
     </ids>
 </model>

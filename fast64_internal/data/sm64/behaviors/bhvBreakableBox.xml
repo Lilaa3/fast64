@@ -1,16 +1,16 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130014e0" readable_name="Breakable Box">
+<behavior address="0x130014E0" readable_name="Breakable Box">
     <tags>
         <tag>SURFACE</tag>
         <tag>INTERACTIVE</tag>
     </tags>
     <fields>
-        <field name="Type" type="int" bparam="2" default="0">
+        <field name="Type" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="No Coins" c_name="BREAKABLE_BOX_BP_NO_COINS" />
-                <enum value="1" name="3 Coins" c_name="BREAKABLE_BOX_BP_3_COINS" />
-                <enum value="2" name="5 Coins" c_name="BREAKABLE_BOX_BP_5_COINS" />
-                <enum value="3" name="Large" c_name="BREAKABLE_BOX_BP_LARGE" />
+                <enum name="No Coins" value="0" c_name="BREAKABLE_BOX_BP_NO_COINS" />
+                <enum name="3 Coins" value="1" c_name="BREAKABLE_BOX_BP_3_COINS" />
+                <enum name="5 Coins" value="2" c_name="BREAKABLE_BOX_BP_5_COINS" />
+                <enum name="Large" value="3" c_name="BREAKABLE_BOX_BP_LARGE" />
             </enums>
         </field>
     </fields>

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13004470" readable_name="JRB Treasure Chest Manager">
-    <comment>TODO: In hacker, these could work by having chests check the nearest manager instead of using the parent.</comment>
     <description>Spawns the chests and handles the puzzle completion. The treasure chests are hardcoded.</description>
+    <comment>TODO: In hacker, these could work by having chests check the nearest manager instead of using the parent.</comment>
     <tags>
         <tag>MANAGER</tag>
         <tag>CHEST</tag>

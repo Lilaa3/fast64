@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130001ac" readable_name="Cap Switch Base">
+<behavior address="0x130001AC" readable_name="Cap Switch Base">
     <description>Static surface object serving as the base for a cap switch.</description>
     <tags>
         <tag>SURFACE</tag>

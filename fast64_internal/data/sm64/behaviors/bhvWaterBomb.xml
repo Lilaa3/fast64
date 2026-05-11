@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13004ba8" readable_name="Water Bomb">
+<behavior address="0x13004BA8" readable_name="Water Bomb">
     <description>It can either be shot from a cannon (WATER_BOMB_ACT_SHOT_FROM_CANNON, the default) or dropped from above (WATER_BOMB_ACT_INIT), which is set directly by the parent.</description>
     <tags>
         <tag>HURT</tag>

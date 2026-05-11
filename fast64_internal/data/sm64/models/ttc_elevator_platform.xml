@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ttc Elevator Platform">
-    <geolayout address="0xe000340" />
+    <geolayout address="0x0E000340" />
     <level>TTC</level>
     <ids>
         <id value="0x40" name="MODEL_TTC_ELEVATOR_PLATFORM" />
     </ids>
     <collisions>
-        <collision c_name="ttc_seg7_collision_clock_platform" address="0x701585c" />
+        <collision c_name="ttc_seg7_collision_clock_platform" address="0x0701585C" />
     </collisions>
 </model>

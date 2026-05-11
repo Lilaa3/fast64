@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13002ce0" readable_name="Idle Water Wave">
+<behavior address="0x13002CE0" readable_name="Idle Water Wave">
+    <particle>PARTICLE_IDLE_WATER_WAVE</particle>
     <tags>
         <tag>PARTICLE</tag>
         <tag>WATER</tag>
     </tags>
-    <particle>PARTICLE_IDLE_WATER_WAVE</particle>
 </behavior>

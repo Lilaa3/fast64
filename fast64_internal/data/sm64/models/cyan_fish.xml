@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Cyan Fish">
-    <geolayout address="0xd000324" />
+    <geolayout address="0x0D000324" />
     <group>group13</group>
     <ids>
         <id value="0x67" name="MODEL_CYAN_FISH" />

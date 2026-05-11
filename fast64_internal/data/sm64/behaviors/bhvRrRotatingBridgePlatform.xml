@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130010d8" readable_name="RR Rotating Bridge Platform">
+<behavior address="0x130010D8" readable_name="RR Rotating Bridge Platform">
     <description>A rotating platform that also acts as a flamethrower.</description>
     <tags>
         <tag>RR</tag>
@@ -8,14 +8,14 @@
         <tag>FIRE</tag>
     </tags>
     <fields>
-        <field name="Flamethrower Type" type="int" bparam="2" default="1">
+        <field name="Flamethrower Type" type="int" bparam="2" default="0x1">
             <description>The type of flames produced.</description>
             <enums>
-                <enum value="0" name="Normal" c_name="FLAMETHROWER_BP_0" />
-                <enum value="1" name="Blue" c_name="FLAMETHROWER_BP_BLUE" />
-                <enum value="2" name="Slow" c_name="FLAMETHROWER_BP_SLOW" />
-                <enum value="3" name="Tall Hitbox" c_name="FLAMETHROWER_BP_TALL_HITBOX" />
-                <enum value="4" name="Upwards" c_name="FLAMETHROWER_BP_UPWARDS" />
+                <enum name="Normal" value="0" c_name="FLAMETHROWER_BP_0" />
+                <enum name="Blue" value="1" c_name="FLAMETHROWER_BP_BLUE" />
+                <enum name="Slow" value="2" c_name="FLAMETHROWER_BP_SLOW" />
+                <enum name="Tall Hitbox" value="3" c_name="FLAMETHROWER_BP_TALL_HITBOX" />
+                <enum name="Upwards" value="4" c_name="FLAMETHROWER_BP_UPWARDS" />
             </enums>
         </field>
     </fields>

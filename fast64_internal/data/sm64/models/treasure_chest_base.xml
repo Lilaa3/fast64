@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Treasure Chest Base">
-    <geolayout address="0xd000450" />
+    <geolayout address="0x0D000450" />
     <group>group13</group>
     <ids>
         <id value="0x65" name="MODEL_TREASURE_CHEST_BASE" />

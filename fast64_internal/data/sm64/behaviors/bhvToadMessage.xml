@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13002ef8" readable_name="Toad Message">
-    <comment>TODO Should there be some kind of default enums.</comment>
+<behavior address="0x13002EF8" readable_name="Toad Message">
     <description>Speaks dialogue, if specific dialogue ids (TOAD_STAR_1_REQUIREMENT, TOAD_STAR_2_REQUIREMENT, TOAD_STAR_3_REQUIREMENT) certain star requirements are used, otherwise deletion. The dialogue for these is also modified after receiving their respective star after talking.</description>
+    <comment>TODO Should there be some kind of default enums.</comment>
     <tags>
         <tag>NPC</tag>
         <tag>DIALOGUE</tag>
     </tags>
     <fields>
-        <field name="Dialog ID" type="dialogue_id" bparam="1" default="133" />
+        <field name="Dialog ID" type="dialogue_id" bparam="1" default="0x85" />
     </fields>
     <models>
         <model>toad</model>

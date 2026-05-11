@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bitfs Tilting Square Platform">
-    <geolayout address="0xe0006c0" />
+    <geolayout address="0x0E0006C0" />
     <level>BITFS</level>
     <ids>
         <id value="0x37" name="MODEL_BITFS_TILTING_SQUARE_PLATFORM" />
     </ids>
     <collisions>
-        <collision c_name="bitfs_seg7_collision_inverted_pyramid" address="0x7015238" />
+        <collision c_name="bitfs_seg7_collision_inverted_pyramid" address="0x07015238" />
     </collisions>
 </model>

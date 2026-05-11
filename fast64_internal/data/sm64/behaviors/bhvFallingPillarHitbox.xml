@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130043c4" readable_name="JRB Falling Pillar Hitbox">
+<behavior address="0x130043C4" readable_name="JRB Falling Pillar Hitbox">
     <description>Invisible hitboxes, relies on the parent object's transform.</description>
     <tags>
         <tag>JRB</tag>
         <tag>HURT</tag>
     </tags>
     <fields>
-        <field name="Hitbox Index/Y" type="units" bparam="2" multiplier="400" offset="300" default="300">
+        <field name="Hitbox Index/Y" type="units" bparam="2" default="0x12C" multiplier="400" offset="300">
             <description>Index of the hitbox along the pillar's height.</description>
         </field>
     </fields>

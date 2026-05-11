@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wdw Water Level Diamond">
-    <geolayout address="0xe0005c0" />
+    <geolayout address="0x0E0005C0" />
     <level>WDW</level>
     <ids>
         <id value="0x38" name="MODEL_WDW_WATER_LEVEL_DIAMOND" />

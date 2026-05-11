@@ -6,24 +6,24 @@
         <tag>SUB_OBJECT</tag>
     </tags>
     <fields>
-        <field name="Number" type="int" bparam="2" default="0">
+        <field name="Number" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="0" c_name="ORANGE_NUMBER_0" />
-                <enum value="1" name="1" c_name="ORANGE_NUMBER_1" />
-                <enum value="2" name="2" c_name="ORANGE_NUMBER_2" />
-                <enum value="3" name="3" c_name="ORANGE_NUMBER_3" />
-                <enum value="4" name="4" c_name="ORANGE_NUMBER_4" />
-                <enum value="5" name="5" c_name="ORANGE_NUMBER_5" />
-                <enum value="6" name="6" c_name="ORANGE_NUMBER_6" />
-                <enum value="7" name="7" c_name="ORANGE_NUMBER_7" />
-                <enum value="8" name="8" c_name="ORANGE_NUMBER_8" />
-                <enum value="9" name="9" c_name="ORANGE_NUMBER_9" />
-                <enum value="10" name="A" c_name="ORANGE_NUMBER_A" />
-                <enum value="11" name="B" c_name="ORANGE_NUMBER_B" />
-                <enum value="12" name="C" c_name="ORANGE_NUMBER_C" />
-                <enum value="13" name="D" c_name="ORANGE_NUMBER_D" />
-                <enum value="14" name="E" c_name="ORANGE_NUMBER_E" />
-                <enum value="15" name="F" c_name="ORANGE_NUMBER_F" />
+                <enum name="0" value="0" c_name="ORANGE_NUMBER_0" />
+                <enum name="1" value="1" c_name="ORANGE_NUMBER_1" />
+                <enum name="2" value="2" c_name="ORANGE_NUMBER_2" />
+                <enum name="3" value="3" c_name="ORANGE_NUMBER_3" />
+                <enum name="4" value="4" c_name="ORANGE_NUMBER_4" />
+                <enum name="5" value="5" c_name="ORANGE_NUMBER_5" />
+                <enum name="6" value="6" c_name="ORANGE_NUMBER_6" />
+                <enum name="7" value="7" c_name="ORANGE_NUMBER_7" />
+                <enum name="8" value="8" c_name="ORANGE_NUMBER_8" />
+                <enum name="9" value="9" c_name="ORANGE_NUMBER_9" />
+                <enum name="A" value="10" c_name="ORANGE_NUMBER_A" />
+                <enum name="B" value="11" c_name="ORANGE_NUMBER_B" />
+                <enum name="C" value="12" c_name="ORANGE_NUMBER_C" />
+                <enum name="D" value="13" c_name="ORANGE_NUMBER_D" />
+                <enum name="E" value="14" c_name="ORANGE_NUMBER_E" />
+                <enum name="F" value="15" c_name="ORANGE_NUMBER_F" />
             </enums>
         </field>
     </fields>

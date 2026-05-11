@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x50116e4" readable_name="Eyerok">
+<animation_table address="0x050116E4" readable_name="Eyerok">
     <names>
         <name>Recovering</name>
         <name>Death</name>

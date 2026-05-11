@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13000c64" readable_name="LLL Tumbling Bridge">
+<behavior address="0x13000C64" readable_name="LLL Tumbling Bridge">
     <tags>
         <tag>ENVIRONMENTAL</tag>
         <tag>SURFACE</tag>
@@ -7,7 +7,7 @@
         <tag>SPAWNER</tag>
         <tag>LLL</tag>
     </tags>
-    <models automatically_set="true">
+    <models>
         <model>lll_falling_platform</model>
     </models>
 </behavior>

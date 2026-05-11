@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Castle Inside Castle Clock Hour Hand">
-    <geolayout address="0xe001548" />
+    <geolayout address="0x0E001548" />
     <level>CASTLE_INSIDE</level>
     <ids>
         <id value="0x38" name="MODEL_CASTLE_CLOCK_HOUR_HAND" />

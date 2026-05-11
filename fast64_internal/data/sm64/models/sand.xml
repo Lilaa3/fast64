@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Sand">
-    <displaylist address="0x302bcd0" name="sand_seg3_dl_0302BCD0" />
+    <displaylist address="0x0302BCD0" name="sand_seg3_dl_0302BCD0" />
     <group>common1</group>
     <ids>
-        <id value="0x9f" name="MODEL_SAND_DUST" />
+        <id value="0x9F" name="MODEL_SAND_DUST" />
     </ids>
 </model>

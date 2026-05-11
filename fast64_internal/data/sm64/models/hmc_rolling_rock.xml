@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Hmc Rolling Rock">
-    <geolayout address="0xe000548" />
+    <geolayout address="0x0E000548" />
     <level>HMC</level>
     <ids>
         <id value="0x39" name="MODEL_HMC_ROLLING_ROCK" />

@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ttc Small Gear">
-    <geolayout address="0xe000388" />
+    <geolayout address="0x0E000388" />
     <level>TTC</level>
     <ids>
         <id value="0x43" name="MODEL_TTC_SMALL_GEAR" />
     </ids>
     <collisions>
-        <collision c_name="ttc_seg7_collision_clock_main_rotation" address="0x70158e0" />
+        <collision c_name="ttc_seg7_collision_clock_main_rotation" address="0x070158E0" />
     </collisions>
 </model>

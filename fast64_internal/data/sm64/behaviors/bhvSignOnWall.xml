@@ -6,6 +6,6 @@
         <tag>DIALOGUE</tag>
     </tags>
     <fields>
-        <field name="Dialogue ID" type="dialogue_id" bparam="2" default="0" />
+        <field name="Dialogue ID" type="dialogue_id" bparam="2" default="0x0" />
     </fields>
 </behavior>

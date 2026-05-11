@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13004d90" readable_name="TTC Spinner">
+<behavior address="0x13004D90" readable_name="TTC Spinner">
     <tags>
         <tag>PLATFORM</tag>
         <tag>TTC</tag>

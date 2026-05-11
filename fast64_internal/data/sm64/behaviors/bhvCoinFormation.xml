@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130008ec" readable_name="Coin Formation">
+<behavior address="0x130008EC" readable_name="Coin Formation">
     <description>Spawner for patterns of yellow coins.</description>
     <tags>
         <tag>SPAWNER</tag>
@@ -8,16 +8,16 @@
         <tag>COLLECTABLE</tag>
     </tags>
     <fields>
-        <field name="Formation Shape" type="int" bparam="2" default="0">
+        <field name="Formation Shape" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="Horizontal Line" c_name="COIN_FORMATION_BP_SHAPE_HORIZONTAL_LINE" />
-                <enum value="1" name="Vertical Line" c_name="COIN_FORMATION_BP_SHAPE_VERTICAL_LINE" />
-                <enum value="2" name="Horizontal Ring" c_name="COIN_FORMATION_BP_SHAPE_HORIZONTAL_RING" />
-                <enum value="3" name="Vertical Ring" c_name="COIN_FORMATION_BP_SHAPE_VERTICAL_RING" />
-                <enum value="4" name="Arrow" c_name="COIN_FORMATION_BP_SHAPE_ARROW" />
+                <enum name="Horizontal Line" value="0" c_name="COIN_FORMATION_BP_SHAPE_HORIZONTAL_LINE" />
+                <enum name="Vertical Line" value="1" c_name="COIN_FORMATION_BP_SHAPE_VERTICAL_LINE" />
+                <enum name="Horizontal Ring" value="2" c_name="COIN_FORMATION_BP_SHAPE_HORIZONTAL_RING" />
+                <enum name="Vertical Ring" value="3" c_name="COIN_FORMATION_BP_SHAPE_VERTICAL_RING" />
+                <enum name="Arrow" value="4" c_name="COIN_FORMATION_BP_SHAPE_ARROW" />
             </enums>
         </field>
-        <field name="Flying" type="bool" bparam="2" shift="4" default="0" />
-        <field name="Coin Spawn Mask" type="int" bparam="3" default="0" />
+        <field name="Flying" type="bool" bparam="2" default="FALSE" shift="4" />
+        <field name="Coin Spawn Mask" type="int" bparam="3" default="0x0" />
     </fields>
 </behavior>

@@ -3,6 +3,6 @@
     <geolayout address="0x16000020" />
     <group>common1</group>
     <ids>
-        <id value="0xe0" name="MODEL_WHITE_PUFF" />
+        <id value="0xE0" name="MODEL_WHITE_PUFF" />
     </ids>
 </model>

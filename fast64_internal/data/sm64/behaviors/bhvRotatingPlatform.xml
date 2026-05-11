@@ -1,16 +1,16 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130005b4" readable_name="Rotating Platform">
+<behavior address="0x130005B4" readable_name="Rotating Platform">
     <description>A platform that rotates around its center. Rotation speed is set via parameter 1, while parameter 2 selects the collision data and scale from a predefined table.</description>
     <tags>
         <tag>PLATAFORM</tag>
         <tag>ENVIRONMENTAL</tag>
     </tags>
     <fields>
-        <field name="Rotation Speed" type="int" bparam="1" default="0" />
-        <field name="Platform Type" type="int" bparam="2" default="0">
+        <field name="Rotation Speed" type="int" bparam="1" default="0x0" />
+        <field name="Platform Type" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="WF" />
-                <enum value="1" name="WDW" />
+                <enum name="WF" value="0" />
+                <enum name="WDW" value="1" />
             </enums>
         </field>
     </fields>

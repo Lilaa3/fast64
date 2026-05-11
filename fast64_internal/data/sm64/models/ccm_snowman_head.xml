@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ccm Snowman Head">
-    <geolayout address="0xe00040c" />
+    <geolayout address="0x0E00040C" />
     <level>CCM</level>
     <ids>
         <id value="0x37" name="MODEL_CCM_SNOWMAN_HEAD" />

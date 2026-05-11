@@ -3,6 +3,6 @@
     <geolayout address="0x17000230" />
     <group>group0</group>
     <ids>
-        <id value="0xa7" name="MODEL_WATER_SPLASH" />
+        <id value="0xA7" name="MODEL_WATER_SPLASH" />
     </ids>
 </model>

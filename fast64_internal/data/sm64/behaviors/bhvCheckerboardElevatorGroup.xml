@@ -1,18 +1,18 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13001b70" readable_name="Checkerboard Elevator Group">
+<behavior address="0x13001B70" readable_name="Checkerboard Elevator Group">
     <description>Spawner that creates a pair of bhvCheckerboardPlatformSub objects. Position and scale are determined by the platform type.</description>
     <tags>
         <tag>SPAWNER</tag>
         <tag>PLATFORM</tag>
     </tags>
     <fields>
-        <field name="Platform Type" type="int" bparam="1" default="0">
+        <field name="Platform Type" type="int" bparam="1" default="0x0">
             <enums>
-                <enum value="0" name="BOB" />
-                <enum value="1" name="VCUTM" />
+                <enum name="BOB" value="0" />
+                <enum name="VCUTM" value="1" />
             </enums>
         </field>
-        <field name="Vertical Offset" type="units" bparam="2" default="65" multiplier="10" />
+        <field name="Vertical Offset" type="units" bparam="2" default="0x41" multiplier="10" />
     </fields>
     <models>
         <model>checkerboard_platform</model>

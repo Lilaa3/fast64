@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Mr. Blizzard (Hidden)">
-    <geolayout address="0xc00021c" />
+    <geolayout address="0x0C00021C" />
     <group>group7</group>
     <ids>
         <id value="0x55" name="MODEL_MR_BLIZZARD_HIDDEN" />

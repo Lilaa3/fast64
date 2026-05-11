@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Checkerboard Platform">
-    <geolayout address="0xf0004e4" />
+    <geolayout address="0x0F0004E4" />
     <group>common0</group>
     <ids>
-        <id value="0xca" name="MODEL_CHECKERBOARD_PLATFORM" />
+        <id value="0xCA" name="MODEL_CHECKERBOARD_PLATFORM" />
     </ids>
     <collisions>
         <collision c_name="checkerboard_platform_seg8_collision_platform" address="0x0800D710" />

@@ -7,11 +7,11 @@
         <tag>BOSS</tag>
     </tags>
     <fields>
-        <field name="Variant" type="int" bparam="2" default="0">
+        <field name="Variant" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="Ghost Hunt" c_name="BIG_BOO_BP_GHOST_HUNT" />
-                <enum value="1" name="Merry Go Round" c_name="BIG_BOO_BP_MERRY_GO_ROUND" />
-                <enum value="2" name="Balcony" c_name="BIG_BOO_BP_BALCONY" />
+                <enum name="Ghost Hunt" value="0" c_name="BIG_BOO_BP_GHOST_HUNT" />
+                <enum name="Merry Go Round" value="1" c_name="BIG_BOO_BP_MERRY_GO_ROUND" />
+                <enum name="Balcony" value="2" c_name="BIG_BOO_BP_BALCONY" />
             </enums>
         </field>
     </fields>

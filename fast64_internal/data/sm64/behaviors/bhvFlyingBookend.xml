@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x1300506c" readable_name="Flying Bookend">
+<behavior address="0x1300506C" readable_name="Flying Bookend">
     <description>It changes its model to MODEL_BOOKEND_PART and rotates its pitch and roll upon activation.</description>
     <tags>
         <tag>ENEMY</tag>

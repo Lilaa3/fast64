@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Rr L Shaped Platform">
-    <geolayout address="0xe000940" />
+    <geolayout address="0x0E000940" />
     <level>RR</level>
     <ids>
-        <id value="0x3d" name="MODEL_RR_L_SHAPED_PLATFORM" />
+        <id value="0x3D" name="MODEL_RR_L_SHAPED_PLATFORM" />
     </ids>
 </model>

@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Transparent Star">
-    <geolayout address="0x16000f6c" />
+    <geolayout address="0x16000F6C" />
     <group>common1</group>
     <ids>
         <id value="0x79" name="MODEL_TRANSPARENT_STAR" />

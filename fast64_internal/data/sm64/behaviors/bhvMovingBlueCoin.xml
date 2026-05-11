@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130030a4" readable_name="Moving Blue Coin">
+<behavior address="0x130030A4" readable_name="Moving Blue Coin">
     <description>Starts moving when Mario gets close.</description>
     <tags>
         <tag>COLLECTABLE</tag>

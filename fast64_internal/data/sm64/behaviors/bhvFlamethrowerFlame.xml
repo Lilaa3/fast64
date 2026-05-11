@@ -6,14 +6,14 @@
         <tag>PROJECTILE</tag>
     </tags>
     <fields>
-        <field name="Flame Type" type="int" bparam="2" default="0">
+        <field name="Flame Type" type="int" bparam="2" default="0x0">
             <description>Determines scaling, hitbox height, and movement direction.</description>
             <enums>
-                <enum value="0" name="Normal" c_name="FLAMETHROWER_BP_0" />
-                <enum value="1" name="Blue" c_name="FLAMETHROWER_BP_BLUE" />
-                <enum value="2" name="Slow" c_name="FLAMETHROWER_BP_SLOW" />
-                <enum value="3" name="Tall Hitbox" c_name="FLAMETHROWER_BP_TALL_HITBOX" />
-                <enum value="4" name="Upwards" c_name="FLAMETHROWER_BP_UPWARDS" />
+                <enum name="Normal" value="0" c_name="FLAMETHROWER_BP_0" />
+                <enum name="Blue" value="1" c_name="FLAMETHROWER_BP_BLUE" />
+                <enum name="Slow" value="2" c_name="FLAMETHROWER_BP_SLOW" />
+                <enum name="Tall Hitbox" value="3" c_name="FLAMETHROWER_BP_TALL_HITBOX" />
+                <enum name="Upwards" value="4" c_name="FLAMETHROWER_BP_UPWARDS" />
             </enums>
         </field>
     </fields>

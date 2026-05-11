@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bowser Impact Ring">
-    <geolayout address="0xd000090" />
+    <geolayout address="0x0D000090" />
     <group>group12</group>
     <ids>
         <id value="0x68" name="MODEL_BOWSER_WAVE" />

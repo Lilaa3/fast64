@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x1300381c" readable_name="Bowser Bomb Explosion">
+<behavior address="0x1300381C" readable_name="Bowser Bomb Explosion">
     <description>The explosion effect when a Bowser bomb detonates Emits bhvBowserBombSmoke.</description>
     <tags>
         <tag>BOSS</tag>

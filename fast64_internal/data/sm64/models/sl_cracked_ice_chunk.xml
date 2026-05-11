@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Sl Cracked Ice Chunk">
-    <geolayout address="0xe000378" />
+    <geolayout address="0x0E000378" />
     <level>SL</level>
     <ids>
         <id value="0x38" name="MODEL_SL_CRACKED_ICE_CHUNK" />

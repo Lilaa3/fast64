@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bitdw Sliding Platform">
-    <geolayout address="0xe000528" />
+    <geolayout address="0x0E000528" />
     <level>BITDW</level>
     <ids>
         <id value="0x38" name="MODEL_BITDW_SLIDING_PLATFORM" />

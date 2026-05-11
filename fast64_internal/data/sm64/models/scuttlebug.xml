@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Scuttlebug">
-    <geolayout address="0xd000394" />
+    <geolayout address="0x0D000394" />
     <group>group17</group>
     <ids>
         <id value="0x65" name="MODEL_SCUTTLEBUG" />

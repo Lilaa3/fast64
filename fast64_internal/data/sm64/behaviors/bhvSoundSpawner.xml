@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x1300229c" readable_name="Sound Spawner">
+<behavior address="0x1300229C" readable_name="Sound Spawner">
     <description>A short-lived object that plays a specific sound effect once and then deactivates.</description>
     <tags>
         <tag>SOUND</tag>

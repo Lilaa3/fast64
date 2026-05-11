@@ -1,6 +1,10 @@
+from pathlib import Path
+
 from bpy.types import PropertyGroup
 from bpy.props import PointerProperty
 from bpy.utils import register_class, unregister_class
+
+from .xml.export import model_to_xml_file, behavior_to_xml_file, animation_table_to_xml_file
 
 from .xml.parser import parse_all
 
@@ -182,4 +186,13 @@ def sm64_unregister(unregister_panels: bool):
         sm64_panel_unregister()
 
 
-parse_all()
+base_path = Path("fast64_internal/data/sm64")
+result = parse_all(base_path)
+"""
+for model in result.models:
+    model_to_xml_file(base_path, model)
+for behavior in result.behaviors:
+    behavior_to_xml_file(base_path, behavior)
+for animation_table in result.animation_tables:
+    animation_table_to_xml_file(base_path, animation_table)
+"""

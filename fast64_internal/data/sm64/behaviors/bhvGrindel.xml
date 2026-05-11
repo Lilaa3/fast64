@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13000b58" readable_name="Grindel">
+<behavior address="0x13000B58" readable_name="Grindel">
     <description>Shares behavior with Thwomp, different collision.</description>
     <tags>
         <tag>ENEMY</tag>
@@ -7,7 +7,7 @@
         <tag>MOVING</tag>
     </tags>
     <fields>
-        <field name="Rising Duration Offset" type="frames" bparam="2" offset="40" default="0x1C" />
+        <field name="Rising Duration Offset" type="frames" bparam="2" default="0x1C" offset="40" />
     </fields>
     <models>
         <model>ssl_grindel</model>

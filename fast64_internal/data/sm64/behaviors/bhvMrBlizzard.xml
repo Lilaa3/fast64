@@ -1,15 +1,15 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13004dbc" readable_name="Mr. Blizzard">
+<behavior address="0x13004DBC" readable_name="Mr. Blizzard">
     <tags>
         <tag>ENEMY</tag>
         <tag>SPECIALIZED</tag>
     </tags>
     <fields>
-        <field name="Style" type="int" bparam="2" default="0">
+        <field name="Style" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="Standard" c_name="MR_BLIZZARD_STYPE_NO_CAP" />
-                <enum value="1" name="Jumping" c_name="MR_BLIZZARD_STYPE_JUMPING" />
-                <enum value="2" name="Hidden" />
+                <enum name="Standard" value="0" c_name="MR_BLIZZARD_STYPE_NO_CAP" />
+                <enum name="Jumping" value="1" c_name="MR_BLIZZARD_STYPE_JUMPING" />
+                <enum name="Hidden" value="2" />
             </enums>
         </field>
     </fields>

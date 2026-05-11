@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Springboard Top">
-    <geolayout address="0xc000000" />
+    <geolayout address="0x0C000000" />
     <group>group8</group>
     <ids>
-        <id value="0xb5" name="MODEL_TRAMPOLINE" />
+        <id value="0xB5" name="MODEL_TRAMPOLINE" />
     </ids>
     <collisions>
         <collision c_name="springboard_collision_05001A28" address="0x05001A28" />

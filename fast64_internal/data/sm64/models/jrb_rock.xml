@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Jrb Rock">
-    <geolayout address="0xe000930" />
+    <geolayout address="0x0E000930" />
     <level>JRB</level>
     <ids>
-        <id value="0x3b" name="MODEL_JRB_ROCK" />
+        <id value="0x3B" name="MODEL_JRB_ROCK" />
     </ids>
     <collisions>
-        <collision c_name="jrb_seg7_collision_rock_solid" address="0x700c758" />
+        <collision c_name="jrb_seg7_collision_rock_solid" address="0x0700C758" />
     </collisions>
 </model>

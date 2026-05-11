@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bitdw Seesaw Platform">
-    <geolayout address="0xe000540" />
+    <geolayout address="0x0E000540" />
     <level>BITDW</level>
     <ids>
         <id value="0x37" name="MODEL_BITDW_SEESAW_PLATFORM" />

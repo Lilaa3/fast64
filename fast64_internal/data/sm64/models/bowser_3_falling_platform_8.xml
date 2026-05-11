@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bowser 3 Falling Platform 8">
-    <geolayout address="0xe000338" />
+    <geolayout address="0x0E000338" />
     <level>BOWSER_3</level>
     <ids>
-        <id value="0x3d" name="MODEL_BOWSER_3_FALLING_PLATFORM_8" />
+        <id value="0x3D" name="MODEL_BOWSER_3_FALLING_PLATFORM_8" />
     </ids>
     <collisions>
         <collision c_name="bowser_3_seg7_collision_07004F30" address="0x07004F30" />

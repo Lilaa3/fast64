@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130009e0" readable_name="Coin Sparkles">
+<behavior address="0x130009E0" readable_name="Coin Sparkles">
     <tags>
         <tag>PARTICLE</tag>
         <tag>COLLECTIBLE</tag>

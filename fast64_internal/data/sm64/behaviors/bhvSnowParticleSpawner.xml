@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13000e58" readable_name="Snow Particle Spawner">
+<behavior address="0x13000E58" readable_name="Snow Particle Spawner">
     <particle>PARTICLE_SNOW</particle>
     <tags>
         <tag>SPAWNER</tag>

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13004e08" readable_name="Mr. Blizzard Snowball">
+<behavior address="0x13004E08" readable_name="Mr. Blizzard Snowball">
     <tags>
         <tag>ENEMY</tag>
         <tag>HURT</tag>

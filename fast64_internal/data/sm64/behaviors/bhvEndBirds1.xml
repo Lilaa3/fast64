@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x1300565c" readable_name="End Birds 1">
+<behavior address="0x1300565C" readable_name="End Birds 1">
     <description>Birds used during the end cutscene.</description>
     <tags>
         <tag>BIRD</tag>

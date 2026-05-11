@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Yellow Sphere (Bowser 1)">
-    <geolayout address="0xd0000b0" />
+    <geolayout address="0x0D0000B0" />
     <group>group12</group>
     <ids>
-        <id value="0x3" name="MODEL_LEVEL_GEOMETRY_03" />
+        <id value="0x03" name="MODEL_LEVEL_GEOMETRY_03" />
     </ids>
 </model>

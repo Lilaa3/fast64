@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13000a98" readable_name="Hor Star Particle Spawner">
+<behavior address="0x13000A98" readable_name="Hor Star Particle Spawner">
     <description>A temporary spawner that creates 8 Pound Tiny Star Particles objects arranged in a circle..</description>
+    <particle>PARTICLE_HORIZONTAL_STAR</particle>
     <tags>
         <tag>PARTICLE</tag>
         <tag>SPAWNER</tag>
     </tags>
-    <particle>PARTICLE_HORIZONTAL_STAR</particle>
 </behavior>

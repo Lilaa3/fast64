@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13004a58" readable_name="Monty Mole Hole">
+<behavior address="0x13004A58" readable_name="Monty Mole Hole">
     <description>A hole that Monty Moles pop out of. It manages the list of available holes and the kill streak counter.</description>
     <tags>
         <tag>ENVIRONMENTAL</tag>

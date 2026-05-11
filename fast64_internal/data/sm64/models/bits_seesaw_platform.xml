@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bits Seesaw Platform">
-    <geolayout address="0xe000670" />
+    <geolayout address="0x0E000670" />
     <level>BITS</level>
     <ids>
-        <id value="0x3f" name="MODEL_BITS_SEESAW_PLATFORM" />
+        <id value="0x3F" name="MODEL_BITS_SEESAW_PLATFORM" />
     </ids>
 </model>

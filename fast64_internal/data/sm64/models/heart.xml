@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Heart">
-    <geolayout address="0xf0004fc" />
+    <geolayout address="0x0F0004FC" />
     <group>common0</group>
     <ids>
         <id value="0x78" name="MODEL_HEART" />

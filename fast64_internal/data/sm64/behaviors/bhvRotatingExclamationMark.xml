@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x1300227c" readable_name="Rotating Exclamation Mark">
+<behavior address="0x1300227C" readable_name="Rotating Exclamation Mark">
     <description>An exclamation mark particle that rotates around an exclamation box. It is automatically deletes itself when its parent object is no longer in its outline state.</description>
     <tags>
         <tag>PARTICLE</tag>

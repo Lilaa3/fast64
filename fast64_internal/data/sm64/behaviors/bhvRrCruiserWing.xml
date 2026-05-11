@@ -1,14 +1,14 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13003ae0" readable_name="RR Cruiser Wing">
+<behavior address="0x13003AE0" readable_name="RR Cruiser Wing">
     <tags>
         <tag>RR</tag>
         <tag>ENVIRONMENTAL</tag>
     </tags>
     <fields>
-        <field name="Oscillation Direction" type="bool" bparam="2" default="False">
+        <field name="Oscillation Direction" type="bool" bparam="2" default="FALSE">
             <enums>
-                <enum value="0" name="Left" />
-                <enum value="1" name="Right" />
+                <enum />
+                <enum />
             </enums>
         </field>
     </fields>

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13001f3c" readable_name="Koopa Shell">
+<behavior address="0x13001F3C" readable_name="Koopa Shell">
     <tags>
         <tag>MOVING</tag>
         <tag>HOLDABLE</tag>

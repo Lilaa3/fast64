@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13002f88" readable_name="Airborne Star Collect Warp">
+<behavior address="0x13002F88" readable_name="Airborne Star Collect Warp">
     <tags>
         <tag>WARP_SPAWN</tag>
     </tags>

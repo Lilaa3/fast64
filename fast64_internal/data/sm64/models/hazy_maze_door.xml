@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Hazy Maze Door">
-    <geolayout address="0x1600068c" />
+    <geolayout address="0x1600068C" />
     <group>common1</group>
     <ids>
         <id value="0x20" name="MODEL_HMC_HAZY_MAZE_DOOR" level="common1" />

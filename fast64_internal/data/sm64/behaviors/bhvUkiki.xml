@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13000f08" readable_name="Ukiki">
+<behavior address="0x13000F08" readable_name="Ukiki">
     <tags>
         <tag>NPC</tag>
         <tag>HOLDABLE</tag>
@@ -7,10 +7,10 @@
         <tag>TTM</tag>
     </tags>
     <fields>
-        <field name="Type" type="int" bparam="2" default="0">
+        <field name="Type" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="Cage" c_name="UKIKI_BP_CAGE" />
-                <enum value="1" name="Steal Mario's Cap" c_name="UKIKI_BP_CAP" />
+                <enum name="Cage" value="0" c_name="UKIKI_BP_CAGE" />
+                <enum name="Steal Mario's Cap" value="1" c_name="UKIKI_BP_CAP" />
             </enums>
         </field>
     </fields>

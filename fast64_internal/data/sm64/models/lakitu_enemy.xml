@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Lakitu (Enemy)">
-    <geolayout address="0xc0001bc" />
+    <geolayout address="0x0C0001BC" />
     <group>group11</group>
     <ids>
         <id value="0x54" name="MODEL_ENEMY_LAKITU" />

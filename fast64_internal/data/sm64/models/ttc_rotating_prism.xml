@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ttc Rotating Prism">
-    <geolayout address="0xe000258" />
+    <geolayout address="0x0E000258" />
     <level>TTC</level>
     <ids>
         <id value="0x37" name="MODEL_TTC_ROTATING_PRISM" />

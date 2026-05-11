@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x6015724" readable_name="Mips">
+<animation_table address="0x06015724" readable_name="Mips">
     <names>
         <name>Idle</name>
         <name>Hopping</name>

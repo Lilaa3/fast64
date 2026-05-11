@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Mario's Wing Cap">
-    <geolayout address="0x16000d3c" />
+    <geolayout address="0x16000D3C" />
     <group>common1</group>
     <ids>
         <id value="0x87" name="MODEL_MARIOS_WING_CAP" />

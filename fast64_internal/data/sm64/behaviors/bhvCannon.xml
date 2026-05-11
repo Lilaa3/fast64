@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130004a8" readable_name="Cannon Base">
+<behavior address="0x130004A8" readable_name="Cannon Base">
     <description>Spawns a bhvCannonBarrel child.</description>
     <tags>
         <tag>INTERACTIVE</tag>

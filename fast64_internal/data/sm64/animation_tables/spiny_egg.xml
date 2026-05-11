@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x50157e4" readable_name="Spiny Egg">
+<animation_table address="0x050157E4" readable_name="Spiny Egg">
     <names>
         <name>Default</name>
     </names>

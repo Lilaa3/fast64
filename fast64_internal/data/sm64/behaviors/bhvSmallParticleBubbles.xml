@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x1300046c" readable_name="Small Particle Bubbles">
+<behavior address="0x1300046C" readable_name="Small Particle Bubbles">
     <description>Spawned with the fish in the entrance to JRB.</description>
     <tags>
         <tag>PARTICLE</tag>

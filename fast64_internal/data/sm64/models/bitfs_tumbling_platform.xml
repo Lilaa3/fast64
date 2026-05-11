@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bitfs Tumbling Platform">
-    <geolayout address="0xe0006f0" />
+    <geolayout address="0x0E0006F0" />
     <level>BITFS</level>
     <ids>
         <id value="0x41" name="MODEL_BITFS_TUMBLING_PLATFORM" />

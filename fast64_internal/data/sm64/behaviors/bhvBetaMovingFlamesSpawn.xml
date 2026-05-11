@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130010a8" readable_name="Beta Moving Flames Spawner">
+<behavior address="0x130010A8" readable_name="Beta Moving Flames Spawner">
     <description>A beta spawner for moving flames.</description>
     <tags>
         <tag>SPAWNER</tag>

@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Lll Drawbridge Part">
-    <geolayout address="0xe000b20" />
+    <geolayout address="0x0E000B20" />
     <level>LLL</level>
     <ids>
         <id value="0x38" name="MODEL_LLL_DRAWBRIDGE_PART" />
     </ids>
     <collisions>
-        <collision c_name="lll_seg7_collision_drawbridge" address="0x701d108" />
+        <collision c_name="lll_seg7_collision_drawbridge" address="0x0701D108" />
     </collisions>
 </model>

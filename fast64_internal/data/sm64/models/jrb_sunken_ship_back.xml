@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Jrb Sunken Ship Back">
-    <geolayout address="0xe0009c8" />
+    <geolayout address="0x0E0009C8" />
     <level>JRB</level>
     <ids>
-        <id value="0x3a" name="MODEL_JRB_SUNKEN_SHIP_BACK" />
+        <id value="0x3A" name="MODEL_JRB_SUNKEN_SHIP_BACK" />
     </ids>
 </model>

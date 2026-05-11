@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bub">
-    <geolayout address="0xd00038c" />
+    <geolayout address="0x0D00038C" />
     <group>group13</group>
     <ids>
         <id value="0x64" name="MODEL_BUB" />

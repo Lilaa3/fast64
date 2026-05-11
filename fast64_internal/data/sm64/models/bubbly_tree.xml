@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bubbly Tree">
-    <geolayout address="0x16000fe8" />
+    <geolayout address="0x16000FE8" />
     <group>common1</group>
     <ids>
         <id value="0x17" name="MODEL_THI_BUBBLY_TREE" level="common1" />

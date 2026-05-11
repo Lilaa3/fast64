@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130013a8" readable_name="Tree Snow">
+<behavior address="0x130013A8" readable_name="Tree Snow">
     <description>Snowy tree equivilent to Tree Leaf.</description>
     <tags>
         <tag>PARTICLE</tag>

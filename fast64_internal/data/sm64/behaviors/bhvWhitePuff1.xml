@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130024dc" readable_name="White Puff 1">
+<behavior address="0x130024DC" readable_name="White Puff 1">
     <description>Spawned by bhvMistParticleSpawner.</description>
     <tags>
         <tag>PARTICLE</tag>

@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Fly Guy">
-    <geolayout address="0xf000518" />
+    <geolayout address="0x0F000518" />
     <group>common0</group>
     <ids>
-        <id value="0xdc" name="MODEL_FLYGUY" />
+        <id value="0xDC" name="MODEL_FLYGUY" />
     </ids>
     <animation_tables>
         <table>fly_guy</table>

@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bowser 3 Falling Platform 4">
-    <geolayout address="0xe0002d8" />
+    <geolayout address="0x0E0002D8" />
     <level>BOWSER_3</level>
     <ids>
         <id value="0x39" name="MODEL_BOWSER_3_FALLING_PLATFORM_4" />

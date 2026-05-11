@@ -9,10 +9,10 @@
         <tag>CCM</tag>
     </tags>
     <fields>
-        <field name="Penguin Type" type="int" bparam="2" default="0">
+        <field name="Penguin Type" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="Normal" />
-                <enum value="1" name="120-Star (Giant)">
+                <enum name="Normal" value="0" />
+                <enum name="120-Star (Giant)" value="1">
                     <description>Set automatically by the behavior.</description>
                 </enum>
             </enums>

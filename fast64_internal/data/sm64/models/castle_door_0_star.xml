@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Castle Door (0 Star)">
-    <geolayout address="0x160007b4" />
+    <geolayout address="0x160007B4" />
     <group>common1</group>
     <ids>
         <id value="0x22" name="MODEL_CASTLE_DOOR_0_STARS" level="common1" />

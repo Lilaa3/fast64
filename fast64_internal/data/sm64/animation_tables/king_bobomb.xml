@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x500fe30" readable_name="King Bobomb" size="12">
+<animation_table address="0x0500FE30" readable_name="King Bobomb" size="12">
     <names>
         <name>Grab Mario</name>
         <name>Holding Mario</name>

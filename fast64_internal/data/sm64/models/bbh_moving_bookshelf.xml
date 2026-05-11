@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bbh Moving Bookshelf">
-    <geolayout address="0xe000610" />
+    <geolayout address="0x0E000610" />
     <level>BBH</level>
     <ids>
         <id value="0x39" name="MODEL_BBH_MOVING_BOOKSHELF" />
     </ids>
     <collisions>
-        <collision c_name="bbh_seg7_collision_haunted_bookshelf" address="0x7026b4c" />
+        <collision c_name="bbh_seg7_collision_haunted_bookshelf" address="0x07026B4C" />
     </collisions>
 </model>

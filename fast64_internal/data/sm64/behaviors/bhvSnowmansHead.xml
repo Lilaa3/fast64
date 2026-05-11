@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13003d0c" readable_name="Snowman's Head">
+<behavior address="0x13003D0C" readable_name="Snowman's Head">
     <tags>
         <tag>ENVIRONMENTAL</tag>
         <tag>SL</tag>
         <tag>DIALOGUE</tag>
     </tags>
     <fields>
-        <field name="Star" type="int" bparam="1" default="4">
+        <field name="Star" type="int" bparam="1" default="0x4">
             <description>If the star at that index is collected, the snowman starts the level with it's head in place.</description>
         </field>
     </fields>

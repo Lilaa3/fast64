@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bitfs Platform On Track">
-    <geolayout address="0xe000758" />
+    <geolayout address="0x0E000758" />
     <level>BITFS</level>
     <ids>
         <id value="0x36" name="MODEL_BITFS_PLATFORM_ON_TRACK" />

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x6020a04" readable_name="Whomp" size="2">
+<animation_table address="0x06020A04" readable_name="Whomp" size="2">
     <names>
         <name>Walk</name>
         <name>Jump</name>

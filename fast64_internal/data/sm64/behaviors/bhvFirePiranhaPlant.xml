@@ -6,13 +6,13 @@
         <tag>FIRE</tag>
     </tags>
     <fields>
-        <field name="Neutral scale" type="int" bparam="2" default="1">
+        <field name="Neutral scale" type="int" bparam="2" default="0x1">
             <enums>
-                <enum value="0" name="Normal (0.5)" c_name="FIRE_PIRANHA_PLANT_BP_NORMAL" />
-                <enum value="1" name="Big (2.0)" c_name="FIRE_PIRANHA_PLANT_BP_THI" />
+                <enum name="Normal (0.5)" value="0" c_name="FIRE_PIRANHA_PLANT_BP_NORMAL" />
+                <enum name="Big (2.0)" value="1" c_name="FIRE_PIRANHA_PLANT_BP_THI" />
             </enums>
         </field>
-        <field name="Disable Coins" type="bool" bparam="3" default="0" />
+        <field name="Disable Coins" type="bool" bparam="3" default="FALSE" />
     </fields>
     <models>
         <model>piranha_plant</model>

@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bitfs Moving Square Platform">
-    <geolayout address="0xe000728" />
+    <geolayout address="0x0E000728" />
     <level>BITFS</level>
     <ids>
-        <id value="0x3e" name="MODEL_BITFS_MOVING_SQUARE_PLATFORM" />
+        <id value="0x3E" name="MODEL_BITFS_MOVING_SQUARE_PLATFORM" />
     </ids>
     <collisions>
         <collision c_name="bitfs_seg7_collision_07015714" address="0x07015714" />

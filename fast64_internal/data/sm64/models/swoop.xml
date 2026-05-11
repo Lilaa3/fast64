@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Swoop">
-    <geolayout address="0xd0000dc" />
+    <geolayout address="0x0D0000DC" />
     <group>group17</group>
     <ids>
         <id value="0x64" name="MODEL_SWOOP" />

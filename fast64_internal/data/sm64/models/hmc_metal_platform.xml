@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Hmc Metal Platform">
-    <geolayout address="0xe0005a0" />
+    <geolayout address="0x0E0005A0" />
     <level>HMC</level>
     <ids>
         <id value="0x36" name="MODEL_HMC_METAL_PLATFORM" />
     </ids>
     <collisions>
-        <collision c_name="hmc_seg7_collision_controllable_platform" address="0x702b6e0" />
+        <collision c_name="hmc_seg7_collision_controllable_platform" address="0x0702B6E0" />
     </collisions>
 </model>

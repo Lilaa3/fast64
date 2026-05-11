@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Metal Box">
-    <geolayout address="0xf000a30" />
+    <geolayout address="0x0F000A30" />
     <group>common0</group>
     <ids>
-        <id value="0xd9" name="MODEL_METAL_BOX" />
+        <id value="0xD9" name="MODEL_METAL_BOX" />
     </ids>
     <collisions>
-        <collision c_name="metal_box_seg8_collision_08024C28" address="0x8024C28" />
+        <collision c_name="metal_box_seg8_collision_08024C28" address="0x08024C28" />
     </collisions>
 </model>

@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ttc Rotating Triangle">
-    <geolayout address="0xe0002f8" />
+    <geolayout address="0x0E0002F8" />
     <level>TTC</level>
     <ids>
-        <id value="0x3d" name="MODEL_TTC_ROTATING_TRIANGLE" />
+        <id value="0x3D" name="MODEL_TTC_ROTATING_TRIANGLE" />
     </ids>
 </model>

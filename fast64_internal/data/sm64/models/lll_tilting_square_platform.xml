@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Lll Tilting Square Platform">
-    <geolayout address="0xe000bf8" />
+    <geolayout address="0x0E000BF8" />
     <level>LLL</level>
     <ids>
         <id value="0x41" name="MODEL_LLL_TILTING_SQUARE_PLATFORM" />
     </ids>
     <collisions>
-        <collision c_name="lll_seg7_collision_inverted_pyramid" address="0x701d510" />
+        <collision c_name="lll_seg7_collision_inverted_pyramid" address="0x0701D510" />
     </collisions>
 </model>

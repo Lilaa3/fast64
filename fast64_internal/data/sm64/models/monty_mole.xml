@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Monty Mole">
-    <geolayout address="0xc000000" />
+    <geolayout address="0x0C000000" />
     <group>group6</group>
     <ids>
         <id value="0x55" name="MODEL_MONTY_MOLE" />

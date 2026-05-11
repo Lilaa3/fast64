@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bitfs Stretching Platforms">
-    <geolayout address="0xe000708" />
+    <geolayout address="0x0E000708" />
     <level>BITFS</level>
     <ids>
-        <id value="0x3c" name="MODEL_BITFS_STRETCHING_PLATFORMS" />
+        <id value="0x3C" name="MODEL_BITFS_STRETCHING_PLATFORMS" />
     </ids>
     <collisions>
-        <collision c_name="bitfs_seg7_collision_squishable_platform" address="0x701530c" />
+        <collision c_name="bitfs_seg7_collision_squishable_platform" address="0x0701530C" />
     </collisions>
 </model>

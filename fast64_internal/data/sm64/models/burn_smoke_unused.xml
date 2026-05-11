@@ -3,6 +3,6 @@
     <geolayout address="0x17000084" />
     <group>group0</group>
     <ids>
-        <id value="0x9c" name="MODEL_BURN_SMOKE_UNUSED" />
+        <id value="0x9C" name="MODEL_BURN_SMOKE_UNUSED" />
     </ids>
 </model>

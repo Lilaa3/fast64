@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Fwoosh">
-    <geolayout address="0xc00036c" />
+    <geolayout address="0x0C00036C" />
     <group>group6</group>
     <ids>
         <id value="0x57" name="MODEL_FWOOSH" />

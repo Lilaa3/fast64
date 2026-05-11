@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13001f90" readable_name="Tox Box">
+<behavior address="0x13001F90" readable_name="Tox Box">
     <comment>TODO. For hacker, a path would make more sense</comment>
     <tags>
         <tag>ENVIRONMENTAL</tag>
@@ -8,11 +8,11 @@
         <tag>SSL</tag>
     </tags>
     <fields>
-        <field name="Movement Pattern" type="int" bparam="2" default="0">
+        <field name="Movement Pattern" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="Pattern 1" />
-                <enum value="1" name="Pattern 2" />
-                <enum value="2" name="Pattern 3" />
+                <enum name="Pattern 1" value="0" />
+                <enum name="Pattern 2" value="1" />
+                <enum name="Pattern 3" value="2" />
             </enums>
         </field>
     </fields>

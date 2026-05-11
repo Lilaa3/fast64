@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130023d0" readable_name="JRB Afloat Ship">
+<behavior address="0x130023D0" readable_name="JRB Afloat Ship">
     <description>A part of the JRB Afloating ship act 2 and onwards.</description>
     <tags>
         <tag>JRB</tag>

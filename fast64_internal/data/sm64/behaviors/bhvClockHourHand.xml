@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13001c8c" readable_name="Clock Hour Hand">
+<behavior address="0x13001C8C" readable_name="Clock Hour Hand">
     <tags>
         <tag>ENVIRONMENTAL</tag>
         <tag>CASTLE</tag>

@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Spiny Egg">
-    <geolayout address="0xc000290" />
+    <geolayout address="0x0C000290" />
     <group>group11</group>
     <ids>
         <id value="0x55" name="MODEL_SPINY_BALL" />

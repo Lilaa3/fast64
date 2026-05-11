@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wf Tower Door">
-    <geolayout address="0xe000be0" />
+    <geolayout address="0x0E000BE0" />
     <level>WF</level>
     <ids>
         <id value="0x39" name="MODEL_WF_TOWER_DOOR" />
     </ids>
     <collisions>
-        <collision c_name="wf_seg7_collision_tower_door" address="0x700fd00" />
+        <collision c_name="wf_seg7_collision_tower_door" address="0x0700FD00" />
     </collisions>
 </model>

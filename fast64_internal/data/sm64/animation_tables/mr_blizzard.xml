@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x500d118" readable_name="Mr. Blizzard">
+<animation_table address="0x0500D118" readable_name="Mr. Blizzard">
     <names>
         <name>Spawn Snowball</name>
         <name>Throw Snowball</name>

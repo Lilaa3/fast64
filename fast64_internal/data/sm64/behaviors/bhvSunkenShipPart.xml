@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x1300241c" readable_name="JRB Unused Floating Ship">
+<behavior address="0x1300241C" readable_name="JRB Unused Floating Ship">
     <description>The infamous unused floating ship, can be shown up by removing cur_obj_disable_rendering in it's loop.</description>
     <tags>
         <tag>UNUSED</tag>

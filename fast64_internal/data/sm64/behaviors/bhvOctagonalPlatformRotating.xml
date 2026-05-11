@@ -1,23 +1,23 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13004e78" readable_name="Rotating Octagonal Platform">
+<behavior address="0x13004E78" readable_name="Rotating Octagonal Platform">
     <tags>
         <tag>PLATAFORM</tag>
         <tag>ENVIRONMENTAL</tag>
         <tag>SURFACE</tag>
     </tags>
     <fields>
-        <field name="Rotation Speed" type="int" bparam="1" default="0">
+        <field name="Rotation Speed" type="int" bparam="1" default="0x0">
             <enums>
-                <enum value="0" name="300" c_name="300" />
-                <enum value="1" name="-300" c_name="-300" />
-                <enum value="2" name="600" c_name="600" />
-                <enum value="3" name="-600" c_name="-600" />
+                <enum name="300" value="0" c_name="300" />
+                <enum name="-300" value="1" c_name="-300" />
+                <enum name="600" value="2" c_name="600" />
+                <enum name="-600" value="3" c_name="-600" />
             </enums>
         </field>
-        <field name="Collision Model" type="int" bparam="2" default="0">
+        <field name="Collision Model" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="BITS" />
-                <enum value="1" name="RR" />
+                <enum name="BITS" value="0" />
+                <enum name="RR" value="1" />
             </enums>
         </field>
     </fields>

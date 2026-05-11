@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Jrb Falling Pillar">
-    <geolayout address="0xe000900" />
+    <geolayout address="0x0E000900" />
     <level>JRB</level>
     <ids>
-        <id value="0x3d" name="MODEL_JRB_FALLING_PILLAR" />
+        <id value="0x3D" name="MODEL_JRB_FALLING_PILLAR" />
     </ids>
 </model>

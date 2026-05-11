@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13000a54" readable_name="Vertical Star Particle Spawner">
+<behavior address="0x13000A54" readable_name="Vertical Star Particle Spawner">
     <description>Generates 7 tiny star particles.</description>
     <particle>PARTICLE_VERTICAL_STAR</particle>
     <tags>

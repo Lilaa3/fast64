@@ -6,7 +6,7 @@
         <tag>RR</tag>
     </tags>
     <fields>
-        <field name="Platform Index" type="int" bparam="2" default="0" />
+        <field name="Platform Index" type="int" bparam="2" default="0x0" />
     </fields>
     <models>
         <model>rr_donut_platform</model>

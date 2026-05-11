@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bits Octagonal Platform">
-    <geolayout address="0xe000610" />
+    <geolayout address="0x0E000610" />
     <level>BITS</level>
     <ids>
         <id value="0x39" name="MODEL_BITS_OCTAGONAL_PLATFORM" />

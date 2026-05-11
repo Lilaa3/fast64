@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x301c2b0" readable_name="Blue Fish">
+<animation_table address="0x0301C2B0" readable_name="Blue Fish">
     <names>
         <name>Swimming</name>
         <name>Diving</name>

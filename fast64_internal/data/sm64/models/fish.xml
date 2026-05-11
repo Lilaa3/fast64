@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Fish">
-    <geolayout address="0x16000c44" />
+    <geolayout address="0x16000C44" />
     <group>common1</group>
     <ids>
-        <id value="0xb9" name="MODEL_FISH" />
+        <id value="0xB9" name="MODEL_FISH" />
     </ids>
     <animation_tables>
         <table>blue_fish</table>

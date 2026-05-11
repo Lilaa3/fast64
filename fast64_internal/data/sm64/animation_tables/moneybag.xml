@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x6005e5c" readable_name="Moneybag">
+<animation_table address="0x06005E5C" readable_name="Moneybag">
     <names>
         <name>Idle</name>
         <name>Prepare</name>

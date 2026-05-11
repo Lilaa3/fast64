@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bowser Impact Smoke">
-    <geolayout address="0xd000bfc" />
+    <geolayout address="0x0D000BFC" />
     <group>group12</group>
     <ids>
         <id value="0x66" name="MODEL_BOWSER_SMOKE" />

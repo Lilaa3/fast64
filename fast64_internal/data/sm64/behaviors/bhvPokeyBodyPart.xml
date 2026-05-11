@@ -6,7 +6,7 @@
         <tag>SUB_OBJECT</tag>
     </tags>
     <fields>
-        <field name="Part Index" type="int" bparam="2" max="5" default="0">
+        <field name="Part Index" type="int" bparam="2" default="0x0" max="5">
             <description>Index of the body part, with 0 being the head.</description>
         </field>
     </fields>

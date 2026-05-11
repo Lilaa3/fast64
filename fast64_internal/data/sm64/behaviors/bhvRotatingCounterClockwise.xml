@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130006d8" readable_name="Rotating Counter-Clockwise">
+<behavior address="0x130006D8" readable_name="Rotating Counter-Clockwise">
     <comment>Where did decomp get that name?</comment>
     <tags>
         <tag>UNUSED</tag>

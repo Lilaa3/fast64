@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130044e0" readable_name="Treasure Chest Top">
+<behavior address="0x130044E0" readable_name="Treasure Chest Top">
     <description>The lid of a treasure chest. It animates opening and closing based on the state of its parent (the chest bottom). When opening, it spawns an orange number corresponding to the chest's open order.</description>
     <tags>
         <tag>CHEST</tag>

@@ -6,11 +6,11 @@
         <tag>PUZZLE</tag>
     </tags>
     <fields>
-        <field name="Switch Mode" type="int" bparam="2" default="0">
+        <field name="Switch Mode" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="No Tick" c_name="PURPLE_SWITCH_BP_NO_TICK" />
-                <enum value="1" name="Fast" c_name="PURPLE_SWITCH_BP_ANIMATES" />
-                <enum value="2" name="Slow" c_name="PURPLE_SWITCH_BP_REVEAL_HIDDEN" />
+                <enum name="No Tick" value="0" c_name="PURPLE_SWITCH_BP_NO_TICK" />
+                <enum name="Fast" value="1" c_name="PURPLE_SWITCH_BP_ANIMATES" />
+                <enum name="Slow" value="2" c_name="PURPLE_SWITCH_BP_REVEAL_HIDDEN" />
             </enums>
         </field>
     </fields>

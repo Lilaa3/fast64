@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13002b5c" readable_name="Scuttlebug">
+<behavior address="0x13002B5C" readable_name="Scuttlebug">
     <tags>
         <tag>ENEMY</tag>
     </tags>

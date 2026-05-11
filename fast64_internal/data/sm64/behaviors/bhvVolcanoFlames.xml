@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13001e4c" readable_name="Volcano Flames">
+<behavior address="0x13001E4C" readable_name="Volcano Flames">
     <description>Spawned by bhvLllRotatingHexagonalRing</description>
     <tags>
         <tag>PARTICLE</tag>

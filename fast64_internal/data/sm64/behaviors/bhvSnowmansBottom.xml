@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13003ce4" readable_name="Snowman's Bottom">
+<behavior address="0x13003CE4" readable_name="Snowman's Bottom">
     <description>The bottom part of the snowman. When Mario interacts with it, it rolls towards the snowman's head (ccm_seg7_trajectory_snowman).</description>
     <tags>
         <tag>NPC</tag>

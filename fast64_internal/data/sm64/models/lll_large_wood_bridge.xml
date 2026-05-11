@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Lll Large Wood Bridge">
-    <geolayout address="0xe000b68" />
+    <geolayout address="0x0E000B68" />
     <level>LLL</level>
     <ids>
-        <id value="0x3b" name="MODEL_LLL_LARGE_WOOD_BRIDGE" />
+        <id value="0x3B" name="MODEL_LLL_LARGE_WOOD_BRIDGE" />
     </ids>
 </model>

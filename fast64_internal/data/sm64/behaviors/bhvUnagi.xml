@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13004f40" readable_name="Unagi">
+<behavior address="0x13004F40" readable_name="Unagi">
     <description>Follows predefined paths.</description>
     <comment>Behavior param 2 gets dupped to param 1 for no reason?</comment>
     <tags>
@@ -7,11 +7,11 @@
         <tag>JRB</tag>
     </tags>
     <fields>
-        <field name="Type" type="int" bparam="2" default="0">
+        <field name="Type" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="Ship" c_name="UNAGI_BP_IN_SHIP" />
-                <enum value="1" name="Cave" c_name="UNAGI_BP_IN_CAVE" />
-                <enum value="2" name="Start Swimming" c_name="UNAGI_BP_START_SWIMMING" />
+                <enum name="Ship" value="0" c_name="UNAGI_BP_IN_SHIP" />
+                <enum name="Cave" value="1" c_name="UNAGI_BP_IN_CAVE" />
+                <enum name="Start Swimming" value="2" c_name="UNAGI_BP_START_SWIMMING" />
             </enums>
         </field>
     </fields>

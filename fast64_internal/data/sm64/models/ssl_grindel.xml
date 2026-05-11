@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ssl Grindel">
-    <geolayout address="0xe000734" />
+    <geolayout address="0x0E000734" />
     <level>SSL</level>
     <ids>
         <id value="0x36" name="MODEL_SSL_GRINDEL" />
     </ids>
     <collisions>
-        <collision c_name="ssl_seg7_collision_grindel" address="0x7027ed0" />
+        <collision c_name="ssl_seg7_collision_grindel" address="0x07027ED0" />
     </collisions>
 </model>

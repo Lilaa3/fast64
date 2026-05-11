@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Blue Coin Switch">
-    <geolayout address="0xf000000" />
+    <geolayout address="0x0F000000" />
     <group>common0</group>
     <ids>
-        <id value="0x8c" name="MODEL_BLUE_COIN_SWITCH" />
+        <id value="0x8C" name="MODEL_BLUE_COIN_SWITCH" />
     </ids>
     <collisions>
-        <collision c_name="blue_coin_switch_seg8_collision_08000E98" address="0x8000E98" />
+        <collision c_name="blue_coin_switch_seg8_collision_08000E98" address="0x08000E98" />
     </collisions>
 </model>

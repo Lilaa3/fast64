@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13004d28" readable_name="TTC Elevator">
+<behavior address="0x13004D28" readable_name="TTC Elevator">
     <description>An elevator in TTC that moves up and down. The peak height is determined by its parameters.</description>
     <tags>
         <tag>PLATFORM</tag>
         <tag>TTC</tag>
     </tags>
     <fields>
-        <field name="Peak Offset Multiplier" type="units" bparam="23" multiplier="100" default="4">
+        <field name="Peak Offset Multiplier" type="units" bparam="23" default="0x4" multiplier="100">
             <description>If 0, defaults to 500.0f.</description>
         </field>
     </fields>

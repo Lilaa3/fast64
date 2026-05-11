@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130053dc" readable_name="Penguin Race Shortcut Check">
+<behavior address="0x130053DC" readable_name="Penguin Race Shortcut Check">
     <description>Gets parented to the race penguin. An invisible trigger that detects if Mario has taken a shortcut during the penguin race, setting its parent to oRacingPenguinMarioCheated, marking him as a CHEATER. </description>
     <tags>
         <tag>ENVIRONMENTAL</tag>
         <tag>INTERACTIVE</tag>
         <tag>CCM</tag>
         <tag>SUB_OBJECT</tag>
-     </tags>
+    </tags>
 </behavior>

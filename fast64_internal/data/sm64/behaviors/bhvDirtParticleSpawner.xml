@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13000e3c" readable_name="Dirt Particle Spawner">
+<behavior address="0x13000E3C" readable_name="Dirt Particle Spawner">
     <particle>ACTIVE_PARTICLE_DIRT</particle>
     <tags>
         <tag>SPAWNER</tag>

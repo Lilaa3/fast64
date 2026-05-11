@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Castle Inside Castle Clock Pendulum">
-    <geolayout address="0xe001518" />
+    <geolayout address="0x0E001518" />
     <level>CASTLE_INSIDE</level>
     <ids>
         <id value="0x39" name="MODEL_CASTLE_CLOCK_PENDULUM" />

@@ -3,11 +3,11 @@
     <description>A warp object that transports Mario to another location. The trigger radius for the warp is determined by its first behavior parameter.</description>
     <tags>
         <tag>WARP</tag>
-        <tag>SPAWN_WARP</tag> 
+        <tag>SPAWN_WARP</tag>
     </tags>
     <fields>
-        <field name="Warp ID" type="int" bparam="2" default="0" />
-        <field name="Warp Radius" type="units" bparam="1" default="0x0B" multiplier="10">
+        <field name="Warp ID" type="int" bparam="2" default="0x0" />
+        <field name="Warp Radius" type="units" bparam="1" default="0xB" multiplier="10">
             <description>0 defaults to 85. Above 2550 is set to 10000.</description>
         </field>
     </fields>

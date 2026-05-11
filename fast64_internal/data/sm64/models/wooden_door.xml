@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wooden Door">
-    <geolayout address="0x160004d0" />
+    <geolayout address="0x160004D0" />
     <group>common1</group>
     <ids>
         <id value="0x27" name="MODEL_COURTYARD_WOODEN_DOOR" level="common1" />

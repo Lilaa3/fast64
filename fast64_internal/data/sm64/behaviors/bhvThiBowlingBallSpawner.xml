@@ -1,19 +1,19 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13003ac8" readable_name="THI Bowling Ball Spawner">
-    <comment>Only passes oBehParams2ndByte to children.</comment>
+<behavior address="0x13003AC8" readable_name="THI Bowling Ball Spawner">
     <description>Passes its second bparam to the spawned balls.</description>
+    <comment>Only passes oBehParams2ndByte to children.</comment>
     <tags>
         <tag>SPAWNER</tag>
         <tag>THI</tag>
     </tags>
     <fields>
-        <field name="Type" type="int" bparam="2" default="3">
+        <field name="Type" type="int" bparam="2" default="0x3">
             <enums>
-                <enum value="3" name="THI Large" c_name="BBALL_BP_STYPE_THI_LARGE" />
-                <enum value="4" name="THI Small" c_name="BBALL_BP_STYPE_THI_SMALL" />
-                <enum value="0" name="BOB Upper" c_name="BBALL_BP_STYPE_BOB_UPPER" />
-                <enum value="1" name="TTM" c_name="BBALL_BP_STYPE_TTM" />
-                <enum value="2" name="BOB Lower" c_name="BBALL_BP_STYPE_BOB_LOWER" />
+                <enum name="THI Large" value="3" c_name="BBALL_BP_STYPE_THI_LARGE" />
+                <enum name="THI Small" value="4" c_name="BBALL_BP_STYPE_THI_SMALL" />
+                <enum name="BOB Upper" value="0" c_name="BBALL_BP_STYPE_BOB_UPPER" />
+                <enum name="TTM" value="1" c_name="BBALL_BP_STYPE_TTM" />
+                <enum name="BOB Lower" value="2" c_name="BBALL_BP_STYPE_BOB_LOWER" />
             </enums>
         </field>
     </fields>

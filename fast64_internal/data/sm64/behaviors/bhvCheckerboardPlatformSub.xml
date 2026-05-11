@@ -1,14 +1,14 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13001b88" readable_name="Checkerboard Platform Sub">
+<behavior address="0x13001B88" readable_name="Checkerboard Platform Sub">
     <tags>
         <tag>SURFACE</tag>
         <tag>PLATFORM</tag>
     </tags>
     <fields>
-        <field name="Initial Direction" type="int" bparam="2" default="0">
+        <field name="Initial Direction" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="Up" />
-                <enum value="1" name="Down" />
+                <enum name="Up" value="0" />
+                <enum name="Down" value="1" />
             </enums>
         </field>
     </fields>

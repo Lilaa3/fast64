@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130013c4" readable_name="Tree Leaf">
+<behavior address="0x130013C4" readable_name="Tree Leaf">
     <tags>
         <tag>PARTICLE</tag>
         <tag>ENVIRONMENTAL</tag>

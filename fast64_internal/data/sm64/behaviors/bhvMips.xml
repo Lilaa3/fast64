@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130044fc" readable_name="Mips">
+<behavior address="0x130044FC" readable_name="Mips">
     <tags>
         <tag>ENEMY</tag>
         <tag>INTERACTIVE</tag>

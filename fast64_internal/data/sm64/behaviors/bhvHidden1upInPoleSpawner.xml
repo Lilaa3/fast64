@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130041a4" readable_name="Hidden 1-Up Mushroom In Pole Spawner">
+<behavior address="0x130041A4" readable_name="Hidden 1-Up Mushroom In Pole Spawner">
     <description>A spawner that triggers when Mario is within 700 units. It spawns one Hidden 1up In Pole object and two Hidden 1up In Pole Triggers objects at relative offsets.</description>
     <tags>
         <tag>SPAWNER</tag>

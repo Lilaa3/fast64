@@ -6,14 +6,14 @@
         <tag>INTRO</tag>
     </tags>
     <fields>
-        <field name="Type" type="int" bparam="2" default="0">
+        <field name="Type" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="Follow Camera" c_name="CAMERA_LAKITU_BP_FOLLOW_CAMERA">
+                <enum name="Follow Camera" value="0" c_name="CAMERA_LAKITU_BP_FOLLOW_CAMERA">
                     <description>
                         Castle mirror lakitu.
                     </description>
                 </enum>
-                <enum value="1" name="Intro" c_name="CAMERA_LAKITU_BP_INTRO">
+                <enum name="Intro" value="1" c_name="CAMERA_LAKITU_BP_INTRO">
                     <description>
                         Handles the intro cutscene and dialog. Only persists if player hasn't entered the castle.
                     </description>

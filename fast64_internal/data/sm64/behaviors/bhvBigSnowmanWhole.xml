@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13003d4c" readable_name="Big Snowman (Whole)">
+<behavior address="0x13003D4C" readable_name="Big Snowman (Whole)">
     <tags>
         <tag>BOSS</tag>
         <tag>COLD</tag>

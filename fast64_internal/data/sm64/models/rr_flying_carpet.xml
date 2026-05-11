@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Rr Flying Carpet">
-    <geolayout address="0xe000848" />
+    <geolayout address="0x0E000848" />
     <level>RR</level>
     <ids>
         <id value="0x37" name="MODEL_RR_FLYING_CARPET" />

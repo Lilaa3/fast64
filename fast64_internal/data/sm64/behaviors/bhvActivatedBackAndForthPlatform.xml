@@ -1,21 +1,21 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13004ecc" readable_name="Activated Back and Forth Platform">
+<behavior address="0x13004ECC" readable_name="Activated Back and Forth Platform">
     <description>Moving platform that activates when Mario steps on it, moving back and forth.</description>
     <tags>
         <tag>PLATAFORM</tag>
     </tags>
     <fields>
-        <field name="Platform Type" type="int" bparam="1" mask="0x3" default="0">
+        <field name="Platform Type" type="int" bparam="1" default="0x0">
             <enums>
-                <enum value="0" name="BitS Arrow Platform" c_name="ACTIVATED_BF_PLAT_TYPE_BITS_ARROW_PLAT" />
-                <enum value="1" name="BitFS Mesh Platform" c_name="ACTIVATED_BF_PLAT_TYPE_BITFS_MESH_PLAT" />
-                <enum value="2" name="BitFS Elevator" c_name="ACTIVATED_BF_PLAT_TYPE_BITFS_ELEVATOR" />
+                <enum name="BitS Arrow Platform" value="0" c_name="ACTIVATED_BF_PLAT_TYPE_BITS_ARROW_PLAT" />
+                <enum name="BitFS Mesh Platform" value="1" c_name="ACTIVATED_BF_PLAT_TYPE_BITFS_MESH_PLAT" />
+                <enum name="BitFS Elevator" value="2" c_name="ACTIVATED_BF_PLAT_TYPE_BITFS_ELEVATOR" />
             </enums>
         </field>
-        <field name="Distance" type="int" bparam="2" mask="0x7F" default="0" multiplier="50">
+        <field name="Distance" type="int" bparam="2" default="0x0" multiplier="50" mask="0x7F">
             <description>Max distance the platform moves before reversing.</description>
         </field>
-        <field name="Vertical" type="bool" bparam="2" shift="7" default="0">
+        <field name="Vertical" type="bool" bparam="2" default="FALSE" shift="7">
             <description>If set, platform moves vertically instead of horizontally.</description>
         </field>
     </fields>

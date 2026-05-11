@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13003fa4" readable_name="LLL Rolling Log">
+<behavior address="0x13003FA4" readable_name="LLL Rolling Log">
     <description>Hardcoded position to x 5120 z 6016.</description>
     <tags>
         <tag>INTERACTIVE</tag>

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13001c34" readable_name="DDD Warp">
+<behavior address="0x13001C34" readable_name="DDD Warp">
     <description>Warp object that switches its collision model based on whether Bowser's sub has been beaten.</description>
     <tags>
         <tag>WARP</tag>

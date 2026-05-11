@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Hmc Rock Small Piece">
-    <geolayout address="0xe000588" />
+    <geolayout address="0x0E000588" />
     <level>HMC</level>
     <ids>
-        <id value="0x3b" name="MODEL_HMC_ROCK_SMALL_PIECE" />
+        <id value="0x3B" name="MODEL_HMC_ROCK_SMALL_PIECE" />
     </ids>
 </model>

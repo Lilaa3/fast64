@@ -2,7 +2,7 @@ import traceback
 import xml.etree.ElementTree as ET
 import logging
 from pathlib import Path
-from typing import Union, Optional
+from typing import Union, Optional, NamedTuple
 
 from ..sm64_utility import int_from_str
 from ...utility import filepath_checks
@@ -107,7 +107,7 @@ def _parse_collision(element: ET.Element, base_name: str, more_than_one: bool):
     elif base_name and not more_than_one:
         logger.warning("Not recommended to include per collision name when there is only one collision model.")
 
-    return Collision(AddressOrCName(name, address), readable_name)
+    return Collision(AddressOrCName(address, name), readable_name)
 
 
 def _parse_animation_table(root: ET.Element, file_name: str) -> AnimationTable:
@@ -204,10 +204,10 @@ def _parse_field_enum(element: ET.Element, is_bool: bool) -> BehaviorFieldEnum:
         value = None
     else:
         name = _get_attr(element, "name")
-        description = _get_text(element, "description", required=False)
+        description = _get_text(element, "description", required=False) or ""
         value = _get_attr(element, "value", convert_int=True)
     c_name = _get_attr(element, "c_name", required=False)
-    return BehaviorFieldEnum(name=name, description=description, value=value, c_name=c_name)
+    return BehaviorFieldEnum(name, description, value, c_name)
 
 
 def _parse_field(root: ET.Element) -> BehaviorField:
@@ -218,7 +218,7 @@ def _parse_field(root: ET.Element) -> BehaviorField:
 
     name = _get_attr(root, "name")
     field_type = _get_attr(root, "type")
-    description = _get_text(root, "description", required=False)
+    description = _get_text(root, "description", required=False) or ""
     shift = _get_attr(root, "shift", convert_int=True, required=False) or 0
     multiplier = _get_attr(root, "multiplier", convert_int=True, convert_float=True, required=False) or 1
     offset = _get_attr(root, "offset", convert_int=True, convert_float=True, required=False) or 0
@@ -286,7 +286,7 @@ def _parse_behavior_wrapped(root: ET.Element, name_or_address: str | int, file_n
 
     description = _get_text(root, "description") or ""
     readable_name = _get_attr(root, "readable_name")
-    comment = _get_text(root, "comment")
+    comment = _get_text(root, "comment") or ""
     particle = _get_text(root, "particle")
 
     tags = _get_list(root, "tags", "tag")
@@ -316,7 +316,9 @@ def _parse_behavior_wrapped(root: ET.Element, name_or_address: str | int, file_n
             except Exception as exc:
                 raise ParseError(f"Error while parsing <collision>:\n{exc}") from exc
 
-    return Behavior(file_name, name_or_address, readable_name, description, comment, tags, models, collisions, fields)
+    return Behavior(
+        file_name, name_or_address, readable_name, description, comment, particle, tags, models, collisions, fields
+    )
 
 
 def _parse_behavior(root: ET.Element, file_name: str) -> Behavior:
@@ -354,8 +356,8 @@ def _parse_model_wrapped(root: ET.Element, file_name: str):
     )
 
     readable_name = _get_attr(root, "readable_name")
-    description = _get_text(root, "description")
-    comment = _get_text(root, "comment")
+    description = _get_text(root, "description") or ""
+    comment = _get_text(root, "comment") or ""
 
     geolayout_elem = root.find("geolayout")
     if geolayout_elem is not None:
@@ -364,7 +366,7 @@ def _parse_model_wrapped(root: ET.Element, file_name: str):
         geolayout_name = _get_attr(geolayout_elem, "name", required=False)
         if geolayout_name is None and geolayout_address is None:
             raise ParseError('Must specify either "name" or "address"')
-        geolayout = AddressOrCName(geolayout_name, geolayout_address)
+        geolayout = AddressOrCName(geolayout_address, geolayout_name)
     else:
         geolayout = None
 
@@ -375,7 +377,7 @@ def _parse_model_wrapped(root: ET.Element, file_name: str):
         displaylist_name = _get_attr(displaylist_elem, "name", required=False)
         if displaylist_name is None and displaylist_address is None:
             raise ParseError('Must specify either "name" or "address"')
-        displaylist = AddressOrCName(displaylist_name, displaylist_address)
+        displaylist = AddressOrCName(displaylist_address, displaylist_name)
     else:
         displaylist = None
 
@@ -429,7 +431,9 @@ def _parse_model_wrapped(root: ET.Element, file_name: str):
             except Exception as exc:
                 raise ParseError(f"Error while parsing <collision>:\n{exc}") from exc
 
-    return Model(file_name, readable_name, description, comment, geolayout, group, ids, tables, collisions)
+    return Model(
+        file_name, readable_name, description, comment, geolayout, displaylist, group, level, ids, tables, collisions
+    )
 
 
 def _parse_model(root: ET.Element, file_name: str):
@@ -498,16 +502,20 @@ def validate_cross_references(results: dict[str, list[Behavior | Model | Animati
                 model.real_tables[table_ref] = existing_table_names[table_ref]
 
 
-def parse_all() -> None:
-    base_path = Path("fast64_internal/data/sm64")
+class ParseResult(NamedTuple):
+    models: list[Model]
+    behaviors: list[Behavior]
+    animation_tables: list[AnimationTable]
 
+
+def parse_all(path: Path):
     results = {"models": [], "behaviors": [], "animation_tables": []}
 
     success_count = 0
     error_count = 0
 
     for folder_name in results.keys():
-        folder_path = base_path / folder_name
+        folder_path = path / folder_name
 
         if not folder_path.exists():
             logger.warning(f"Directory not found: {folder_path}")
@@ -534,3 +542,4 @@ def parse_all() -> None:
 
     validate_cross_references(results)
     logger.info(f"Parsing complete. Success: {success_count}, Errors: {error_count}")
+    return ParseResult(**results)

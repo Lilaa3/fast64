@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130032c8" readable_name="Jet Stream">
+<behavior address="0x130032C8" readable_name="Jet Stream">
     <description>A water jet stream that spawns bubble particles when Mario is nearby and plays a water ambient sound.</description>
     <tags>
         <tag>ENVIRONMENTAL</tag>

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130033ec" readable_name="Hoot">
+<behavior address="0x130033EC" readable_name="Hoot">
     <tags>
         <tag>NPC</tag>
         <tag>FRIENDLY</tag>

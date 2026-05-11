@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ssl Tox Box">
-    <geolayout address="0xe000630" />
+    <geolayout address="0x0E000630" />
     <level>SSL</level>
     <ids>
-        <id value="0xc7" name="MODEL_SSL_TOX_BOX" />
+        <id value="0xC7" name="MODEL_SSL_TOX_BOX" />
     </ids>
     <collisions>
-        <collision c_name="ssl_seg7_collision_tox_box" address="0x7012644" />
+        <collision c_name="ssl_seg7_collision_tox_box" address="0x07012644" />
     </collisions>
 </model>

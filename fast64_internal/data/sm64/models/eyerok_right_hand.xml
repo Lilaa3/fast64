@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Eyerok Right Hand">
-    <geolayout address="0xc0005e4" />
+    <geolayout address="0x0C0005E4" />
     <group>group5</group>
     <ids>
         <id value="0x59" name="MODEL_EYEROK_RIGHT_HAND" />

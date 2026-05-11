@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Whomp">
-    <geolayout address="0xd000480" />
+    <geolayout address="0x0D000480" />
     <group>group14</group>
     <ids>
         <id value="0x67" name="MODEL_WHOMP" />

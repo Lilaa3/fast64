@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130021e4" readable_name="Bub Spawner">
+<behavior address="0x130021E4" readable_name="Bub Spawner">
     <comment>Chip Chip in decomp??? Fire whoever did that. Hacker uses bhvBubSpawner</comment>
     <tags>
         <tag>SPAWNER</tag>

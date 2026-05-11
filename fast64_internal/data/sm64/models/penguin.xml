@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Penguin">
-    <geolayout address="0xc000104" />
+    <geolayout address="0x0C000104" />
     <group>group7</group>
     <ids>
         <id value="0x57" name="MODEL_PENGUIN" />

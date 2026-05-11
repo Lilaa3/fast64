@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bullet Bill">
-    <geolayout address="0xc000264" />
+    <geolayout address="0x0C000264" />
     <group>group1</group>
     <ids>
         <id value="0x54" name="MODEL_BULLET_BILL" />

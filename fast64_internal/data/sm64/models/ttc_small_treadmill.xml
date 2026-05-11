@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ttc Small Treadmill">
-    <geolayout address="0xe0002a8" />
+    <geolayout address="0x0E0002A8" />
     <level>TTC</level>
     <ids>
-        <id value="0x3a" name="MODEL_TTC_SMALL_TREADMILL" />
+        <id value="0x3A" name="MODEL_TTC_SMALL_TREADMILL" />
     </ids>
     <collisions>
         <collision c_name="ttc_seg7_collision_070153E0" address="0x070153E0" />

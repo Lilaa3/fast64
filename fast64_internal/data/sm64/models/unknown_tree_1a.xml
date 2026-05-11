@@ -1,6 +1,6 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Unknown Tree 1a">
     <ids>
-        <id value="0x1a" name="MODEL_UNKNOWN_TREE_1A"/>
+        <id value="0x1A" name="MODEL_UNKNOWN_TREE_1A" />
     </ids>
 </model>

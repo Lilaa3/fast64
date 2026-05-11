@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x1300246c" readable_name="Sunken Ship">
+<behavior address="0x1300246C" readable_name="Sunken Ship">
     <description>JRB sunken ship (excluding the aftcastle) act 1's collision.</description>
     <tags>
         <tag>SURFACE</tag>

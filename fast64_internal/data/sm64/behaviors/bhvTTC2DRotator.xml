@@ -1,15 +1,15 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13004d64" readable_name="TTC 2D Rotator">
+<behavior address="0x13004D64" readable_name="TTC 2D Rotator">
     <description>A 2D rotating object used in TTC and it's entrance in the castle, such as clock hands or cogs.</description>
     <tags>
         <tag>ENVIRONMENTAL</tag>
         <tag>TTC</tag>
     </tags>
     <fields>
-        <field name="Type" type="int" bparam="2" default="0">
+        <field name="Type" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="Hand" c_name="TTC_2D_ROTATOR_BP_HAND" />
-                <enum value="1" name="Cog" c_name="TTC_2D_ROTATOR_BP_COG" />
+                <enum name="Hand" value="0" c_name="TTC_2D_ROTATOR_BP_HAND" />
+                <enum name="Cog" value="1" c_name="TTC_2D_ROTATOR_BP_COG" />
             </enums>
         </field>
     </fields>

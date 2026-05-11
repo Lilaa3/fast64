@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x1300029c" readable_name="Beta Chest Lid">
+<behavior address="0x1300029C" readable_name="Beta Chest Lid">
     <description>A beta treasure chest lid.</description>
     <tags>
         <tag>UNUSED</tag>

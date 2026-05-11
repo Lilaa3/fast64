@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13004ab0" readable_name="Platform On Track">
+<behavior address="0x13004AB0" readable_name="Platform On Track">
     <description>A platform that moves along a predefined set of waypoints. It can behave as a ski lift, a carpet, or a standard platform.</description>
     <tags>
         <tag>PLATAFORM</tag>
@@ -7,16 +7,16 @@
         <tag>SURFACE</tag>
     </tags>
     <fields>
-        <field name="Spawn Balls" type="bool" bparam="2" shift="7" default="False" />
-        <field name="Type" type="int" bparam="12" shift="4" mask="0x70">
+        <field name="Spawn Balls" type="bool" bparam="2" default="FALSE" shift="7" />
+        <field name="Type" type="int" bparam="12" shift="4">
             <enums>
-                <enum name="Carpet" c_name="PLATFORM_ON_TRACK_TYPE_CARPET" value="0" />
-                <enum name="Ski Lift" c_name="PLATFORM_ON_TRACK_TYPE_SKI_LIFT" value="1" />
-                <enum name="Checkerboard" c_name="PLATFORM_ON_TRACK_TYPE_CHECKERED" value="2" />
-                <enum name="Grate" c_name="PLATFORM_ON_TRACK_TYPE_GRATE" value="3" />
+                <enum name="Carpet" value="0" c_name="PLATFORM_ON_TRACK_TYPE_CARPET" />
+                <enum name="Ski Lift" value="1" c_name="PLATFORM_ON_TRACK_TYPE_SKI_LIFT" />
+                <enum name="Checkerboard" value="2" c_name="PLATFORM_ON_TRACK_TYPE_CHECKERED" />
+                <enum name="Grate" value="3" c_name="PLATFORM_ON_TRACK_TYPE_GRATE" />
             </enums>
         </field>
-        <field name="Path" type="int" bparam="12" mask="0x0F">
+        <field name="Path" type="int" bparam="12">
             <enums>
                 <enum name="RR 0x702EC3C" value="0" />
                 <enum name="RR 0x702ECC0" value="1" />

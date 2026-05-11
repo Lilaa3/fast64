@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wf Kickable Board">
-    <geolayout address="0xe000ba8" />
+    <geolayout address="0x0E000BA8" />
     <level>WF</level>
     <ids>
         <id value="0x38" name="MODEL_WF_KICKABLE_BOARD" />
     </ids>
     <collisions>
-        <collision c_name="wf_seg7_collision_kickable_board" address="0x700fc7c" />
+        <collision c_name="wf_seg7_collision_kickable_board" address="0x0700FC7C" />
     </collisions>
 </model>

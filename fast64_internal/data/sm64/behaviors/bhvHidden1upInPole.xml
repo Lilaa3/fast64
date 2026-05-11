@@ -5,7 +5,7 @@
         <tag>COLLECTABLE</tag>
     </tags>
     <fields>
-        <field name="Trigger Count" type="int" bparam="2" default="0" />
+        <field name="Trigger Count" type="int" bparam="2" default="0x0" />
     </fields>
     <models>
         <model>mushroom_1up</model>

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130026d4" readable_name="Castle Boo">
+<behavior address="0x130026D4" readable_name="Castle Boo">
     <description>A Boo that appears in the castle.</description>
     <tags>
         <tag>ENEMY</tag>

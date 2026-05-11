@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Rr Donut Platform">
-    <geolayout address="0xe000920" />
+    <geolayout address="0x0E000920" />
     <level>RR</level>
     <ids>
-        <id value="0x3f" name="MODEL_RR_DONUT_PLATFORM" />
+        <id value="0x3F" name="MODEL_RR_DONUT_PLATFORM" />
     </ids>
     <collisions>
-        <collision c_name="rr_seg7_collision_donut_platform" address="0x70297d4" />
+        <collision c_name="rr_seg7_collision_donut_platform" address="0x070297D4" />
     </collisions>
 </model>

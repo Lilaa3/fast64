@@ -3,7 +3,7 @@
     <geolayout address="0x16000720" />
     <group>common1</group>
     <ids>
-        <id value="0x1d" name="MODEL_BBH_HAUNTED_DOOR" level="common1" />
+        <id value="0x1D" name="MODEL_BBH_HAUNTED_DOOR" level="common1" />
     </ids>
     <animation_tables>
         <table>door</table>

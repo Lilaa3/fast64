@@ -1,14 +1,14 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13004ea0" readable_name="Animated Floor Switch Press">
-    <comment>The object finds the nearest bhvFloorSwitchAnimatesObject to use as its parent.</comment>
+<behavior address="0x13004EA0" readable_name="Animated Floor Switch Press">
     <description>Animated geometry that responds to floor switch activation. Linked to parent switch object. Uses the animation index to select timers and animation frames.</description>
+    <comment>The object finds the nearest bhvFloorSwitchAnimatesObject to use as its parent.</comment>
     <tags>
         <tag>SURFACE</tag>
         <tag>INTERACTIVE</tag>
         <tag>ENVIRONMENTAL</tag>
     </tags>
     <fields>
-        <field name="Animation Index" type="int" bparam="2" default="0">
+        <field name="Animation Index" type="int" bparam="2" default="0x0">
             <enums>
                 <enum name="BITS" value="0" />
                 <enum name="BITDW" value="1" />
@@ -16,7 +16,7 @@
             </enums>
         </field>
     </fields>
-    <models automatically_set="true">
+    <models>
         <model>bitdw_staircase</model>
         <model>bits_staircase</model>
         <model>rr_tricky_triangles</model>

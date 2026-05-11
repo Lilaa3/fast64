@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13002aa4" readable_name="Tree">
+<behavior address="0x13002AA4" readable_name="Tree">
     <tags>
         <tag>ENVIRONMENTAL</tag>
         <tag>POLE</tag>

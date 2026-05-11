@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wdw Square Floating Platform">
-    <geolayout address="0xe000580" />
+    <geolayout address="0x0E000580" />
     <level>WDW</level>
     <ids>
         <id value="0x36" name="MODEL_WDW_SQUARE_FLOATING_PLATFORM" />
     </ids>
     <collisions>
-        <collision c_name="wdw_seg7_collision_square_floating_platform" address="0x70183c0" />
+        <collision c_name="wdw_seg7_collision_square_floating_platform" address="0x070183C0" />
     </collisions>
 </model>

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x1300220c" readable_name="Bub">
+<behavior address="0x1300220C" readable_name="Bub">
     <tags>
         <tag>ENEMY</tag>
         <tag>FISH</tag>

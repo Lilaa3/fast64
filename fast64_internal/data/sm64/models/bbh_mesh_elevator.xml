@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bbh Mesh Elevator">
-    <geolayout address="0xe000628" />
+    <geolayout address="0x0E000628" />
     <level>BBH</level>
     <ids>
-        <id value="0x3a" name="MODEL_BBH_MESH_ELEVATOR" />
+        <id value="0x3A" name="MODEL_BBH_MESH_ELEVATOR" />
     </ids>
     <collisions>
-        <collision c_name="bbh_seg7_collision_mesh_elevator" address="0x7026b94" />
+        <collision c_name="bbh_seg7_collision_mesh_elevator" address="0x07026B94" />
     </collisions>
 </model>

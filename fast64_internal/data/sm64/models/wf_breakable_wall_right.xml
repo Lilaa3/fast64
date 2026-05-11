@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wf Breakable Wall Right">
-    <geolayout address="0xe000b78" />
+    <geolayout address="0x0E000B78" />
     <level>WF</level>
     <ids>
         <id value="0x36" name="MODEL_WF_BREAKABLE_WALL_RIGHT" />

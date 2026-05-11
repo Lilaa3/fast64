@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13004af4" readable_name="Track Ball">
+<behavior address="0x13004AF4" readable_name="Track Ball">
     <description>Balls representing paths, they delete themselves after the elevator passes them.</description>
     <tags>
         <tag>PARTICLE</tag>
     </tags>
     <fields>
-        <field name="Ball Index" type="int" bparam="2" default="0" />
+        <field name="Ball Index" type="int" bparam="2" default="0x0" />
     </fields>
     <models>
         <model>trajectory_marker_ball</model>

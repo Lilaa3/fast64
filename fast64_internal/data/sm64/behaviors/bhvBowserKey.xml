@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130016e4" readable_name="Bowser Key">
+<behavior address="0x130016E4" readable_name="Bowser Key">
     <tags>
         <tag>COLLECTABLE</tag>
         <tag>BOWSER</tag>
     </tags>
     <fields>
-        <field name="Star Index" type="int" bparam="2" default="0">
+        <field name="Star Index" type="int" bparam="2" default="0x0">
             <description>Index of the star. Always 0 for keys</description>
         </field>
     </fields>

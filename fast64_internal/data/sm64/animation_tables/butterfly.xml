@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x30056b0" readable_name="Butterfly" size="2">
+<animation_table address="0x030056B0" readable_name="Butterfly" size="2">
     <names>
         <name>Flying</name>
         <name>Resting</name>

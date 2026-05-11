@@ -3,6 +3,6 @@
     <geolayout address="0x16001048" />
     <group>common1</group>
     <ids>
-        <id value="0x1b" name="MODEL_SSL_PALM_TREE" level="common1" />
+        <id value="0x1B" name="MODEL_SSL_PALM_TREE" level="common1" />
     </ids>
 </model>

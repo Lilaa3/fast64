@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wiggler Body">
-    <geolayout address="0x500c778" />
+    <geolayout address="0x0500C778" />
     <group>group11</group>
     <ids>
         <id value="0x58" name="MODEL_WIGGLER_BODY" />

@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Koopa Shell">
-    <geolayout address="0xf000ab0" />
+    <geolayout address="0x0F000AB0" />
     <group>common0</group>
     <ids>
-        <id value="0xbe" name="MODEL_KOOPA_SHELL" />
+        <id value="0xBE" name="MODEL_KOOPA_SHELL" />
     </ids>
 </model>

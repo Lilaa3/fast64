@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x1300213c" readable_name="Many Blue Fish Spawner">
+<behavior address="0x1300213C" readable_name="Many Blue Fish Spawner">
     <description>A specialized fish spawner that inherits functionality from bhvFishSpawner. Forces Many Blue.</description>
     <tags>
         <tag>SPAWNER</tag>

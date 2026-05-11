@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Chain Ball">
-    <geolayout address="0xd0005d0" />
+    <geolayout address="0x0D0005D0" />
     <group>group14</group>
     <ids>
         <id value="0x65" name="MODEL_METALLIC_BALL" />

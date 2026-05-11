@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003158" readable_name="Seaweed Bundle">
     <description>Spawns 4 seaweeds of varying sizes and rotations.sssssssssssssssssssssss</description>
-    <tags>sss
+    <tags>
         <tag>ENVIRONMENTAL</tag>
         <tag>WATER</tag>
         <tag>SPAWNER</tag>

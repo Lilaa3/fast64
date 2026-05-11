@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x800c070" readable_name="Chuckya">
+<animation_table address="0x0800C070" readable_name="Chuckya">
     <names>
         <name>Grab Mario</name>
         <name>Holding Mario</name>

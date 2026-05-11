@@ -1,19 +1,19 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13000cfc" readable_name="RR Elevator Platform">
+<behavior address="0x13000CFC" readable_name="RR Elevator Platform">
     <tags>
         <tag>RR</tag>
         <tag>PLATFORM</tag>
         <tag>ENVIRONMENTAL</tag>
     </tags>
     <fields>
-        <field name="Height Index" type="int" bparam="2" default="5">
+        <field name="Height Index" type="int" bparam="2" default="0x5">
             <description>Index into the internal elevator heights table to determine movement range.</description>
             <enums>
-                <enum value="0" name="BBH (bhvMeshElevator) and HMC (bhvHmcElevatorPlatform)" />
-                <enum value="1" name="HMC (bhvHmcElevatorPlatform)" />
-                <enum value="2" name="HMC (bhvHmcElevatorPlatform)" />
-                <enum value="3" name="HMC (bhvHmcElevatorPlatform)" />
-                <enum value="5" name="RR" />
+                <enum name="BBH (bhvMeshElevator) and HMC (bhvHmcElevatorPlatform)" value="0" />
+                <enum name="HMC (bhvHmcElevatorPlatform)" value="1" />
+                <enum name="HMC (bhvHmcElevatorPlatform)" value="2" />
+                <enum name="HMC (bhvHmcElevatorPlatform)" value="3" />
+                <enum name="RR" value="5" />
             </enums>
         </field>
     </fields>

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13002d28" readable_name="Object Water Splash">
+<behavior address="0x13002D28" readable_name="Object Water Splash">
     <description>Water splashes similar to the splashes created by water droplets, but are created by other objects.</description>
     <tags>
         <tag>ENVIRONMENTAL</tag>

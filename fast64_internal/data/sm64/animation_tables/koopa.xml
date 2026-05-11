@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x6011364" readable_name="Koopa">
+<animation_table address="0x06011364" readable_name="Koopa">
     <names>
         <name>Falling Over (Unused Shelled Act 3)</name>
         <name>Run Away</name>

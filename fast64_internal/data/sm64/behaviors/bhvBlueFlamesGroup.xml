@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13001a0c" readable_name="Blue Flames Group">
+<behavior address="0x13001A0C" readable_name="Blue Flames Group">
     <description>An object that spawns groups of blue flames.</description>
     <tags>
         <tag>SPAWNER</tag>

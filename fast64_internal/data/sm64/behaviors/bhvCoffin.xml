@@ -7,10 +7,10 @@
         <tag>BBH</tag>
     </tags>
     <fields>
-        <field name="Stationary" type="bool" bparam="2" default="0">
+        <field name="Stationary" type="bool" bparam="2" default="FALSE">
             <enums>
-                <enum value="0" name="Stationary" c_name="COFFIN_BP_STATIONARY" />
-                <enum value="1" name="Active" c_name="COFFIN_BP_MOVING" />
+                <enum c_name="COFFIN_BP_STATIONARY" />
+                <enum c_name="COFFIN_BP_MOVING" />
             </enums>
         </field>
     </fields>

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130009a4" readable_name="Single Coin Spawned">
+<behavior address="0x130009A4" readable_name="Single Coin Spawned">
     <tags>
         <tag>COLLECTABLE</tag>
         <tag>COINS</tag>

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13001ef8" readable_name="LLL Tilting Inverted Pyramid">
+<behavior address="0x13001EF8" readable_name="LLL Tilting Inverted Pyramid">
     <tags>
         <tag>INTERACTIVE</tag>
         <tag>SURFACE</tag>

@@ -8,11 +8,11 @@
         <tag>WF</tag>
     </tags>
     <fields>
-        <field name="Movement Velocity" type="int" bparam="2" default="1">
+        <field name="Movement Velocity" type="int" bparam="2" default="0x1">
             <enums>
-                <enum value="1" name="10" c_name="WF_SLID_BRICK_PTFM_BP_MOV_VEL_10" />
-                <enum value="2" name="15" c_name="WF_SLID_BRICK_PTFM_BP_MOV_VEL_15" />
-                <enum value="3" name="20" c_name="WF_SLID_BRICK_PTFM_BP_MOV_VEL_20" />
+                <enum name="10" value="1" c_name="WF_SLID_BRICK_PTFM_BP_MOV_VEL_10" />
+                <enum name="15" value="2" c_name="WF_SLID_BRICK_PTFM_BP_MOV_VEL_15" />
+                <enum name="20" value="3" c_name="WF_SLID_BRICK_PTFM_BP_MOV_VEL_20" />
             </enums>
         </field>
     </fields>

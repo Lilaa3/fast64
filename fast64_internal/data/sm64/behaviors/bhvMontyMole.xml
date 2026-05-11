@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13004a00" readable_name="Monty Mole">
-    <description>Use Monty Mole Hole within <game_unit value="1500" /> of Mario.</description>
+<behavior address="0x13004A00" readable_name="Monty Mole">
+    <description>Use Monty Mole Hole within </description>
     <tags>
         <tag>ENEMY</tag>
         <tag>TTM</tag>
     </tags>
     <fields>
-        <field name="Can Throw Rocks" type="bool" bparam="2" default="0">
+        <field name="Can Throw Rocks" type="bool" bparam="2" default="FALSE">
             <enums>
                 <enum c_name="MONTY_MOLE_BP_NO_ROCK" />
                 <enum c_name="MONTY_MOLE_BP_CAN_THROW_ROCK" />

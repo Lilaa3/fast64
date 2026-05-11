@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130002b8" readable_name="Bubble Particle Spawner">
+<behavior address="0x130002B8" readable_name="Bubble Particle Spawner">
     <description>Spawner for bubble particles. Spawns bhvSmallWaterWave with MODEL_BUBBLE after a random delay.</description>
     <tags>
         <tag>SPAWNER</tag>

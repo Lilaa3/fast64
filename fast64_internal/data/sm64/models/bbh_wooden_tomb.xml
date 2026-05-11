@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bbh Wooden Tomb">
-    <geolayout address="0xe000658" />
+    <geolayout address="0x0E000658" />
     <level>BBH</level>
     <ids>
-        <id value="0x3c" name="MODEL_BBH_WOODEN_TOMB" />
+        <id value="0x3C" name="MODEL_BBH_WOODEN_TOMB" />
     </ids>
     <collisions>
-        <collision c_name="bbh_seg7_collision_coffin" address="0x7026d18" />
+        <collision c_name="bbh_seg7_collision_coffin" address="0x07026D18" />
     </collisions>
 </model>

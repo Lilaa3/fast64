@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Castle Grounds Vcutm Grill">
-    <geolayout address="0xe00070c" />
+    <geolayout address="0x0E00070C" />
     <level>CASTLE_GROUNDS</level>
     <ids>
         <id value="0x36" name="MODEL_CASTLE_GROUNDS_VCUTM_GRILL" />
     </ids>
     <collisions>
-        <collision c_name="castle_grounds_seg7_collision_moat_grills" address="0x7010db4" />
+        <collision c_name="castle_grounds_seg7_collision_moat_grills" address="0x07010DB4" />
     </collisions>
 </model>

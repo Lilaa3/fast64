@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Montey Mole Hole">
-    <displaylist address="0x5000840" name="monty_mole_hole_seg5_dl_05000840" />
+    <displaylist address="0x05000840" name="monty_mole_hole_seg5_dl_05000840" />
     <group>group6</group>
     <ids>
         <id value="0x54" name="MODEL_DL_MONTY_MOLE_HOLE" />

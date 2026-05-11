@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130049c8" readable_name="Spiny">
+<behavior address="0x130049C8" readable_name="Spiny">
     <description>Walks randomly on the ground or is held/thrown by Lakitu.</description>
     <tags>
         <tag>ENEMY</tag>

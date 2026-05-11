@@ -1,14 +1,14 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13004c5c" readable_name="TTC Treadmill">
+<behavior address="0x13004C5C" readable_name="TTC Treadmill">
     <tags>
         <tag>PLATFORM</tag>
         <tag>TTC</tag>
     </tags>
     <fields>
-        <field name="Size" type="int" bparam="2" mask="0x1" default="0">
+        <field name="Size" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="Small" />
-                <enum value="1" name="Large" />
+                <enum name="Small" value="0" />
+                <enum name="Large" value="1" />
             </enums>
         </field>
     </fields>

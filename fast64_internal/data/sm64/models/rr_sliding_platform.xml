@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Rr Sliding Platform">
-    <geolayout address="0xe0008c0" />
+    <geolayout address="0x0E0008C0" />
     <level>RR</level>
     <ids>
         <id value="0x36" name="MODEL_RR_SLIDING_PLATFORM" />

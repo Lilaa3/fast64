@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bitfs Sliding Platform">
-    <geolayout address="0xe000740" />
+    <geolayout address="0x0E000740" />
     <level>BITFS</level>
     <ids>
-        <id value="0x3f" name="MODEL_BITFS_SLIDING_PLATFORM" />
+        <id value="0x3F" name="MODEL_BITFS_SLIDING_PLATFORM" />
     </ids>
     <collisions>
         <collision c_name="bitfs_seg7_collision_07015768" address="0x07015768" />

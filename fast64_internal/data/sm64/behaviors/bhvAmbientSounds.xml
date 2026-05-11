@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13003c90" readable_name="Ambient Sounds">
+<behavior address="0x13003C90" readable_name="Ambient Sounds">
     <description>Plays ambient outdoor sounds when not in behind-Mario camera mode.</description>
     <tags>
         <tag>ENVIROMENTAL</tag>

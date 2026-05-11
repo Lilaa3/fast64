@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Springboard Middle">
-    <geolayout address="0xc000018" />
+    <geolayout address="0x0C000018" />
     <group>group8</group>
     <ids>
-        <id value="0xb6" name="MODEL_TRAMPOLINE_CENTER" />
+        <id value="0xB6" name="MODEL_TRAMPOLINE_CENTER" />
     </ids>
 </model>

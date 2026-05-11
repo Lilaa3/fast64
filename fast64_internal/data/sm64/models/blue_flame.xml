@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Blue Flame">
-    <geolayout address="0x16000b8c" />
+    <geolayout address="0x16000B8C" />
     <group>common1</group>
     <ids>
         <id value="0x91" name="MODEL_BLUE_FLAME" />

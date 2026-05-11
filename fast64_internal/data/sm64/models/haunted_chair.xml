@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Haunted Chair">
-    <geolayout address="0xc0000d8" />
+    <geolayout address="0x0C0000D8" />
     <group>group9</group>
     <ids>
         <id value="0x56" name="MODEL_HAUNTED_CHAIR" />

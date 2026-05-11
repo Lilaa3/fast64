@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="King Bobomb">
-    <geolayout address="0xc000000" />
+    <geolayout address="0x0C000000" />
     <group>group3</group>
     <ids>
         <id value="0x56" name="MODEL_KING_BOBOMB" />

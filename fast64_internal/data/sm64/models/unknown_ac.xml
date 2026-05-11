@@ -1,6 +1,6 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Unknown Ac">
     <ids>
-        <id value="0xac" name="MODEL_UNKNOWN_AC"/>
+        <id value="0xAC" name="MODEL_UNKNOWN_AC" />
     </ids>
 </model>

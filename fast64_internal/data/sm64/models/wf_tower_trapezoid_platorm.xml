@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wf Tower Trapezoid Platorm">
-    <geolayout address="0xe000af8" />
+    <geolayout address="0x0E000AF8" />
     <level>WF</level>
     <ids>
-        <id value="0x2c" name="MODEL_WF_TOWER_TRAPEZOID_PLATORM" />
+        <id value="0x2C" name="MODEL_WF_TOWER_TRAPEZOID_PLATORM" />
     </ids>
 </model>

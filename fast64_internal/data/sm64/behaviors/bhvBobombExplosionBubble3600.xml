@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <behavior address="0x13003600" readable_name="Bob-omb Explosion Bubble Helper">
-    <comment>???? Wtf is that name</comment>
     <description>A helper behavior for Bob-omb explosions.</description>
+    <comment>???? Wtf is that name</comment>
     <tags>
         <tag>HELPER</tag>
         <tag>PARTICLE</tag>

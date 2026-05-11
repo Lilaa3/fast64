@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ttc Pit Block">
-    <geolayout address="0xe000310" />
+    <geolayout address="0x0E000310" />
     <level>TTC</level>
     <ids>
-        <id value="0x3e" name="MODEL_TTC_PIT_BLOCK" />
+        <id value="0x3E" name="MODEL_TTC_PIT_BLOCK" />
     </ids>
     <collisions>
         <collision c_name="ttc_seg7_collision_07015754" address="0x07015754" />

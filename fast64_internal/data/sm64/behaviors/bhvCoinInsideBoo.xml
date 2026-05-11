@@ -5,10 +5,10 @@
         <tag>COLLECTABLE</tag>
     </tags>
     <fields>
-        <field name="Coin Index" type="int" bparam="2" default="0">
+        <field name="Coin Index" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="Yellow Coin" c_name="COIN_INSIDE_BOO_BP_YELLOW_COIN" />
-                <enum value="1" name="Blue Coin" c_name="COIN_INSIDE_BOO_BP_BLUE_COIN">
+                <enum name="Yellow Coin" value="0" c_name="COIN_INSIDE_BOO_BP_YELLOW_COIN" />
+                <enum name="Blue Coin" value="1" c_name="COIN_INSIDE_BOO_BP_BLUE_COIN">
                     <description>Forces model to be blue coin.</description>
                 </enum>
             </enums>

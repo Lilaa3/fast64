@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13002e3c" readable_name="SL Snowman">
+<behavior address="0x13002E3C" readable_name="SL Snowman">
     <description>The handler for the strong wind blown by the Snowman in SL. Triggers dialog and then aims towards Mario.</description>
     <tags>
         <tag>SL</tag>

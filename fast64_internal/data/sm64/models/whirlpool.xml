@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Whirlpool">
-    <displaylist address="0x5013cb8" name="whirlpool_seg5_dl_05013CB8" />
+    <displaylist address="0x05013CB8" name="whirlpool_seg5_dl_05013CB8" />
     <group>group4</group>
     <ids>
         <id value="0x57" name="MODEL_DL_WHIRLPOOL" />

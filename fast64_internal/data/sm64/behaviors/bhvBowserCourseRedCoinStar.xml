@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13003ee4" readable_name="Bowser Course Red Coin Star">
+<behavior address="0x13003EE4" readable_name="Bowser Course Red Coin Star">
     <description>Star that appears after collecting a certain number of red coins in Bowser's courses.</description>
     <tags>
         <tag>BOWSER</tag>
         <tag>COLLECTIBLE</tag>
     </tags>
     <fields>
-        <field name="Required Red Coins" type="int" bparam="2" default="0">
+        <field name="Required Red Coins" type="int" bparam="2" default="0x0">
             <description>Number of red coins required to spawn the star. 0 will use the amount of red coins in the area.</description>
         </field>
     </fields>

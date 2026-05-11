@@ -1,17 +1,17 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13003a80" readable_name="TTM Bowling Ball Spawner">
+<behavior address="0x13003A80" readable_name="TTM Bowling Ball Spawner">
     <tags>
         <tag>SPAWNER</tag>
         <tag>TTM</tag>
     </tags>
     <fields>
-        <field name="Spawner Type" type="int" bparam="2" default="1">
+        <field name="Spawner Type" type="int" bparam="2" default="0x1">
             <enums>
-                <enum value="1" name="TTM" c_name="BBALL_BP_STYPE_TTM" />
-                <enum value="0" name="BOB Upper" c_name="BBALL_BP_STYPE_BOB_UPPER" />
-                <enum value="2" name="BOB Lower" c_name="BBALL_BP_STYPE_BOB_LOWER" />
-                <enum value="3" name="THI Large" c_name="BBALL_BP_STYPE_THI_LARGE" />
-                <enum value="4" name="THI Small" c_name="BBALL_BP_STYPE_THI_SMALL" />
+                <enum name="TTM" value="1" c_name="BBALL_BP_STYPE_TTM" />
+                <enum name="BOB Upper" value="0" c_name="BBALL_BP_STYPE_BOB_UPPER" />
+                <enum name="BOB Lower" value="2" c_name="BBALL_BP_STYPE_BOB_LOWER" />
+                <enum name="THI Large" value="3" c_name="BBALL_BP_STYPE_THI_LARGE" />
+                <enum name="THI Small" value="4" c_name="BBALL_BP_STYPE_THI_SMALL" />
             </enums>
         </field>
     </fields>

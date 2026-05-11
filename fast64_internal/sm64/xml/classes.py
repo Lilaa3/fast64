@@ -9,31 +9,31 @@ class ParseError(Exception):
 @dataclasses.dataclass(frozen=True)
 class BehaviorFieldEnum:
     name: str
-    description: Optional[str]
+    description: str
     value: int
-    c_name: str
+    c_name: Optional[str]
 
 
 @dataclasses.dataclass(frozen=True)
 class BehaviorField:
     name: str
-    description: Optional[str]
+    description: str
     type: str
     bparam: list[int]
-    default: Optional[int | str] = None
+    default: Optional[int | str | bool] = None
     enums: list[BehaviorFieldEnum] = dataclasses.field(default_factory=list)
     mask: int = 0
     shift: int = 0
-    multiplier: int = 1
-    offset: int = 0
-    min: int = 0
-    max: int = 0
+    multiplier: float | int = 1
+    offset: float | int = 0
+    min: float | int = 0
+    max: float | int = 0
 
 
 @dataclasses.dataclass(frozen=True)
 class AddressOrCName:
-    address: int
-    c_name: str
+    address: Optional[int] = None
+    c_name: Optional[str] = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -68,10 +68,12 @@ class Model:
     description: str
     dev_comment: str
     geolayout: Optional[AddressOrCName]
+    displaylist: Optional[AddressOrCName]
     group: Optional[str]
+    level: Optional[str]
     ids: list[ModelId]
     tables: list[str]
-    collisions: Optional[AddressOrCName]
+    collisions: list[Collision]
     real_tables: dict[str, AnimationTable] = dataclasses.field(default_factory=dict)
 
 
@@ -82,6 +84,7 @@ class Behavior:
     readable_name: str
     description: str
     dev_comment: str
+    particle: Optional[str]
     tags: list[str]
     models: list[str]
     collisions: list[Collision]

@@ -3,6 +3,6 @@
     <geolayout address="0x16000040" />
     <group>common1</group>
     <ids>
-        <id value="0xcd" name="MODEL_EXPLOSION" />
+        <id value="0xCD" name="MODEL_EXPLOSION" />
     </ids>
 </model>

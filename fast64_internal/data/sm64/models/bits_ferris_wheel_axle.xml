@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bits Ferris Wheel Axle">
-    <geolayout address="0xe000640" />
+    <geolayout address="0x0E000640" />
     <level>BITS</level>
     <ids>
-        <id value="0x3d" name="MODEL_BITS_FERRIS_WHEEL_AXLE" />
+        <id value="0x3D" name="MODEL_BITS_FERRIS_WHEEL_AXLE" />
     </ids>
     <collisions>
         <collision c_name="bits_seg7_collision_0701AC28" address="0x0701AC28" />

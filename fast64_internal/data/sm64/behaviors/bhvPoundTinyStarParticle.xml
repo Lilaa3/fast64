@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13000a78" readable_name="GP Star Particle">
+<behavior address="0x13000A78" readable_name="GP Star Particle">
     <description>Spawned by Horizontal Star Particle Spawner</description>
     <tags>
         <tag>PARTICLE</tag>

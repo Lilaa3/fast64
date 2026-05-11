@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bits Arrow Platform">
-    <geolayout address="0xe000658" />
+    <geolayout address="0x0E000658" />
     <level>BITS</level>
     <ids>
-        <id value="0x3e" name="MODEL_BITS_ARROW_PLATFORM" />
+        <id value="0x3E" name="MODEL_BITS_ARROW_PLATFORM" />
     </ids>
 </model>

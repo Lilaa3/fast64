@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bowser">
-    <geolayout address="0xd000ac4" />
+    <geolayout address="0x0D000AC4" />
     <group>group12</group>
     <ids>
         <id value="0x64" name="MODEL_BOWSER" />

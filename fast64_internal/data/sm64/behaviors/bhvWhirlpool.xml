@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x130032a8" readable_name="Whirlpool">
+<behavior address="0x130032A8" readable_name="Whirlpool">
     <tags>
         <tag>ENVIRONMENTAL</tag>
         <tag>WATER</tag>

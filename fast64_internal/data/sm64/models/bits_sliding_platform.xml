@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bits Sliding Platform">
-    <geolayout address="0xe0005e0" />
+    <geolayout address="0x0E0005E0" />
     <level>BITS</level>
     <ids>
         <id value="0x36" name="MODEL_BITS_SLIDING_PLATFORM" />

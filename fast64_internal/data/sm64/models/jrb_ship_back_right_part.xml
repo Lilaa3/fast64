@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Jrb Ship Back Right Part">
-    <geolayout address="0xe000a00" />
+    <geolayout address="0x0E000A00" />
     <level>JRB</level>
     <ids>
         <id value="0x38" name="MODEL_JRB_SHIP_BACK_RIGHT_PART" />

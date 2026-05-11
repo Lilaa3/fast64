@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13003bec" readable_name="Pyramid Top Fragment">
+<behavior address="0x13003BEC" readable_name="Pyramid Top Fragment">
     <description>Debris fragments spawned from the explosion of the pyramid top.</description>
     <tags>
         <tag>PARTICLE</tag>

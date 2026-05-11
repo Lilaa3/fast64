@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Blargg">
-    <geolayout address="0xc000240" />
+    <geolayout address="0x0C000240" />
     <group>group2</group>
     <ids>
         <id value="0x54" name="MODEL_BLARGG" />

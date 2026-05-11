@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13002a7c" readable_name="Floor Trap (Castle)">
+<behavior address="0x13002A7C" readable_name="Floor Trap (Castle)">
     <description>Triggers interaction (INT_STATUS_TRAP_TURN) in its parent object when Mario stands on it. It synchronizes its roll angle with the parent object.</description>
     <tags>
         <tag>INTERACTIVE</tag>

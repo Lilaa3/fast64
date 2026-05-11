@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Cap Switch (Base)">
-    <displaylist address="0x5003120" name="cap_switch_base_seg5_dl_05003120" />
+    <displaylist address="0x05003120" name="cap_switch_base_seg5_dl_05003120" />
     <group>group8</group>
     <ids>
         <id value="0x56" name="MODEL_CAP_SWITCH_BASE" />
     </ids>
     <collisions>
-        <collision c_name="capswitch_collision_05003448" address="0x5003448" />
+        <collision c_name="capswitch_collision_05003448" address="0x05003448" />
     </collisions>
 </model>

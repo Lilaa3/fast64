@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wf Rotating Platform">
-    <geolayout address="0xe0009b8" />
+    <geolayout address="0x0E0009B8" />
     <level>WF</level>
     <ids>
         <id value="0x10" name="MODEL_WF_ROTATING_PLATFORM" />

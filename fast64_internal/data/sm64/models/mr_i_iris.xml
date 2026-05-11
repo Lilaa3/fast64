@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Mr. I Iris">
-    <geolayout address="0xd00001c" />
+    <geolayout address="0x0D00001C" />
     <group>group16</group>
     <ids>
         <id value="0x66" name="MODEL_MR_I_IRIS" />

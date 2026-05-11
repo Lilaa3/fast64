@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Rr Seesaw Platform">
-    <geolayout address="0xe000908" />
+    <geolayout address="0x0E000908" />
     <level>RR</level>
     <ids>
-        <id value="0x3c" name="MODEL_RR_SEESAW_PLATFORM" />
+        <id value="0x3C" name="MODEL_RR_SEESAW_PLATFORM" />
     </ids>
 </model>

@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Castle Inside Castle Water Level Pillar">
-    <geolayout address="0xe001940" />
+    <geolayout address="0x0E001940" />
     <level>CASTLE_INSIDE</level>
     <ids>
         <id value="0x36" name="MODEL_CASTLE_WATER_LEVEL_PILLAR" />
     </ids>
     <collisions>
-        <collision c_name="inside_castle_seg7_collision_water_level_pillar" address="0x7078e80" />
+        <collision c_name="inside_castle_seg7_collision_water_level_pillar" address="0x07078E80" />
     </collisions>
 </model>

@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13000c44" readable_name="BBH Tumbling Bridge">
+<behavior address="0x13000C44" readable_name="BBH Tumbling Bridge">
     <description>A bridge that tumbles when Mario stands on it.</description>
     <tags>
         <tag>PLATAFORM</tag>
         <tag>MOVING</tag>
     </tags>
-    <models automatically_set="true">
+    <models>
         <model>bbh_tumbling_platform</model>
     </models>
 </behavior>

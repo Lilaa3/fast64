@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Rr Elevator Platform">
-    <geolayout address="0xe0008f0" />
+    <geolayout address="0x0E0008F0" />
     <level>RR</level>
     <ids>
         <id value="0x40" name="MODEL_RR_ELEVATOR_PLATFORM" />
     </ids>
     <collisions>
-        <collision c_name="rr_seg7_collision_elevator_platform" address="0x70296cc" />
+        <collision c_name="rr_seg7_collision_elevator_platform" address="0x070296CC" />
     </collisions>
 </model>

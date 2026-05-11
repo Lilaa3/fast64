@@ -6,11 +6,11 @@
         <tag>MANAGER</tag>
     </tags>
     <fields>
-        <field name="Cloud Type" type="int" bparam="2" default="0">
+        <field name="Cloud Type" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="Fwoosh" c_name="CLOUD_BP_FWOOSH" />
-                <enum value="1" name="Lakitu" c_name="CLOUD_BP_LAKITU_CLOUD" />
-                <enum value="5" name="Fwoosh Face" c_name="CLOUD_BP_FWOOSH_FACE" />
+                <enum name="Fwoosh" value="0" c_name="CLOUD_BP_FWOOSH" />
+                <enum name="Lakitu" value="1" c_name="CLOUD_BP_LAKITU_CLOUD" />
+                <enum name="Fwoosh Face" value="5" c_name="CLOUD_BP_FWOOSH_FACE" />
             </enums>
         </field>
     </fields>

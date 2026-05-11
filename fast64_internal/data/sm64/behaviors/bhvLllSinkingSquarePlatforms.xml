@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13001ec4" readable_name="LLL Sinking Square Platform">
+<behavior address="0x13001EC4" readable_name="LLL Sinking Square Platform">
     <description>Square platforms in LLL that sink and oscillate vertically using a sine-wave.</description>
     <tags>
         <tag>SURFACE</tag>

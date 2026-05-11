@@ -4,10 +4,10 @@
         <tag>ENEMY</tag>
     </tags>
     <fields>
-        <field name="Type" type="int" bparam="2" default="0">
+        <field name="Type" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="Generic" c_name="BOBOMB_BP_STYPE_GENERIC" />
-                <enum value="1" name="Stationary" c_name="BOBOMB_BP_STYPE_STATIONARY" />
+                <enum name="Generic" value="0" c_name="BOBOMB_BP_STYPE_GENERIC" />
+                <enum name="Stationary" value="1" c_name="BOBOMB_BP_STYPE_STATIONARY" />
             </enums>
         </field>
     </fields>

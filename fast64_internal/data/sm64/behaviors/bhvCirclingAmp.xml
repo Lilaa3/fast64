@@ -6,12 +6,12 @@
         <tag>ENVIRONMENTAL</tag>
     </tags>
     <fields>
-        <field name="Rotation Radius" type="int" bparam="2" default="0">
+        <field name="Rotation Radius" type="int" bparam="2" default="0x0">
             <enums>
-                <enum value="0" name="200" c_name="AMP_BP_ROT_RADIUS_200" />
-                <enum value="1" name="300" c_name="AMP_BP_ROT_RADIUS_300" />
-                <enum value="2" name="400" c_name="AMP_BP_ROT_RADIUS_400" />
-                <enum value="3" name="Fixed" c_name="AMP_BP_ROT_RADIUS_0" />
+                <enum name="200" value="0" c_name="AMP_BP_ROT_RADIUS_200" />
+                <enum name="300" value="1" c_name="AMP_BP_ROT_RADIUS_300" />
+                <enum name="400" value="2" c_name="AMP_BP_ROT_RADIUS_400" />
+                <enum name="Fixed" value="3" c_name="AMP_BP_ROT_RADIUS_0" />
             </enums>
         </field>
     </fields>

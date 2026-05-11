@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Ttm Star Smiley">
-    <geolayout address="0xe000d84" />
+    <geolayout address="0x0E000D84" />
     <level>TTM</level>
     <ids>
         <id value="0x39" name="MODEL_TTM_STAR_SMILEY" />

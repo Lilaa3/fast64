@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Wdw Express Elevator">
-    <geolayout address="0xe000610" />
+    <geolayout address="0x0E000610" />
     <level>WDW</level>
     <ids>
-        <id value="0x3a" name="MODEL_WDW_EXPRESS_ELEVATOR" />
+        <id value="0x3A" name="MODEL_WDW_EXPRESS_ELEVATOR" />
     </ids>
     <collisions>
-        <collision c_name="wdw_seg7_collision_express_elevator_platform" address="0x70185ac" />
+        <collision c_name="wdw_seg7_collision_express_elevator_platform" address="0x070185AC" />
     </collisions>
 </model>

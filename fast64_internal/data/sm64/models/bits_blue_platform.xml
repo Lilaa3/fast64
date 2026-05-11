@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bits Blue Platform">
-    <geolayout address="0xe000628" />
+    <geolayout address="0x0E000628" />
     <level>BITS</level>
     <ids>
-        <id value="0x3c" name="MODEL_BITS_BLUE_PLATFORM" />
+        <id value="0x3C" name="MODEL_BITS_BLUE_PLATFORM" />
     </ids>
 </model>

@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="(Beta) Boo Key">
-    <geolayout address="0xc000188" />
+    <geolayout address="0x0C000188" />
     <group>group9</group>
     <ids>
         <id value="0x55" name="MODEL_BETA_BOO_KEY" />

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<animation_table address="0x600f638" readable_name="Dorrie" size="3">
+<animation_table address="0x0600F638" readable_name="Dorrie" size="3">
     <names>
         <name>Idle</name>
         <name>Moving</name>

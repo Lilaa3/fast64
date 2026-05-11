@@ -7,7 +7,7 @@
         <tag>BOWSER</tag>
     </tags>
     <fields>
-        <field name="Platform Index" type="int" bparam="2" max="10" default="0">
+        <field name="Platform Index" type="int" bparam="2" default="0x0" max="10">
             <description>Index into sBowserFallingPlatform for collision and position data.</description>
         </field>
     </fields>

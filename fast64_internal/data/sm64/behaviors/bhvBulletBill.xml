@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x1300179c" readable_name="Bullet Bill">
+<behavior address="0x1300179C" readable_name="Bullet Bill">
     <tags>
         <tag>ENEMY</tag>
         <tag>PROJECTILE</tag>

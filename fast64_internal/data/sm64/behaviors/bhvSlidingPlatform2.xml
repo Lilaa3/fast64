@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13004e4c" readable_name="Sliding Platform 2">
+<behavior address="0x13004E4C" readable_name="Sliding Platform 2">
     <description>A platform that slides back and forth.</description>
     <comment>TODO RR Pyramid while unused does have collision data, how to include that?</comment>
     <tags>
@@ -7,20 +7,20 @@
         <tag>ENVIRONMENTAL</tag>
     </tags>
     <fields>
-        <field name="Platform Type" type="int" bparam="1" default="0">
+        <field name="Platform Type" type="int" bparam="1" default="0x0">
             <enums>
-                <enum value="0" name="BitS Sliding Platform" c_name="SLIDING_PLATFORM_BP1_BITS_SLIDING_PLATFORM" />
-                <enum value="1" name="BitS Twin Sliding Platforms" c_name="SLIDING_PLATFORM_BP1_BITS_TWIN_SLIDING_PLATFORMS" />
-                <enum value="2" name="BitFS Moving Square" c_name="SLIDING_PLATFORM_BP1_BITFS_MOVING_SQUARE" />
-                <enum value="3" name="BitFS Sliding Platform" c_name="SLIDING_PLATFORM_BP1_BITFS_SLIDING_PLATFORM" />
-                <enum value="4" name="RR Sliding Platform" c_name="SLIDING_PLATFORM_BP1_RR_SLIDING_PLATFORM" />
-                <enum value="5" name="RR Pyramid (Unused)" c_name="SLIDING_PLATFORM_BP1_RR_PYRAMID" />
-                <enum value="6" name="Null (Unused)" c_name="SLIDING_PLATFORM_BP1_NULL" />
-                <enum value="7" name="BitDW Sliding Platform" c_name="SLIDING_PLATFORM_BP1_BITDW_SLIDING_PLATFORM" />
+                <enum name="BitS Sliding Platform" value="0" c_name="SLIDING_PLATFORM_BP1_BITS_SLIDING_PLATFORM" />
+                <enum name="BitS Twin Sliding Platforms" value="1" c_name="SLIDING_PLATFORM_BP1_BITS_TWIN_SLIDING_PLATFORMS" />
+                <enum name="BitFS Moving Square" value="2" c_name="SLIDING_PLATFORM_BP1_BITFS_MOVING_SQUARE" />
+                <enum name="BitFS Sliding Platform" value="3" c_name="SLIDING_PLATFORM_BP1_BITFS_SLIDING_PLATFORM" />
+                <enum name="RR Sliding Platform" value="4" c_name="SLIDING_PLATFORM_BP1_RR_SLIDING_PLATFORM" />
+                <enum name="RR Pyramid (Unused)" value="5" c_name="SLIDING_PLATFORM_BP1_RR_PYRAMID" />
+                <enum name="Null (Unused)" value="6" c_name="SLIDING_PLATFORM_BP1_NULL" />
+                <enum name="BitDW Sliding Platform" value="7" c_name="SLIDING_PLATFORM_BP1_BITDW_SLIDING_PLATFORM" />
             </enums>
         </field>
-        <field name="Path Length" type="units" bparam="2" mask="0x3F" default="0" multiplier="50" />
-        <field name="Inverted" type="bool" bparam="2" shift="6" default="False" />
+        <field name="Path Length" type="units" bparam="2" default="0x0" multiplier="50" mask="0x3F" />
+        <field name="Inverted" type="bool" bparam="2" default="FALSE" shift="6" />
     </fields>
     <models>
         <model>bitdw_sliding_platform</model>

@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13004b6c" readable_name="Ferris Wheel Platform">
+<behavior address="0x13004B6C" readable_name="Ferris Wheel Platform">
     <description>A platform that orbits a bhvFerrisWheelAxle. Position is relative to the parent's + rool.</description>
     <tags>
         <tag>PLATFORM</tag>
         <tag>SURFACE</tag>
     </tags>
     <fields>
-        <field name="Platform Index" type="int" bparam="2" max="3" default="0">
+        <field name="Platform Index" type="int" bparam="2" default="0x0" max="3">
             <description>Index of the platform (0-3), used to set the relative angle (multiplied by 90 degrees).</description>
         </field>
     </fields>

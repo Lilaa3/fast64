@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bitfs Blue Pole">
-    <geolayout address="0xe0006a8" />
+    <geolayout address="0x0E0006A8" />
     <level>BITFS</level>
     <ids>
         <id value="0x39" name="MODEL_BITFS_BLUE_POLE" />

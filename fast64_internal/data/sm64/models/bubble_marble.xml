@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Bubble Marble">
-    <geolayout address="0x1700001c" />
+    <geolayout address="0x1700001C" />
     <group>group0</group>
     <ids>
-        <id value="0xaa" name="MODEL_PURPLE_MARBLE" />
+        <id value="0xAA" name="MODEL_PURPLE_MARBLE" />
     </ids>
 </model>

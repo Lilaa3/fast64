@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Rr Octagonal Platform">
-    <geolayout address="0xe0008a8" />
+    <geolayout address="0x0E0008A8" />
     <level>RR</level>
     <ids>
         <id value="0x38" name="MODEL_RR_OCTAGONAL_PLATFORM" />

@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
-<behavior address="0x13000b8c" readable_name="Thwomp (140% larger)">
+<behavior address="0x13000B8C" readable_name="Thwomp (140% larger)">
     <description>Has higher drawing distance.</description>
     <tags>
         <tag>ENEMY</tag>
         <tag>SURFACE</tag>
     </tags>
     <fields>
-        <field name="Rising Duration Offset" type="frames" bparam="2" offset="40" default="0" />
+        <field name="Rising Duration Offset" type="frames" bparam="2" default="0x0" offset="40" />
     </fields>
     <models>
         <model>thwomp</model>

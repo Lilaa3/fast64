@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <model readable_name="Metal Box (DL)">
-    <displaylist address="0x8024bb8" name="metal_box_dl" />
+    <displaylist address="0x08024BB8" name="metal_box_dl" />
     <group>common0</group>
     <ids>
-        <id value="0xda" name="MODEL_METAL_BOX_DL" />
+        <id value="0xDA" name="MODEL_METAL_BOX_DL" />
     </ids>
 </model>
