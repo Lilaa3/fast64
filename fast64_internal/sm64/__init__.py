@@ -2,7 +2,7 @@ from bpy.types import PropertyGroup
 from bpy.props import PointerProperty
 from bpy.utils import register_class, unregister_class
 
-from .parse_sm64_xml import parse_all
+from .xml.parser import parse_all
 
 from .settings import (
     settings_props_register,
